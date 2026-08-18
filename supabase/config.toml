@@ -1,18 +1,1 @@
 project_id = "edjbajhaqtqqkvqikxcx"
-[functions.gcal-oauth-start]
-verify_jwt = true
-
-[functions.gcal-oauth-complete]
-verify_jwt = true
-
-[functions.gcal-status]
-verify_jwt = true
-
-[functions.gcal-disconnect]
-verify_jwt = true
-
-[functions.gcal-list-events]
-verify_jwt = true
-
-[functions.gcal-push-event]
-verify_jwt = true
