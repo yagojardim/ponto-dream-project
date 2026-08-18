@@ -13,6 +13,7 @@ interface ProfileLite {
   status: string | null
   primary_role: string | null
   tenant_owner: boolean | null
+  can_create_projects?: boolean | null
   metadata?: unknown
 }
 
@@ -54,7 +55,7 @@ export function fetchTenantPersonas(): Promise<MockUser[]> {
   return safeCall<MockUser[]>('tenantPersonas.fetch', async () => {
     const { data: profileRows, error } = await supabase
       .from('profiles')
-      .select('id, name, email, status, primary_role, tenant_owner, metadata')
+      .select('id, name, email, status, primary_role, tenant_owner, can_create_projects, metadata')
       .eq('tenant_id', DEFAULT_TENANT_ID)
       .is('archived_at', null)
     if (error) throw error
@@ -100,6 +101,7 @@ export function fetchTenantPersonas(): Promise<MockUser[]> {
         email: p.email ?? '',
         role_context: role,
         tenant_owner: !!p.tenant_owner,
+        can_create_projects: !!p.can_create_projects,
         available_roles: [role, ...dbRoles.filter(r => r !== role)],
       })
     })

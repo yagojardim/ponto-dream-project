@@ -195,6 +195,7 @@ export function buildPersona(input: {
   role_context: RoleContext
   tenant_owner?: boolean
   available_roles?: RoleContext[]
+  can_create_projects?: boolean
 }): MockUser {
   const tenantId = input.tenant_id ?? MOCK_TENANT.tenant_id
   const isMaster = !!input.tenant_owner
@@ -216,7 +217,13 @@ export function buildPersona(input: {
     modules_enabled: isMaster
       ? ['board', 'reports', 'portfolio', 'roadmap', 'config', 'team', 'modules', 'audit']
       : BASE_MODULES,
-    permissions: isMaster ? ['*'] : derivePermissions(input.role_context),
+    permissions: isMaster
+      ? ['*']
+      : (() => {
+          const perms = derivePermissions(input.role_context)
+          if (input.can_create_projects && !perms.includes('project:create')) perms.push('project:create')
+          return perms
+        })(),
     assigned_dashboards: dashboards,
     tenant_owner: isMaster,
     available_roles: [input.role_context, ...roles.filter(r => r !== input.role_context)],
