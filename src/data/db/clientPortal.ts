@@ -16,6 +16,9 @@ type PortalTable =
   | 'client_signals'
   | 'client_approvals'
   | 'shared_project_items'
+  | 'project_client_responsibles'
+  | 'project_members'
+  | 'profiles'
 
 function tbl(name: PortalTable): any {
   return (supabase as unknown as { from: (t: string) => any }).from(name)
@@ -537,3 +540,105 @@ export function portalLogin(email: string): Promise<PortalLoginResult> {
     return res
   }, { ok: false, error: 'unavailable' })
 }
+
+
+// ─── Responsáveis por mensagens do cliente (por projeto) ─────────────────────
+export interface ResponsibleCandidate {
+  id: string
+  name: string
+  email: string
+  avatar_initials: string | null
+  avatar_color: string | null
+}
+
+async function listProjectResponsibleCandidates__raw(projectId: string): Promise<ResponsibleCandidate[]> {
+  const { data: members, error: mErr } = await tbl('project_members')
+    .select('profile_id')
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('project_id', projectId)
+  if (mErr) throw tenantError('project_members', mErr.message)
+  const ids = [...new Set((members ?? []).map((m: any) => m.profile_id).filter(Boolean))]
+  if (!ids.length) return []
+
+  const { data, error } = await tbl('profiles')
+    .select('id, name, email, avatar_initials, avatar_color')
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .in('id', ids)
+    .is('archived_at', null)
+    .eq('can_handle_client_messages', true)
+    .neq('tenant_owner', true)
+    .order('name')
+  if (error) throw tenantError('profiles', error.message)
+  return (data ?? []).map((p: any) => ({
+    id: p.id,
+    name: p.name ?? p.email ?? '',
+    email: p.email ?? '',
+    avatar_initials: p.avatar_initials ?? null,
+    avatar_color: p.avatar_color ?? null,
+  }))
+}
+
+async function listProjectResponsibles__raw(projectId: string): Promise<string[]> {
+  const { data, error } = await tbl('project_client_responsibles')
+    .select('profile_id')
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('project_id', projectId)
+  if (error) throw tenantError('project_client_responsibles', error.message)
+  return (data ?? []).map((r: any) => r.profile_id).filter(Boolean)
+}
+
+/** Projetos em que o profile é responsável pelas mensagens do cliente. */
+async function listResponsibleProjectIds__raw(profileId: string): Promise<string[]> {
+  const { data, error } = await tbl('project_client_responsibles')
+    .select('project_id')
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('profile_id', profileId)
+  if (error) throw tenantError('project_client_responsibles', error.message)
+  return (data ?? []).map((r: any) => r.project_id).filter(Boolean)
+}
+
+async function setProjectResponsibles__raw(
+  projectId: string, profileIds: string[], actorName?: string,
+): Promise<void> {
+  const before = await listProjectResponsibles__raw(projectId)
+  const next = [...new Set(profileIds.filter(Boolean))]
+
+  const toRemove = before.filter(id => !next.includes(id))
+  if (toRemove.length) {
+    const { error } = await tbl('project_client_responsibles')
+      .delete()
+      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('project_id', projectId)
+      .in('profile_id', toRemove)
+    if (error) throw tenantError('project_client_responsibles', error.message)
+  }
+
+  const toAdd = next.filter(id => !before.includes(id))
+  if (toAdd.length) {
+    const { error } = await tbl('project_client_responsibles').insert(
+      toAdd.map(profile_id => ({ tenant_id: DEFAULT_TENANT_ID, project_id: projectId, profile_id })),
+    )
+    if (error) throw tenantError('project_client_responsibles', error.message)
+  }
+
+  if (toAdd.length || toRemove.length) {
+    await writeAudit(
+      'project_client_responsibles', projectId, 'set_responsibles',
+      actorName ?? 'Sistema',
+      { profile_ids: before.join(',') },
+      { profile_ids: next.join(',') },
+    )
+  }
+}
+
+export const listProjectResponsibleCandidates = (projectId: string): Promise<ResponsibleCandidate[]> =>
+  safeCall('clientPortal.listProjectResponsibleCandidates', () => listProjectResponsibleCandidates__raw(projectId), [], { projectId })
+
+export const listProjectResponsibles = (projectId: string): Promise<string[]> =>
+  safeCall('clientPortal.listProjectResponsibles', () => listProjectResponsibles__raw(projectId), [], { projectId })
+
+export const listResponsibleProjectIds = (profileId: string): Promise<string[]> =>
+  safeCall('clientPortal.listResponsibleProjectIds', () => listResponsibleProjectIds__raw(profileId), [], { profileId })
+
+export const setProjectResponsibles = (projectId: string, profileIds: string[], actorName?: string): Promise<void> =>
+  safeCall('clientPortal.setProjectResponsibles', () => setProjectResponsibles__raw(projectId, profileIds, actorName), undefined, { projectId })

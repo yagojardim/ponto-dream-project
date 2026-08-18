@@ -196,6 +196,7 @@ export function buildPersona(input: {
   tenant_owner?: boolean
   available_roles?: RoleContext[]
   can_create_projects?: boolean
+  can_handle_client_messages?: boolean
 }): MockUser {
   const tenantId = input.tenant_id ?? MOCK_TENANT.tenant_id
   const isMaster = !!input.tenant_owner
@@ -225,6 +226,9 @@ export function buildPersona(input: {
             for (const cap of ['project:create', 'create:epic', 'create:feature'] as const) {
               if (!perms.includes(cap)) perms.push(cap)
             }
+          }
+          if (input.can_handle_client_messages && !perms.includes('access:client-messages')) {
+            perms.push('access:client-messages')
           }
           return perms
         })(),

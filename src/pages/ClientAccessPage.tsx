@@ -6,6 +6,10 @@ import { MOCK_TENANT } from '../data/session'
 import { useSession } from '../data/SessionContext'
 import { useClientPortal } from '../data/clientPortalStore'
 import { copyToClipboard } from '../utils/copyToClipboard'
+import {
+  listProjectResponsibleCandidates, setProjectResponsibles,
+  type ResponsibleCandidate,
+} from '../data/db/clientPortal'
 
 interface Props {
   onBack: () => void
@@ -32,12 +36,31 @@ export default function ClientAccessPage({ onBack }: Props) {
   const [permission, setPermission] = useState<'viewer' | 'admin'>('viewer')
   const [clientCanApprove, setClientCanApprove] = useState(false)
   const [clientCanPreview, setClientCanPreview] = useState(false)
+  const [candidatesByProject, setCandidatesByProject] = useState<Record<string, ResponsibleCandidate[]>>({})
+  const [responsibles, setResponsibles] = useState<string[]>([])
   const [done, setDone] = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState('')
   const [generatedPwd, setGeneratedPwd] = useState('')
   const [copied, setCopied] = useState(false)
   const [pwdCopied, setPwdCopied] = useState(false)
   const [copyErr, setCopyErr] = useState('')
+
+  // Carrega os candidatos elegíveis (membros do projeto com permissão de mensagens).
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const entries = await Promise.all(
+        selectedProjects.map(async id => [id, await listProjectResponsibleCandidates(id)] as const),
+      )
+      if (!alive) return
+      const map: Record<string, ResponsibleCandidate[]> = {}
+      for (const [id, list] of entries) map[id] = list
+      setCandidatesByProject(map)
+      const valid = new Set(entries.flatMap(([, list]) => list.map(c => c.id)))
+      setResponsibles(prev => prev.filter(id => valid.has(id)))
+    })()
+    return () => { alive = false }
+  }, [selectedProjects])
 
   useEffect(() => {
     if (done) {
@@ -64,6 +87,14 @@ export default function ClientAccessPage({ onBack }: Props) {
       project_names:      PROJECTS.filter(p => selectedProjects.includes(p.id)).map(p => p.name),
       actor_name:         activeUser?.name,
     })
+    for (const projectId of selectedProjects) {
+      const eligible = (candidatesByProject[projectId] ?? []).map(c => c.id)
+      void setProjectResponsibles(
+        projectId,
+        responsibles.filter(id => eligible.includes(id)),
+        activeUser?.name,
+      )
+    }
     setDone(true)
   }
 
@@ -72,6 +103,8 @@ export default function ClientAccessPage({ onBack }: Props) {
     setClientName('')
     setClientEmail('')
     setSelectedProjects([])
+    setResponsibles([])
+    setCandidatesByProject({})
     setPermission('viewer')
     setClientCanApprove(false)
     setClientCanPreview(false)
@@ -419,6 +452,64 @@ export default function ClientAccessPage({ onBack }: Props) {
                   {permissionLabel}
                 </span>
               </div>
+
+              {/* ── Responsáveis pelas mensagens do cliente ── */}
+              <div style={{
+                background: T.bgSurface2, border: `1px solid ${T.border}`,
+                borderRadius: 12, padding: '20px 20px 16px', marginBottom: 20,
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.text2, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                  Responsáveis pelas mensagens
+                </div>
+                <div style={{ fontSize: 11, color: T.text3, lineHeight: 1.5, marginBottom: 14 }}>
+                  Membros habilitados nos projetos selecionados que tratarão as mensagens deste cliente.
+                </div>
+                {selectedProjectObjs.map(p => {
+                  const cands = candidatesByProject[p.id] ?? []
+                  return (
+                    <div key={p.id} style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: T.text1, marginBottom: 8 }}>{p.name}</div>
+                      {cands.length === 0 ? (
+                        <div style={{ fontSize: 11, color: T.text3 }}>
+                          Nenhum membro habilitado para mensagens do cliente neste projeto.
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          {cands.map(c => {
+                            const on = responsibles.includes(c.id)
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setResponsibles(prev =>
+                                  prev.includes(c.id) ? prev.filter(x => x !== c.id) : [...prev, c.id],
+                                )}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: 8,
+                                  background: on ? T.accentDim : T.bgSurface,
+                                  border: `1px solid ${on ? T.accentBorder : T.border}`,
+                                  color: on ? T.accent : T.text2,
+                                  borderRadius: 20, padding: '5px 12px', fontSize: 12, cursor: 'pointer',
+                                }}
+                              >
+                                <span style={{
+                                  width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                  border: `1.5px solid ${on ? T.accent : T.border2}`,
+                                  background: on ? T.accent : 'transparent',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: 10, color: '#fff',
+                                }}>{on && '✓'}</span>
+                                {c.name}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
 
               {/* ── Capacidades granulares do portal ── */}
               <div style={{

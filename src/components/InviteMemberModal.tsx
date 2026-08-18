@@ -237,6 +237,9 @@ export default function InviteMemberModal({ onClose, onSuccess }: Props) {
       canCreateProjects:
         capabilityVisibility(role, 'project:create') === 'on'
         || optIns.has('project:create' as Capability),
+      canHandleClientMessages:
+        capabilityVisibility(role, 'access:client-messages') === 'on'
+        || optIns.has('access:client-messages' as Capability),
 
     })
 

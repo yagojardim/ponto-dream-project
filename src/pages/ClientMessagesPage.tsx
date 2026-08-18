@@ -8,6 +8,7 @@ import {
   addManagementMessage, markProjectReadByPo,
   type ClientSignal,
 } from '../data/clientSignals'
+import { listResponsibleProjectIds } from '../data/db/clientPortal'
 
 // ─── Chat message (flattened view over ClientSignal) ─────────────────────────
 interface ChatMsg {
@@ -381,17 +382,36 @@ function EmptyThread() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ClientMessagesPage() {
-  useClientPortal()
+  const portal = useClientPortal()
   const { activeUser } = useSession()
+  const isSupervisor = !!activeUser?.tenant_owner || activeUser?.role_context === 'Admin'
+  const [myProjectNames, setMyProjectNames] = useState<string[] | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [search, setSearch]     = useState('')
   const [tick, setTick]         = useState(0)
   void tick
 
-  const projects = getProjectsWithSignals(MOCK_TENANT.tenant_id)
+  // Responsabilidade real: só vê os projetos em que é responsável (Admin vê tudo).
+  useEffect(() => {
+    let alive = true
+    if (isSupervisor || !activeUser?.user_id) { setMyProjectNames(null); return }
+    ;(async () => {
+      const ids = await listResponsibleProjectIds(activeUser.user_id)
+      if (!alive) return
+      const byId = new Map(portal.projects.map(p => [p.id, p.name]))
+      setMyProjectNames(ids.map(id => byId.get(id)).filter((n): n is string => !!n))
+    })()
+    return () => { alive = false }
+  }, [isSupervisor, activeUser?.user_id, portal.projects])
+
+  const allProjects = getProjectsWithSignals(MOCK_TENANT.tenant_id)
+  const projects = isSupervisor
+    ? allProjects
+    : allProjects.filter(p => (myProjectNames ?? []).includes(p.project))
   const filtered = projects.filter(p =>
     p.project.toLowerCase().includes(search.toLowerCase())
   )
+  const noResponsibility = !isSupervisor && (myProjectNames?.length ?? 0) === 0
 
   const authorName     = activeUser?.name ?? 'Equipe Altech'
   const authorInitials = (activeUser?.name ?? 'Equipe Altech').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
@@ -407,6 +427,27 @@ export default function ClientMessagesPage() {
   }
 
   const totalUnread = projects.reduce((s, p) => s + p.unread, 0)
+
+  if (noResponsibility) {
+    return (
+      <div style={{
+        height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: T.bgPage, fontFamily: 'system-ui, -apple-system, sans-serif', padding: 24,
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: 360 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: 16, background: T.bgSurface2,
+            border: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 28, margin: '0 auto 16px',
+          }}>💬</div>
+          <p style={{ fontSize: 16, fontWeight: 700, color: T.text1, marginBottom: 8 }}>Nenhuma conversa atribuída</p>
+          <p style={{ fontSize: 13, color: T.text2, lineHeight: 1.6 }}>
+            Você ainda não é responsável pelas mensagens de nenhum projeto. Peça ao administrador para atribuir a responsabilidade.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{

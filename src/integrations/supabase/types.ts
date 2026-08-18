@@ -1959,6 +1959,7 @@ export type Database = {
           avatar_color: string | null
           avatar_initials: string | null
           can_create_projects: boolean
+          can_handle_client_messages: boolean
           created_at: string
           created_by: string | null
           department: string | null
@@ -1991,6 +1992,7 @@ export type Database = {
           avatar_color?: string | null
           avatar_initials?: string | null
           can_create_projects?: boolean
+          can_handle_client_messages?: boolean
           created_at?: string
           created_by?: string | null
           department?: string | null
@@ -2023,6 +2025,7 @@ export type Database = {
           avatar_color?: string | null
           avatar_initials?: string | null
           can_create_projects?: boolean
+          can_handle_client_messages?: boolean
           created_at?: string
           created_by?: string | null
           department?: string | null
@@ -2064,6 +2067,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      project_client_responsibles: {
+        Row: {
+          created_at: string
+          id: string
+          profile_id: string
+          project_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          profile_id: string
+          project_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          profile_id?: string
+          project_id?: string
+          tenant_id?: string
+        }
+        Relationships: []
       }
       project_members: {
         Row: {

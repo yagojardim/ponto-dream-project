@@ -45,6 +45,7 @@ export type Capability =
   | 'users:manage'
   | 'module:request'
   | 'access:client-portal'
+  | 'access:client-messages'
   | 'manage:dashboard-cards'
 
 // ─── Matrix: for each capability, which roles have it by default vs opt-in ───
@@ -145,6 +146,11 @@ export const PERMISSION_MATRIX: Record<Capability, CapabilityRule> = {
     default: ['Admin','PMO','ProjectManager','ProductManager','ProductOwner'],
     optIn:   ['ScrumMaster','TechLead'],
     hidden:  ['Dev','QA','UX'],
+  },
+  'access:client-messages': {
+    default: ['Admin'],
+    optIn:   ['PMO','ProjectManager','ProductManager','ProductOwner','TechLead','Dev'],
+    hidden:  ['ScrumMaster','QA','UX'],
   },
   'manage:dashboard-cards': {
     default: ['Admin','PMO'],
@@ -250,5 +256,10 @@ export const STEP4_CAPABILITIES: { cap: Capability; label: string; desc: string 
     cap:   'access:client-portal',
     label: 'Acesso ao Portal do Cliente',
     desc:  'Permite visualizar e gerir a visão do portal do cliente',
+  },
+  {
+    cap:   'access:client-messages',
+    label: 'Mensagens do Cliente',
+    desc:  'Pode ser responsável pelas tratativas de mensagens do cliente',
   },
 ]
