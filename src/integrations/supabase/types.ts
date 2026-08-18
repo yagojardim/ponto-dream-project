@@ -1958,6 +1958,7 @@ export type Database = {
           auth_user_id: string | null
           avatar_color: string | null
           avatar_initials: string | null
+          can_create_projects: boolean
           created_at: string
           created_by: string | null
           department: string | null
@@ -1989,6 +1990,7 @@ export type Database = {
           auth_user_id?: string | null
           avatar_color?: string | null
           avatar_initials?: string | null
+          can_create_projects?: boolean
           created_at?: string
           created_by?: string | null
           department?: string | null
@@ -2020,6 +2022,7 @@ export type Database = {
           auth_user_id?: string | null
           avatar_color?: string | null
           avatar_initials?: string | null
+          can_create_projects?: boolean
           created_at?: string
           created_by?: string | null
           department?: string | null
