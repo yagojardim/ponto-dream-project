@@ -220,8 +220,12 @@ export function buildPersona(input: {
     permissions: isMaster
       ? ['*']
       : (() => {
-          const perms = derivePermissions(input.role_context)
-          if (input.can_create_projects && !perms.includes('project:create')) perms.push('project:create')
+        const perms = derivePermissions(input.role_context)
+          if (input.can_create_projects) {
+            for (const cap of ['project:create', 'create:epic', 'create:feature'] as const) {
+              if (!perms.includes(cap)) perms.push(cap)
+            }
+          }
           return perms
         })(),
     assigned_dashboards: dashboards,
