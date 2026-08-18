@@ -499,7 +499,9 @@ export default function ClientAccessPage({ onBack }: Props) {
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   fontSize: 10, color: '#fff',
                                 }}>{on && '✓'}</span>
-                                {c.name}
+                                {c.primary_role
+                                  ? `${c.name} — ${ROLE_LABEL[c.primary_role as RoleContext] ?? roleChoiceLabel(c.primary_role as RoleChoice)}`
+                                  : c.name}
                               </button>
                             )
                           })}
