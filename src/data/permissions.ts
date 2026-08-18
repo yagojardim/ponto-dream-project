@@ -45,6 +45,7 @@ export type Capability =
   | 'users:manage'
   | 'module:request'
   | 'access:client-portal'
+  | 'access:client-messages'
   | 'manage:dashboard-cards'
 
 // ─── Matrix: for each capability, which roles have it by default vs opt-in ───
