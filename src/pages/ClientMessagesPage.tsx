@@ -8,6 +8,7 @@ import {
   addManagementMessage, markProjectReadByPo,
   type ClientSignal,
 } from '../data/clientSignals'
+import { listResponsibleProjectIds } from '../data/db/clientPortal'
 
 // ─── Chat message (flattened view over ClientSignal) ─────────────────────────
 interface ChatMsg {
@@ -381,17 +382,36 @@ function EmptyThread() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ClientMessagesPage() {
-  useClientPortal()
+  const portal = useClientPortal()
   const { activeUser } = useSession()
+  const isSupervisor = !!activeUser?.tenant_owner || activeUser?.role_context === 'Admin'
+  const [myProjectNames, setMyProjectNames] = useState<string[] | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [search, setSearch]     = useState('')
   const [tick, setTick]         = useState(0)
   void tick
 
-  const projects = getProjectsWithSignals(MOCK_TENANT.tenant_id)
+  // Responsabilidade real: só vê os projetos em que é responsável (Admin vê tudo).
+  useEffect(() => {
+    let alive = true
+    if (isSupervisor || !activeUser?.user_id) { setMyProjectNames(null); return }
+    ;(async () => {
+      const ids = await listResponsibleProjectIds(activeUser.user_id)
+      if (!alive) return
+      const byId = new Map(portal.projects.map(p => [p.id, p.name]))
+      setMyProjectNames(ids.map(id => byId.get(id)).filter((n): n is string => !!n))
+    })()
+    return () => { alive = false }
+  }, [isSupervisor, activeUser?.user_id, portal.projects])
+
+  const allProjects = getProjectsWithSignals(MOCK_TENANT.tenant_id)
+  const projects = isSupervisor
+    ? allProjects
+    : allProjects.filter(p => (myProjectNames ?? []).includes(p.project))
   const filtered = projects.filter(p =>
     p.project.toLowerCase().includes(search.toLowerCase())
   )
+  const noResponsibility = !isSupervisor && (myProjectNames?.length ?? 0) === 0
 
   const authorName     = activeUser?.name ?? 'Equipe Altech'
   const authorInitials = (activeUser?.name ?? 'Equipe Altech').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
