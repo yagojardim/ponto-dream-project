@@ -112,7 +112,9 @@ export interface CreateMemberInput {
   modules: string[]
   status: 'active' | 'invited'
   reportsAccess: boolean
+  canCreateProjects: boolean
 }
+
 
 /** Cria o profile real e todos os vínculos. Retorna o profiles.id. */
 export function createMember(input: CreateMemberInput): Promise<string | null> {
