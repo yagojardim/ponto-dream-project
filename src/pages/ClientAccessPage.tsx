@@ -65,7 +65,7 @@ export default function ClientAccessPage({ onBack }: Props) {
   useEffect(() => {
     if (done) {
       const hash = Math.random().toString(36).slice(2, 10)
-      setGeneratedUrl(`https://portal.altech.io/client/${hash}`)
+      setGeneratedUrl(`https://altechproject.com/portal/${hash}`)
       setGeneratedPwd(generateTempPassword())
     }
   }, [done])
