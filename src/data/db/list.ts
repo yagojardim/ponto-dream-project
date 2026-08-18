@@ -104,7 +104,7 @@ export async function listWorkItems(filters: ListFilters = {}): Promise<ListData
     supabase.from('epics').select('id, project_id, name, color').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('sprints').select('id, project_id, name, state, start_date').eq('tenant_id', tid).is('archived_at', null)
       .order('start_date', { ascending: true, nullsFirst: false }),
-    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid),
+    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, key, name').eq('tenant_id', tid).is('archived_at', null).order('name'),
   ])
 

@@ -56,7 +56,7 @@ export async function listEpics(projectIds?: string[]): Promise<EpicsData> {
     epicsQ.order('key'),
     supabase.from('features').select('id, epic_id, name, description').eq('tenant_id', tid).is('archived_at', null),
     itemsQ.order('key'),
-    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid),
+    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, key, name').eq('tenant_id', tid).is('archived_at', null).order('name'),
   ])
 

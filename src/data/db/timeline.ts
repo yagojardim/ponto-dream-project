@@ -80,7 +80,7 @@ export async function fetchTimelineData(): Promise<TimelineData> {
     supabase.from('work_items').select('id, key, title, type, status, project_id, epic_id, sprint_id, start_date, due_date, assignee_id, is_blocked')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
     supabase.from('dependencies').select('source_id, target_id, relation_type').eq('tenant_id', tid),
-    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid),
+    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
   ])
 
   const failed = [
