@@ -6,6 +6,10 @@ import { MOCK_TENANT } from '../data/session'
 import { useSession } from '../data/SessionContext'
 import { useClientPortal } from '../data/clientPortalStore'
 import { copyToClipboard } from '../utils/copyToClipboard'
+import {
+  listProjectResponsibleCandidates, setProjectResponsibles,
+  type ResponsibleCandidate,
+} from '../data/db/clientPortal'
 
 interface Props {
   onBack: () => void
@@ -32,12 +36,31 @@ export default function ClientAccessPage({ onBack }: Props) {
   const [permission, setPermission] = useState<'viewer' | 'admin'>('viewer')
   const [clientCanApprove, setClientCanApprove] = useState(false)
   const [clientCanPreview, setClientCanPreview] = useState(false)
+  const [candidatesByProject, setCandidatesByProject] = useState<Record<string, ResponsibleCandidate[]>>({})
+  const [responsibles, setResponsibles] = useState<string[]>([])
   const [done, setDone] = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState('')
   const [generatedPwd, setGeneratedPwd] = useState('')
   const [copied, setCopied] = useState(false)
   const [pwdCopied, setPwdCopied] = useState(false)
   const [copyErr, setCopyErr] = useState('')
+
+  // Carrega os candidatos elegíveis (membros do projeto com permissão de mensagens).
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const entries = await Promise.all(
+        selectedProjects.map(async id => [id, await listProjectResponsibleCandidates(id)] as const),
+      )
+      if (!alive) return
+      const map: Record<string, ResponsibleCandidate[]> = {}
+      for (const [id, list] of entries) map[id] = list
+      setCandidatesByProject(map)
+      const valid = new Set(entries.flatMap(([, list]) => list.map(c => c.id)))
+      setResponsibles(prev => prev.filter(id => valid.has(id)))
+    })()
+    return () => { alive = false }
+  }, [selectedProjects])
 
   useEffect(() => {
     if (done) {
@@ -64,6 +87,14 @@ export default function ClientAccessPage({ onBack }: Props) {
       project_names:      PROJECTS.filter(p => selectedProjects.includes(p.id)).map(p => p.name),
       actor_name:         activeUser?.name,
     })
+    for (const projectId of selectedProjects) {
+      const eligible = (candidatesByProject[projectId] ?? []).map(c => c.id)
+      void setProjectResponsibles(
+        projectId,
+        responsibles.filter(id => eligible.includes(id)),
+        activeUser?.name,
+      )
+    }
     setDone(true)
   }
 
@@ -72,6 +103,8 @@ export default function ClientAccessPage({ onBack }: Props) {
     setClientName('')
     setClientEmail('')
     setSelectedProjects([])
+    setResponsibles([])
+    setCandidatesByProject({})
     setPermission('viewer')
     setClientCanApprove(false)
     setClientCanPreview(false)
