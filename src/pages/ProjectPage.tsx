@@ -1435,16 +1435,6 @@ function BoardTab({
                     })
                   )}
 
-                  {/* Bottom add button — opens CreateIssueModal pre-filled with column status */}
-                  {col.id !== 'unmapped' && (
-                    <button onClick={()=>openComposer(col.id)}
-                      className="w-full py-1.5 rounded-lg text-[11px] transition-all text-center mt-auto"
-                      style={{ color:S.t3, border:`1px dashed ${S.border}` }}
-                      onMouseEnter={e=>{ (e.currentTarget as HTMLButtonElement).style.background=DS.accentDim;(e.currentTarget as HTMLButtonElement).style.borderColor=DS.accent;(e.currentTarget as HTMLButtonElement).style.color=DS.accent }}
-                      onMouseLeave={e=>{ (e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.borderColor=S.border;(e.currentTarget as HTMLButtonElement).style.color=S.t3 }}>
-                      + issue
-                    </button>
-                  )}
                 </div>
               </div>
             )
