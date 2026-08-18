@@ -58,7 +58,7 @@ export async function listProjects(): Promise<ProjectsData> {
     supabase.from('work_items')
       .select('id, key, title, type, status, project_id, assignee_id, start_date, due_date, progress')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
-    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null).eq('can_create_projects', true),
+    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null).eq('can_create_projects' as never, true as never),
     supabase.from('project_members').select('project_id, profile_id, project_role').eq('tenant_id', tid),
     supabase.from('boards').select('id, project_id, name, board_type').eq('tenant_id', tid).is('archived_at', null),
   ])
