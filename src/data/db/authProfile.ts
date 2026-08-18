@@ -83,14 +83,14 @@ export function loadProfileByAuthUserId(authUserId: string, email: string): Prom
   return safeCall<MockUser | null>('authProfile.load', async () => {
     let row: any = null
     const byAuth = await tbl('profiles')
-      .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, password_must_change, metadata')
+      .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, can_handle_client_messages, password_must_change, metadata')
       .eq('auth_user_id', authUserId).limit(1)
     row = (byAuth.data ?? [])[0] ?? null
 
     // Fallback por e-mail (profiles ainda não vinculados) — vincula na primeira entrada.
     if (!row && email) {
       const byEmail = await tbl('profiles')
-        .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, password_must_change, metadata')
+        .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, can_handle_client_messages, password_must_change, metadata')
         .ilike('email', email).limit(1)
       row = (byEmail.data ?? [])[0] ?? null
       if (row) {
@@ -125,6 +125,9 @@ export function loadProfileByAuthUserId(authUserId: string, email: string): Prom
               for (const cap of ['project:create', 'create:epic', 'create:feature'] as const) {
                 if (!perms.includes(cap)) perms.push(cap)
               }
+            }
+            if (row.can_handle_client_messages && !perms.includes('access:client-messages')) {
+              perms.push('access:client-messages')
             }
             return perms
           })(),

@@ -113,6 +113,7 @@ export interface CreateMemberInput {
   status: 'active' | 'invited'
   reportsAccess: boolean
   canCreateProjects: boolean
+  canHandleClientMessages: boolean
 }
 
 
@@ -133,6 +134,7 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
       status: input.status === 'active' ? 'active' : 'invited',
       reports_access: input.reportsAccess,
       can_create_projects: input.canCreateProjects,
+      can_handle_client_messages: input.canHandleClientMessages,
 
       password_must_change: true,
       metadata: {

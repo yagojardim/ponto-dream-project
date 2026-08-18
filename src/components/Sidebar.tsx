@@ -91,7 +91,7 @@ const ALL_GROUPS: NavGroup[] = [
       { id: 'automations',   label: 'Automações',           icon: AutomIcon,  cap: 'users:manage' },
       { id: 'client-access',    label: 'Criar acesso cliente',    icon: AccessIcon, cap: 'access:client-portal' },
       { id: 'client',           label: 'Portal do Cliente',       icon: ClientIcon, cap: 'access:client-portal' },
-      { id: 'client-messages',  label: 'Mensagens do Cliente',    icon: ChatIcon },
+      { id: 'client-messages',  label: 'Mensagens do Cliente',    icon: ChatIcon, cap: 'access:client-messages' },
     ],
   },
   {
@@ -108,13 +108,13 @@ const ALL_GROUPS: NavGroup[] = [
 // ─── Role → nav item ids map ──────────────────────────────────────────────────
 const ROLE_NAV_MAP: Record<RoleContext, string[]> = {
   Admin:          ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','config','modules','automations','client-access','client','client-messages','team','login','client-login'],
-  PMO:            ['home','calendar','projects-list','boards-list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','client','client-messages'],
-  ProjectManager: ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','modules','client','client-messages'],
+  PMO:            ['home','calendar','projects-list','boards-list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','client'],
+  ProjectManager: ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','modules','client'],
   ProductManager: ['home','calendar','projects-list','boards-list','dashboard','epics','releases','reports','filters','navigator'],
-  ProductOwner:   ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','client','client-access','client-messages'],
-  ScrumMaster:    ['home','my-tasks','calendar','projects-list','boards-list','list','gantt','timeline','filters','navigator','reports','client-messages'],
-  TechLead:       ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','filters','navigator','reports','client-messages'],
-  Dev:            ['home','my-tasks','calendar','projects-list','boards-list','storage','list','filters','navigator','client-messages'],
+  ProductOwner:   ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','client','client-access'],
+  ScrumMaster:    ['home','my-tasks','calendar','projects-list','boards-list','list','gantt','timeline','filters','navigator','reports'],
+  TechLead:       ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','filters','navigator','reports'],
+  Dev:            ['home','my-tasks','calendar','projects-list','boards-list','storage','list','filters','navigator'],
   UX:             ['home','my-tasks','calendar','projects-list','boards-list','list','filters','navigator'],
   QA:             ['home','my-tasks','calendar','projects-list','boards-list','list','filters','navigator'],
 }
