@@ -127,9 +127,10 @@ export const PERMISSION_MATRIX: Record<Capability, CapabilityRule> = {
   },
   'project:create': {
     default: ['Admin','PMO'],
-    optIn:   ['ProjectManager'],
-    hidden:  ['ProductManager','ProductOwner','ScrumMaster','TechLead','Dev','QA','UX'],
+    optIn:   ['ProjectManager','ProductOwner','Dev'],
+    hidden:  ['ProductManager','ScrumMaster','TechLead','QA','UX'],
   },
+
   'users:manage': {
     default: ['Admin'],
     optIn:   [],
