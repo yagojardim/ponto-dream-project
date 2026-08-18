@@ -226,10 +226,16 @@ export const DEFAULT_DASHBOARD: Record<RoleContext, DashboardType> = {
 // Capabilities shown as opt-in checkboxes in Passo 4
 export const STEP4_CAPABILITIES: { cap: Capability; label: string; desc: string }[] = [
   {
+    cap:   'project:create',
+    label: 'Criar Projetos',
+    desc:  'Permite criar novos projetos e ser responsável por projetos',
+  },
+  {
     cap:   'create:epic',
     label: 'Criar Épicos e Funcionalidades',
     desc:  'Permite criar épicos e funcionalidades no backlog',
   },
+
   {
     cap:   'access:dashview',
     label: 'Acesso ao Dashboard Executivo',
