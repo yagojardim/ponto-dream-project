@@ -257,4 +257,9 @@ export const STEP4_CAPABILITIES: { cap: Capability; label: string; desc: string 
     label: 'Acesso ao Portal do Cliente',
     desc:  'Permite visualizar e gerir a visão do portal do cliente',
   },
+  {
+    cap:   'access:client-messages',
+    label: 'Mensagens do Cliente',
+    desc:  'Pode ser responsável pelas tratativas de mensagens do cliente',
+  },
 ]
