@@ -1270,8 +1270,9 @@ function BoardTab({
                   style={{
                     cursor: col.id!=='unmapped' ? 'grab' : 'default',
                     padding:'4px 6px',
-                    background: isColOver ? `${DS.accent}18` : 'transparent',
+                    background: isColOver ? `${DS.accent}18` : S.bg,
                     border: isColOver ? `1.5px dashed ${DS.accent}` : '1.5px dashed transparent',
+                    position:'sticky', top:0, zIndex:20,
                   }}>
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background:col.dot }}/>
