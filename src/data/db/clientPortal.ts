@@ -549,6 +549,7 @@ export interface ResponsibleCandidate {
   email: string
   avatar_initials: string | null
   avatar_color: string | null
+  primary_role: string | null
 }
 
 async function listProjectResponsibleCandidates__raw(projectId: string): Promise<ResponsibleCandidate[]> {
@@ -561,22 +562,29 @@ async function listProjectResponsibleCandidates__raw(projectId: string): Promise
   if (!ids.length) return []
 
   const { data, error } = await tbl('profiles')
-    .select('id, name, email, avatar_initials, avatar_color')
+    .select('id, name, email, avatar_initials, avatar_color, primary_role')
     .eq('tenant_id', DEFAULT_TENANT_ID)
     .in('id', ids)
     .is('archived_at', null)
     .eq('can_handle_client_messages', true)
-    .neq('tenant_owner', true)
     .order('name')
   if (error) throw tenantError('profiles', error.message)
-  return (data ?? []).map((p: any) => ({
-    id: p.id,
-    name: p.name ?? p.email ?? '',
-    email: p.email ?? '',
-    avatar_initials: p.avatar_initials ?? null,
-    avatar_color: p.avatar_color ?? null,
-  }))
+
+  return (data ?? [])
+    .filter((p: any) => {
+      const normalized = String(p.primary_role ?? '').toLowerCase().replace(/_/g, '')
+      return normalized !== 'admin'
+    })
+    .map((p: any) => ({
+      id: p.id,
+      name: p.name ?? p.email ?? '',
+      email: p.email ?? '',
+      avatar_initials: p.avatar_initials ?? null,
+      avatar_color: p.avatar_color ?? null,
+      primary_role: p.primary_role ?? null,
+    }))
 }
+
 
 async function listProjectResponsibles__raw(projectId: string): Promise<string[]> {
   const { data, error } = await tbl('project_client_responsibles')

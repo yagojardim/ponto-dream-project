@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { T } from '../components/ds/tokens'
 import { generateTempPassword } from '../data/security'
 import { createClientAccess } from '../data/clientAccess'
-import { MOCK_TENANT } from '../data/session'
+import { MOCK_TENANT, ROLE_LABEL, roleChoiceLabel, type RoleChoice, type RoleContext } from '../data/session'
 import { useSession } from '../data/SessionContext'
 import { useClientPortal } from '../data/clientPortalStore'
 import { copyToClipboard } from '../utils/copyToClipboard'
@@ -65,7 +65,7 @@ export default function ClientAccessPage({ onBack }: Props) {
   useEffect(() => {
     if (done) {
       const hash = Math.random().toString(36).slice(2, 10)
-      setGeneratedUrl(`https://portal.altech.io/client/${hash}`)
+      setGeneratedUrl(`https://altechproject.com/portal/${hash}`)
       setGeneratedPwd(generateTempPassword())
     }
   }, [done])
@@ -499,7 +499,9 @@ export default function ClientAccessPage({ onBack }: Props) {
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                   fontSize: 10, color: '#fff',
                                 }}>{on && '✓'}</span>
-                                {c.name}
+                                {c.primary_role
+                                  ? `${c.name} — ${ROLE_LABEL[c.primary_role as RoleContext] ?? roleChoiceLabel(c.primary_role as RoleChoice)}`
+                                  : c.name}
                               </button>
                             )
                           })}
