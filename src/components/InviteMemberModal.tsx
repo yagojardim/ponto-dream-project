@@ -234,6 +234,10 @@ export default function InviteMemberModal({ onClose, onSuccess }: Props) {
       modules,
       status,
       reportsAccess: roleSupportsReportsAccess(role) ? reportsAccess : false,
+      canCreateProjects:
+        capabilityVisibility(role, 'project:create') === 'on'
+        || optIns.has('project:create' as Capability),
+
     })
 
     setSaving(false)

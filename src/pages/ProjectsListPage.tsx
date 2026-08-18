@@ -325,16 +325,18 @@ export default function ProjectsListPage({ onNav }: Props) {
                 : <>{projects.length} projetos &nbsp;·&nbsp; {inProgress} em progresso &nbsp;·&nbsp; {totalTasks} tarefas &nbsp;·&nbsp; {done} concluída{done !== 1 ? 's' : ''}</>}
             </p>
           </div>
-          <button
-            onClick={() => setNewProjOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:brightness-110"
-            style={{ background: '#4d82ff' }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            Novo Projeto
-          </button>
+          {can(activeUser.permissions, 'project:create') && (
+            <button
+              onClick={() => setNewProjOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:brightness-110"
+              style={{ background: '#4d82ff' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              Novo Projeto
+            </button>
+          )}
         </div>
 
         {error && (

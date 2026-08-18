@@ -83,14 +83,14 @@ export function loadProfileByAuthUserId(authUserId: string, email: string): Prom
   return safeCall<MockUser | null>('authProfile.load', async () => {
     let row: any = null
     const byAuth = await tbl('profiles')
-      .select('id, tenant_id, name, email, status, primary_role, tenant_owner, password_must_change, metadata')
+      .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, password_must_change, metadata')
       .eq('auth_user_id', authUserId).limit(1)
     row = (byAuth.data ?? [])[0] ?? null
 
     // Fallback por e-mail (profiles ainda não vinculados) — vincula na primeira entrada.
     if (!row && email) {
       const byEmail = await tbl('profiles')
-        .select('id, tenant_id, name, email, status, primary_role, tenant_owner, password_must_change, metadata')
+        .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, password_must_change, metadata')
         .ilike('email', email).limit(1)
       row = (byEmail.data ?? [])[0] ?? null
       if (row) {
@@ -117,7 +117,13 @@ export function loadProfileByAuthUserId(authUserId: string, email: string): Prom
       project_id: '*',
       squad_id: '*',
       modules_enabled: ['board', 'reports', 'portfolio', 'roadmap', 'config', 'team', 'modules'],
-      permissions: isAdmin ? ['*'] : derivePermissions(roleContext),
+      permissions: isAdmin
+        ? ['*']
+        : (() => {
+            const perms = derivePermissions(roleContext)
+            if (row.can_create_projects && !perms.includes('project:create')) perms.push('project:create')
+            return perms
+          })(),
       assigned_dashboards: [dash(row.id, row.tenant_id, defaultDash, true)],
       password_must_change: !!row.password_must_change,
       tenant_owner: isOwner,
