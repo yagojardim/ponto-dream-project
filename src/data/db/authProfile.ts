@@ -121,7 +121,11 @@ export function loadProfileByAuthUserId(authUserId: string, email: string): Prom
         ? ['*']
         : (() => {
             const perms = derivePermissions(roleContext)
-            if (row.can_create_projects && !perms.includes('project:create')) perms.push('project:create')
+            if (row.can_create_projects) {
+              for (const cap of ['project:create', 'create:epic', 'create:feature'] as const) {
+                if (!perms.includes(cap)) perms.push(cap)
+              }
+            }
             return perms
           })(),
       assigned_dashboards: [dash(row.id, row.tenant_id, defaultDash, true)],
