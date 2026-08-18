@@ -147,6 +147,11 @@ export const PERMISSION_MATRIX: Record<Capability, CapabilityRule> = {
     optIn:   ['ScrumMaster','TechLead'],
     hidden:  ['Dev','QA','UX'],
   },
+  'access:client-messages': {
+    default: ['Admin'],
+    optIn:   ['PMO','ProjectManager','ProductManager','ProductOwner','TechLead','Dev'],
+    hidden:  ['ScrumMaster','QA','UX'],
+  },
   'manage:dashboard-cards': {
     default: ['Admin','PMO'],
     optIn:   ['ProjectManager'],
