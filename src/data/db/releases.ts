@@ -42,7 +42,7 @@ export async function listReleases(): Promise<ReleasesData> {
     supabase.from('work_items')
       .select('id, key, title, type, status, project_id, release_id, assignee_id')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
-    supabase.from('profiles').select('id, name, avatar_initials').eq('tenant_id', tid),
+    supabase.from('profiles').select('id, name, avatar_initials').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, key, name').eq('tenant_id', tid).is('archived_at', null).order('name'),
   ])
 
