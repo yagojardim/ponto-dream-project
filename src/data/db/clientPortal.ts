@@ -650,3 +650,111 @@ export const listResponsibleProjectIds = (profileId: string): Promise<string[]> 
 
 export const setProjectResponsibles = (projectId: string, profileIds: string[], actorName?: string): Promise<void> =>
   safeCall('clientPortal.setProjectResponsibles', () => setProjectResponsibles__raw(projectId, profileIds, actorName), undefined, { projectId })
+
+// ─── Wave 2a — Fórum de Mensagens do Cliente (client_signals reais) ──────────
+export interface ProjectSignalSummary {
+  projectId:  string
+  name:       string
+  clientName: string | null
+  unread:     number
+  lastAt:     string
+  lastBody:   string
+  lastAuthor: string
+  lastSource: 'client' | 'management'
+}
+
+function signalSource(row: ClientSignalRow): 'client' | 'management' {
+  const m = (row.metadata ?? {}) as Record<string, unknown>
+  return m.source === 'management' ? 'management' : 'client'
+}
+
+async function listProjectsWithClientSignals__raw(): Promise<ProjectSignalSummary[]> {
+  const { data, error } = await tbl('client_signals')
+    .select('id, project_id, type, author, body, item_title, read_by_po, metadata, created_at')
+    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .order('created_at', { ascending: true })
+  if (error) throw tenantError('client_signals', error.message)
+  const rows = (data ?? []) as ClientSignalRow[]
+  if (rows.length === 0) return []
+
+  const ids = [...new Set(rows.map(r => r.project_id).filter(Boolean))]
+  const { data: projects } = await supabase.from('projects')
+    .select('id, name, client_name')
+    .eq('tenant_id', DEFAULT_TENANT_ID).in('id', ids)
+  const byId = new Map((projects ?? []).map((p: any) => [p.id, p]))
+
+  const map = new Map<string, ProjectSignalSummary>()
+  for (const r of rows) {
+    const src = signalSource(r)
+    const proj = byId.get(r.project_id) as any
+    const prev = map.get(r.project_id)
+    const body = r.type === 'approval'
+      ? `✓ ${r.item_title ?? 'Aprovação registrada'}`
+      : (r.body ?? '')
+    map.set(r.project_id, {
+      projectId:  r.project_id,
+      name:       proj?.name ?? 'Projeto',
+      clientName: proj?.client_name ?? null,
+      unread:     (prev?.unread ?? 0) + (src === 'client' && !r.read_by_po ? 1 : 0),
+      lastAt:     r.created_at,
+      lastBody:   body,
+      lastAuthor: r.author ?? '—',
+      lastSource: src,
+    })
+  }
+  return [...map.values()].sort(
+    (a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime())
+}
+
+export interface ClientChatMessage {
+  id:        string
+  side:      'client' | 'management'
+  author:    string
+  body:      string
+  createdAt: string
+  type:      SignalType
+  itemTitle: string | null
+}
+
+async function listProjectChat__raw(projectId: string): Promise<ClientChatMessage[]> {
+  const rows = await listClientSignals__raw(projectId)
+  return rows.map(r => ({
+    id:        r.id,
+    side:      signalSource(r),
+    author:    r.author ?? '—',
+    body:      r.type === 'approval'
+      ? `Aprovação registrada: "${r.item_title ?? ''}"`
+      : (r.body ?? ''),
+    createdAt: r.created_at,
+    type:      r.type,
+    itemTitle: r.item_title,
+  }))
+}
+
+export interface AddClientMessageInput {
+  projectId: string
+  body:      string
+  author:    string
+  source:    'client' | 'management'
+}
+
+async function markProjectSignalsReadByPo__raw(projectId: string): Promise<void> {
+  const { error } = await tbl('client_signals').update({ read_by_po: true })
+    .eq('tenant_id', DEFAULT_TENANT_ID).eq('project_id', projectId)
+    .eq('read_by_po', false).eq('metadata->>source', 'client')
+  if (error) throw tenantError('client_signals', error.message)
+}
+
+export const listProjectsWithClientSignals = (): Promise<ProjectSignalSummary[]> =>
+  safeCall('clientPortal.listProjectsWithClientSignals', () => listProjectsWithClientSignals__raw(), [])
+
+export const listProjectChat = (projectId: string): Promise<ClientChatMessage[]> =>
+  safeCall('clientPortal.listProjectChat', () => listProjectChat__raw(projectId), [], { projectId })
+
+export const addClientMessage = (input: AddClientMessageInput): Promise<ClientSignalRow | null> =>
+  safeCall('clientPortal.addClientMessage', () => addClientComment__raw({
+    projectId: input.projectId, body: input.body, author: input.author, source: input.source,
+  }), null, { projectId: input.projectId })
+
+export const markProjectSignalsReadByPo = (projectId: string): Promise<void> =>
+  safeCall('clientPortal.markProjectSignalsReadByPo', () => markProjectSignalsReadByPo__raw(projectId), undefined, { projectId })
