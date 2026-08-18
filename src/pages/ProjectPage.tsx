@@ -1270,8 +1270,9 @@ function BoardTab({
                   style={{
                     cursor: col.id!=='unmapped' ? 'grab' : 'default',
                     padding:'4px 6px',
-                    background: isColOver ? `${DS.accent}18` : 'transparent',
+                    background: isColOver ? `${DS.accent}18` : S.bg,
                     border: isColOver ? `1.5px dashed ${DS.accent}` : '1.5px dashed transparent',
+                    position:'sticky', top:0, zIndex:20,
                   }}>
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
                     <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background:col.dot }}/>
@@ -1435,16 +1436,6 @@ function BoardTab({
                     })
                   )}
 
-                  {/* Bottom add button — opens CreateIssueModal pre-filled with column status */}
-                  {col.id !== 'unmapped' && (
-                    <button onClick={()=>openComposer(col.id)}
-                      className="w-full py-1.5 rounded-lg text-[11px] transition-all text-center mt-auto"
-                      style={{ color:S.t3, border:`1px dashed ${S.border}` }}
-                      onMouseEnter={e=>{ (e.currentTarget as HTMLButtonElement).style.background=DS.accentDim;(e.currentTarget as HTMLButtonElement).style.borderColor=DS.accent;(e.currentTarget as HTMLButtonElement).style.color=DS.accent }}
-                      onMouseLeave={e=>{ (e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.borderColor=S.border;(e.currentTarget as HTMLButtonElement).style.color=S.t3 }}>
-                      + issue
-                    </button>
-                  )}
                 </div>
               </div>
             )
@@ -2648,29 +2639,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
-          {/* Team avatars */}
-          <div className="flex items-center">
-            {['AL','NM','JN','CS'].map((a, i) => (
-              <span key={a} style={{ marginLeft: i > 0 ? -7 : 0, zIndex: 4-i, position:'relative' }}>
-                <Av i={a} size={26} />
-              </span>
-            ))}
-          </div>
-          <button
-            onClick={() => setQuickCreate({})}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-semibold text-white transition-all"
-            style={{ background: DS.accent, cursor: 'pointer' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.filter = 'brightness(1.15)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = 'none' }}
-          >
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-              <path d="M4.5 1.5v6M1.5 4.5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            Demanda
-          </button>
-
-        </div>
+        <div className="flex items-center gap-2" />
       </div>
 
       {/* Tab content */}

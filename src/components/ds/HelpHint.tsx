@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { T } from './tokens'
 
 export interface HelpHintProps {
@@ -17,9 +18,30 @@ export interface HelpHintProps {
 export function HelpHint({ text, title, label }: HelpHintProps) {
   const [hover, setHover]   = useState(false)
   const [pinned, setPinned] = useState(false)
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
   const wrapRef = useRef<HTMLSpanElement>(null)
 
   const open = hover || pinned
+
+  // Popover em position:fixed + portal: escapa de qualquer container com
+  // overflow hidden/auto (barra de filtros do board, drawers, modais).
+  useEffect(() => {
+    if (!open) { setCoords(null); return }
+    function place() {
+      const r = wrapRef.current?.getBoundingClientRect()
+      if (!r) return
+      const width = 260
+      const left = Math.min(Math.max(8, r.left), window.innerWidth - width - 8)
+      setCoords({ top: r.bottom + 6, left })
+    }
+    place()
+    window.addEventListener('scroll', place, true)
+    window.addEventListener('resize', place)
+    return () => {
+      window.removeEventListener('scroll', place, true)
+      window.removeEventListener('resize', place)
+    }
+  }, [open])
 
   useEffect(() => {
     if (!pinned) return
@@ -62,11 +84,13 @@ export function HelpHint({ text, title, label }: HelpHintProps) {
         }}
       >?</button>
 
-      {open && (
+      {open && coords && createPortal(
         <span
           role="tooltip"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
           style={{
-            position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 3000,
+            position: 'fixed', top: coords.top, left: coords.left, zIndex: 4000,
             width: 'max-content', maxWidth: 260,
             background: T.bgSurface2, border: `1px solid ${T.border}`,
             borderRadius: 8, padding: '8px 10px',
@@ -81,7 +105,8 @@ export function HelpHint({ text, title, label }: HelpHintProps) {
           <span style={{ display: 'block', fontSize: 11, lineHeight: 1.5, color: T.text2, fontWeight: 400 }}>
             {text}
           </span>
-        </span>
+        </span>,
+        document.body,
       )}
     </span>
   )
