@@ -69,6 +69,7 @@ const CAP_LABELS: Record<Capability, string> = {
   'accept:functional':'Aceite Funcional', 'signoff:qa':'Sign-off QA',
   'project:create':'Criar Projetos', 'users:manage':'Gerenciar Usuários',
   'module:request':'Solicitar Módulos', 'access:client-portal':'Portal do Cliente',
+  'access:client-messages':'Mensagens do Cliente',
   'manage:dashboard-cards':'Gerenciar Cards de Dashboard', 'edit:workitem':'Editar Work Items',
 }
 
