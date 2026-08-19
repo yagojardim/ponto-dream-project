@@ -2367,11 +2367,12 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }))
   }, [boardData])
 
-  const availableMembers = useMemo<{ id: string; initials: string; name: string }[]>(() => {
+  const availableMembers = useMemo<{ id: string; initials: string; name: string; color: string | null }[]>(() => {
     return (boardData?.profiles ?? []).map(p => ({
       id: p.id,
       initials: p.avatar_initials ?? p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase(),
       name: p.name,
+      color: p.avatar_color ?? null,
     }))
   }, [boardData])
 
