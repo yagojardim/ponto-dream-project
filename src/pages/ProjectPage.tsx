@@ -1464,7 +1464,6 @@ function BoardTab({
                         <div key={lane}>
                           <p className="text-[9px] font-semibold uppercase tracking-wide mb-1 px-0.5" style={{ color:S.t3 }}>{laneLabel}</p>
                           {laneIssues.map(issue=>{
-                            const label = swimlane==='assignee' ? (memberById.get(issue.assigneeId ?? '')?.name ?? issue.assignee) : (issue.epic ?? 'Sem épico')
                             return (
                             <div key={issue.key} className="mb-1.5">
                               <BoardCard issue={issue} dragging={draggingCard===issue.key}
@@ -1479,6 +1478,7 @@ function BoardTab({
                       )
                     })
                   )}
+
 
 
                 </div>
