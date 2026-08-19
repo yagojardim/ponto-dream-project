@@ -987,13 +987,14 @@ function ClientNotifBell({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-semibold mb-0.5" style={{ color: C.txt }}>
-                      {sig.po_reply_by ?? 'Equipe Altech'} respondeu seu comentário
+                      {sig.poReplyBy ?? 'Equipe Altech'} respondeu seu comentário
                     </p>
                     <p className="text-[10px] leading-snug mb-1 line-clamp-2" style={{ color: C.txt2 }}>
-                      "{sig.po_reply}"
+                      "{sig.poReply}"
                     </p>
                     <p className="text-[9px]" style={{ color: C.txt3 }}>
-                      {sig.item_title} · {sig.project}
+                      {sig.itemTitle} · {sig.project}
+
                     </p>
                   </div>
                   <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: C.accent }} />
@@ -1007,7 +1008,7 @@ function ClientNotifBell({
             className="px-4 py-2.5 text-[9px] text-center"
             style={{ borderTop: `1px solid ${C.border}`, color: C.txt3 }}
           >
-            Notificações deste tenant · {MOCK_TENANT.tenant_id.replace('ten_', '')}
+            Notificações do seu portal
           </div>
         </div>
       )}
@@ -1040,8 +1041,8 @@ function ChangePasswordModal({ onSaved, onClose, voluntary = false }: { onSaved:
   function handleSave() {
     if (!valid) return
     setSaving(true)
-    const rec = getClientAccess(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
-    if (rec) updateClientPassword(rec.id, pwd1)
+    if (CLIENT) void setPortalPasswordChanged(CLIENT.id)
+
     setTimeout(() => {
       setSaving(false)
       onSaved()
@@ -1374,55 +1375,8 @@ interface ChatBubble {
   itemTitle?: string
 }
 
-function flattenClientThread(signals: ClientSignal[], clientAuthor: string): ChatBubble[] {
-  const bubbles: ChatBubble[] = []
-  for (const sig of signals) {
-    const isClientSig = sig.author === clientAuthor && sig.source !== 'management'
-    const isMgmtSig = sig.source === 'management'
-    if (!isClientSig && !isMgmtSig) continue
 
-    if (isClientSig) {
-      bubbles.push({
-        id: sig.id,
-        side: 'client',
-        author: clientAuthor,
-        initials: 'JS',
-        body: sig.body ?? (sig.type === 'approval' ? '✓ Item aprovado' : ''),
-        timestamp: sig.created_at,
-        badge: sig.type === 'approval' ? '✓ Aprovação' : undefined,
-        itemTitle: sig.item_title,
-      })
-    } else {
-      const inits = sig.author.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-      bubbles.push({
-        id: sig.id,
-        side: 'management',
-        author: sig.author,
-        initials: inits,
-        body: sig.body ?? '',
-        timestamp: sig.created_at,
-        itemTitle: sig.item_title,
-      })
-    }
 
-    // PO reply on a client signal
-    if (sig.po_reply && isClientSig) {
-      const replyTs = new Date(sig.created_at)
-      replyTs.setSeconds(replyTs.getSeconds() + 60)
-      bubbles.push({
-        id: `${sig.id}_r`,
-        side: 'management',
-        author: sig.po_reply_by ?? 'Equipe Altech',
-        initials: 'EA',
-        body: sig.po_reply,
-        timestamp: replyTs.toISOString(),
-        itemTitle: sig.item_title,
-      })
-    }
-  }
-  bubbles.sort((a, b) => a.timestamp.localeCompare(b.timestamp))
-  return bubbles
-}
 
 function fmtTime(iso: string) {
   try {
@@ -1436,16 +1390,9 @@ function fmtDay(iso: string) {
   } catch { return '' }
 }
 
-function sigProjectId(sigProject: string): string | null {
-  const p = PROJECTS.find(
-    proj => proj.name === sigProject || sigProject.startsWith(proj.name) || proj.name.startsWith(sigProject),
-  )
-  return p?.id ?? null
-}
-
 function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   const [selId, setSelId] = useState<string>(PROJECTS[0]?.id ?? '')
-  const chatCanComment = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).client_can_comment
+  const chatCanComment = CLIENT?.canComment ?? false
   const [draft, setDraft] = useState('')
   const [tick, setTick] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -1453,12 +1400,17 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   void tick
 
   // Unread per project (management replies the client hasn't read)
-  const allUnread = getClientUnreadReplies(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+  const [allUnread, setAllUnread] = useState<ClientReplyNotice[]>([])
+  useEffect(() => {
+    let alive = true
+    void listClientUnreadReplies(CLIENT).then(rows => { if (alive) setAllUnread(rows) })
+    return () => { alive = false }
+  }, [tick])
   const unreadByProject = new Map<string, number>()
   for (const sig of allUnread) {
-    const pid = sigProjectId(sig.project)
-    if (pid) unreadByProject.set(pid, (unreadByProject.get(pid) ?? 0) + 1)
+    unreadByProject.set(sig.projectId, (unreadByProject.get(sig.projectId) ?? 0) + 1)
   }
+
 
   const project = PROJECTS.find(p => p.id === selId) ?? PROJECTS[0]
   const [chat, setChat] = useState<ClientChatMessage[]>([])
