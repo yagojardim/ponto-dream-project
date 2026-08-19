@@ -1210,16 +1210,17 @@ function BoardTab({
         <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
         <div className="flex items-center gap-1">
           {availableMembers.map(m=>{
-            const active = filterAssignees.length===0||filterAssignees.includes(m.initials)
+            const active = filterAssignees.length===0||filterAssignees.includes(m.id)
             return (
-              <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.initials))}
+              <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.id))}
                 title={m.name}
                 className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white transition-all"
-                style={{ background:m.color??DS.text3, opacity:active?1:.3, outline:filterAssignees.includes(m.initials)?'2px solid white':'2px solid transparent' }}>
+                style={{ background:m.color??DS.text3, opacity:active?1:.3, outline:filterAssignees.includes(m.id)?'2px solid white':'2px solid transparent' }}>
                 {m.initials}
               </button>
             )
           })}
+
         </div>
         <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
         {(['critical','high','medium','low'] as Priority[]).map(p=>(
