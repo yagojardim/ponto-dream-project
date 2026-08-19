@@ -1003,7 +1003,10 @@ function BoardTab({
     setTimeout(() => setBoardToast(null), 4000)
   }
   // filters
-  const [activeSprint, setActiveSprint] = useState('')
+  const [activeSprint, setActiveSprint] = useState(() => {
+    const selectable = activeSprints.filter(s => s.state !== 'completed')
+    return selectable.find(s => s.state === 'active')?.id ?? selectable[0]?.id ?? ''
+  })
   const [swimlane, setSwimlane]     = useState<SwimlaneMode>('none')
   const [filterAssignees, setFilterA] = useState<string[]>([])
   const [filterPriority, setFilterP]  = useState<Priority[]>([])
