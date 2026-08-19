@@ -945,6 +945,28 @@ function uiStatus(dbStatus: string): IssueStatus {
   }
 }
 
+/** Choose the sprint the board should show by default.
+ *  1. Active sprint, if any.
+ *  2. Most recent sprint that actually has items.
+ *  3. Most recent sprint by date as last resort.
+ */
+function defaultSprint(sprints: SprintDef[], issues: Issue[]): SprintDef | null {
+  if (!sprints.length) return null
+  const active = sprints.find(s => s.state === 'active')
+  if (active) return active
+
+  const recent = (a: SprintDef, b: SprintDef) => {
+    const da = Date.parse(a.end) || Date.parse(a.start) || 0
+    const db = Date.parse(b.end) || Date.parse(b.start) || 0
+    return db - da
+  }
+
+  const withItems = sprints.filter(s => issues.some(i => i.sprint === s.id))
+  if (withItems.length) return [...withItems].sort(recent)[0]
+  return [...sprints].sort(recent)[0]
+}
+
+
 function BoardTab({
   issues, onCreateIssue, onCompleteSprint, canManageSprint, activeSprints,
   dbCols, loading, error, onMoveCard, onQuickCreate, onLocalPatch,
@@ -1003,21 +1025,20 @@ function BoardTab({
     setTimeout(() => setBoardToast(null), 4000)
   }
   // filters
-  const [activeSprint, setActiveSprint] = useState(() => {
-    const selectable = activeSprints.filter(s => s.state !== 'completed')
-    return selectable.find(s => s.state === 'active')?.id ?? selectable[0]?.id ?? ''
-  })
+  const [activeSprint, setActiveSprint] = useState('')
   const [swimlane, setSwimlane]     = useState<SwimlaneMode>('none')
   const [filterAssignees, setFilterA] = useState<string[]>([])
   const [filterPriority, setFilterP]  = useState<Priority[]>([])
   const [filterType, setFilterType]   = useState<IssueType[]>([])
 
-  const selectableSprints = activeSprints.filter(s => s.state !== 'completed')
+  const projectSprints = activeSprints
   useEffect(() => {
-    if (activeSprint && selectableSprints.some(s => s.id === activeSprint)) return
-    const next = selectableSprints.find(s => s.state === 'active') ?? selectableSprints[0]
-    if (next) setActiveSprint(next.id)
-  }, [activeSprints]) // eslint-disable-line react-hooks/exhaustive-deps
+    // Once sprints load, keep a valid manual selection; otherwise pick the default.
+    if (activeSprint && projectSprints.some(s => s.id === activeSprint)) return
+    const next = defaultSprint(projectSprints, issues)
+    if (next && next.id !== activeSprint) setActiveSprint(next.id)
+  }, [activeSprints, issues]) // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const sprintIssues = activeSprint ? issues.filter(i => i.sprint === activeSprint) : issues
   const filtered = sprintIssues.filter(i => {
@@ -1151,7 +1172,7 @@ function BoardTab({
         <select value={activeSprint} onChange={e=>setActiveSprint(e.target.value)}
           className="h-7 px-2 text-[11px] rounded-lg border outline-none appearance-none pr-5 font-[inherit]"
           style={{ background:S.surface2, border:`1px solid ${S.border}`, color:DS.accent }}>
-          {selectableSprints.map(s=>(
+          {projectSprints.map(s=>(
             <option key={s.id} value={s.id} style={{ background:S.surface2 }}>{s.name} {s.state==='active'?'▶':''}</option>
           ))}
         </select>
