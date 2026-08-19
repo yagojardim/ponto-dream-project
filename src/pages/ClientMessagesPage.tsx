@@ -29,12 +29,14 @@ function mentionQuery(text: string, caret: number): { query: string; start: numb
   return { query, start: at }
 }
 
-function matchPeople(people: MentionProfile[], query: string): MentionProfile[] {
+function matchPeople(people: MentionProfile[], query: string): MentionMenuItem[] {
   const q = query.trim().toLowerCase()
-  return people.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 6)
+  const matches = people.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 6)
+  const todosVisible = !q || 'todos os responsáveis'.includes(q) || '@todos'.includes(q)
+  return todosVisible ? [TODOS_MENTION, ...matches] : matches
 }
 
-function MentionMenu({ items, onPick }: { items: MentionProfile[]; onPick: (p: MentionProfile) => void }) {
+function MentionMenu({ items, onPick }: { items: MentionMenuItem[]; onPick: (p: MentionMenuItem) => void }) {
   if (!items.length) return null
   return (
     <div style={{
@@ -54,7 +56,7 @@ function MentionMenu({ items, onPick }: { items: MentionProfile[]; onPick: (p: M
           onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = T.bgSurface2)}
           onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')}
         >
-          <Av initials={initialsOf(p.name)} size={20} />
+          <Av initials={p.id === '@todos' ? '👋' : initialsOf(p.name)} size={20} />
           {p.name}
         </button>
       ))}
@@ -62,10 +64,10 @@ function MentionMenu({ items, onPick }: { items: MentionProfile[]; onPick: (p: M
   )
 }
 
-/** Renderiza o corpo destacando os tokens @Nome mencionados. */
+/** Renderiza o corpo destacando os tokens @Nome (e @todos) mencionados. */
 function renderBody(body: string, names: string[]) {
-  if (!names.length) return body
-  const escaped = names
+  const allNames = [...names, 'todos']
+  const escaped = allNames
     .filter(Boolean)
     .sort((a, b) => b.length - a.length)
     .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -83,6 +85,14 @@ function renderBody(body: string, names: string[]) {
   if (last < body.length) out.push(body.slice(last))
   return out
 }
+
+function resolveMentions(text: string, picked: MentionProfile[], allPeople: MentionProfile[]): string[] {
+  const individual = picked.filter(p => text.includes(`@${p.name}`)).map(p => p.id)
+  const hasTodos = text.includes('@todos')
+  if (!hasTodos) return [...new Set(individual)]
+  return [...new Set([...allPeople.map(p => p.id), ...individual])]
+}
+
 
 function initialsOf(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '—'
