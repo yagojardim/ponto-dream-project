@@ -1889,7 +1889,8 @@ export default function ClientPortalPage({
     })
   }, [scope])
 
-  const [notifTick, setNotifTick] = useState(0)
+
+
   const [showPwdModal, setShowPwdModal] = useState(mustChangePassword)
   const [showVoluntaryPwdModal, setShowVoluntaryPwdModal] = useState(false)
   const [portalView, setPortalView] = useState<'dashboard' | 'chat'>('dashboard')
@@ -1928,6 +1929,8 @@ export default function ClientPortalPage({
         onToggle={toggleProject}
         notifTick={notifTick}
         onNotifRead={handleNotifRead}
+        unreadCount={unreadCount}
+
         isChatMode={portalView === 'chat'}
         onChatToggle={() => setPortalView(v => v === 'chat' ? 'dashboard' : 'chat')}
         onLogout={onLogout ?? (() => {})}
