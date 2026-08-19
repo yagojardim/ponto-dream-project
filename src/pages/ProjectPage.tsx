@@ -1128,10 +1128,10 @@ function BoardTab({
     setWipColId(null)
   }
 
-  const ASSIGNEES = ['AL','NM','JN','CS','RM','LF']
   function toggleArr<T>(arr: T[], val: T): T[] {
     return arr.includes(val) ? arr.filter(x=>x!==val) : [...arr, val]
   }
+
   const swimlaneKeys: string[] = swimlane==='none' ? ['_all']
     : swimlane==='assignee' ? [...new Set(filtered.map(i=>i.assignee))].sort()
     : [...new Set(filtered.map(i=>i.epic ?? 'Sem épico'))]
