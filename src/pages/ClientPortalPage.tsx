@@ -733,7 +733,7 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
                 <p className="text-[10px] font-semibold" style={{ color: C.success }}>✓ Aprovado por você</p>
               )}
               {/* Show client thread: own comments + PO replies */}
-              <ClientSignalThread itemId={v.id} refresh={refresh} />
+              <ClientSignalThread itemId={v.id} project={v.project} refresh={refresh} />
             </div>
           )
         })}
