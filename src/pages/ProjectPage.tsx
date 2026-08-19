@@ -25,6 +25,7 @@ import { StoryIcon, EpicIcon } from '../components/ds/AltechIcons'
 import { generateSprintCeremonies, DEFAULT_TENANT_ID, type CeremonySlot } from '@/data/db/calendarEvents'
 import { epicColor } from '@/data/db/timeline'
 import { SprintCeremoniesModal } from '@/components/SprintCeremoniesModal'
+import { DailyModal } from '../components/DailyModal'
 
 
 // ─── RULE annotations ────────────────────────────────────────────────────────
@@ -975,7 +976,7 @@ function defaultSprint(sprints: SprintDef[], issues: Issue[]): SprintDef | null 
 function BoardTab({
   issues, onCreateIssue, onCompleteSprint, canManageSprint, activeSprints,
   dbCols, loading, error, onMoveCard, onQuickCreate, onLocalPatch,
-  availableEpics, availableMembers,
+  availableEpics, availableMembers, projectName, onReloadBoard,
 }: {
   issues: Issue[]
   onCreateIssue: () => void
@@ -990,8 +991,11 @@ function BoardTab({
   onLocalPatch: (key: string, patch: Partial<Issue>) => void
   availableEpics: { id: string; label: string; color: string }[]
   availableMembers: { id: string; initials: string; name: string; color: string | null }[]
+  projectName: string
+  onReloadBoard: () => Promise<void> | void
 }) {
   const { activeUser: boardUser } = useSession()
+  const [dailyOpen, setDailyOpen] = useState(false)
   const canDrag = can(boardUser.permissions, 'board:manage')
 
   // ── column config state (hydrated from board_columns) ────────────────────
@@ -1176,6 +1180,23 @@ function BoardTab({
 
   return (
     <div className="flex flex-col flex-1 min-h-0" onClick={()=>{if(menuColId)setMenuColId(null)}}>
+      <DailyModal
+        open={dailyOpen}
+        projectName={projectName}
+        sprintName={activeSprints.find(s=>s.id===activeSprint)?.name ?? ''}
+        columns={visibleCols.filter(c=>c.id!=='unmapped').map(c=>({ id:c.id, label:c.label, dot:c.dot }))}
+        issues={sprintIssues.map(i=>({ id:i.id, key:i.key, title:i.title, colId:i.colId, assigneeId:i.assigneeId, points:i.points, type:i.type }))}
+        members={availableMembers}
+        onMove={async (di, colId) => {
+          const issue = issues.find(i => i.key === di.key)
+          if (!issue) throw new Error('Demanda não encontrada')
+          const col = cols.find(c => c.id === colId)
+          const nextDbStatus = col && col.statuses.includes(issue.dbStatus ?? '') ? issue.dbStatus! : (col?.statuses[0] ?? 'todo')
+          await onMoveCard(issue, colId)
+          onLocalPatch(issue.key, { colId, dbStatus: nextDbStatus, status: uiStatus(nextDbStatus) })
+        }}
+        onClose={() => { setDailyOpen(false); void onReloadBoard() }}
+      />
       {/* ── Quick filters ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto flex-shrink-0"
         style={{ background:S.surface, borderBottom:`1px solid ${S.border}` }}>
@@ -1211,6 +1232,20 @@ function BoardTab({
           )
         })()}
         <HelpHint text="Fecha a sprint, calcula a velocity pelas demandas concluídas e move as não-concluídas para a próxima sprint ou para o backlog." label="Ajuda sobre Encerrar sprint" />
+        <button
+          onClick={()=>{ if(canManageSprint) setDailyOpen(true) }}
+          disabled={!canManageSprint}
+          title={canManageSprint ? 'Iniciar a daily com o board ao vivo' : 'Requer permissão: Gerenciar Sprint (sprint:manage)'}
+          className="h-7 px-2.5 rounded-lg text-[11px] font-medium flex items-center gap-1.5 flex-shrink-0 transition-all"
+          style={{
+            background: canManageSprint ? DS.accentDim : S.surface2,
+            border: `1px solid ${canManageSprint ? DS.accent+'60' : S.border}`,
+            color: canManageSprint ? DS.accent : S.t3,
+            cursor: canManageSprint ? 'pointer' : 'not-allowed',
+            opacity: canManageSprint ? 1 : 0.6,
+          }}>
+          ▶ Iniciar Daily
+        </button>
         <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
         <div className="flex items-center gap-1">
           {availableMembers.map(m=>{
@@ -2706,6 +2741,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           onLocalPatch={patchDbIssue}
           availableEpics={availableEpics}
           availableMembers={availableMembers}
+          projectName={boardData?.project?.name ?? '—'}
+          onReloadBoard={loadBoard}
         />
       )}
       {tab === 'Backlog' && (
