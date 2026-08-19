@@ -1457,12 +1457,15 @@ function BoardTab({
                     ))
                   ) : (
                     swimlaneKeys.map(lane=>{
-                      const laneIssues = colIssues.filter(i=>swimlane==='assignee'?i.assignee===lane:(i.epic??'Sem épico')===lane)
+                      const laneIssues = colIssues.filter(i=>swimlane==='assignee'?(i.assigneeId ?? '')===lane:(i.epic??'Sem épico')===lane)
                       if(!laneIssues.length) return null
+                      const laneLabel = swimlane==='assignee' ? (memberById.get(lane)?.name ?? lane) : lane
                       return (
                         <div key={lane}>
-                          <p className="text-[9px] font-semibold uppercase tracking-wide mb-1 px-0.5" style={{ color:S.t3 }}>{lane}</p>
-                          {laneIssues.map(issue=>(
+                          <p className="text-[9px] font-semibold uppercase tracking-wide mb-1 px-0.5" style={{ color:S.t3 }}>{laneLabel}</p>
+                          {laneIssues.map(issue=>{
+                            const label = swimlane==='assignee' ? (memberById.get(issue.assigneeId ?? '')?.name ?? issue.assignee) : (issue.epic ?? 'Sem épico')
+                            return (
                             <div key={issue.key} className="mb-1.5">
                               <BoardCard issue={issue} dragging={draggingCard===issue.key}
                                 onDragStart={()=>setDraggingCard(issue.key)}
@@ -1470,11 +1473,13 @@ function BoardTab({
                                 onOpen={()=>setOpenIssue(issue)}
                                 canDrag={canDrag}/>
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )
                     })
                   )}
+
 
                 </div>
               </div>
