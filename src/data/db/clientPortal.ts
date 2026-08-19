@@ -263,6 +263,8 @@ export interface AddCommentInput {
   responsiblePo?: string | null
   /** management-originated messages are pre-read by the PO */
   source?: 'client' | 'management'
+  /** profile ids mentioned via @ in the body */
+  mentions?: string[]
 }
 
 async function addClientComment__raw(input: AddCommentInput): Promise<ClientSignalRow> {
@@ -278,7 +280,10 @@ async function addClientComment__raw(input: AddCommentInput): Promise<ClientSign
     body: input.body,
     read_by_po: isMgmt,
     reply_read_by_client: !isMgmt,
-    metadata: { source: input.source ?? 'client' },
+    metadata: {
+      source: input.source ?? 'client',
+      mentions: [...new Set((input.mentions ?? []).filter(Boolean))],
+    },
   }).select('*').single()
   if (error) throw tenantError('client_signals', error.message)
   const row = data as ClientSignalRow
@@ -586,6 +591,8 @@ async function listProjectResponsibleCandidates__raw(projectId: string): Promise
 }
 
 
+export interface MentionProfile { id: string; name: string }
+
 async function listProjectResponsibles__raw(projectId: string): Promise<string[]> {
   const { data, error } = await tbl('project_client_responsibles')
     .select('profile_id')
@@ -641,6 +648,23 @@ async function setProjectResponsibles__raw(
 
 export const listProjectResponsibleCandidates = (projectId: string): Promise<ResponsibleCandidate[]> =>
   safeCall('clientPortal.listProjectResponsibleCandidates', () => listProjectResponsibleCandidates__raw(projectId), [], { projectId })
+
+/** Responsáveis atribuídos ao projeto (para autocomplete de @menção). */
+async function listProjectResponsibleProfiles__raw(projectId: string): Promise<MentionProfile[]> {
+  const ids = await listProjectResponsibles__raw(projectId)
+  if (!ids.length) return []
+  const { data, error } = await tbl('profiles')
+    .select('id, name, email')
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .in('id', ids)
+    .is('archived_at', null)
+    .order('name')
+  if (error) throw tenantError('profiles', error.message)
+  return (data ?? []).map((p: any) => ({ id: p.id, name: p.name ?? p.email ?? '' }))
+}
+
+export const listProjectResponsibleProfiles = (projectId: string): Promise<MentionProfile[]> =>
+  safeCall('clientPortal.listProjectResponsibleProfiles', () => listProjectResponsibleProfiles__raw(projectId), [], { projectId })
 
 export const listProjectResponsibles = (projectId: string): Promise<string[]> =>
   safeCall('clientPortal.listProjectResponsibles', () => listProjectResponsibles__raw(projectId), [], { projectId })
@@ -774,6 +798,12 @@ export interface ClientChatMessage {
   createdAt: string
   type:      SignalType
   itemTitle: string | null
+  mentions:  string[]
+}
+
+function signalMentions(row: ClientSignalRow): string[] {
+  const m = (row.metadata ?? {}) as Record<string, unknown>
+  return Array.isArray(m.mentions) ? (m.mentions as unknown[]).map(String) : []
 }
 
 async function listProjectChat__raw(projectId: string): Promise<ClientChatMessage[]> {
@@ -788,6 +818,7 @@ async function listProjectChat__raw(projectId: string): Promise<ClientChatMessag
     createdAt: r.created_at,
     type:      r.type,
     itemTitle: r.item_title,
+    mentions:  signalMentions(r),
   }))
 }
 
@@ -796,6 +827,7 @@ export interface AddClientMessageInput {
   body:      string
   author:    string
   source:    'client' | 'management'
+  mentions?: string[]
 }
 
 async function markProjectSignalsReadByPo__raw(projectId: string): Promise<void> {
@@ -813,7 +845,8 @@ export const listProjectChat = (projectId: string): Promise<ClientChatMessage[]>
 
 export const addClientMessage = (input: AddClientMessageInput): Promise<ClientSignalRow | null> =>
   safeCall('clientPortal.addClientMessage', () => addClientComment__raw({
-    projectId: input.projectId, body: input.body, author: input.author, source: input.source,
+    projectId: input.projectId, body: input.body, author: input.author,
+    source: input.source, mentions: input.mentions,
   }), null, { projectId: input.projectId })
 
 export const markProjectSignalsReadByPo = (projectId: string): Promise<void> =>
