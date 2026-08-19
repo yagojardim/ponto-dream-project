@@ -1046,11 +1046,12 @@ function BoardTab({
 
   const sprintIssues = activeSprint ? issues.filter(i => i.sprint === activeSprint) : issues
   const filtered = sprintIssues.filter(i => {
-    if (filterAssignees.length && !filterAssignees.includes(i.assigneeId)) return false
+    if (filterAssignees.length && !filterAssignees.includes(i.assigneeId ?? '')) return false
     if (filterPriority.length && !filterPriority.includes(i.priority)) return false
     if (filterType.length && !filterType.includes(i.type)) return false
     return true
   })
+
 
 
   const orderedCols = colOrder.map(id => cols.find(c=>c.id===id)!).filter(Boolean)
