@@ -151,7 +151,6 @@ function AppInner() {
   const { setActiveUser, status, enterInspection, mustChangePassword } =
     useSession()
   const [view, setView] = useState<View>("home")
-  const [clientMsgProjectId, setClientMsgProjectId] = useState<string | null>(null)
   const [clientMustChangePwd, setClientMustChangePwd] = useState(false)
   const [activateToken, setActivateToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null
@@ -372,6 +371,7 @@ function ShellWithRole({
   setView: (v: View) => void
 }) {
   const [createOpen, setCreate] = useState(false)
+  const [clientMsgProjectId, setClientMsgProjectId] = useState<string | null>(null)
   const [inviteOpen, setInvite] = useState(false)
   const [selectedBoardId, setSelectedBoardId] = useState<string | undefined>()
   const [selectedProjectId, setSelectedProjectId] =
