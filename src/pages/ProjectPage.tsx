@@ -1396,7 +1396,7 @@ function BoardTab({
       <>
       {/* ── Board area ─────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto min-h-0">
-        <div className="flex gap-3 items-start px-4 pb-4" style={{ minWidth: visibleCols.length*224+80 }}>
+        <div className="flex gap-3 items-stretch px-4 pb-4" style={{ minWidth: visibleCols.length*224+80 }}>
 
           {visibleCols.map((col) => {
             const colIssues  = getColIssues(col)
@@ -1514,7 +1514,7 @@ function BoardTab({
 
                 {/* ── Drop zone + cards ─────────────────────────────── */}
                 <div className="flex flex-col gap-2 flex-1 rounded-xl p-1.5 transition-all"
-                  style={{ background:isCardOver?`${DS.accent}10`:'transparent', border:isCardOver?`1.5px dashed ${DS.accent}`:'1.5px dashed transparent', minHeight:80 }}
+                  style={{ background:isCardOver?`${DS.accent}10`:'transparent', border:isCardOver?`1.5px dashed ${DS.accent}`:'1.5px dashed transparent', minHeight:120 }}
                   onDragOver={e=>{ e.preventDefault(); setDragOver(col.id) }}
                   onDragLeave={()=>setDragOver(null)}
                   onDrop={()=>{ void handleCardDrop(col) }}
