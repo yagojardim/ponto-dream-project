@@ -1027,6 +1027,10 @@ function defaultSprint(sprints: SprintDef[], issues: Issue[]): SprintDef | null 
 }
 
 
+function toggleArrTop<T>(arr: T[], val: T): T[] {
+  return arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]
+}
+
 function BoardTab({
   issues, onCreateIssue, onCompleteSprint, canManageSprint, activeSprints,
   dbCols, loading, error, onMoveCard, onQuickCreate, onLocalPatch,
@@ -2801,7 +2805,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           {availableMembers.map(m => {
             const active = filterAssignees.length === 0 || filterAssignees.includes(m.id)
             return (
-              <button key={m.id} onClick={() => setFilterA(prev => toggleArr(prev, m.id))}
+              <button key={m.id} onClick={() => setFilterA(prev => toggleArrTop(prev, m.id))}
                 title={m.name}
                 className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all"
                 style={{ background: m.color ?? DS.text3, opacity: active ? 1 : .35, outline: filterAssignees.includes(m.id) ? '2px solid ' + DS.accent : '2px solid transparent' }}>
