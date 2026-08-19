@@ -773,8 +773,9 @@ function issueToWID(
 ): WorkItemData {
   const epic = availableEpics.find(e => e.id === issue.epicId)
   const sprint = availableSprints.find(s => s.id === issue.sprint)
-  const member = availableMembers.find(m => m.initials === issue.assignee)
+  const member = availableMembers.find(m => (issue.assigneeId ? m.id === issue.assigneeId : m.initials === issue.assignee))
   const reporter = issue.reporter ? availableMembers.find(m => m.initials === issue.reporter) : undefined
+
   return {
     key:              issue.key,
     type:             issue.type,
