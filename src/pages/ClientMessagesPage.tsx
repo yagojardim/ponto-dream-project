@@ -78,7 +78,7 @@ function ConvItem({ conv, active, onClick }: {
           }}>
             {conv.name}
           </span>
-          <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{fmtDate(conv.lastAt)}</span>
+          <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{isEmpty ? '' : fmtDate(conv.lastAt)}</span>
         </div>
         <p style={{
           fontSize: 11, color: T.text2, margin: 0, lineHeight: 1.4,
