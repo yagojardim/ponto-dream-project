@@ -1,12 +1,82 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { T } from '../components/ds/tokens'
 import { useSession } from '../data/SessionContext'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import {
   listProjectsWithClientSignals, listProjectChat, addClientMessage,
   markProjectSignalsReadByPo, listResponsibleProjectIds, listResponsibleProjects,
-  type ProjectSignalSummary, type ClientChatMessage,
+  listProjectResponsibleProfiles,
+  type ProjectSignalSummary, type ClientChatMessage, type MentionProfile,
 } from '../data/db/clientPortal'
+import { create as createNotification } from '../data/db/notifications'
+
+// ─── @menções ────────────────────────────────────────────────────────────────
+/** Detecta o token "@..." em edição imediatamente antes do cursor. */
+function mentionQuery(text: string, caret: number): { query: string; start: number } | null {
+  const upto = text.slice(0, caret)
+  const at = upto.lastIndexOf('@')
+  if (at < 0) return null
+  const before = at === 0 ? ' ' : upto[at - 1]
+  if (!/\s/.test(before)) return null
+  const query = upto.slice(at + 1)
+  if (/\s/.test(query)) return null
+  return { query, start: at }
+}
+
+function matchPeople(people: MentionProfile[], query: string): MentionProfile[] {
+  const q = query.trim().toLowerCase()
+  return people.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 6)
+}
+
+function MentionMenu({ items, onPick }: { items: MentionProfile[]; onPick: (p: MentionProfile) => void }) {
+  if (!items.length) return null
+  return (
+    <div style={{
+      position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, zIndex: 40,
+      minWidth: 200, background: T.bgSurface, border: `1px solid ${T.border}`,
+      borderRadius: 10, boxShadow: '0 10px 28px rgba(0,0,0,0.35)', overflow: 'hidden',
+    }}>
+      {items.map(p => (
+        <button
+          key={p.id}
+          onMouseDown={e => { e.preventDefault(); onPick(p) }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left',
+            padding: '7px 10px', border: 'none', background: 'transparent', cursor: 'pointer',
+            fontSize: 12, color: T.text1,
+          }}
+          onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = T.bgSurface2)}
+          onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')}
+        >
+          <Av initials={initialsOf(p.name)} size={20} />
+          {p.name}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Renderiza o corpo destacando os tokens @Nome mencionados. */
+function renderBody(body: string, names: string[]) {
+  if (!names.length) return body
+  const escaped = names
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+    .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const re = new RegExp(`@(${escaped.join('|')})`, 'g')
+  const out: ReactNode[] = []
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = re.exec(body))) {
+    if (m.index > last) out.push(body.slice(last, m.index))
+    out.push(
+      <span key={`${m.index}-${m[0]}`} style={{ color: T.accent, fontWeight: 700 }}>{m[0]}</span>,
+    )
+    last = m.index + m[0].length
+  }
+  if (last < body.length) out.push(body.slice(last))
+  return out
+}
 
 function initialsOf(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '—'
@@ -102,7 +172,8 @@ function ConvItem({ conv, active, onClick }: {
 }
 
 // ─── Chat bubble ─────────────────────────────────────────────────────────────
-function Bubble({ msg }: { msg: ClientChatMessage }) {
+function Bubble({ msg, people }: { msg: ClientChatMessage; people: MentionProfile[] }) {
+  const mentionedNames = people.filter(p => msg.mentions.includes(p.id)).map(p => p.name)
   const isMe = msg.side === 'management'
   return (
     <div style={{
@@ -136,7 +207,7 @@ function Bubble({ msg }: { msg: ClientChatMessage }) {
           border: `1px solid ${isMe ? T.accentBorder : T.border}`,
           fontSize: 13, color: T.text1, lineHeight: 1.5, wordBreak: 'break-word',
         }}>
-          {msg.body}
+          {renderBody(msg.body, mentionedNames)}
         </div>
       </div>
     </div>
@@ -155,14 +226,40 @@ function DaySep({ label }: { label: string }) {
 }
 
 // ─── Composer ─────────────────────────────────────────────────────────────────
-function Composer({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
+function Composer({ onSend, disabled, people }: {
+  onSend: (text: string, mentions: string[]) => void
+  disabled?: boolean
+  people: MentionProfile[]
+}) {
   const [val, setVal] = useState('')
+  const [menu, setMenu] = useState<{ items: MentionProfile[]; start: number } | null>(null)
+  const [picked, setPicked] = useState<MentionProfile[]>([])
+  const taRef = useRef<HTMLTextAreaElement>(null)
+
+  function syncMenu(text: string, caret: number) {
+    const q = mentionQuery(text, caret)
+    if (!q) { setMenu(null); return }
+    setMenu({ items: matchPeople(people, q.query), start: q.start })
+  }
+
+  function pick(p: MentionProfile) {
+    if (!menu) return
+    const caret = taRef.current?.selectionStart ?? val.length
+    const next = `${val.slice(0, menu.start)}@${p.name} ${val.slice(caret)}`
+    setVal(next)
+    setPicked(prev => (prev.some(x => x.id === p.id) ? prev : [...prev, p]))
+    setMenu(null)
+    requestAnimationFrame(() => taRef.current?.focus())
+  }
 
   function submit() {
     const t = val.trim()
     if (!t) return
-    onSend(t)
+    const ids = picked.filter(p => t.includes(`@${p.name}`)).map(p => p.id)
+    onSend(t, ids)
     setVal('')
+    setPicked([])
+    setMenu(null)
   }
 
   return (
@@ -170,9 +267,12 @@ function Composer({ onSend, disabled }: { onSend: (text: string) => void; disabl
       borderTop: `1px solid ${T.border}`, padding: '14px 16px',
       background: T.bgSurface, display: 'flex', gap: 10, alignItems: 'flex-end',
     }}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex' }}>
+      {menu && <MentionMenu items={menu.items} onPick={pick} />}
       <textarea
+        ref={taRef}
         value={val}
-        onChange={e => setVal(e.target.value)}
+        onChange={e => { setVal(e.target.value); syncMenu(e.target.value, e.target.selectionStart ?? 0) }}
         placeholder={disabled ? 'Selecione uma conversa para responder…' : 'Digite sua resposta ao cliente…'}
         disabled={disabled}
         rows={2}
@@ -184,8 +284,9 @@ function Composer({ onSend, disabled }: { onSend: (text: string) => void; disabl
           opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'text',
         }}
         onFocus={e => { e.target.style.borderColor = T.accent }}
-        onBlur={e => { e.target.style.borderColor = T.border }}
+        onBlur={e => { e.target.style.borderColor = T.border; setMenu(null) }}
       />
+      </div>
       <button
         onClick={submit}
         disabled={!val.trim() || disabled}
@@ -203,6 +304,19 @@ function Composer({ onSend, disabled }: { onSend: (text: string) => void; disabl
   )
 }
 
+async function notifyMentions(
+  mentions: string[], author: string, conv: ProjectSignalSummary, body: string,
+) {
+  await Promise.all(mentions.map(id => createNotification({
+    profileId: id,
+    type: 'mention',
+    title: `${author} mencionou você em "${conv.name}"`,
+    body,
+    entityType: 'client_messages_project',
+    entityId: conv.projectId,
+  })))
+}
+
 // ─── Thread panel ─────────────────────────────────────────────────────────────
 function ThreadPanel({ conv, authorName, onChanged }: {
   conv: ProjectSignalSummary
@@ -211,7 +325,17 @@ function ThreadPanel({ conv, authorName, onChanged }: {
 }) {
   const [messages, setMessages] = useState<ClientChatMessage[]>([])
   const [loading, setLoading]   = useState(true)
+  const [people, setPeople]     = useState<MentionProfile[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const rows = await listProjectResponsibleProfiles(conv.projectId)
+      if (alive) setPeople(rows)
+    })()
+    return () => { alive = false }
+  }, [conv.projectId])
 
   const reload = useCallback(async () => {
     const rows = await listProjectChat(conv.projectId)
@@ -238,10 +362,11 @@ function ThreadPanel({ conv, authorName, onChanged }: {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, mentions: string[]) {
     await addClientMessage({
-      projectId: conv.projectId, body: text, author: authorName, source: 'management',
+      projectId: conv.projectId, body: text, author: authorName, source: 'management', mentions,
     })
+    await notifyMentions(mentions, authorName, conv, text)
     await reload()
     onChanged()
   }
@@ -288,13 +413,13 @@ function ThreadPanel({ conv, authorName, onChanged }: {
         ) : groups.map(g => (
           <div key={g.day}>
             <DaySep label={g.day} />
-            {g.msgs.map(msg => <Bubble key={msg.id} msg={msg} />)}
+            {g.msgs.map(msg => <Bubble key={msg.id} msg={msg} people={people} />)}
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      <Composer onSend={handleSend} />
+      <Composer onSend={handleSend} people={people} />
     </div>
   )
 }
@@ -324,17 +449,40 @@ function SimulateClientMessage({ conv, onSent }: {
 }) {
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  const [people, setPeople] = useState<MentionProfile[]>([])
+  const [menu, setMenu] = useState<{ items: MentionProfile[]; start: number } | null>(null)
+  const [picked, setPicked] = useState<MentionProfile[]>([])
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    let alive = true
+    if (!conv) { setPeople([]); return }
+    ;(async () => {
+      const rows = await listProjectResponsibleProfiles(conv.projectId)
+      if (alive) setPeople(rows)
+    })()
+    return () => { alive = false }
+  }, [conv?.projectId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function pick(p: MentionProfile) {
+    if (!menu) return
+    const caret = inputRef.current?.selectionStart ?? text.length
+    setText(`${text.slice(0, menu.start)}@${p.name} ${text.slice(caret)}`)
+    setPicked(prev => (prev.some(x => x.id === p.id) ? prev : [...prev, p]))
+    setMenu(null)
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }
 
   async function send() {
     if (!conv || !text.trim()) return
     setBusy(true)
-    await addClientMessage({
-      projectId: conv.projectId,
-      body: text.trim(),
-      author: conv.clientName || 'Cliente (teste)',
-      source: 'client',
-    })
+    const body = text.trim()
+    const author = conv.clientName || 'Cliente (teste)'
+    const mentions = picked.filter(p => body.includes(`@${p.name}`)).map(p => p.id)
+    await addClientMessage({ projectId: conv.projectId, body, author, source: 'client', mentions })
+    await notifyMentions(mentions, author, conv, body)
     setText('')
+    setPicked([])
     setBusy(false)
     onSent()
   }
@@ -343,16 +491,25 @@ function SimulateClientMessage({ conv, onSent }: {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto',
     }}>
-      <input
-        value={text}
-        onChange={e => setText(e.target.value)}
-        placeholder="Mensagem do cliente (teste)…"
-        onKeyDown={e => { if (e.key === 'Enter') void send() }}
-        style={{
-          width: 220, background: T.bgSurface2, border: `1px solid ${T.border}`,
-          borderRadius: 7, color: T.text1, fontSize: 12, padding: '6px 10px', outline: 'none',
-        }}
-      />
+      <div style={{ position: 'relative' }}>
+        {menu && <MentionMenu items={menu.items} onPick={pick} />}
+        <input
+          ref={inputRef}
+          value={text}
+          onChange={e => {
+            setText(e.target.value)
+            const q = mentionQuery(e.target.value, e.target.selectionStart ?? 0)
+            setMenu(q ? { items: matchPeople(people, q.query), start: q.start } : null)
+          }}
+          placeholder="Mensagem do cliente (teste)…"
+          onKeyDown={e => { if (e.key === 'Enter' && !menu) void send() }}
+          onBlur={() => setMenu(null)}
+          style={{
+            width: 220, background: T.bgSurface2, border: `1px solid ${T.border}`,
+            borderRadius: 7, color: T.text1, fontSize: 12, padding: '6px 10px', outline: 'none',
+          }}
+        />
+      </div>
       <button
         onClick={() => void send()}
         disabled={!conv || !text.trim() || busy}
