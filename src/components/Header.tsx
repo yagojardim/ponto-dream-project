@@ -17,6 +17,7 @@ interface HeaderProps {
   onCreateIssue?: () => void
   currentView:    View
   onViewChange:   (v: string) => void
+  onOpenClientMessages?: (projectId: string) => void
 }
 
 const viewLabels: Partial<Record<View, string>> = {
@@ -78,6 +79,8 @@ interface NotifItem {
   time: string
   read: boolean
   notifId?: string
+  entityType?: string | null
+  entityId?: string | null
 }
 
 const STATIC_NOTIFICATIONS: NotifItem[] = [
@@ -95,10 +98,12 @@ function rowToNotif(r: NotificationRow): NotifItem {
     time: new Date(r.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
     read: r.read,
     notifId: r.id,
+    entityType: r.entity_type,
+    entityId: r.entity_id,
   }
 }
 
-export function Header({ currentView, onViewChange, onCreateIssue }: HeaderProps) {
+export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientMessages }: HeaderProps) {
   const [cmdOpen,    setCmdOpen]    = useState(false)
   const [notifOpen,  setNotifOpen]  = useState(false)
   const [switchOpen, setSwitchOpen] = useState(false)
@@ -156,8 +161,13 @@ export function Header({ currentView, onViewChange, onCreateIssue }: HeaderProps
     } else {
       setReadStatic(prev => new Set([...prev, n.id]))
     }
-    onViewChange('home')
     setNotifOpen(false)
+    if (n.entityType === 'client_messages_project' && n.entityId) {
+      if (onOpenClientMessages) onOpenClientMessages(n.entityId)
+      else onViewChange('client-messages')
+      return
+    }
+    onViewChange('home')
   }
 
 
