@@ -43,9 +43,12 @@ function Av({ initials, size = 28 }: { initials: string; size?: number }) {
 function ConvItem({ conv, active, onClick }: {
   conv: ProjectSignalSummary; active: boolean; onClick: () => void
 }) {
-  const preview = conv.lastSource === 'management'
-    ? `${conv.lastAuthor}: ${conv.lastBody}`
-    : conv.lastBody
+  const isEmpty = conv.lastBody === 'Sem mensagens ainda'
+  const preview = isEmpty
+    ? conv.lastBody
+    : conv.lastSource === 'management'
+      ? `${conv.lastAuthor}: ${conv.lastBody}`
+      : conv.lastBody
 
   return (
     <button
