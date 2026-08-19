@@ -1165,7 +1165,7 @@ function BoardTab({
     : orderedCols
 
   return (
-    <div className="flex flex-col flex-1" onClick={()=>{if(menuColId)setMenuColId(null)}}>
+    <div className="flex flex-col flex-1 min-h-0" onClick={()=>{if(menuColId)setMenuColId(null)}}>
       {/* ── Quick filters ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto flex-shrink-0"
         style={{ background:S.surface, borderBottom:`1px solid ${S.border}` }}>
@@ -1645,7 +1645,7 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
   const backlogIssues = issues.filter(i => !i.sprint)
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto min-h-0">
       {startingSprint && (
 
         <StartSprintModal
@@ -2020,7 +2020,7 @@ function SprintsTab({ issues, sprints, onUpdateIssue, canManageSprint, loading, 
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
           {[0, 1, 2].map(i => (
             <div key={i} className="rounded-xl h-28 skeleton"
@@ -2033,7 +2033,7 @@ function SprintsTab({ issues, sprints, onUpdateIssue, canManageSprint, loading, 
 
   if (error) {
     return (
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="rounded-xl px-4 py-3 text-[12px]"
             style={{ background: `${DS.crit}12`, border: `1px solid ${DS.crit}44`, color: DS.crit }}>
@@ -2045,7 +2045,7 @@ function SprintsTab({ issues, sprints, onUpdateIssue, canManageSprint, loading, 
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto min-h-0">
       <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
         {canManageSprint && (
           <div className="flex justify-end">
@@ -2344,7 +2344,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
   const loadBoard = useCallback(async () => {
     setBoardLoading(true); setBoardError(null)
     try {
-      const data = await fetchBoardData(scopedProjectId, undefined, boardId ? getBoardById(boardId)?.name : undefined)
+      const data = await fetchBoardData(scopedProjectId, boardId ?? undefined)
       setBoardData(data)
       applyBoardData(data)
     } catch (err) {
@@ -2612,26 +2612,27 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
 
     <>
     {/* Board context bar — shown when opened from boards list */}
-    {boardDef && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 20px', background: isArchivedBoard ? `${DS.warn}15` : `${DS.accent}12`, borderBottom: `1px solid ${isArchivedBoard ? DS.warn + '44' : DS.accent + '33'}`, flexShrink: 0 }}>
-        {onBackToBoards && (
-          <button onClick={onBackToBoards} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: DS.accent, fontSize: 12, padding: 0 }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8 2.5L4 6.5l4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Boards
-          </button>
-        )}
-        {onBackToBoards && <span style={{ fontSize: 12, color: DS.accent + '66' }}>›</span>}
-        <svg width="13" height="13" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="4" height="16" rx="1.5" fill={isArchivedBoard ? DS.warn : DS.accent} opacity="0.8"/><rect x="7" y="1" width="4" height="11" rx="1.5" fill={isArchivedBoard ? DS.warn : DS.accent} opacity="0.6"/><rect x="13" y="1" width="4" height="14" rx="1.5" fill={isArchivedBoard ? DS.warn : DS.accent} opacity="0.4"/></svg>
-        <span style={{ fontSize: 12, fontWeight: 600, color: isArchivedBoard ? DS.warn : DS.accent }}>{boardDef.name}</span>
-        <span style={{ fontSize: 11, color: DS.text3 }}>· {boardDef.project_name}</span>
-        {isArchivedBoard && (
-          <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: DS.warn, background: `${DS.warn}20`, border: `1px solid ${DS.warn}44`, borderRadius: 4, padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Arquivado — modo leitura
-          </span>
-        )}
-      </div>
-    )}
-    <div className="flex flex-col h-full" style={{ background: S.bg }}>
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: S.bg }}>
+      {/* Board context bar — shown when opened from boards list */}
+      {boardDef && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 20px', background: isArchivedBoard ? `${DS.warn}15` : `${DS.accent}12`, borderBottom: `1px solid ${isArchivedBoard ? DS.warn + '44' : DS.accent + '33'}`, flexShrink: 0 }}>
+          {onBackToBoards && (
+            <button onClick={onBackToBoards} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', color: DS.accent, fontSize: 12, padding: 0 }}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8 2.5L4 6.5l4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Boards
+            </button>
+          )}
+          {onBackToBoards && <span style={{ fontSize: 12, color: DS.accent + '66' }}>›</span>}
+          <svg width="13" height="13" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="4" height="16" rx="1.5" fill={isArchivedBoard ? DS.warn : DS.accent} opacity="0.8"/><rect x="7" y="1" width="4" height="11" rx="1.5" fill={isArchivedBoard ? DS.warn : DS.accent} opacity="0.6"/><rect x="13" y="1" width="4" height="14" rx="1.5" fill={isArchivedBoard ? DS.warn : DS.accent} opacity="0.4"/></svg>
+          <span style={{ fontSize: 12, fontWeight: 600, color: isArchivedBoard ? DS.warn : DS.accent }}>{boardDef.name}</span>
+          <span style={{ fontSize: 11, color: DS.text3 }}>· {boardDef.project_name}</span>
+          {isArchivedBoard && (
+            <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 700, color: DS.warn, background: `${DS.warn}20`, border: `1px solid ${DS.warn}44`, borderRadius: 4, padding: '1px 7px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Arquivado — modo leitura
+            </span>
+          )}
+        </div>
+      )}
       {/* Toolbar */}
       <div
         className="flex items-center justify-between px-5 py-2 flex-shrink-0"
