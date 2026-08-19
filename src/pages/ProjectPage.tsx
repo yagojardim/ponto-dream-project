@@ -54,7 +54,9 @@ interface Issue {
   priority: Priority
   labels:   string[]
   assignee: string
+  assigneeId: string | null
   dueDate:  string
+
   points:   number
   epicId?:  string
   epic?:    string
@@ -771,8 +773,9 @@ function issueToWID(
 ): WorkItemData {
   const epic = availableEpics.find(e => e.id === issue.epicId)
   const sprint = availableSprints.find(s => s.id === issue.sprint)
-  const member = availableMembers.find(m => m.initials === issue.assignee)
+  const member = availableMembers.find(m => (issue.assigneeId ? m.id === issue.assigneeId : m.initials === issue.assignee))
   const reporter = issue.reporter ? availableMembers.find(m => m.initials === issue.reporter) : undefined
+
   return {
     key:              issue.key,
     type:             issue.type,
@@ -912,7 +915,9 @@ function mapDbItem(
     priority: PRIORITY_FROM_DB[(it.priority ?? '').toLowerCase()] ?? 'medium',
     labels:   [],
     assignee: initials,
+    assigneeId: it.assignee_id ?? null,
     dueDate:  it.due_date ? fmtDay(it.due_date) : '',
+
     points:   it.story_points != null ? Number(it.story_points) : 0,
     epicId:   it.epic_id ?? undefined,
     epic:     epic?.name,
@@ -1042,11 +1047,13 @@ function BoardTab({
 
   const sprintIssues = activeSprint ? issues.filter(i => i.sprint === activeSprint) : issues
   const filtered = sprintIssues.filter(i => {
-    if (filterAssignees.length && !filterAssignees.includes(i.assignee)) return false
+    if (filterAssignees.length && !filterAssignees.includes(i.assigneeId ?? '')) return false
     if (filterPriority.length && !filterPriority.includes(i.priority)) return false
     if (filterType.length && !filterType.includes(i.type)) return false
     return true
   })
+
+
 
   const orderedCols = colOrder.map(id => cols.find(c=>c.id===id)!).filter(Boolean)
   const colIds = new Set(orderedCols.map(c => c.id))
@@ -1156,9 +1163,12 @@ function BoardTab({
     return arr.includes(val) ? arr.filter(x=>x!==val) : [...arr, val]
   }
 
+  const memberById = useMemo(() => new Map(availableMembers.map(m => [m.id, m])), [availableMembers])
+
   const swimlaneKeys: string[] = swimlane==='none' ? ['_all']
-    : swimlane==='assignee' ? [...new Set(filtered.map(i=>i.assignee))].sort()
+    : swimlane==='assignee' ? [...new Set(filtered.map(i=>i.assigneeId ?? ''))].sort()
     : [...new Set(filtered.map(i=>i.epic ?? 'Sem épico'))]
+
 
   const visibleCols = hasUnmapped
     ? [...orderedCols, {id:'unmapped',label:'⚠ Não mapeados',statuses:[],dot:DS.crit} as ColState]
@@ -1204,16 +1214,17 @@ function BoardTab({
         <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
         <div className="flex items-center gap-1">
           {availableMembers.map(m=>{
-            const active = filterAssignees.length===0||filterAssignees.includes(m.initials)
+            const active = filterAssignees.length===0||filterAssignees.includes(m.id)
             return (
-              <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.initials))}
+              <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.id))}
                 title={m.name}
                 className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white transition-all"
-                style={{ background:m.color??DS.text3, opacity:active?1:.3, outline:filterAssignees.includes(m.initials)?'2px solid white':'2px solid transparent' }}>
+                style={{ background:m.color??DS.text3, opacity:active?1:.3, outline:filterAssignees.includes(m.id)?'2px solid white':'2px solid transparent' }}>
                 {m.initials}
               </button>
             )
           })}
+
         </div>
         <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
         {(['critical','high','medium','low'] as Priority[]).map(p=>(
@@ -1447,12 +1458,14 @@ function BoardTab({
                     ))
                   ) : (
                     swimlaneKeys.map(lane=>{
-                      const laneIssues = colIssues.filter(i=>swimlane==='assignee'?i.assignee===lane:(i.epic??'Sem épico')===lane)
+                      const laneIssues = colIssues.filter(i=>swimlane==='assignee'?(i.assigneeId ?? '')===lane:(i.epic??'Sem épico')===lane)
                       if(!laneIssues.length) return null
+                      const laneLabel = swimlane==='assignee' ? (memberById.get(lane)?.name ?? lane) : lane
                       return (
                         <div key={lane}>
-                          <p className="text-[9px] font-semibold uppercase tracking-wide mb-1 px-0.5" style={{ color:S.t3 }}>{lane}</p>
-                          {laneIssues.map(issue=>(
+                          <p className="text-[9px] font-semibold uppercase tracking-wide mb-1 px-0.5" style={{ color:S.t3 }}>{laneLabel}</p>
+                          {laneIssues.map(issue=>{
+                            return (
                             <div key={issue.key} className="mb-1.5">
                               <BoardCard issue={issue} dragging={draggingCard===issue.key}
                                 onDragStart={()=>setDraggingCard(issue.key)}
@@ -1460,11 +1473,14 @@ function BoardTab({
                                 onOpen={()=>setOpenIssue(issue)}
                                 canDrag={canDrag}/>
                             </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )
                     })
                   )}
+
+
 
                 </div>
               </div>
