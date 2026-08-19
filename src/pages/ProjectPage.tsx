@@ -962,7 +962,7 @@ function BoardTab({
   onQuickCreate: (title: string, colId: string, sprintId: string) => Promise<void>
   onLocalPatch: (key: string, patch: Partial<Issue>) => void
   availableEpics: { id: string; label: string; color: string }[]
-  availableMembers: { id: string; initials: string; name: string }[]
+  availableMembers: { id: string; initials: string; name: string; color: string | null }[]
 }) {
   const { activeUser: boardUser } = useSession()
   const canDrag = can(boardUser.permissions, 'board:manage')
