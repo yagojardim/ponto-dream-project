@@ -240,62 +240,70 @@ function ClientCommentInput({
   )
 }
 
-function ClientSignalThread({ itemId, refresh }: { itemId: string; refresh: number }) {
-  const signals = getSignalsForItem(itemId, MOCK_TENANT.tenant_id)
-  const comments = signals.filter(s => s.type === 'comment')
+function ClientSignalThread({ itemId, project, refresh }: {
+  itemId: string; project: string; refresh: number
+}) {
+  const [messages, setMessages] = useState<ClientChatMessage[]>([])
 
-  // Mark unread signals as read when client views them (client reads PO replies)
   useEffect(() => {
-    signals.forEach(s => { if (!s.read_by_po) markReadByPo(s.id) })
+    let alive = true
+    const pid = portalProjectId(project)
+    if (!pid) { setMessages([]); return }
+    ;(async () => {
+      const rows = await listThreadMessages(pid, itemId)
+      if (!alive) return
+      setMessages(rows)
+      // O cliente visualizou a thread: marca os sinais como lidos no banco.
+      await Promise.all(rows.filter(r => r.side === 'client').map(r => markSignalReadByPo(r.id)))
+    })()
+    return () => { alive = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refresh])
+  }, [itemId, project, refresh])
 
-  if (!comments.length) return null
+  if (!messages.length) return null
 
   return (
     <div className="mt-2 space-y-2">
-      {comments.map(c => (
-        <div key={c.id} className="space-y-1.5">
-          {/* Client message */}
-          <div
-            className="rounded-xl px-3 py-2.5"
-            style={{ background: `${C.accent}0C`, border: `1px solid ${C.accent}20` }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
-                style={{ background: C.accent, color: '#fff' }}
-              >{c.author_initials}</span>
-              <span className="text-[10px] font-semibold" style={{ color: C.accent }}>{c.author}</span>
-              <span className="text-[9px]" style={{ color: C.txt3 }}>{new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
-            </div>
-            <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.body}</p>
+      {messages.map(c => c.side === 'client' ? (
+        <div
+          key={c.id}
+          className="rounded-xl px-3 py-2.5"
+          style={{ background: `${C.accent}0C`, border: `1px solid ${C.accent}20` }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+              style={{ background: C.accent, color: '#fff' }}
+            >{c.author.split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase()}</span>
+            <span className="text-[10px] font-semibold" style={{ color: C.accent }}>{c.author}</span>
+            <span className="text-[9px]" style={{ color: C.txt3 }}>{new Date(c.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
           </div>
-          {/* PO public reply */}
-          {c.po_reply && (
-            <div
-              className="ml-4 rounded-xl px-3 py-2.5"
-              style={{ background: `${C.success}08`, border: `1px solid ${C.success}25` }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
-                  style={{ background: C.success, color: '#fff' }}
-                >BA</span>
-                <span className="text-[10px] font-semibold" style={{ color: C.success }}>Equipe Altech</span>
-                <span
-                  className="text-[9px] px-1.5 py-px rounded-full"
-                  style={{ color: C.success, background: `${C.success}18` }}
-                >resposta pública</span>
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.po_reply}</p>
-            </div>
-          )}
+          <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.body}</p>
+        </div>
+      ) : (
+        <div
+          key={c.id}
+          className="ml-4 rounded-xl px-3 py-2.5"
+          style={{ background: `${C.success}08`, border: `1px solid ${C.success}25` }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+              style={{ background: C.success, color: '#fff' }}
+            >BA</span>
+            <span className="text-[10px] font-semibold" style={{ color: C.success }}>{c.author}</span>
+            <span
+              className="text-[9px] px-1.5 py-px rounded-full"
+              style={{ color: C.success, background: `${C.success}18` }}
+            >resposta pública</span>
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.body}</p>
         </div>
       ))}
     </div>
   )
 }
+
 
 // ─── Data (live, hydrated from Supabase via useClientPortal) ──────────────────
 // These module-level bindings are refreshed by the portal shell on every render
