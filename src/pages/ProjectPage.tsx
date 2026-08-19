@@ -1645,7 +1645,7 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
   const backlogIssues = issues.filter(i => !i.sprint)
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto min-h-0">
       {startingSprint && (
 
         <StartSprintModal
@@ -2020,7 +2020,7 @@ function SprintsTab({ issues, sprints, onUpdateIssue, canManageSprint, loading, 
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
           {[0, 1, 2].map(i => (
             <div key={i} className="rounded-xl h-28 skeleton"
@@ -2033,7 +2033,7 @@ function SprintsTab({ issues, sprints, onUpdateIssue, canManageSprint, loading, 
 
   if (error) {
     return (
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="rounded-xl px-4 py-3 text-[12px]"
             style={{ background: `${DS.crit}12`, border: `1px solid ${DS.crit}44`, color: DS.crit }}>
@@ -2045,7 +2045,7 @@ function SprintsTab({ issues, sprints, onUpdateIssue, canManageSprint, loading, 
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto min-h-0">
       <div className="max-w-4xl mx-auto px-4 py-4 space-y-3">
         {canManageSprint && (
           <div className="flex justify-end">
