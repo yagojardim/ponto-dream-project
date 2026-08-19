@@ -186,6 +186,60 @@ function TypeIcon({ t }: { t: IssueType }) {
   return <span className="text-[11px] flex-shrink-0" style={{ color: m.color }}>{m.label}</span>
 }
 
+
+function FilterIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </svg>
+  )
+}
+
+interface FilterPopoverProps {
+  trigger: React.ReactNode
+  activeCount: number
+  clearAll: () => void
+  children: React.ReactNode
+}
+
+function FilterPopover({ trigger, activeCount, clearAll, children }: FilterPopoverProps) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) {
+      document.addEventListener('mousedown', handler)
+      return () => document.removeEventListener('mousedown', handler)
+    }
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <div onClick={() => setOpen(o => !o)} style={{ cursor: 'pointer' }}>{trigger}</div>
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-1.5 z-50 rounded-xl p-3 flex flex-col gap-2 min-w-[240px] max-w-[320px] fade-rise"
+          style={{ background: S.surface2, border: `1px solid ${S.border}`, boxShadow: DS.shadowModal }}>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold" style={{ color: S.t1 }}>Filtros</span>
+            {activeCount > 0 && (
+              <button
+                onClick={() => { clearAll(); setOpen(false) }}
+                className="text-[10px] font-medium transition-opacity hover:opacity-70"
+                style={{ color: DS.accent }}>
+                Limpar ({activeCount})
+              </button>
+            )}
+          </div>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
 // ─── Tag system (P3) ──────────────────────────────────────────────────────────
 type TagLevel = 'red' | 'amber' | 'green'
 interface CardTag { label: string; level: TagLevel }
@@ -1197,11 +1251,11 @@ function BoardTab({
         }}
         onClose={() => { setDailyOpen(false); void onReloadBoard() }}
       />
-      {/* ── Quick filters ──────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto flex-shrink-0"
+      {/* ── Quick filters / context bar ──────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2 flex-shrink-0"
         style={{ background:S.surface, borderBottom:`1px solid ${S.border}` }}>
         <select value={activeSprint} onChange={e=>setActiveSprint(e.target.value)}
-          className="h-7 px-2 text-[11px] rounded-lg border outline-none appearance-none pr-5 font-[inherit]"
+          className="h-7 px-2 text-[11px] rounded-lg border outline-none appearance-none pr-5 font-[inherit] flex-shrink-0"
           style={{ background:S.surface2, border:`1px solid ${S.border}`, color:DS.accent }}>
           {projectSprints.map(s=>(
             <option key={s.id} value={s.id} style={{ background:S.surface2 }}>{s.name} {s.state==='active'?'▶':''}</option>
@@ -1246,38 +1300,74 @@ function BoardTab({
           }}>
           ▶ Iniciar Daily
         </button>
-        <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
-        <div className="flex items-center gap-1">
-          {availableMembers.map(m=>{
-            const active = filterAssignees.length===0||filterAssignees.includes(m.id)
-            return (
-              <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.id))}
-                title={m.name}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white transition-all"
-                style={{ background:m.color??DS.text3, opacity:active?1:.3, outline:filterAssignees.includes(m.id)?'2px solid white':'2px solid transparent' }}>
-                {m.initials}
-              </button>
-            )
-          })}
-
-        </div>
-        <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
-        {(['critical','high','medium','low'] as Priority[]).map(p=>(
-          <button key={p} onClick={()=>setFilterP(prev=>toggleArr(prev,p))}
-            className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
-            style={{ background:filterPriority.includes(p)?`${PRIORITY_COLOR[p]}22`:S.surface2, color:filterPriority.includes(p)?PRIORITY_COLOR[p]:S.t3, border:`1px solid ${filterPriority.includes(p)?`${PRIORITY_COLOR[p]}50`:S.border}` }}>
-            <PriorityDot p={p}/>{p.charAt(0).toUpperCase()+p.slice(1)}
-          </button>
-        ))}
-        <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
-        {(['story','bug','task'] as IssueType[]).map(t=>(
-          <button key={t} onClick={()=>setFilterType(prev=>toggleArr(prev,t))}
-            className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
-            style={{ background:filterType.includes(t)?S.surface2:'transparent', border:`1px solid ${filterType.includes(t)?S.border2:'transparent'}`, color:filterType.includes(t)?S.t1:S.t3 }}>
-            <TypeIcon t={t}/> {t.charAt(0).toUpperCase()+t.slice(1)}
-          </button>
-        ))}
-        <div className="ml-auto flex items-center gap-1.5">
+        <FilterPopover
+          activeCount={filterAssignees.length + filterPriority.length + filterType.length}
+          clearAll={() => { setFilterA([]); setFilterP([]); setFilterType([]) }}
+          trigger={
+            <button
+              className="h-7 pl-2.5 pr-2 rounded-lg text-[11px] font-medium flex items-center gap-1.5 flex-shrink-0 transition-all"
+              style={{
+                background: S.surface2,
+                border: `1px solid ${S.border}`,
+                color: S.t1,
+              }}>
+              <FilterIcon />
+              Filtros
+              {filterAssignees.length + filterPriority.length + filterType.length > 0 && (
+                <span className="ml-0.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold"
+                  style={{ background: DS.accent, color: '#fff' }}>
+                  {filterAssignees.length + filterPriority.length + filterType.length}
+                </span>
+              )}
+            </button>
+          }>
+          {/* Responsável */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Responsável</span>
+            <div className="flex flex-wrap gap-1.5">
+              {availableMembers.map(m=>{
+                const active = filterAssignees.length===0 || filterAssignees.includes(m.id)
+                return (
+                  <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.id))}
+                    title={m.name}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all"
+                    style={{ background:m.color??DS.text3, opacity:active?1:.35, outline:filterAssignees.includes(m.id)?'2px solid '+DS.accent:'2px solid transparent' }}>
+                    {m.initials}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div className="w-full h-px" style={{ background:S.border, margin:'4px 0' }} />
+          {/* Prioridade */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Prioridade</span>
+            <div className="flex flex-wrap gap-1.5">
+              {(['critical','high','medium','low'] as Priority[]).map(p=>(
+                <button key={p} onClick={()=>setFilterP(prev=>toggleArr(prev,p))}
+                  className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
+                  style={{ background:filterPriority.includes(p)?`${PRIORITY_COLOR[p]}22`:S.surface2, color:filterPriority.includes(p)?PRIORITY_COLOR[p]:S.t3, border:`1px solid ${filterPriority.includes(p)?`${PRIORITY_COLOR[p]}50`:S.border}` }}>
+                  <PriorityDot p={p}/>{p.charAt(0).toUpperCase()+p.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="w-full h-px" style={{ background:S.border, margin:'4px 0' }} />
+          {/* Tipo */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Tipo</span>
+            <div className="flex flex-wrap gap-1.5">
+              {(['story','bug','task'] as IssueType[]).map(t=>(
+                <button key={t} onClick={()=>setFilterType(prev=>toggleArr(prev,t))}
+                  className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
+                  style={{ background:filterType.includes(t)?S.surface2:'transparent', border:`1px solid ${filterType.includes(t)?S.border2:'transparent'}`, color:filterType.includes(t)?S.t1:S.t3 }}>
+                  <TypeIcon t={t}/> {t.charAt(0).toUpperCase()+t.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </FilterPopover>
+        <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
           <span className="text-[10px]" style={{ color:S.t3 }}>Agrupar:</span>
           {(['none','assignee','epic'] as SwimlaneMode[]).map(m=>(
             <button key={m} onClick={()=>setSwimlane(m)}
@@ -1288,7 +1378,6 @@ function BoardTab({
           ))}
         </div>
       </div>
-
       {/* ── Loading / error / empty ────────────────────────────────────────── */}
       {loading ? (
         <div className="flex-1 overflow-hidden">
