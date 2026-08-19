@@ -1165,7 +1165,7 @@ function BoardTab({
     : orderedCols
 
   return (
-    <div className="flex flex-col flex-1" onClick={()=>{if(menuColId)setMenuColId(null)}}>
+    <div className="flex flex-col flex-1 min-h-0" onClick={()=>{if(menuColId)setMenuColId(null)}}>
       {/* ── Quick filters ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto flex-shrink-0"
         style={{ background:S.surface, borderBottom:`1px solid ${S.border}` }}>
