@@ -1302,7 +1302,7 @@ function BoardTab({
         </button>
         <FilterPopover
           activeCount={filterAssignees.length + filterPriority.length + filterType.length}
-          clearAll={() => { setFilterA([)); setFilterP([)); setFilterType([)) }}
+          clearAll={() => { setFilterA([]); setFilterP([]); setFilterType([]) }}
           trigger={
             <button
               className="h-7 pl-2.5 pr-2 rounded-lg text-[11px] font-medium flex items-center gap-1.5 flex-shrink-0 transition-all"
@@ -1343,7 +1343,7 @@ function BoardTab({
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Prioridade</span>
             <div className="flex flex-wrap gap-1.5">
-              {(['critical','high','medium','low'] as Priority[)).map(p=>(
+              {(['critical','high','medium','low'] as Priority[].map(p=>(
                 <button key={p} onClick={()=>setFilterP(prev=>toggleArr(prev,p))}
                   className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
                   style={{ background:filterPriority.includes(p)?`${PRIORITY_COLOR[p]}22`:S.surface2, color:filterPriority.includes(p)?PRIORITY_COLOR[p]:S.t3, border:`1px solid ${filterPriority.includes(p)?`${PRIORITY_COLOR[p]}50`:S.border}` }}>
@@ -1357,7 +1357,7 @@ function BoardTab({
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Tipo</span>
             <div className="flex flex-wrap gap-1.5">
-              {(['story','bug','task'] as IssueType[)).map(t=>(
+              {(['story','bug','task'] as IssueType[].map(t=>(
                 <button key={t} onClick={()=>setFilterType(prev=>toggleArr(prev,t))}
                   className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
                   style={{ background:filterType.includes(t)?S.surface2:'transparent', border:`1px solid ${filterType.includes(t)?S.border2:'transparent'}`, color:filterType.includes(t)?S.t1:S.t3 }}>
@@ -1369,7 +1369,7 @@ function BoardTab({
         </FilterPopover>
         <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
           <span className="text-[10px]" style={{ color:S.t3 }}>Agrupar:</span>
-          {(['none','assignee','epic'] as SwimlaneMode[)).map(m=>(
+          {(['none','assignee','epic'] as SwimlaneMode[].map(m=>(
             <button key={m} onClick={()=>setSwimlane(m)}
               className="h-6 px-2 rounded-md text-[10px] font-medium transition-colors"
               style={{ background:swimlane===m?`${DS.accent}20`:'transparent', color:swimlane===m?DS.accent:S.t3 }}>
