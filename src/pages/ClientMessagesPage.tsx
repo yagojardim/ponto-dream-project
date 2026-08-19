@@ -1,67 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { T } from '../components/ds/tokens'
-import { useClientPortal } from '../data/clientPortalStore'
 import { useSession } from '../data/SessionContext'
-import { MOCK_TENANT } from '../data/session'
+import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import {
-  getProjectsWithSignals, getSignalsForProject,
-  addManagementMessage, markProjectReadByPo,
-  type ClientSignal,
-} from '../data/clientSignals'
-import { listResponsibleProjectIds } from '../data/db/clientPortal'
+  listProjectsWithClientSignals, listProjectChat, addClientMessage,
+  markProjectSignalsReadByPo, listResponsibleProjectIds,
+  type ProjectSignalSummary, type ClientChatMessage,
+} from '../data/db/clientPortal'
 
-// ─── Chat message (flattened view over ClientSignal) ─────────────────────────
-interface ChatMsg {
-  id:        string
-  side:      'client' | 'management'
-  author:    string
-  initials:  string
-  body:      string
-  timestamp: string
-  badge?:    'approval' | 'comment'
-  itemTitle?: string
-}
-
-function flattenToChat(signals: ClientSignal[]): ChatMsg[] {
-  const msgs: ChatMsg[] = []
-  for (const s of signals) {
-    if (s.source === 'management') {
-      msgs.push({
-        id: s.id + '_m', side: 'management',
-        author: s.author, initials: s.author_initials,
-        body: s.body ?? '', timestamp: s.created_at,
-      })
-    } else {
-      // Client bubble
-      const isApproval = s.type === 'approval'
-      msgs.push({
-        id: s.id + '_c', side: 'client',
-        author: s.author, initials: s.author_initials,
-        body: isApproval ? `Aprovação registrada: "${s.item_title}"` : (s.body ?? ''),
-        timestamp: s.created_at,
-        badge: s.type,
-        itemTitle: s.item_title,
-      })
-      // Management po_reply inline
-      if (s.po_reply) {
-        const initials = (s.po_reply_by ?? 'EA').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
-        msgs.push({
-          id: s.id + '_r', side: 'management',
-          author: s.po_reply_by ?? 'Equipe Altech', initials,
-          body: s.po_reply,
-          timestamp: new Date(new Date(s.created_at).getTime() + 60_000).toISOString(),
-          itemTitle: s.item_title,
-        })
-      }
-    }
-  }
-  return msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-}
-
-function fmtTime(iso: string): string {
-  const d = new Date(iso)
-  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
-  return `${d.getDate()} ${months[d.getMonth()]} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+function initialsOf(name: string): string {
+  return name.trim().split(/\s+/).slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '—'
 }
 
 function fmtDate(iso: string): string {
@@ -70,16 +18,19 @@ function fmtDate(iso: string): string {
   return `${d.getDate()} ${months[d.getMonth()]}`
 }
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-const AV_COLORS: Record<string, string> = {
-  JS: T.accent, MF: T.purple, CM: T.warn, BA: T.success, LF: '#f97316',
-  EA: T.success,
+function fmtTime(iso: string): string {
+  const d = new Date(iso)
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+const AV_COLORS = [T.accent, T.purple, T.warn, T.success, '#f97316']
 function Av({ initials, size = 28 }: { initials: string; size?: number }) {
+  const idx = initials.charCodeAt(0) % AV_COLORS.length
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      background: AV_COLORS[initials] ?? T.text3,
+      background: AV_COLORS[Number.isNaN(idx) ? 0 : idx],
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: size * 0.36, fontWeight: 700, color: '#fff',
     }}>
@@ -89,18 +40,12 @@ function Av({ initials, size = 28 }: { initials: string; size?: number }) {
 }
 
 // ─── Conversation list item ───────────────────────────────────────────────────
-function ConvItem({
-  project, unread, latest, active, onClick,
-}: {
-  project: string; unread: number; latest: ClientSignal; active: boolean; onClick: () => void
+function ConvItem({ conv, active, onClick }: {
+  conv: ProjectSignalSummary; active: boolean; onClick: () => void
 }) {
-  const preview = latest.source === 'management'
-    ? `Você: ${latest.body ?? ''}`
-    : latest.po_reply
-      ? `Você: ${latest.po_reply}`
-      : latest.type === 'approval'
-        ? `✓ ${latest.item_title}`
-        : (latest.body ?? '')
+  const preview = conv.lastSource === 'management'
+    ? `${conv.lastAuthor}: ${conv.lastBody}`
+    : conv.lastBody
 
   return (
     <button
@@ -115,27 +60,22 @@ function ConvItem({
       onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = T.bgSurface2 }}
       onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
     >
-      {/* Project icon */}
       <div style={{
         width: 36, height: 36, borderRadius: 8, flexShrink: 0, marginTop: 1,
         background: active ? `${T.accent}22` : T.bgSurface2,
         border: `1px solid ${active ? T.accentBorder : T.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 16,
-      }}>
-        💬
-      </div>
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+      }}>💬</div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, marginBottom: 2 }}>
           <span style={{
-            fontSize: 13, fontWeight: 700,
-            color: active ? T.accent : T.text1,
+            fontSize: 13, fontWeight: 700, color: active ? T.accent : T.text1,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
           }}>
-            {project}
+            {conv.name}
           </span>
-          <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{fmtDate(latest.created_at)}</span>
+          <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{fmtDate(conv.lastAt)}</span>
         </div>
         <p style={{
           fontSize: 11, color: T.text2, margin: 0, lineHeight: 1.4,
@@ -143,13 +83,13 @@ function ConvItem({
         }}>
           {preview.slice(0, 80)}
         </p>
-        {unread > 0 && (
+        {conv.unread > 0 && (
           <div style={{ marginTop: 4 }}>
             <span style={{
               fontSize: 9, fontWeight: 700, background: T.accent, color: '#fff',
               borderRadius: 20, padding: '1px 7px',
             }}>
-              {unread} não {unread === 1 ? 'lida' : 'lidas'}
+              {conv.unread} não {conv.unread === 1 ? 'lida' : 'lidas'}
             </span>
           </div>
         )}
@@ -159,22 +99,22 @@ function ConvItem({
 }
 
 // ─── Chat bubble ─────────────────────────────────────────────────────────────
-function Bubble({ msg }: { msg: ChatMsg }) {
+function Bubble({ msg }: { msg: ClientChatMessage }) {
   const isMe = msg.side === 'management'
   return (
     <div style={{
       display: 'flex', flexDirection: isMe ? 'row-reverse' : 'row',
       alignItems: 'flex-end', gap: 8, marginBottom: 12,
     }}>
-      <Av initials={msg.initials} size={26} />
+      <Av initials={initialsOf(msg.author)} size={26} />
       <div style={{ maxWidth: '68%', display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4,
           flexDirection: isMe ? 'row-reverse' : 'row',
         }}>
           <span style={{ fontSize: 11, fontWeight: 600, color: isMe ? T.accent : T.text2 }}>{msg.author}</span>
-          <span style={{ fontSize: 10, color: T.text3 }}>{fmtTime(msg.timestamp)}</span>
-          {msg.badge === 'approval' && (
+          <span style={{ fontSize: 10, color: T.text3 }}>{fmtTime(msg.createdAt)}</span>
+          {msg.type === 'approval' && (
             <span style={{
               fontSize: 9, fontWeight: 700, color: T.success,
               background: T.successDim, border: `1px solid ${T.success}40`,
@@ -182,7 +122,7 @@ function Bubble({ msg }: { msg: ChatMsg }) {
             }}>✓ Aprovação</span>
           )}
         </div>
-        {msg.itemTitle && msg.badge && (
+        {msg.itemTitle && msg.type === 'approval' && (
           <div style={{ fontSize: 10, color: T.text3, marginBottom: 3, fontStyle: 'italic' }}>
             Re: {msg.itemTitle}
           </div>
@@ -212,9 +152,7 @@ function DaySep({ label }: { label: string }) {
 }
 
 // ─── Composer ─────────────────────────────────────────────────────────────────
-function Composer({
-  onSend, disabled,
-}: { onSend: (text: string) => void; disabled?: boolean }) {
+function Composer({ onSend, disabled }: { onSend: (text: string) => void; disabled?: boolean }) {
   const [val, setVal] = useState('')
 
   function submit() {
@@ -249,7 +187,8 @@ function Composer({
         onClick={submit}
         disabled={!val.trim() || disabled}
         style={{
-          height: 40, padding: '0 20px', borderRadius: 10, border: 'none', cursor: !val.trim() || disabled ? 'not-allowed' : 'pointer',
+          height: 40, padding: '0 20px', borderRadius: 10, border: 'none',
+          cursor: !val.trim() || disabled ? 'not-allowed' : 'pointer',
           background: !val.trim() || disabled ? T.border2 : T.accent, color: '#fff',
           fontSize: 13, fontWeight: 600, flexShrink: 0, transition: 'background 0.15s',
           opacity: !val.trim() || disabled ? 0.5 : 1,
@@ -262,61 +201,57 @@ function Composer({
 }
 
 // ─── Thread panel ─────────────────────────────────────────────────────────────
-function ThreadPanel({ project, tenantId, authorName, authorInitials, onSent }: {
-  project: string; tenantId: string
-  authorName: string; authorInitials: string
-  onSent: () => void
+function ThreadPanel({ conv, authorName, onChanged }: {
+  conv: ProjectSignalSummary
+  authorName: string
+  onChanged: () => void
 }) {
-  const [tick, setTick] = useState(0)
+  const [messages, setMessages] = useState<ClientChatMessage[]>([])
+  const [loading, setLoading]   = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
-  void tick
 
-  const signals  = getSignalsForProject(project, tenantId)
-  const messages = flattenToChat(signals)
+  const reload = useCallback(async () => {
+    const rows = await listProjectChat(conv.projectId)
+    setMessages(rows)
+    setLoading(false)
+  }, [conv.projectId])
 
   useEffect(() => {
-    markProjectReadByPo(project, tenantId)
-    setTick(t => t + 1)
+    let alive = true
+    setLoading(true)
+    ;(async () => {
+      await markProjectSignalsReadByPo(conv.projectId)
+      const rows = await listProjectChat(conv.projectId)
+      if (!alive) return
+      setMessages(rows)
+      setLoading(false)
+      onChanged()
+    })()
+    return () => { alive = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project])
+  }, [conv.projectId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length])
 
-  function handleSend(text: string) {
-    addManagementMessage(project, tenantId, text, authorName, authorInitials)
-    markProjectReadByPo(project, tenantId)
-    setTick(t => t + 1)
-    onSent()
+  async function handleSend(text: string) {
+    await addClientMessage({
+      projectId: conv.projectId, body: text, author: authorName, source: 'management',
+    })
+    await reload()
+    onChanged()
   }
 
-  // Group messages by day for day separators
-  const groups: { day: string; msgs: ChatMsg[] }[] = []
+  const groups: { day: string; msgs: ClientChatMessage[] }[] = []
   for (const msg of messages) {
-    const day = fmtDate(msg.timestamp)
+    const day = fmtDate(msg.createdAt)
     const last = groups[groups.length - 1]
     if (!last || last.day !== day) groups.push({ day, msgs: [msg] })
     else last.msgs.push(msg)
   }
 
-  // Get distinct client names
-  const clients = [...new Set(signals.filter(s => s.source !== 'management').map(s => s.author))]
-
-  if (messages.length === 0) {
-    return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', maxWidth: 300 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
-            <p style={{ fontSize: 15, fontWeight: 700, color: T.text1, marginBottom: 6 }}>Sem mensagens</p>
-            <p style={{ fontSize: 13, color: T.text2 }}>Nenhuma mensagem do cliente neste projeto ainda.</p>
-          </div>
-        </div>
-        <Composer onSend={handleSend} />
-      </div>
-    )
-  }
+  const clients = [...new Set(messages.filter(m => m.side === 'client').map(m => m.author))]
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -330,24 +265,24 @@ function ThreadPanel({ project, tenantId, authorName, authorInitials, onSent }: 
           border: `1px solid ${T.accentBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
         }}>💬</div>
         <div>
-          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.text1 }}>{project}</p>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.text1 }}>{conv.name}</p>
           <p style={{ margin: 0, fontSize: 11, color: T.text3 }}>
-            {clients.join(' · ')} · {messages.length} mensagens
+            {clients.length ? `${clients.join(' · ')} · ` : ''}{messages.length} mensagens
           </p>
-        </div>
-        <div style={{ marginLeft: 'auto' }}>
-          <span style={{
-            fontSize: 10, color: T.text3, background: T.bgSurface2, border: `1px solid ${T.border}`,
-            borderRadius: 6, padding: '3px 8px',
-          }}>
-            Somente gestão interna — nunca visível ao cliente como chat
-          </span>
         </div>
       </div>
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-        {groups.map(g => (
+        {loading ? (
+          <p style={{ fontSize: 12, color: T.text3 }}>Carregando conversa…</p>
+        ) : messages.length === 0 ? (
+          <div style={{ textAlign: 'center', paddingTop: 60 }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: T.text1, marginBottom: 6 }}>Sem mensagens</p>
+            <p style={{ fontSize: 13, color: T.text2 }}>Nenhuma mensagem do cliente neste projeto ainda.</p>
+          </div>
+        ) : groups.map(g => (
           <div key={g.day}>
             <DaySep label={g.day} />
             {g.msgs.map(msg => <Bubble key={msg.id} msg={msg} />)}
@@ -380,53 +315,98 @@ function EmptyThread() {
   )
 }
 
+// ─── Harness (Inspection only) ────────────────────────────────────────────────
+function SimulateClientMessage({ conv, onSent }: {
+  conv: ProjectSignalSummary | null; onSent: () => void
+}) {
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function send() {
+    if (!conv || !text.trim()) return
+    setBusy(true)
+    await addClientMessage({
+      projectId: conv.projectId,
+      body: text.trim(),
+      author: conv.clientName || 'Cliente (teste)',
+      source: 'client',
+    })
+    setText('')
+    setBusy(false)
+    onSent()
+  }
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto',
+    }}>
+      <input
+        value={text}
+        onChange={e => setText(e.target.value)}
+        placeholder="Mensagem do cliente (teste)…"
+        onKeyDown={e => { if (e.key === 'Enter') void send() }}
+        style={{
+          width: 220, background: T.bgSurface2, border: `1px solid ${T.border}`,
+          borderRadius: 7, color: T.text1, fontSize: 12, padding: '6px 10px', outline: 'none',
+        }}
+      />
+      <button
+        onClick={() => void send()}
+        disabled={!conv || !text.trim() || busy}
+        style={{
+          height: 30, padding: '0 12px', borderRadius: 7, border: `1px solid ${T.border}`,
+          background: T.bgSurface2, color: T.text2, fontSize: 12, fontWeight: 600,
+          cursor: !conv || !text.trim() || busy ? 'not-allowed' : 'pointer',
+          opacity: !conv || !text.trim() || busy ? 0.5 : 1,
+        }}
+      >
+        Simular mensagem do cliente
+      </button>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ClientMessagesPage() {
-  const portal = useClientPortal()
   const { activeUser } = useSession()
   const isSupervisor = !!activeUser?.tenant_owner || activeUser?.role_context === 'Admin'
-  const [myProjectNames, setMyProjectNames] = useState<string[] | null>(null)
+  const [convs, setConvs]       = useState<ProjectSignalSummary[]>([])
+  const [myIds, setMyIds]       = useState<string[] | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [search, setSearch]     = useState('')
-  const [tick, setTick]         = useState(0)
-  void tick
+  const [loading, setLoading]   = useState(true)
+
+  const reloadConvs = useCallback(async () => {
+    const rows = await listProjectsWithClientSignals()
+    setConvs(rows)
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { void reloadConvs() }, [reloadConvs])
 
   // Responsabilidade real: só vê os projetos em que é responsável (Admin vê tudo).
   useEffect(() => {
     let alive = true
-    if (isSupervisor || !activeUser?.user_id) { setMyProjectNames(null); return }
+    if (isSupervisor || !activeUser?.user_id) { setMyIds(null); return }
     ;(async () => {
       const ids = await listResponsibleProjectIds(activeUser.user_id)
-      if (!alive) return
-      const byId = new Map(portal.projects.map(p => [p.id, p.name]))
-      setMyProjectNames(ids.map(id => byId.get(id)).filter((n): n is string => !!n))
+      if (alive) setMyIds(ids)
     })()
     return () => { alive = false }
-  }, [isSupervisor, activeUser?.user_id, portal.projects])
+  }, [isSupervisor, activeUser?.user_id])
 
-  const allProjects = getProjectsWithSignals(MOCK_TENANT.tenant_id)
-  const projects = isSupervisor
-    ? allProjects
-    : allProjects.filter(p => (myProjectNames ?? []).includes(p.project))
-  const filtered = projects.filter(p =>
-    p.project.toLowerCase().includes(search.toLowerCase())
-  )
-  const noResponsibility = !isSupervisor && (myProjectNames?.length ?? 0) === 0
+  const visible = isSupervisor ? convs : convs.filter(c => (myIds ?? []).includes(c.projectId))
+  const filtered = visible.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+  const noResponsibility = !isSupervisor && myIds !== null && myIds.length === 0
 
-  const authorName     = activeUser?.name ?? 'Equipe Altech'
-  const authorInitials = (activeUser?.name ?? 'Equipe Altech').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()
-
-  // Auto-select first project if none selected
   useEffect(() => {
-    if (!selected && filtered.length > 0) setSelected(filtered[0].project)
+    if (!selected && filtered.length > 0) setSelected(filtered[0].projectId)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtered.length])
 
-  function handleSent() {
-    setTick(t => t + 1)
-  }
-
-  const totalUnread = projects.reduce((s, p) => s + p.unread, 0)
+  const authorName = activeUser?.name ?? 'Equipe Altech'
+  const totalUnread = visible.reduce((s, c) => s + c.unread, 0)
+  const activeConv = filtered.find(c => c.projectId === selected) ?? null
 
   if (noResponsibility) {
     return (
@@ -469,9 +449,9 @@ export default function ClientMessagesPage() {
             {totalUnread} não {totalUnread === 1 ? 'lida' : 'lidas'}
           </span>
         )}
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: T.text3 }}>
-          Tenant: {MOCK_TENANT.tenant_id} · Somente sinais do seu escopo
-        </span>
+        {INSPECTION_MODE_ENABLED && (
+          <SimulateClientMessage conv={activeConv} onSent={() => void reloadConvs()} />
+        )}
       </div>
 
       {/* Body: left list + right thread */}
@@ -482,7 +462,6 @@ export default function ClientMessagesPage() {
           width: 288, flexShrink: 0, borderRight: `1px solid ${T.border}`,
           background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
-          {/* Search */}
           <div style={{ padding: '10px 12px', borderBottom: `1px solid ${T.border}` }}>
             <input
               value={search}
@@ -498,21 +477,22 @@ export default function ClientMessagesPage() {
             />
           </div>
 
-          {/* Project list */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: T.text3 }}>Carregando conversas…</p>
+              </div>
+            ) : filtered.length === 0 ? (
               <div style={{ padding: '32px 16px', textAlign: 'center' }}>
                 <p style={{ fontSize: 13, color: T.text3 }}>Nenhuma conversa encontrada.</p>
               </div>
             ) : (
-              filtered.map(p => (
+              filtered.map(c => (
                 <ConvItem
-                  key={p.project}
-                  project={p.project}
-                  unread={p.unread}
-                  latest={p.latest}
-                  active={selected === p.project}
-                  onClick={() => { setSelected(p.project); setTick(t => t + 1) }}
+                  key={c.projectId}
+                  conv={c}
+                  active={selected === c.projectId}
+                  onClick={() => setSelected(c.projectId)}
                 />
               ))
             )}
@@ -520,14 +500,12 @@ export default function ClientMessagesPage() {
         </div>
 
         {/* Right: thread */}
-        {selected
+        {activeConv
           ? <ThreadPanel
-              key={selected}
-              project={selected}
-              tenantId={MOCK_TENANT.tenant_id}
+              key={activeConv.projectId}
+              conv={activeConv}
               authorName={authorName}
-              authorInitials={authorInitials}
-              onSent={handleSent}
+              onChanged={() => void reloadConvs()}
             />
           : <EmptyThread />
         }
