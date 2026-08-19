@@ -523,7 +523,7 @@ function SprintDeliveriesCard({ projectFilter, onComment }: { projectFilter: Set
                   onSent={_msg => { setRefresh(r => r + 1); onComment('Feedback enviado à equipe responsável.') }}
                 />
               </div>
-              <ClientSignalThread itemId={d.id} refresh={refresh} />
+              <ClientSignalThread itemId={d.id} project={d.project} refresh={refresh} />
             </div>
           )
         })}
