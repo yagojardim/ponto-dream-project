@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
 import { T } from '../components/ds/tokens'
 import { useSession } from '../data/SessionContext'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
@@ -64,7 +64,7 @@ function renderBody(body: string, names: string[]) {
     .sort((a, b) => b.length - a.length)
     .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
   const re = new RegExp(`@(${escaped.join('|')})`, 'g')
-  const out: (string | JSX.Element)[] = []
+  const out: ReactNode[] = []
   let last = 0
   let m: RegExpExecArray | null
   while ((m = re.exec(body))) {
