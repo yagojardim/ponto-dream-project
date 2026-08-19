@@ -248,7 +248,7 @@ function Composer({ onSend, disabled, people }: {
   people: MentionProfile[]
 }) {
   const [val, setVal] = useState('')
-  const [menu, setMenu] = useState<{ items: MentionProfile[]; start: number } | null>(null)
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
   const [picked, setPicked] = useState<MentionProfile[]>([])
   const taRef = useRef<HTMLTextAreaElement>(null)
 
@@ -258,12 +258,18 @@ function Composer({ onSend, disabled, people }: {
     setMenu({ items: matchPeople(people, q.query), start: q.start })
   }
 
-  function pick(p: MentionProfile) {
+  function pick(item: MentionMenuItem) {
     if (!menu) return
     const caret = taRef.current?.selectionStart ?? val.length
-    const next = `${val.slice(0, menu.start)}@${p.name} ${val.slice(caret)}`
-    setVal(next)
-    setPicked(prev => (prev.some(x => x.id === p.id) ? prev : [...prev, p]))
+    if (item.id === '@todos') {
+      const next = `${val.slice(0, menu.start)}@todos ${val.slice(caret)}`
+      setVal(next)
+      setPicked(people)
+    } else {
+      const next = `${val.slice(0, menu.start)}@${item.name} ${val.slice(caret)}`
+      setVal(next)
+      setPicked(prev => (prev.some(x => x.id === item.id) ? prev : [...prev, item]))
+    }
     setMenu(null)
     requestAnimationFrame(() => taRef.current?.focus())
   }
@@ -271,12 +277,12 @@ function Composer({ onSend, disabled, people }: {
   function submit() {
     const t = val.trim()
     if (!t) return
-    const ids = picked.filter(p => t.includes(`@${p.name}`)).map(p => p.id)
-    onSend(t, ids)
+    onSend(t, resolveMentions(t, picked, people))
     setVal('')
     setPicked([])
     setMenu(null)
   }
+
 
   return (
     <div style={{
