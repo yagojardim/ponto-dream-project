@@ -622,6 +622,8 @@ function SimulateClientMessage({ conv, onSent }: {
   const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
   const [picked, setPicked] = useState<MentionProfile[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const [items, setItems]   = useState<ProjectWorkItemOption[]>([])
+  const [itemId, setItemId] = useState('')
 
   useEffect(() => {
     let alive = true
