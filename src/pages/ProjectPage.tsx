@@ -1027,10 +1027,15 @@ function defaultSprint(sprints: SprintDef[], issues: Issue[]): SprintDef | null 
 }
 
 
+function toggleArrTop<T>(arr: T[], val: T): T[] {
+  return arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val]
+}
+
 function BoardTab({
   issues, onCreateIssue, onCompleteSprint, canManageSprint, activeSprints,
   dbCols, loading, error, onMoveCard, onQuickCreate, onLocalPatch,
   availableEpics, availableMembers, projectName, onReloadBoard,
+  filterAssignees, setFilterA,
 }: {
   issues: Issue[]
   onCreateIssue: () => void
@@ -1047,6 +1052,8 @@ function BoardTab({
   availableMembers: { id: string; initials: string; name: string; color: string | null }[]
   projectName: string
   onReloadBoard: () => Promise<void> | void
+  filterAssignees: string[]
+  setFilterA: React.Dispatch<React.SetStateAction<string[]>>
 }) {
   const { activeUser: boardUser } = useSession()
   const [dailyOpen, setDailyOpen] = useState(false)
@@ -1090,7 +1097,7 @@ function BoardTab({
   // filters
   const [activeSprint, setActiveSprint] = useState('')
   const [swimlane, setSwimlane]     = useState<SwimlaneMode>('none')
-  const [filterAssignees, setFilterA] = useState<string[]>([])
+  
   const [filterPriority, setFilterP]  = useState<Priority[]>([])
   const [filterType, setFilterType]   = useState<IssueType[]>([])
 
@@ -1321,24 +1328,6 @@ function BoardTab({
               )}
             </button>
           }>
-          {/* Responsável */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Responsável</span>
-            <div className="flex flex-wrap gap-1.5">
-              {availableMembers.map(m=>{
-                const active = filterAssignees.length===0 || filterAssignees.includes(m.id)
-                return (
-                  <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.id))}
-                    title={m.name}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all"
-                    style={{ background:m.color??DS.text3, opacity:active?1:.35, outline:filterAssignees.includes(m.id)?'2px solid '+DS.accent:'2px solid transparent' }}>
-                    {m.initials}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div className="w-full h-px" style={{ background:S.border, margin:'4px 0' }} />
           {/* Prioridade */}
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Prioridade</span>
@@ -2533,6 +2522,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }))
   }, [boardData])
 
+  const [filterAssignees, setFilterA] = useState<string[]>([])
   const availableMembers = useMemo<{ id: string; initials: string; name: string; color: string | null }[]>(() => {
     return (boardData?.profiles ?? []).map(p => ({
       id: p.id,
@@ -2810,8 +2800,27 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           ))}
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2" />
+        {/* Actions — filtro de responsável */}
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {availableMembers.map(m => {
+            const active = filterAssignees.length === 0 || filterAssignees.includes(m.id)
+            return (
+              <button key={m.id} onClick={() => setFilterA(prev => toggleArrTop(prev, m.id))}
+                title={m.name}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all"
+                style={{ background: m.color ?? DS.text3, opacity: active ? 1 : .35, outline: filterAssignees.includes(m.id) ? '2px solid ' + DS.accent : '2px solid transparent' }}>
+                {m.initials}
+              </button>
+            )
+          })}
+          {filterAssignees.length > 0 && (
+            <button onClick={() => setFilterA([])}
+              className="h-7 px-2 rounded-lg text-[11px] font-medium"
+              style={{ background: S.surface2, border: `1px solid ${S.border}`, color: S.t2 }}>
+              Todos
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tab content */}
@@ -2830,6 +2839,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           onLocalPatch={patchDbIssue}
           availableEpics={availableEpics}
           availableMembers={availableMembers}
+          filterAssignees={filterAssignees}
+          setFilterA={setFilterA}
           projectName={boardData?.project?.name ?? '—'}
           onReloadBoard={loadBoard}
         />
