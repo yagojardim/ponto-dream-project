@@ -2344,7 +2344,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
   const loadBoard = useCallback(async () => {
     setBoardLoading(true); setBoardError(null)
     try {
-      const data = await fetchBoardData(scopedProjectId, undefined, boardId ? getBoardById(boardId)?.name : undefined)
+      const data = await fetchBoardData(scopedProjectId, boardId ?? undefined)
       setBoardData(data)
       applyBoardData(data)
     } catch (err) {
