@@ -945,6 +945,28 @@ function uiStatus(dbStatus: string): IssueStatus {
   }
 }
 
+/** Choose the sprint the board should show by default.
+ *  1. Active sprint, if any.
+ *  2. Most recent sprint that actually has items.
+ *  3. Most recent sprint by date as last resort.
+ */
+function defaultSprint(sprints: SprintDef[], issues: Issue[]): SprintDef | null {
+  if (!sprints.length) return null
+  const active = sprints.find(s => s.state === 'active')
+  if (active) return active
+
+  const recent = (a: SprintDef, b: SprintDef) => {
+    const da = Date.parse(a.end) || Date.parse(a.start) || 0
+    const db = Date.parse(b.end) || Date.parse(b.start) || 0
+    return db - da
+  }
+
+  const withItems = sprints.filter(s => issues.some(i => i.sprint === s.id))
+  if (withItems.length) return [...withItems].sort(recent)[0]
+  return [...sprints].sort(recent)[0]
+}
+
+
 function BoardTab({
   issues, onCreateIssue, onCompleteSprint, canManageSprint, activeSprints,
   dbCols, loading, error, onMoveCard, onQuickCreate, onLocalPatch,
