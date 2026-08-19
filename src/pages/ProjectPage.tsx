@@ -54,7 +54,9 @@ interface Issue {
   priority: Priority
   labels:   string[]
   assignee: string
+  assigneeId: string | null
   dueDate:  string
+
   points:   number
   epicId?:  string
   epic?:    string
@@ -912,7 +914,9 @@ function mapDbItem(
     priority: PRIORITY_FROM_DB[(it.priority ?? '').toLowerCase()] ?? 'medium',
     labels:   [],
     assignee: initials,
+    assigneeId: it.assignee_id ?? null,
     dueDate:  it.due_date ? fmtDay(it.due_date) : '',
+
     points:   it.story_points != null ? Number(it.story_points) : 0,
     epicId:   it.epic_id ?? undefined,
     epic:     epic?.name,
@@ -1042,11 +1046,12 @@ function BoardTab({
 
   const sprintIssues = activeSprint ? issues.filter(i => i.sprint === activeSprint) : issues
   const filtered = sprintIssues.filter(i => {
-    if (filterAssignees.length && !filterAssignees.includes(i.assignee)) return false
+    if (filterAssignees.length && !filterAssignees.includes(i.assigneeId)) return false
     if (filterPriority.length && !filterPriority.includes(i.priority)) return false
     if (filterType.length && !filterType.includes(i.type)) return false
     return true
   })
+
 
   const orderedCols = colOrder.map(id => cols.find(c=>c.id===id)!).filter(Boolean)
   const colIds = new Set(orderedCols.map(c => c.id))
