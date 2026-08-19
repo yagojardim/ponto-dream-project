@@ -1025,21 +1025,20 @@ function BoardTab({
     setTimeout(() => setBoardToast(null), 4000)
   }
   // filters
-  const [activeSprint, setActiveSprint] = useState(() => {
-    const selectable = activeSprints.filter(s => s.state !== 'completed')
-    return selectable.find(s => s.state === 'active')?.id ?? selectable[0]?.id ?? ''
-  })
+  const [activeSprint, setActiveSprint] = useState('')
   const [swimlane, setSwimlane]     = useState<SwimlaneMode>('none')
   const [filterAssignees, setFilterA] = useState<string[]>([])
   const [filterPriority, setFilterP]  = useState<Priority[]>([])
   const [filterType, setFilterType]   = useState<IssueType[]>([])
 
-  const selectableSprints = activeSprints.filter(s => s.state !== 'completed')
+  const projectSprints = activeSprints
   useEffect(() => {
-    if (activeSprint && selectableSprints.some(s => s.id === activeSprint)) return
-    const next = selectableSprints.find(s => s.state === 'active') ?? selectableSprints[0]
-    if (next) setActiveSprint(next.id)
-  }, [activeSprints]) // eslint-disable-line react-hooks/exhaustive-deps
+    // Once sprints load, keep a valid manual selection; otherwise pick the default.
+    if (activeSprint && projectSprints.some(s => s.id === activeSprint)) return
+    const next = defaultSprint(projectSprints, issues)
+    if (next && next.id !== activeSprint) setActiveSprint(next.id)
+  }, [activeSprints, issues]) // eslint-disable-line react-hooks/exhaustive-deps
+
 
   const sprintIssues = activeSprint ? issues.filter(i => i.sprint === activeSprint) : issues
   const filtered = sprintIssues.filter(i => {
