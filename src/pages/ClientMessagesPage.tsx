@@ -11,6 +11,12 @@ import {
 import { create as createNotification } from '../data/db/notifications'
 
 // ─── @menções ────────────────────────────────────────────────────────────────
+const TODOS_MENTION: { id: '@todos'; name: 'Todos os responsáveis' } = {
+  id: '@todos',
+  name: 'Todos os responsáveis',
+}
+type MentionMenuItem = MentionProfile | typeof TODOS_MENTION
+
 /** Detecta o token "@..." em edição imediatamente antes do cursor. */
 function mentionQuery(text: string, caret: number): { query: string; start: number } | null {
   const upto = text.slice(0, caret)
@@ -23,12 +29,14 @@ function mentionQuery(text: string, caret: number): { query: string; start: numb
   return { query, start: at }
 }
 
-function matchPeople(people: MentionProfile[], query: string): MentionProfile[] {
+function matchPeople(people: MentionProfile[], query: string): MentionMenuItem[] {
   const q = query.trim().toLowerCase()
-  return people.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 6)
+  const matches = people.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 6)
+  const todosVisible = !q || 'todos os responsáveis'.includes(q) || '@todos'.includes(q)
+  return todosVisible ? [TODOS_MENTION, ...matches] : matches
 }
 
-function MentionMenu({ items, onPick }: { items: MentionProfile[]; onPick: (p: MentionProfile) => void }) {
+function MentionMenu({ items, onPick }: { items: MentionMenuItem[]; onPick: (p: MentionMenuItem) => void }) {
   if (!items.length) return null
   return (
     <div style={{
@@ -48,7 +56,7 @@ function MentionMenu({ items, onPick }: { items: MentionProfile[]; onPick: (p: M
           onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = T.bgSurface2)}
           onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')}
         >
-          <Av initials={initialsOf(p.name)} size={20} />
+          <Av initials={p.id === '@todos' ? '👋' : initialsOf(p.name)} size={20} />
           {p.name}
         </button>
       ))}
@@ -56,10 +64,10 @@ function MentionMenu({ items, onPick }: { items: MentionProfile[]; onPick: (p: M
   )
 }
 
-/** Renderiza o corpo destacando os tokens @Nome mencionados. */
+/** Renderiza o corpo destacando os tokens @Nome (e @todos) mencionados. */
 function renderBody(body: string, names: string[]) {
-  if (!names.length) return body
-  const escaped = names
+  const allNames = [...names, 'todos']
+  const escaped = allNames
     .filter(Boolean)
     .sort((a, b) => b.length - a.length)
     .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -77,6 +85,14 @@ function renderBody(body: string, names: string[]) {
   if (last < body.length) out.push(body.slice(last))
   return out
 }
+
+function resolveMentions(text: string, picked: MentionProfile[], allPeople: MentionProfile[]): string[] {
+  const individual = picked.filter(p => text.includes(`@${p.name}`)).map(p => p.id)
+  const hasTodos = text.includes('@todos')
+  if (!hasTodos) return [...new Set(individual)]
+  return [...new Set([...allPeople.map(p => p.id), ...individual])]
+}
+
 
 function initialsOf(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map(w => w[0] ?? '').join('').toUpperCase() || '—'
@@ -232,7 +248,7 @@ function Composer({ onSend, disabled, people }: {
   people: MentionProfile[]
 }) {
   const [val, setVal] = useState('')
-  const [menu, setMenu] = useState<{ items: MentionProfile[]; start: number } | null>(null)
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
   const [picked, setPicked] = useState<MentionProfile[]>([])
   const taRef = useRef<HTMLTextAreaElement>(null)
 
@@ -242,12 +258,18 @@ function Composer({ onSend, disabled, people }: {
     setMenu({ items: matchPeople(people, q.query), start: q.start })
   }
 
-  function pick(p: MentionProfile) {
+  function pick(item: MentionMenuItem) {
     if (!menu) return
     const caret = taRef.current?.selectionStart ?? val.length
-    const next = `${val.slice(0, menu.start)}@${p.name} ${val.slice(caret)}`
-    setVal(next)
-    setPicked(prev => (prev.some(x => x.id === p.id) ? prev : [...prev, p]))
+    if (item.id === '@todos') {
+      const next = `${val.slice(0, menu.start)}@todos ${val.slice(caret)}`
+      setVal(next)
+      setPicked(people)
+    } else {
+      const next = `${val.slice(0, menu.start)}@${item.name} ${val.slice(caret)}`
+      setVal(next)
+      setPicked(prev => (prev.some(x => x.id === item.id) ? prev : [...prev, item]))
+    }
     setMenu(null)
     requestAnimationFrame(() => taRef.current?.focus())
   }
@@ -255,12 +277,12 @@ function Composer({ onSend, disabled, people }: {
   function submit() {
     const t = val.trim()
     if (!t) return
-    const ids = picked.filter(p => t.includes(`@${p.name}`)).map(p => p.id)
-    onSend(t, ids)
+    onSend(t, resolveMentions(t, picked, people))
     setVal('')
     setPicked([])
     setMenu(null)
   }
+
 
   return (
     <div style={{
@@ -450,7 +472,7 @@ function SimulateClientMessage({ conv, onSent }: {
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [people, setPeople] = useState<MentionProfile[]>([])
-  const [menu, setMenu] = useState<{ items: MentionProfile[]; start: number } | null>(null)
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
   const [picked, setPicked] = useState<MentionProfile[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -464,11 +486,16 @@ function SimulateClientMessage({ conv, onSent }: {
     return () => { alive = false }
   }, [conv?.projectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function pick(p: MentionProfile) {
+  function pick(item: MentionMenuItem) {
     if (!menu) return
     const caret = inputRef.current?.selectionStart ?? text.length
-    setText(`${text.slice(0, menu.start)}@${p.name} ${text.slice(caret)}`)
-    setPicked(prev => (prev.some(x => x.id === p.id) ? prev : [...prev, p]))
+    if (item.id === '@todos') {
+      setText(`${text.slice(0, menu.start)}@todos ${text.slice(caret)}`)
+      setPicked(people)
+    } else {
+      setText(`${text.slice(0, menu.start)}@${item.name} ${text.slice(caret)}`)
+      setPicked(prev => (prev.some(x => x.id === item.id) ? prev : [...prev, item]))
+    }
     setMenu(null)
     requestAnimationFrame(() => inputRef.current?.focus())
   }
@@ -478,7 +505,7 @@ function SimulateClientMessage({ conv, onSent }: {
     setBusy(true)
     const body = text.trim()
     const author = conv.clientName || 'Cliente (teste)'
-    const mentions = picked.filter(p => body.includes(`@${p.name}`)).map(p => p.id)
+    const mentions = resolveMentions(body, picked, people)
     await addClientMessage({ projectId: conv.projectId, body, author, source: 'client', mentions })
     await notifyMentions(mentions, author, conv, body)
     setText('')
@@ -486,6 +513,7 @@ function SimulateClientMessage({ conv, onSent }: {
     setBusy(false)
     onSent()
   }
+
 
   return (
     <div style={{
