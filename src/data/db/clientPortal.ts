@@ -919,3 +919,228 @@ export const addClientMessage = (input: AddClientMessageInput): Promise<ClientSi
 export const markProjectSignalsReadByPo = (projectId: string): Promise<void> =>
   safeCall('clientPortal.markProjectSignalsReadByPo', () => markProjectSignalsReadByPo__raw(projectId), undefined, { projectId })
 
+
+// ─── Contexto real do cliente (client_portal_users) ───────────────────────────
+export interface ClientPortalContext {
+  id: string
+  name: string
+  email: string
+  portalRole: PortalRole
+  canApprove: boolean
+  canPreview: boolean
+  canComment: boolean
+  passwordMustChange: boolean
+  /** Ids de todos os projetos liberados para este e-mail no tenant. */
+  projectIds: string[]
+  userIds: string[]
+}
+
+function toContext(rows: ClientPortalUserRow[]): ClientPortalContext | null {
+  if (rows.length === 0) return null
+  const head = rows[0]
+  return {
+    id: head.id,
+    name: head.name,
+    email: head.email,
+    portalRole: rows.some(r => r.portal_role === 'portal-admin') ? 'portal-admin' : 'viewer',
+    canApprove: rows.some(r => r.can_approve),
+    canPreview: rows.some(r => r.can_preview),
+    canComment: rows.some(r => r.can_comment),
+    passwordMustChange: rows.some(r => r.password_must_change),
+    projectIds: [...new Set(rows.map(r => r.project_id))],
+    userIds: rows.map(r => r.id),
+  }
+}
+
+/**
+ * Resolve o cliente logado no portal. Sem identificador (Inspection), cai no
+ * primeiro cliente ativo do tenant para o portal continuar testável.
+ */
+async function getClientPortalContext__raw(
+  ident?: { id?: string | null; email?: string | null } | null,
+): Promise<ClientPortalContext | null> {
+  const base = () => tbl('client_portal_users').select('*')
+    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+
+  if (ident?.email) {
+    const { data, error } = await base().ilike('email', ident.email)
+    if (error) throw tenantError('client_portal_users', error.message)
+    const ctx = toContext((data ?? []) as ClientPortalUserRow[])
+    if (ctx) return ctx
+  }
+  if (ident?.id) {
+    const { data, error } = await base().eq('id', ident.id)
+    if (error) throw tenantError('client_portal_users', error.message)
+    const rows = (data ?? []) as ClientPortalUserRow[]
+    if (rows.length > 0) {
+      const { data: byEmail } = await base().ilike('email', rows[0].email)
+      return toContext(((byEmail ?? rows) as ClientPortalUserRow[]))
+    }
+  }
+  // Fallback (Inspection): primeiro cliente ativo do tenant.
+  const { data, error } = await base().order('created_at', { ascending: true }).limit(1)
+  if (error) throw tenantError('client_portal_users', error.message)
+  const first = ((data ?? []) as ClientPortalUserRow[])[0]
+  if (!first) return null
+  const { data: same } = await base().ilike('email', first.email)
+  return toContext(((same ?? [first]) as ClientPortalUserRow[]))
+}
+
+/** Respostas da gestão ainda não lidas pelo cliente, nos projetos dele. */
+export interface ClientReplyNotice {
+  id: string
+  projectId: string
+  project: string
+  itemTitle: string
+  poReply: string
+  poReplyBy: string | null
+}
+
+async function listClientUnreadReplies__raw(
+  ctx: ClientPortalContext | null,
+): Promise<ClientReplyNotice[]> {
+  if (!ctx || ctx.projectIds.length === 0) return []
+  const { data, error } = await tbl('client_signals').select('*')
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .in('project_id', ctx.projectIds)
+    .eq('reply_read_by_client', false)
+    .not('po_reply', 'is', null)
+    .is('archived_at', null)
+    .order('created_at', { ascending: false })
+  if (error) throw tenantError('client_signals', error.message)
+  const rows = (data ?? []) as ClientSignalRow[]
+  const projects = await listPortalProjects__raw()
+  const nameOf = new Map(projects.map(p => [p.id, p.name]))
+  return rows.map(r => {
+    const meta = (r.metadata ?? {}) as Record<string, unknown>
+    return {
+      id: r.id,
+      projectId: r.project_id,
+      project: nameOf.get(r.project_id) ?? '',
+      itemTitle: r.item_title ?? 'Conversa geral',
+      poReply: r.po_reply ?? '',
+      poReplyBy: typeof meta.po_reply_by === 'string' ? meta.po_reply_by : null,
+    }
+  })
+}
+
+async function countClientUnreadReplies__raw(ctx: ClientPortalContext | null): Promise<number> {
+  if (!ctx || ctx.projectIds.length === 0) return 0
+  const { count, error } = await tbl('client_signals').select('id', { count: 'exact', head: true })
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .in('project_id', ctx.projectIds)
+    .eq('reply_read_by_client', false)
+    .not('po_reply', 'is', null)
+    .is('archived_at', null)
+  if (error) throw tenantError('client_signals', error.message)
+  return count ?? 0
+}
+
+async function markClientRepliesRead__raw(ctx: ClientPortalContext | null): Promise<void> {
+  if (!ctx || ctx.projectIds.length === 0) return
+  await tbl('client_signals').update({ reply_read_by_client: true })
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .in('project_id', ctx.projectIds)
+    .eq('reply_read_by_client', false)
+}
+
+// ─── Escopo do portal (view models prontos para a tela) ──────────────────────
+export interface ScopeProject {
+  id: string; name: string; progress: number
+  sprint: string; sprintPct: number; status: 'on-track' | 'at-risk'
+}
+export interface ScopeSprint { name: string; pct: number; status: string; ends: string }
+export interface ScopeDelivery {
+  id: string; title: string; status: 'done' | 'review' | 'progress'
+  project: string; date: string; due: string; overdueDays: number
+}
+export interface ScopeMilestone {
+  id: string; date: string; title: string; desc: string; status: 'upcoming' | 'done'
+}
+export interface PortalScope {
+  projects: ScopeProject[]
+  sprints: ScopeSprint[]
+  deliveries: ScopeDelivery[]
+  roadmap: ScopeMilestone[]
+}
+
+export const EMPTY_PORTAL_SCOPE: PortalScope = {
+  projects: [], sprints: [], deliveries: [], roadmap: [],
+}
+
+const MONTHS_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+function fmtShortDate(iso: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return `${d.getDate()} ${MONTHS_PT[d.getMonth()]}`
+}
+function fmtMonthYear(iso: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return `${MONTHS_PT[d.getMonth()]} ${d.getFullYear()}`
+}
+
+async function getPortalScope__raw(projectIds: string[]): Promise<PortalScope> {
+  if (projectIds.length === 0) return EMPTY_PORTAL_SCOPE
+  const scopes = await Promise.all(projectIds.map(id => getClientPortal__raw(id)))
+  const out: PortalScope = { projects: [], sprints: [], deliveries: [], roadmap: [] }
+  for (const sc of scopes) {
+    if (!sc.project) continue
+    const name = sc.project.name
+    const done = sc.deliveries.filter(d => d.status === 'done').length
+    const progress = sc.deliveries.length ? Math.round((done / sc.deliveries.length) * 100) : 0
+    const active = sc.sprints.find(s => s.state === 'active') ?? sc.sprints[sc.sprints.length - 1]
+    const late = sc.deliveries.some(
+      d => d.status !== 'done' && d.due_date !== null && new Date(d.due_date) < new Date(),
+    )
+    out.projects.push({
+      id: sc.project.id, name, progress,
+      sprint: active?.name ?? 'Sem sprint ativa',
+      sprintPct: progress,
+      status: late ? 'at-risk' : 'on-track',
+    })
+    if (active) {
+      out.sprints.push({
+        name: `${active.name} — ${name}`, pct: progress,
+        status: late ? 'at-risk' : 'on-track', ends: fmtShortDate(active.end_date),
+      })
+    }
+    for (const d of sc.deliveries) {
+      const overdueDays = d.status !== 'done' && d.due_date
+        ? Math.max(0, Math.floor((Date.now() - new Date(d.due_date).getTime()) / 86400000))
+        : 0
+      out.deliveries.push({
+        id: d.id, title: d.title, status: d.status, project: name,
+        date: fmtShortDate(d.completed_at ?? d.due_date),
+        due: fmtShortDate(d.due_date), overdueDays,
+      })
+    }
+    for (const r of sc.roadmap) {
+      out.roadmap.push({
+        id: r.id,
+        date: r.quarter ?? fmtMonthYear(sc.project.period_end),
+        title: r.name,
+        desc: `${name} · ${r.done}/${r.total} entregas concluídas`,
+        status: r.total > 0 && r.done === r.total ? 'done' : 'upcoming',
+      })
+    }
+  }
+  return out
+}
+
+export const getClientPortalContext = (
+  ident?: { id?: string | null; email?: string | null } | null,
+): Promise<ClientPortalContext | null> =>
+  safeCall('clientPortal.getClientPortalContext', () => getClientPortalContext__raw(ident), null)
+
+export const listClientUnreadReplies = (ctx: ClientPortalContext | null): Promise<ClientReplyNotice[]> =>
+  safeCall('clientPortal.listClientUnreadReplies', () => listClientUnreadReplies__raw(ctx), [])
+
+export const countClientUnreadReplies = (ctx: ClientPortalContext | null): Promise<number> =>
+  safeCall('clientPortal.countClientUnreadReplies', () => countClientUnreadReplies__raw(ctx), 0)
+
+export const markClientRepliesRead = (ctx: ClientPortalContext | null): Promise<void> =>
+  safeCall('clientPortal.markClientRepliesRead', () => markClientRepliesRead__raw(ctx), undefined)
+
+export const getPortalScope = (projectIds: string[]): Promise<PortalScope> =>
+  safeCall('clientPortal.getPortalScope', () => getPortalScope__raw(projectIds), EMPTY_PORTAL_SCOPE)

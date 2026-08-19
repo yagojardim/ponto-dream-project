@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { T } from '../components/ds/tokens'
-import { useClientPortal } from '../data/clientPortalStore'
 import { portalLogin, type PortalLoginUser } from '../data/db/clientPortal'
+import { savePortalSession } from '../lib/portalSession'
+
 
 interface Props {
   onSuccess: (permission: 'viewer' | 'admin', mustChangePassword: boolean) => void
@@ -14,7 +15,7 @@ const PA = '#34d399'
 const PADim = 'rgba(52,211,153,0.12)'
 
 export default function ClientLoginPage({ onSuccess }: Props) {
-  useClientPortal()
+
   const [loginState, setLoginState] = useState<PortalLoginState>('idle')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,6 +38,10 @@ export default function ClientLoginPage({ onSuccess }: Props) {
         return
       }
       setPortalUser(res.user)
+      savePortalSession({
+        id: res.user.id, name: res.user.name, email: res.user.email, tenantId: res.user.tenantId,
+      })
+
       setLoginState(res.user.permission === 'admin' ? 'success-admin' : 'success-viewer')
     } catch {
       setErrorMsg('Não foi possível validar o acesso agora. Tente novamente em instantes.')

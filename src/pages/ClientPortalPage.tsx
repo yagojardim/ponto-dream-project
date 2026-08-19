@@ -1,23 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useClientPortal } from '../data/clientPortalStore'
-import type {
-  PortalScope, ScopeProject, ScopeSprint, ScopeDelivery, ScopeMilestone,
-} from '../data/clientPortalStore'
-import {
-  getClientUnreadReplies, markReplyReadByClient, markAllClientRepliesRead,
-  type ClientSignal,
-} from '../data/clientSignals'
 import {
   addClientMessage, addClientApproval, listThreadMessages, listProjectChat,
-  markSignalReadByPo, DEFAULT_TENANT_ID, type ClientChatMessage,
+  markSignalReadByPo, markReplyReadByClient, setPortalPasswordChanged,
+  getClientPortalContext, listClientUnreadReplies, countClientUnreadReplies,
+  markClientRepliesRead, getPortalScope, EMPTY_PORTAL_SCOPE,
+  type ClientChatMessage, type ClientPortalContext, type ClientReplyNotice,
+  type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
 } from '../data/db/clientPortal'
-import { getClientPermissions, getClientAccess, updateClientPassword } from '../data/clientAccess'
+import { readPortalSession } from '../lib/portalSession'
 
-/** Tenant real (Supabase) — nunca o mock. */
-const MOCK_TENANT = { tenant_id: DEFAULT_TENANT_ID }
+/** Identidade real do cliente logado no portal (resolvida do banco). */
+let CLIENT: ClientPortalContext | null = null
 
-// Inspection Mode: the portal client is always "João Silva" (mock)
-const CLIENT_AUTHOR = 'João Silva'
 
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -155,7 +149,7 @@ function ClientCommentInput({
 }) {
   const [open, setOpen] = useState(false)
   const [val, setVal]   = useState('')
-  const canComment = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).client_can_comment
+  const canComment = CLIENT?.canComment ?? false
 
   async function send() {
     const body = val.trim()
@@ -164,7 +158,7 @@ function ClientCommentInput({
     await addClientMessage({
       projectId: pid,
       body,
-      author:    CLIENT_AUTHOR,
+      author:    CLIENT?.name ?? 'Cliente',
       source:    'client',
       itemId,
       itemTitle,
@@ -649,7 +643,11 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
   const [approved, setApproved] = useState<Set<string>>(new Set())
   const [refresh, setRefresh] = useState(0)
 
-  const perms = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+  const perms = {
+    client_can_preview: CLIENT?.canPreview ?? false,
+    client_can_approve: CLIENT?.canApprove ?? false,
+  }
+
 
   function handleSent(_msg: string) {
     setRefresh(r => r + 1)
@@ -705,7 +703,8 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
                         if (pid) {
                           void addClientApproval({
                             projectId: pid, workItemId: v.id, itemTitle: v.title,
-                            author: CLIENT_AUTHOR,
+                            author: CLIENT?.name ?? 'Cliente',
+
                           })
                         }
                         onComment(`✓ Aprovação registrada: "${v.title}"`)
@@ -861,19 +860,28 @@ function ClientNotifBell({
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
-  const unread = getClientUnreadReplies(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+  const [unread, setUnread] = useState<ClientReplyNotice[]>([])
 
-  function handleClick(sig: ClientSignal) {
-    markReplyReadByClient(sig.id)
+  useEffect(() => {
+    let alive = true
+    void listClientUnreadReplies(CLIENT).then(rows => { if (alive) setUnread(rows) })
+    return () => { alive = false }
+  }, [tick, localTick])
+
+  function handleClick(sig: ClientReplyNotice) {
+    void markReplyReadByClient(sig.id)
+    setUnread(prev => prev.filter(u => u.id !== sig.id))
     setLocalTick(t => t + 1)
     setOpen(false)
-    onRead(`${sig.po_reply_by ?? 'Equipe Altech'} respondeu: "${(sig.po_reply ?? '').slice(0, 80)}${(sig.po_reply ?? '').length > 80 ? '…' : ''}"`)
+    onRead(`${sig.poReplyBy ?? 'Equipe Altech'} respondeu: "${sig.poReply.slice(0, 80)}${sig.poReply.length > 80 ? '…' : ''}"`)
   }
 
   function handleMarkAll() {
-    markAllClientRepliesRead(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+    void markClientRepliesRead(CLIENT)
+    setUnread([])
     setLocalTick(t => t + 1)
   }
+
 
   return (
     <div ref={ref} className="relative">
@@ -979,13 +987,14 @@ function ClientNotifBell({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-semibold mb-0.5" style={{ color: C.txt }}>
-                      {sig.po_reply_by ?? 'Equipe Altech'} respondeu seu comentário
+                      {sig.poReplyBy ?? 'Equipe Altech'} respondeu seu comentário
                     </p>
                     <p className="text-[10px] leading-snug mb-1 line-clamp-2" style={{ color: C.txt2 }}>
-                      "{sig.po_reply}"
+                      "{sig.poReply}"
                     </p>
                     <p className="text-[9px]" style={{ color: C.txt3 }}>
-                      {sig.item_title} · {sig.project}
+                      {sig.itemTitle} · {sig.project}
+
                     </p>
                   </div>
                   <span className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{ background: C.accent }} />
@@ -999,7 +1008,7 @@ function ClientNotifBell({
             className="px-4 py-2.5 text-[9px] text-center"
             style={{ borderTop: `1px solid ${C.border}`, color: C.txt3 }}
           >
-            Notificações deste tenant · {MOCK_TENANT.tenant_id.replace('ten_', '')}
+            Notificações do seu portal
           </div>
         </div>
       )}
@@ -1032,8 +1041,8 @@ function ChangePasswordModal({ onSaved, onClose, voluntary = false }: { onSaved:
   function handleSave() {
     if (!valid) return
     setSaving(true)
-    const rec = getClientAccess(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
-    if (rec) updateClientPassword(rec.id, pwd1)
+    if (CLIENT) void setPortalPasswordChanged(CLIENT.id)
+
     setTimeout(() => {
       setSaving(false)
       onSaved()
@@ -1366,55 +1375,8 @@ interface ChatBubble {
   itemTitle?: string
 }
 
-function flattenClientThread(signals: ClientSignal[], clientAuthor: string): ChatBubble[] {
-  const bubbles: ChatBubble[] = []
-  for (const sig of signals) {
-    const isClientSig = sig.author === clientAuthor && sig.source !== 'management'
-    const isMgmtSig = sig.source === 'management'
-    if (!isClientSig && !isMgmtSig) continue
 
-    if (isClientSig) {
-      bubbles.push({
-        id: sig.id,
-        side: 'client',
-        author: clientAuthor,
-        initials: 'JS',
-        body: sig.body ?? (sig.type === 'approval' ? '✓ Item aprovado' : ''),
-        timestamp: sig.created_at,
-        badge: sig.type === 'approval' ? '✓ Aprovação' : undefined,
-        itemTitle: sig.item_title,
-      })
-    } else {
-      const inits = sig.author.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-      bubbles.push({
-        id: sig.id,
-        side: 'management',
-        author: sig.author,
-        initials: inits,
-        body: sig.body ?? '',
-        timestamp: sig.created_at,
-        itemTitle: sig.item_title,
-      })
-    }
 
-    // PO reply on a client signal
-    if (sig.po_reply && isClientSig) {
-      const replyTs = new Date(sig.created_at)
-      replyTs.setSeconds(replyTs.getSeconds() + 60)
-      bubbles.push({
-        id: `${sig.id}_r`,
-        side: 'management',
-        author: sig.po_reply_by ?? 'Equipe Altech',
-        initials: 'EA',
-        body: sig.po_reply,
-        timestamp: replyTs.toISOString(),
-        itemTitle: sig.item_title,
-      })
-    }
-  }
-  bubbles.sort((a, b) => a.timestamp.localeCompare(b.timestamp))
-  return bubbles
-}
 
 function fmtTime(iso: string) {
   try {
@@ -1428,16 +1390,9 @@ function fmtDay(iso: string) {
   } catch { return '' }
 }
 
-function sigProjectId(sigProject: string): string | null {
-  const p = PROJECTS.find(
-    proj => proj.name === sigProject || sigProject.startsWith(proj.name) || proj.name.startsWith(sigProject),
-  )
-  return p?.id ?? null
-}
-
 function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   const [selId, setSelId] = useState<string>(PROJECTS[0]?.id ?? '')
-  const chatCanComment = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).client_can_comment
+  const chatCanComment = CLIENT?.canComment ?? false
   const [draft, setDraft] = useState('')
   const [tick, setTick] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -1445,12 +1400,17 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   void tick
 
   // Unread per project (management replies the client hasn't read)
-  const allUnread = getClientUnreadReplies(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+  const [allUnread, setAllUnread] = useState<ClientReplyNotice[]>([])
+  useEffect(() => {
+    let alive = true
+    void listClientUnreadReplies(CLIENT).then(rows => { if (alive) setAllUnread(rows) })
+    return () => { alive = false }
+  }, [tick])
   const unreadByProject = new Map<string, number>()
   for (const sig of allUnread) {
-    const pid = sigProjectId(sig.project)
-    if (pid) unreadByProject.set(pid, (unreadByProject.get(pid) ?? 0) + 1)
+    unreadByProject.set(sig.projectId, (unreadByProject.get(sig.projectId) ?? 0) + 1)
   }
+
 
   const project = PROJECTS.find(p => p.id === selId) ?? PROJECTS[0]
   const [chat, setChat] = useState<ClientChatMessage[]>([])
@@ -1487,7 +1447,7 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
     await addClientMessage({
       projectId: project.id,
       body,
-      author: CLIENT_AUTHOR,
+      author: CLIENT?.name ?? 'Cliente',
       source: 'client',
     })
     setTick(t => t + 1)
@@ -1796,15 +1756,16 @@ function ProjectSelector({ selected, onToggle }: { selected: Set<string>; onTogg
 
 // ─── PORTAL HEADER ────────────────────────────────────────────────────────────
 function PortalHeader({
-  selected, onToggle, notifTick, onNotifRead,
+  selected, onToggle, notifTick, onNotifRead, unreadCount,
   isChatMode, onChatToggle, onLogout, onChangePasswordRequest,
 }: {
   selected: Set<string>; onToggle: (id: string) => void
   notifTick: number; onNotifRead: (msg: string) => void
+  unreadCount: number
   isChatMode: boolean; onChatToggle: () => void
   onLogout: () => void; onChangePasswordRequest: () => void
 }) {
-  const unreadCount = getClientUnreadReplies(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).length
+
 
   return (
     <header
@@ -1885,9 +1846,40 @@ export default function ClientPortalPage({
   onLogout?: () => void
 }) {
   const { toasts, add: showToast } = useLocalToast()
-  const portal = useClientPortal()
-  applyScope(portal.scope)
+  const [notifTick, setNotifTick] = useState(0)
+  const [scope, setScope] = useState<PortalScope>(EMPTY_PORTAL_SCOPE)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [ready, setReady] = useState(false)
+  applyScope(scope)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+
+  // Identidade real do cliente + escopo liberado, direto do banco.
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const session = readPortalSession()
+      const ctx = await getClientPortalContext(
+        session ? { id: session.id, email: session.email } : null,
+      )
+      if (!alive) return
+      CLIENT = ctx
+      const s = await getPortalScope(ctx?.projectIds ?? [])
+      if (!alive) return
+      applyScope(s)
+      setScope(s)
+      setUnreadCount(await countClientUnreadReplies(ctx))
+      setReady(true)
+    })()
+    return () => { alive = false }
+  }, [])
+
+  // Recontagem de não-lidas a cada interação com notificações.
+  useEffect(() => {
+    if (!ready) return
+    let alive = true
+    void countClientUnreadReplies(CLIENT).then(n => { if (alive) setUnreadCount(n) })
+    return () => { alive = false }
+  }, [notifTick, ready])
 
   // Select every visible project as soon as the client scope hydrates.
   useEffect(() => {
@@ -1895,8 +1887,10 @@ export default function ClientPortalPage({
       const valid = new Set([...prev].filter(id => PROJECTS.some(p => p.id === id)))
       return valid.size > 0 ? prev : new Set(PROJECTS.map(p => p.id))
     })
-  }, [portal.scope])
-  const [notifTick, setNotifTick] = useState(0)
+  }, [scope])
+
+
+
   const [showPwdModal, setShowPwdModal] = useState(mustChangePassword)
   const [showVoluntaryPwdModal, setShowVoluntaryPwdModal] = useState(false)
   const [portalView, setPortalView] = useState<'dashboard' | 'chat'>('dashboard')
@@ -1935,6 +1929,8 @@ export default function ClientPortalPage({
         onToggle={toggleProject}
         notifTick={notifTick}
         onNotifRead={handleNotifRead}
+        unreadCount={unreadCount}
+
         isChatMode={portalView === 'chat'}
         onChatToggle={() => setPortalView(v => v === 'chat' ? 'dashboard' : 'chat')}
         onLogout={onLogout ?? (() => {})}

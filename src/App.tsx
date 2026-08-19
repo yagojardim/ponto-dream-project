@@ -25,6 +25,7 @@ import { CatalogProvider } from "./data/CatalogContext"
 import LoginPage from "./pages/LoginPage"
 import ClientAccessPage from "./pages/ClientAccessPage"
 import ClientLoginPage from "./pages/ClientLoginPage"
+import { clearPortalSession } from "./lib/portalSession"
 import DashboardHomePage from "./pages/DashboardHomePage"
 import TeamPage from "./pages/TeamPage"
 import MyTasksPage from "./pages/MyTasksPage"
@@ -343,7 +344,7 @@ function AppInner() {
             <ClientPortalPage
               mustChangePassword={clientMustChangePwd}
               onPasswordChanged={() => setClientMustChangePwd(false)}
-              onLogout={() => setView("client-login")}
+              onLogout={() => { clearPortalSession(); setView("client-login") }}
             />
           </ErrorBoundary>
         </div>
