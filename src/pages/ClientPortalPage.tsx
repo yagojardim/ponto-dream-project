@@ -4,15 +4,21 @@ import type {
   PortalScope, ScopeProject, ScopeSprint, ScopeDelivery, ScopeMilestone,
 } from '../data/clientPortalStore'
 import {
-  addClientSignal, getSignalsForItem, markReadByPo,
   getClientUnreadReplies, markReplyReadByClient, markAllClientRepliesRead,
-  getSignalsForProject, type ClientSignal,
+  type ClientSignal,
 } from '../data/clientSignals'
+import {
+  addClientMessage, addClientApproval, listThreadMessages, listProjectChat,
+  markSignalReadByPo, DEFAULT_TENANT_ID, type ClientChatMessage,
+} from '../data/db/clientPortal'
 import { getClientPermissions, getClientAccess, updateClientPassword } from '../data/clientAccess'
-import { MOCK_TENANT } from '../data/session'
+
+/** Tenant real (Supabase) — nunca o mock. */
+const MOCK_TENANT = { tenant_id: DEFAULT_TENANT_ID }
 
 // Inspection Mode: the portal client is always "João Silva" (mock)
 const CLIENT_AUTHOR = 'João Silva'
+
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
