@@ -380,10 +380,24 @@ export default function ClientMessagesPage() {
   const [loading, setLoading]   = useState(true)
 
   const reloadConvs = useCallback(async () => {
-    const rows = await listProjectsWithClientSignals()
+    if (!activeUser?.user_id) { setConvs([]); setLoading(false); return }
+    const [signals, responsible] = await Promise.all([
+      listProjectsWithClientSignals(),
+      listResponsibleProjects(activeUser.user_id, isSupervisor),
+    ])
+    const merged = new Map<string, ProjectSignalSummary>()
+    for (const r of responsible) merged.set(r.projectId, r)
+    for (const s of signals) merged.set(s.projectId, s)
+    const rows = [...merged.values()].sort((a, b) => {
+      const aEmpty = a.lastBody === 'Sem mensagens ainda'
+      const bEmpty = b.lastBody === 'Sem mensagens ainda'
+      if (aEmpty && !bEmpty) return 1
+      if (!aEmpty && bEmpty) return -1
+      return new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime()
+    })
     setConvs(rows)
     setLoading(false)
-  }, [])
+  }, [activeUser?.user_id, isSupervisor])
 
   useEffect(() => { void reloadConvs() }, [reloadConvs])
 
