@@ -1259,7 +1259,7 @@ function BoardTab({
           style={{ background:S.surface2, border:`1px solid ${S.border}`, color:DS.accent }}>
           {projectSprints.map(s=>(
             <option key={s.id} value={s.id} style={{ background:S.surface2 }}>{s.name} {s.state==='active'?'▶':''}</option>
-          )}
+          ))}
         </select>
         {/* Encerrar sprint */}
         {(() => {
@@ -1343,13 +1343,13 @@ function BoardTab({
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Prioridade</span>
             <div className="flex flex-wrap gap-1.5">
-              {(['critical','high','medium','low'] as Priority[].map(p=>(
+              {(['critical','high','medium','low'] as Priority[]).map(p=>(
                 <button key={p} onClick={()=>setFilterP(prev=>toggleArr(prev,p))}
                   className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
                   style={{ background:filterPriority.includes(p)?`${PRIORITY_COLOR[p]}22`:S.surface2, color:filterPriority.includes(p)?PRIORITY_COLOR[p]:S.t3, border:`1px solid ${filterPriority.includes(p)?`${PRIORITY_COLOR[p]}50`:S.border}` }}>
                   <PriorityDot p={p}/>{p.charAt(0).toUpperCase()+p.slice(1)}
                 </button>
-              )}
+              ))}
             </div>
           </div>
           <div className="w-full h-px" style={{ background:S.border, margin:'4px 0' }} />
@@ -1357,25 +1357,25 @@ function BoardTab({
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Tipo</span>
             <div className="flex flex-wrap gap-1.5">
-              {(['story','bug','task'] as IssueType[].map(t=>(
+              {(['story','bug','task'] as IssueType[]).map(t=>(
                 <button key={t} onClick={()=>setFilterType(prev=>toggleArr(prev,t))}
                   className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
                   style={{ background:filterType.includes(t)?S.surface2:'transparent', border:`1px solid ${filterType.includes(t)?S.border2:'transparent'}`, color:filterType.includes(t)?S.t1:S.t3 }}>
                   <TypeIcon t={t}/> {t.charAt(0).toUpperCase()+t.slice(1)}
                 </button>
-              )}
+              ))}
             </div>
           </div>
         </FilterPopover>
         <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
           <span className="text-[10px]" style={{ color:S.t3 }}>Agrupar:</span>
-          {(['none','assignee','epic'] as SwimlaneMode[].map(m=>(
+          {(['none','assignee','epic'] as SwimlaneMode[]).map(m=>(
             <button key={m} onClick={()=>setSwimlane(m)}
               className="h-6 px-2 rounded-md text-[10px] font-medium transition-colors"
               style={{ background:swimlane===m?`${DS.accent}20`:'transparent', color:swimlane===m?DS.accent:S.t3 }}>
               {m==='none'?'Nenhum':m==='assignee'?'Responsável':'Épico'}
             </button>
-          )}
+          ))}
         </div>
       </div>
       {/* ── Loading / error / empty ────────────────────────────────────────── */}
