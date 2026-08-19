@@ -149,7 +149,7 @@ function ClientCommentInput({
 }) {
   const [open, setOpen] = useState(false)
   const [val, setVal]   = useState('')
-  const canComment = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).client_can_comment
+  const canComment = CLIENT?.canComment ?? false
 
   async function send() {
     const body = val.trim()
@@ -158,7 +158,7 @@ function ClientCommentInput({
     await addClientMessage({
       projectId: pid,
       body,
-      author:    CLIENT_AUTHOR,
+      author:    CLIENT?.name ?? 'Cliente',
       source:    'client',
       itemId,
       itemTitle,
@@ -643,7 +643,11 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
   const [approved, setApproved] = useState<Set<string>>(new Set())
   const [refresh, setRefresh] = useState(0)
 
-  const perms = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+  const perms = {
+    client_can_preview: CLIENT?.canPreview ?? false,
+    client_can_approve: CLIENT?.canApprove ?? false,
+  }
+
 
   function handleSent(_msg: string) {
     setRefresh(r => r + 1)
@@ -699,7 +703,8 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
                         if (pid) {
                           void addClientApproval({
                             projectId: pid, workItemId: v.id, itemTitle: v.title,
-                            author: CLIENT_AUTHOR,
+                            author: CLIENT?.name ?? 'Cliente',
+
                           })
                         }
                         onComment(`✓ Aprovação registrada: "${v.title}"`)
@@ -855,19 +860,28 @@ function ClientNotifBell({
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
-  const unread = getClientUnreadReplies(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+  const [unread, setUnread] = useState<ClientReplyNotice[]>([])
 
-  function handleClick(sig: ClientSignal) {
-    markReplyReadByClient(sig.id)
+  useEffect(() => {
+    let alive = true
+    void listClientUnreadReplies(CLIENT).then(rows => { if (alive) setUnread(rows) })
+    return () => { alive = false }
+  }, [tick, localTick])
+
+  function handleClick(sig: ClientReplyNotice) {
+    void markReplyReadByClient(sig.id)
+    setUnread(prev => prev.filter(u => u.id !== sig.id))
     setLocalTick(t => t + 1)
     setOpen(false)
-    onRead(`${sig.po_reply_by ?? 'Equipe Altech'} respondeu: "${(sig.po_reply ?? '').slice(0, 80)}${(sig.po_reply ?? '').length > 80 ? '…' : ''}"`)
+    onRead(`${sig.poReplyBy ?? 'Equipe Altech'} respondeu: "${sig.poReply.slice(0, 80)}${sig.poReply.length > 80 ? '…' : ''}"`)
   }
 
   function handleMarkAll() {
-    markAllClientRepliesRead(MOCK_TENANT.tenant_id, CLIENT_AUTHOR)
+    void markClientRepliesRead(CLIENT)
+    setUnread([])
     setLocalTick(t => t + 1)
   }
+
 
   return (
     <div ref={ref} className="relative">
