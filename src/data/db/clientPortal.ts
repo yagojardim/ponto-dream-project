@@ -797,6 +797,7 @@ export interface ClientChatMessage {
   body:      string
   createdAt: string
   type:      SignalType
+  itemId:    string | null
   itemTitle: string | null
   mentions:  string[]
 }
@@ -806,9 +807,8 @@ function signalMentions(row: ClientSignalRow): string[] {
   return Array.isArray(m.mentions) ? (m.mentions as unknown[]).map(String) : []
 }
 
-async function listProjectChat__raw(projectId: string): Promise<ClientChatMessage[]> {
-  const rows = await listClientSignals__raw(projectId)
-  return rows.map(r => ({
+function toChatMessage(r: ClientSignalRow): ClientChatMessage {
+  return {
     id:        r.id,
     side:      signalSource(r),
     author:    r.author ?? '—',
@@ -817,9 +817,64 @@ async function listProjectChat__raw(projectId: string): Promise<ClientChatMessag
       : (r.body ?? ''),
     createdAt: r.created_at,
     type:      r.type,
+    itemId:    r.item_id,
     itemTitle: r.item_title,
     mentions:  signalMentions(r),
-  }))
+  }
+}
+
+async function listProjectChat__raw(projectId: string): Promise<ClientChatMessage[]> {
+  const rows = await listClientSignals__raw(projectId)
+  return rows.map(toChatMessage)
+}
+
+/** Threads (estilo Slack): sinais com item_id agrupados por item. */
+export interface ProjectThreadSummary {
+  itemId:    string
+  itemTitle: string
+  replies:   number
+  lastAt:    string
+  unread:    number
+}
+
+async function listProjectThreads__raw(projectId: string): Promise<ProjectThreadSummary[]> {
+  const rows = (await listClientSignals__raw(projectId)).filter(r => !!r.item_id)
+  const map = new Map<string, ProjectThreadSummary>()
+  for (const r of rows) {
+    const key = r.item_id as string
+    const prev = map.get(key)
+    map.set(key, {
+      itemId:    key,
+      itemTitle: r.item_title ?? prev?.itemTitle ?? 'Demanda',
+      replies:   (prev?.replies ?? 0) + 1,
+      lastAt:    r.created_at,
+      unread:    (prev?.unread ?? 0) + (signalSource(r) === 'client' && !r.read_by_po ? 1 : 0),
+    })
+  }
+  return [...map.values()].sort(
+    (a, b) => new Date(a.lastAt).getTime() - new Date(b.lastAt).getTime())
+}
+
+async function listThreadMessages__raw(projectId: string, itemId: string): Promise<ClientChatMessage[]> {
+  const { data, error } = await tbl('client_signals').select('*')
+    .eq('tenant_id', DEFAULT_TENANT_ID).eq('project_id', projectId).eq('item_id', itemId)
+    .is('archived_at', null).order('created_at', { ascending: true })
+  if (error) throw tenantError('client_signals', error.message)
+  return ((data ?? []) as ClientSignalRow[]).map(toChatMessage)
+}
+
+/** Demandas reais do projeto (harness / seletor de thread). */
+export interface ProjectWorkItemOption { id: string; title: string }
+
+async function listProjectWorkItems__raw(projectId: string): Promise<ProjectWorkItemOption[]> {
+  const { data, error } = await supabase.from('work_items')
+    .select('id, title')
+    .eq('tenant_id', DEFAULT_TENANT_ID).eq('project_id', projectId)
+    .is('archived_at', null)
+    .order('created_at', { ascending: false })
+    .limit(200)
+  if (error) throw tenantError('work_items', error.message)
+  return (data ?? []).map((w: any) => ({ id: w.id, title: w.title ?? 'Demanda' }))
 }
 
 export interface AddClientMessageInput {
@@ -828,6 +883,8 @@ export interface AddClientMessageInput {
   author:    string
   source:    'client' | 'management'
   mentions?: string[]
+  itemId?:   string | null
+  itemTitle?: string | null
 }
 
 async function markProjectSignalsReadByPo__raw(projectId: string): Promise<void> {
@@ -843,11 +900,22 @@ export const listProjectsWithClientSignals = (): Promise<ProjectSignalSummary[]>
 export const listProjectChat = (projectId: string): Promise<ClientChatMessage[]> =>
   safeCall('clientPortal.listProjectChat', () => listProjectChat__raw(projectId), [], { projectId })
 
+export const listProjectThreads = (projectId: string): Promise<ProjectThreadSummary[]> =>
+  safeCall('clientPortal.listProjectThreads', () => listProjectThreads__raw(projectId), [], { projectId })
+
+export const listThreadMessages = (projectId: string, itemId: string): Promise<ClientChatMessage[]> =>
+  safeCall('clientPortal.listThreadMessages', () => listThreadMessages__raw(projectId, itemId), [], { projectId, itemId })
+
+export const listProjectWorkItems = (projectId: string): Promise<ProjectWorkItemOption[]> =>
+  safeCall('clientPortal.listProjectWorkItems', () => listProjectWorkItems__raw(projectId), [], { projectId })
+
 export const addClientMessage = (input: AddClientMessageInput): Promise<ClientSignalRow | null> =>
   safeCall('clientPortal.addClientMessage', () => addClientComment__raw({
     projectId: input.projectId, body: input.body, author: input.author,
     source: input.source, mentions: input.mentions,
+    itemId: input.itemId ?? null, itemTitle: input.itemTitle ?? null,
   }), null, { projectId: input.projectId })
 
 export const markProjectSignalsReadByPo = (projectId: string): Promise<void> =>
   safeCall('clientPortal.markProjectSignalsReadByPo', () => markProjectSignalsReadByPo__raw(projectId), undefined, { projectId })
+

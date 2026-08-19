@@ -5,8 +5,10 @@ import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import {
   listProjectsWithClientSignals, listProjectChat, addClientMessage,
   markProjectSignalsReadByPo, listResponsibleProjectIds, listResponsibleProjects,
-  listProjectResponsibleProfiles,
+  listProjectResponsibleProfiles, listProjectThreads, listThreadMessages,
+  listProjectWorkItems,
   type ProjectSignalSummary, type ClientChatMessage, type MentionProfile,
+  type ProjectThreadSummary, type ProjectWorkItemOption,
 } from '../data/db/clientPortal'
 import { create as createNotification } from '../data/db/notifications'
 
@@ -339,6 +341,108 @@ async function notifyMentions(
   })))
 }
 
+// ─── Thread root row (estilo Slack) ──────────────────────────────────────────
+function ThreadRootRow({ thread, active, onClick }: {
+  thread: ProjectThreadSummary; active: boolean; onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
+        marginBottom: 12, padding: '10px 12px', borderRadius: 12, cursor: 'pointer',
+        background: active ? `${T.accent}12` : T.bgSurface2,
+        border: `1px solid ${active ? T.accentBorder : T.border}`,
+      }}
+    >
+      <span style={{ fontSize: 15 }}>🧵</span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{
+          display: 'block', fontSize: 12.5, fontWeight: 700, color: T.text1,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          Demanda/Sprint {thread.itemTitle}
+        </span>
+        <span style={{ display: 'block', fontSize: 11, color: T.accent, fontWeight: 600 }}>
+          {thread.replies} {thread.replies === 1 ? 'resposta' : 'respostas'} · {fmtDate(thread.lastAt)}
+        </span>
+      </span>
+      {thread.unread > 0 && (
+        <span style={{
+          fontSize: 9, fontWeight: 700, background: T.accent, color: '#fff',
+          borderRadius: 20, padding: '1px 7px',
+        }}>{thread.unread}</span>
+      )}
+    </button>
+  )
+}
+
+// ─── Thread side panel ───────────────────────────────────────────────────────
+function ThreadSidePanel({ conv, thread, authorName, people, onClose, onChanged }: {
+  conv: ProjectSignalSummary
+  thread: ProjectThreadSummary
+  authorName: string
+  people: MentionProfile[]
+  onClose: () => void
+  onChanged: () => void
+}) {
+  const [messages, setMessages] = useState<ClientChatMessage[]>([])
+  const [loading, setLoading]   = useState(true)
+
+  const reload = useCallback(async () => {
+    const rows = await listThreadMessages(conv.projectId, thread.itemId)
+    setMessages(rows)
+    setLoading(false)
+  }, [conv.projectId, thread.itemId])
+
+  useEffect(() => { setLoading(true); void reload() }, [reload])
+
+  async function handleSend(text: string, mentions: string[]) {
+    await addClientMessage({
+      projectId: conv.projectId, body: text, author: authorName, source: 'management',
+      mentions, itemId: thread.itemId, itemTitle: thread.itemTitle,
+    })
+    await notifyMentions(mentions, authorName, conv, text)
+    await reload()
+    onChanged()
+  }
+
+  return (
+    <div style={{
+      width: 380, flexShrink: 0, borderLeft: `1px solid ${T.border}`,
+      background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+    }}>
+      <div style={{
+        padding: '12px 16px', borderBottom: `1px solid ${T.border}`,
+        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+      }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: T.text1 }}>Thread</p>
+          <p style={{
+            margin: 0, fontSize: 11, color: T.text3,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{thread.itemTitle}</p>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            border: `1px solid ${T.border}`, background: T.bgSurface2, color: T.text2,
+            borderRadius: 7, fontSize: 12, padding: '4px 9px', cursor: 'pointer',
+          }}
+        >Fechar</button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
+        {loading
+          ? <p style={{ fontSize: 12, color: T.text3 }}>Carregando thread…</p>
+          : messages.map(m => <Bubble key={m.id} msg={m} people={people} />)}
+      </div>
+
+      <Composer onSend={handleSend} people={people} />
+    </div>
+  )
+}
+
 // ─── Thread panel ─────────────────────────────────────────────────────────────
 function ThreadPanel({ conv, authorName, onChanged }: {
   conv: ProjectSignalSummary
@@ -346,6 +450,8 @@ function ThreadPanel({ conv, authorName, onChanged }: {
   onChanged: () => void
 }) {
   const [messages, setMessages] = useState<ClientChatMessage[]>([])
+  const [threads, setThreads]   = useState<ProjectThreadSummary[]>([])
+  const [openThread, setOpenThread] = useState<string | null>(null)
   const [loading, setLoading]   = useState(true)
   const [people, setPeople]     = useState<MentionProfile[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -360,19 +466,28 @@ function ThreadPanel({ conv, authorName, onChanged }: {
   }, [conv.projectId])
 
   const reload = useCallback(async () => {
-    const rows = await listProjectChat(conv.projectId)
+    const [rows, thr] = await Promise.all([
+      listProjectChat(conv.projectId),
+      listProjectThreads(conv.projectId),
+    ])
     setMessages(rows)
+    setThreads(thr)
     setLoading(false)
   }, [conv.projectId])
 
   useEffect(() => {
     let alive = true
     setLoading(true)
+    setOpenThread(null)
     ;(async () => {
       await markProjectSignalsReadByPo(conv.projectId)
-      const rows = await listProjectChat(conv.projectId)
+      const [rows, thr] = await Promise.all([
+        listProjectChat(conv.projectId),
+        listProjectThreads(conv.projectId),
+      ])
       if (!alive) return
       setMessages(rows)
+      setThreads(thr)
       setLoading(false)
       onChanged()
     })()
@@ -393,17 +508,28 @@ function ThreadPanel({ conv, authorName, onChanged }: {
     onChanged()
   }
 
-  const groups: { day: string; msgs: ClientChatMessage[] }[] = []
-  for (const msg of messages) {
-    const day = fmtDate(msg.createdAt)
+  // Fluxo principal: conversa geral (item_id nulo) + linhas-raiz das threads.
+  type Entry =
+    | { kind: 'msg'; at: string; msg: ClientChatMessage }
+    | { kind: 'thread'; at: string; thread: ProjectThreadSummary }
+  const entries: Entry[] = [
+    ...messages.filter(m => !m.itemId).map(m => ({ kind: 'msg' as const, at: m.createdAt, msg: m })),
+    ...threads.map(t => ({ kind: 'thread' as const, at: t.lastAt, thread: t })),
+  ].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime())
+
+  const groups: { day: string; items: Entry[] }[] = []
+  for (const e of entries) {
+    const day = fmtDate(e.at)
     const last = groups[groups.length - 1]
-    if (!last || last.day !== day) groups.push({ day, msgs: [msg] })
-    else last.msgs.push(msg)
+    if (!last || last.day !== day) groups.push({ day, items: [e] })
+    else last.items.push(e)
   }
 
   const clients = [...new Set(messages.filter(m => m.side === 'client').map(m => m.author))]
+  const active = threads.find(t => t.itemId === openThread) ?? null
 
   return (
+    <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Thread header */}
       <div style={{
@@ -417,7 +543,7 @@ function ThreadPanel({ conv, authorName, onChanged }: {
         <div>
           <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.text1 }}>{conv.name}</p>
           <p style={{ margin: 0, fontSize: 11, color: T.text3 }}>
-            {clients.length ? `${clients.join(' · ')} · ` : ''}{messages.length} mensagens
+            {clients.length ? `${clients.join(' · ')} · ` : ''}{messages.length} mensagens · {threads.length} threads
           </p>
         </div>
       </div>
@@ -426,7 +552,7 @@ function ThreadPanel({ conv, authorName, onChanged }: {
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {loading ? (
           <p style={{ fontSize: 12, color: T.text3 }}>Carregando conversa…</p>
-        ) : messages.length === 0 ? (
+        ) : entries.length === 0 ? (
           <div style={{ textAlign: 'center', paddingTop: 60 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
             <p style={{ fontSize: 15, fontWeight: 700, color: T.text1, marginBottom: 6 }}>Sem mensagens</p>
@@ -435,7 +561,14 @@ function ThreadPanel({ conv, authorName, onChanged }: {
         ) : groups.map(g => (
           <div key={g.day}>
             <DaySep label={g.day} />
-            {g.msgs.map(msg => <Bubble key={msg.id} msg={msg} people={people} />)}
+            {g.items.map(e => e.kind === 'msg'
+              ? <Bubble key={e.msg.id} msg={e.msg} people={people} />
+              : <ThreadRootRow
+                  key={e.thread.itemId}
+                  thread={e.thread}
+                  active={openThread === e.thread.itemId}
+                  onClick={() => setOpenThread(prev => prev === e.thread.itemId ? null : e.thread.itemId)}
+                />)}
           </div>
         ))}
         <div ref={bottomRef} />
@@ -443,8 +576,22 @@ function ThreadPanel({ conv, authorName, onChanged }: {
 
       <Composer onSend={handleSend} people={people} />
     </div>
+
+    {active && (
+      <ThreadSidePanel
+        key={active.itemId}
+        conv={conv}
+        thread={active}
+        authorName={authorName}
+        people={people}
+        onClose={() => setOpenThread(null)}
+        onChanged={() => { void reload(); onChanged() }}
+      />
+    )}
+    </div>
   )
 }
+
 
 // ─── Empty right panel ────────────────────────────────────────────────────────
 function EmptyThread() {
@@ -475,13 +622,21 @@ function SimulateClientMessage({ conv, onSent }: {
   const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
   const [picked, setPicked] = useState<MentionProfile[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const [items, setItems]   = useState<ProjectWorkItemOption[]>([])
+  const [itemId, setItemId] = useState('')
 
   useEffect(() => {
     let alive = true
-    if (!conv) { setPeople([]); return }
+    if (!conv) { setPeople([]); setItems([]); setItemId(''); return }
     ;(async () => {
-      const rows = await listProjectResponsibleProfiles(conv.projectId)
-      if (alive) setPeople(rows)
+      const [rows, wis] = await Promise.all([
+        listProjectResponsibleProfiles(conv.projectId),
+        listProjectWorkItems(conv.projectId),
+      ])
+      if (!alive) return
+      setPeople(rows)
+      setItems(wis)
+      setItemId('')
     })()
     return () => { alive = false }
   }, [conv?.projectId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -506,7 +661,11 @@ function SimulateClientMessage({ conv, onSent }: {
     const body = text.trim()
     const author = conv.clientName || 'Cliente (teste)'
     const mentions = resolveMentions(body, picked, people)
-    await addClientMessage({ projectId: conv.projectId, body, author, source: 'client', mentions })
+    const item = items.find(i => i.id === itemId) ?? null
+    await addClientMessage({
+      projectId: conv.projectId, body, author, source: 'client', mentions,
+      itemId: item?.id ?? null, itemTitle: item?.title ?? null,
+    })
     await notifyMentions(mentions, author, conv, body)
     setText('')
     setPicked([])
@@ -519,8 +678,21 @@ function SimulateClientMessage({ conv, onSent }: {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto',
     }}>
+      <select
+        value={itemId}
+        onChange={e => setItemId(e.target.value)}
+        disabled={!conv}
+        style={{
+          height: 30, maxWidth: 180, background: T.bgSurface2, border: `1px solid ${T.border}`,
+          borderRadius: 7, color: T.text2, fontSize: 12, padding: '0 8px', outline: 'none',
+        }}
+      >
+        <option value="">Conversa geral</option>
+        {items.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}
+      </select>
       <div style={{ position: 'relative' }}>
         {menu && <MentionMenu items={menu.items} onPick={pick} />}
+
         <input
           ref={inputRef}
           value={text}

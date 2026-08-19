@@ -4,15 +4,21 @@ import type {
   PortalScope, ScopeProject, ScopeSprint, ScopeDelivery, ScopeMilestone,
 } from '../data/clientPortalStore'
 import {
-  addClientSignal, getSignalsForItem, markReadByPo,
   getClientUnreadReplies, markReplyReadByClient, markAllClientRepliesRead,
-  getSignalsForProject, type ClientSignal,
+  type ClientSignal,
 } from '../data/clientSignals'
+import {
+  addClientMessage, addClientApproval, listThreadMessages, listProjectChat,
+  markSignalReadByPo, DEFAULT_TENANT_ID, type ClientChatMessage,
+} from '../data/db/clientPortal'
 import { getClientPermissions, getClientAccess, updateClientPassword } from '../data/clientAccess'
-import { MOCK_TENANT } from '../data/session'
+
+/** Tenant real (Supabase) — nunca o mock. */
+const MOCK_TENANT = { tenant_id: DEFAULT_TENANT_ID }
 
 // Inspection Mode: the portal client is always "João Silva" (mock)
 const CLIENT_AUTHOR = 'João Silva'
+
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -133,6 +139,14 @@ function Pill({ color, label }: { color: string; label: string }) {
 }
 
 // ─── Client comment thread ────────────────────────────────────────────────────
+/** Resolve o project_id real (Supabase) a partir do nome exibido no portal. */
+function portalProjectId(name: string): string | null {
+  const p = PROJECTS.find(
+    proj => proj.name === name || name.startsWith(proj.name) || proj.name.startsWith(name),
+  )
+  return p?.id ?? null
+}
+
 function ClientCommentInput({
   itemId, itemTitle, project, onSent,
 }: {
@@ -143,26 +157,23 @@ function ClientCommentInput({
   const [val, setVal]   = useState('')
   const canComment = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).client_can_comment
 
-  function send() {
+  async function send() {
     const body = val.trim()
-    if (!body) return
-    addClientSignal({
-      type:           'comment',
-      item_id:        itemId,
-      item_title:     itemTitle,
-      project,
-      tenant_id:      MOCK_TENANT.tenant_id,
-      responsible_po: 'u_po',
+    const pid = portalProjectId(project)
+    if (!body || !pid) return
+    await addClientMessage({
+      projectId: pid,
       body,
-      author:         'João Silva',
-      author_initials: 'JS',
-      created_at:     new Date().toISOString(),
-      read_by_po:     false,
+      author:    CLIENT_AUTHOR,
+      source:    'client',
+      itemId,
+      itemTitle,
     })
     onSent(body)
     setVal('')
     setOpen(false)
   }
+
 
   if (!canComment) {
     return (
@@ -229,62 +240,70 @@ function ClientCommentInput({
   )
 }
 
-function ClientSignalThread({ itemId, refresh }: { itemId: string; refresh: number }) {
-  const signals = getSignalsForItem(itemId, MOCK_TENANT.tenant_id)
-  const comments = signals.filter(s => s.type === 'comment')
+function ClientSignalThread({ itemId, project, refresh }: {
+  itemId: string; project: string; refresh: number
+}) {
+  const [messages, setMessages] = useState<ClientChatMessage[]>([])
 
-  // Mark unread signals as read when client views them (client reads PO replies)
   useEffect(() => {
-    signals.forEach(s => { if (!s.read_by_po) markReadByPo(s.id) })
+    let alive = true
+    const pid = portalProjectId(project)
+    if (!pid) { setMessages([]); return }
+    ;(async () => {
+      const rows = await listThreadMessages(pid, itemId)
+      if (!alive) return
+      setMessages(rows)
+      // O cliente visualizou a thread: marca os sinais como lidos no banco.
+      await Promise.all(rows.filter(r => r.side === 'client').map(r => markSignalReadByPo(r.id)))
+    })()
+    return () => { alive = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refresh])
+  }, [itemId, project, refresh])
 
-  if (!comments.length) return null
+  if (!messages.length) return null
 
   return (
     <div className="mt-2 space-y-2">
-      {comments.map(c => (
-        <div key={c.id} className="space-y-1.5">
-          {/* Client message */}
-          <div
-            className="rounded-xl px-3 py-2.5"
-            style={{ background: `${C.accent}0C`, border: `1px solid ${C.accent}20` }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
-                style={{ background: C.accent, color: '#fff' }}
-              >{c.author_initials}</span>
-              <span className="text-[10px] font-semibold" style={{ color: C.accent }}>{c.author}</span>
-              <span className="text-[9px]" style={{ color: C.txt3 }}>{new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
-            </div>
-            <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.body}</p>
+      {messages.map(c => c.side === 'client' ? (
+        <div
+          key={c.id}
+          className="rounded-xl px-3 py-2.5"
+          style={{ background: `${C.accent}0C`, border: `1px solid ${C.accent}20` }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+              style={{ background: C.accent, color: '#fff' }}
+            >{c.author.split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase()}</span>
+            <span className="text-[10px] font-semibold" style={{ color: C.accent }}>{c.author}</span>
+            <span className="text-[9px]" style={{ color: C.txt3 }}>{new Date(c.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
           </div>
-          {/* PO public reply */}
-          {c.po_reply && (
-            <div
-              className="ml-4 rounded-xl px-3 py-2.5"
-              style={{ background: `${C.success}08`, border: `1px solid ${C.success}25` }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
-                  style={{ background: C.success, color: '#fff' }}
-                >BA</span>
-                <span className="text-[10px] font-semibold" style={{ color: C.success }}>Equipe Altech</span>
-                <span
-                  className="text-[9px] px-1.5 py-px rounded-full"
-                  style={{ color: C.success, background: `${C.success}18` }}
-                >resposta pública</span>
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.po_reply}</p>
-            </div>
-          )}
+          <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.body}</p>
+        </div>
+      ) : (
+        <div
+          key={c.id}
+          className="ml-4 rounded-xl px-3 py-2.5"
+          style={{ background: `${C.success}08`, border: `1px solid ${C.success}25` }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+              style={{ background: C.success, color: '#fff' }}
+            >BA</span>
+            <span className="text-[10px] font-semibold" style={{ color: C.success }}>{c.author}</span>
+            <span
+              className="text-[9px] px-1.5 py-px rounded-full"
+              style={{ color: C.success, background: `${C.success}18` }}
+            >resposta pública</span>
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: C.txt2 }}>{c.body}</p>
         </div>
       ))}
     </div>
   )
 }
+
 
 // ─── Data (live, hydrated from Supabase via useClientPortal) ──────────────────
 // These module-level bindings are refreshed by the portal shell on every render
@@ -504,7 +523,7 @@ function SprintDeliveriesCard({ projectFilter, onComment }: { projectFilter: Set
                   onSent={_msg => { setRefresh(r => r + 1); onComment('Feedback enviado à equipe responsável.') }}
                 />
               </div>
-              <ClientSignalThread itemId={d.id} refresh={refresh} />
+              <ClientSignalThread itemId={d.id} project={d.project} refresh={refresh} />
             </div>
           )
         })}
@@ -682,13 +701,13 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
                     <button
                       onClick={() => {
                         setApproved(prev => new Set([...prev, v.id]))
-                        addClientSignal({
-                          type: 'approval', item_id: v.id, item_title: v.title,
-                          project: v.project, tenant_id: MOCK_TENANT.tenant_id,
-                          responsible_po: 'u_po', author: 'João Silva',
-                          author_initials: 'JS', created_at: new Date().toISOString(),
-                          read_by_po: false,
-                        })
+                        const pid = portalProjectId(v.project)
+                        if (pid) {
+                          void addClientApproval({
+                            projectId: pid, workItemId: v.id, itemTitle: v.title,
+                            author: CLIENT_AUTHOR,
+                          })
+                        }
                         onComment(`✓ Aprovação registrada: "${v.title}"`)
                       }}
                       className="h-7 px-3 rounded-lg text-xs font-semibold transition-all"
@@ -714,7 +733,7 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
                 <p className="text-[10px] font-semibold" style={{ color: C.success }}>✓ Aprovado por você</p>
               )}
               {/* Show client thread: own comments + PO replies */}
-              <ClientSignalThread itemId={v.id} refresh={refresh} />
+              <ClientSignalThread itemId={v.id} project={v.project} refresh={refresh} />
             </div>
           )
         })}
@@ -1434,33 +1453,47 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   }
 
   const project = PROJECTS.find(p => p.id === selId) ?? PROJECTS[0]
-  const rawSignals = project ? getSignalsForProject(project.name, MOCK_TENANT.tenant_id) : []
-  const thread = flattenClientThread(rawSignals, CLIENT_AUTHOR)
+  const [chat, setChat] = useState<ClientChatMessage[]>([])
+
+  useEffect(() => {
+    let alive = true
+    if (!project) { setChat([]); return }
+    ;(async () => {
+      const rows = await listProjectChat(project.id)
+      if (alive) setChat(rows)
+    })()
+    return () => { alive = false }
+  }, [project?.id, tick]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const thread: ChatBubble[] = chat.map(m => ({
+    id: m.id,
+    side: m.side,
+    author: m.side === 'client' ? m.author : m.author,
+    initials: m.author.split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase(),
+    body: m.body,
+    timestamp: m.createdAt,
+    badge: m.type === 'approval' ? '✓ Aprovação' : undefined,
+    itemTitle: m.itemTitle ?? undefined,
+  }))
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [selId, tick])
+  }, [selId, tick, chat.length])
 
-  function handleSend() {
+  async function handleSend() {
     const body = draft.trim()
     if (!body || !project || !chatCanComment) return
-    addClientSignal({
-      project: project.name,
-      tenant_id: MOCK_TENANT.tenant_id,
-      type: 'comment',
+    setDraft('')
+    await addClientMessage({
+      projectId: project.id,
       body,
       author: CLIENT_AUTHOR,
-      author_initials: 'JS',
-      item_id: `portal-chat-${Date.now()}`,
-      item_title: 'Chat geral do projeto',
-      responsible_po: 'u_po',
-      created_at: new Date().toISOString(),
-      read_by_po: false,
+      source: 'client',
     })
-    setDraft('')
     setTick(t => t + 1)
     onToast('Mensagem enviada.')
   }
+
 
   // Group thread by day
   type DayGroup = { day: string; bubbles: ChatBubble[] }
