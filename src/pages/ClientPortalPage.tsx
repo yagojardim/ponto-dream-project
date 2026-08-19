@@ -139,6 +139,14 @@ function Pill({ color, label }: { color: string; label: string }) {
 }
 
 // ─── Client comment thread ────────────────────────────────────────────────────
+/** Resolve o project_id real (Supabase) a partir do nome exibido no portal. */
+function portalProjectId(name: string): string | null {
+  const p = PROJECTS.find(
+    proj => proj.name === name || name.startsWith(proj.name) || proj.name.startsWith(name),
+  )
+  return p?.id ?? null
+}
+
 function ClientCommentInput({
   itemId, itemTitle, project, onSent,
 }: {
@@ -149,26 +157,23 @@ function ClientCommentInput({
   const [val, setVal]   = useState('')
   const canComment = getClientPermissions(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).client_can_comment
 
-  function send() {
+  async function send() {
     const body = val.trim()
-    if (!body) return
-    addClientSignal({
-      type:           'comment',
-      item_id:        itemId,
-      item_title:     itemTitle,
-      project,
-      tenant_id:      MOCK_TENANT.tenant_id,
-      responsible_po: 'u_po',
+    const pid = portalProjectId(project)
+    if (!body || !pid) return
+    await addClientMessage({
+      projectId: pid,
       body,
-      author:         'João Silva',
-      author_initials: 'JS',
-      created_at:     new Date().toISOString(),
-      read_by_po:     false,
+      author:    CLIENT_AUTHOR,
+      source:    'client',
+      itemId,
+      itemTitle,
     })
     onSent(body)
     setVal('')
     setOpen(false)
   }
+
 
   if (!canComment) {
     return (
