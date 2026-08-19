@@ -1165,7 +1165,7 @@ function BoardTab({
     : orderedCols
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" onClick={()=>{if(menuColId)setMenuColId(null)}}>
+    <div className="flex flex-col flex-1" onClick={()=>{if(menuColId)setMenuColId(null)}}>
       {/* ── Quick filters ──────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto flex-shrink-0"
         style={{ background:S.surface, borderBottom:`1px solid ${S.border}` }}>
@@ -1271,8 +1271,8 @@ function BoardTab({
       ) : (
       <>
       {/* ── Board area ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto">
-        <div className="flex gap-3 p-4 h-full" style={{ minWidth: visibleCols.length*224+80 }}>
+      <div className="flex-1 overflow-auto min-h-0">
+        <div className="flex gap-3 h-full px-4 pb-4" style={{ minWidth: visibleCols.length*224+80 }}>
 
           {visibleCols.map((col) => {
             const colIssues  = getColIssues(col)
@@ -1297,9 +1297,11 @@ function BoardTab({
                   className="flex items-center justify-between mb-2 px-1 rounded-lg transition-all"
                   style={{
                     cursor: col.id!=='unmapped' ? 'grab' : 'default',
-                    padding:'4px 6px',
-                    background: isColOver ? `${DS.accent}18` : S.bg,
+                    padding:'6px 8px',
+                    background: isColOver ? `${DS.accent}18` : S.surface2,
                     border: isColOver ? `1.5px dashed ${DS.accent}` : '1.5px dashed transparent',
+                    borderBottom: isColOver ? `1.5px dashed ${DS.accent}` : `2px solid ${S.border}`,
+                    boxShadow: DS.shadow1,
                     position:'sticky', top:0, zIndex:20,
                   }}>
                   <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -1319,8 +1321,8 @@ function BoardTab({
                       <span
                         onDoubleClick={()=>col.id!=='unmapped' && startRename(col)}
                         title="Clique duplo para renomear"
-                        className="text-[10px] font-bold uppercase tracking-wider truncate"
-                        style={{ color:S.t2, cursor:'text' }}>
+                        className="text-[10px] font-extrabold uppercase tracking-wider truncate"
+                        style={{ color:S.t1, cursor:'text' }}>
                         {col.label}
                       </span>
                     )}
