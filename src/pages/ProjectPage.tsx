@@ -962,7 +962,7 @@ function BoardTab({
   onQuickCreate: (title: string, colId: string, sprintId: string) => Promise<void>
   onLocalPatch: (key: string, patch: Partial<Issue>) => void
   availableEpics: { id: string; label: string; color: string }[]
-  availableMembers: { id: string; initials: string; name: string }[]
+  availableMembers: { id: string; initials: string; name: string; color: string | null }[]
 }) {
   const { activeUser: boardUser } = useSession()
   const canDrag = can(boardUser.permissions, 'board:manage')
@@ -1128,10 +1128,10 @@ function BoardTab({
     setWipColId(null)
   }
 
-  const ASSIGNEES = ['AL','NM','JN','CS','RM','LF']
   function toggleArr<T>(arr: T[], val: T): T[] {
     return arr.includes(val) ? arr.filter(x=>x!==val) : [...arr, val]
   }
+
   const swimlaneKeys: string[] = swimlane==='none' ? ['_all']
     : swimlane==='assignee' ? [...new Set(filtered.map(i=>i.assignee))].sort()
     : [...new Set(filtered.map(i=>i.epic ?? 'Sem épico'))]
@@ -1179,13 +1179,17 @@ function BoardTab({
         <HelpHint text="Fecha a sprint, calcula a velocity pelas demandas concluídas e move as não-concluídas para a próxima sprint ou para o backlog." label="Ajuda sobre Encerrar sprint" />
         <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
         <div className="flex items-center gap-1">
-          {ASSIGNEES.map(a=>(
-            <button key={a} onClick={()=>setFilterA(prev=>toggleArr(prev,a))}
-              className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white transition-all"
-              style={{ background:AV_COLOR[a]??DS.text3, opacity:filterAssignees.length===0||filterAssignees.includes(a)?1:.3, outline:filterAssignees.includes(a)?'2px solid white':'2px solid transparent' }}>
-              {a}
-            </button>
-          ))}
+          {availableMembers.map(m=>{
+            const active = filterAssignees.length===0||filterAssignees.includes(m.initials)
+            return (
+              <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.initials))}
+                title={m.name}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white transition-all"
+                style={{ background:m.color??DS.text3, opacity:active?1:.3, outline:filterAssignees.includes(m.initials)?'2px solid white':'2px solid transparent' }}>
+                {m.initials}
+              </button>
+            )
+          })}
         </div>
         <div className="w-px h-4 flex-shrink-0" style={{ background:S.border }}/>
         {(['critical','high','medium','low'] as Priority[]).map(p=>(
@@ -2363,11 +2367,12 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }))
   }, [boardData])
 
-  const availableMembers = useMemo<{ id: string; initials: string; name: string }[]>(() => {
+  const availableMembers = useMemo<{ id: string; initials: string; name: string; color: string | null }[]>(() => {
     return (boardData?.profiles ?? []).map(p => ({
       id: p.id,
       initials: p.avatar_initials ?? p.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase(),
       name: p.name,
+      color: p.avatar_color ?? null,
     }))
   }, [boardData])
 
