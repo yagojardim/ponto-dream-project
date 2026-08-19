@@ -1418,13 +1418,14 @@ function BoardTab({
                   onDragOver={e=>{ e.preventDefault(); if(draggingCol && draggingCol!==col.id) setDragOverColHeader(col.id) }}
                   onDragLeave={()=>setDragOverColHeader(null)}
                   onDrop={()=>handleColDrop(col.id)}
-                  className="flex items-center justify-between mb-2 px-1 rounded-lg transition-all"
+                  className="flex items-center justify-between mb-2 px-1 transition-all"
                   style={{
                     cursor: col.id!=='unmapped' ? 'grab' : 'default',
                     padding:'6px 8px',
                     background: isColOver ? `${DS.accent}18` : S.surface2,
                     border: isColOver ? `1.5px dashed ${DS.accent}` : '1.5px dashed transparent',
                     borderBottom: isColOver ? `1.5px dashed ${DS.accent}` : `2px solid ${S.border}`,
+                    borderRadius: 10,
                     boxShadow: DS.shadow1,
                     position:'sticky', top:0, zIndex:20,
                   }}>
