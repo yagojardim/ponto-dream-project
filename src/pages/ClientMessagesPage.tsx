@@ -625,10 +625,16 @@ function SimulateClientMessage({ conv, onSent }: {
 
   useEffect(() => {
     let alive = true
-    if (!conv) { setPeople([]); return }
+    if (!conv) { setPeople([]); setItems([]); setItemId(''); return }
     ;(async () => {
-      const rows = await listProjectResponsibleProfiles(conv.projectId)
-      if (alive) setPeople(rows)
+      const [rows, wis] = await Promise.all([
+        listProjectResponsibleProfiles(conv.projectId),
+        listProjectWorkItems(conv.projectId),
+      ])
+      if (!alive) return
+      setPeople(rows)
+      setItems(wis)
+      setItemId('')
     })()
     return () => { alive = false }
   }, [conv?.projectId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -653,7 +659,11 @@ function SimulateClientMessage({ conv, onSent }: {
     const body = text.trim()
     const author = conv.clientName || 'Cliente (teste)'
     const mentions = resolveMentions(body, picked, people)
-    await addClientMessage({ projectId: conv.projectId, body, author, source: 'client', mentions })
+    const item = items.find(i => i.id === itemId) ?? null
+    await addClientMessage({
+      projectId: conv.projectId, body, author, source: 'client', mentions,
+      itemId: item?.id ?? null, itemTitle: item?.title ?? null,
+    })
     await notifyMentions(mentions, author, conv, body)
     setText('')
     setPicked([])
@@ -666,8 +676,21 @@ function SimulateClientMessage({ conv, onSent }: {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto',
     }}>
+      <select
+        value={itemId}
+        onChange={e => setItemId(e.target.value)}
+        disabled={!conv}
+        style={{
+          height: 30, maxWidth: 180, background: T.bgSurface2, border: `1px solid ${T.border}`,
+          borderRadius: 7, color: T.text2, fontSize: 12, padding: '0 8px', outline: 'none',
+        }}
+      >
+        <option value="">Conversa geral</option>
+        {items.map(i => <option key={i.id} value={i.id}>{i.title}</option>)}
+      </select>
       <div style={{ position: 'relative' }}>
         {menu && <MentionMenu items={menu.items} onPick={pick} />}
+
         <input
           ref={inputRef}
           value={text}
