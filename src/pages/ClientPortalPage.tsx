@@ -1447,7 +1447,7 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
     await addClientMessage({
       projectId: project.id,
       body,
-      author: CLIENT_AUTHOR,
+      author: CLIENT?.name ?? 'Cliente',
       source: 'client',
     })
     setTick(t => t + 1)
@@ -1756,15 +1756,16 @@ function ProjectSelector({ selected, onToggle }: { selected: Set<string>; onTogg
 
 // ─── PORTAL HEADER ────────────────────────────────────────────────────────────
 function PortalHeader({
-  selected, onToggle, notifTick, onNotifRead,
+  selected, onToggle, notifTick, onNotifRead, unreadCount,
   isChatMode, onChatToggle, onLogout, onChangePasswordRequest,
 }: {
   selected: Set<string>; onToggle: (id: string) => void
   notifTick: number; onNotifRead: (msg: string) => void
+  unreadCount: number
   isChatMode: boolean; onChatToggle: () => void
   onLogout: () => void; onChangePasswordRequest: () => void
 }) {
-  const unreadCount = getClientUnreadReplies(MOCK_TENANT.tenant_id, CLIENT_AUTHOR).length
+
 
   return (
     <header
@@ -1845,9 +1846,40 @@ export default function ClientPortalPage({
   onLogout?: () => void
 }) {
   const { toasts, add: showToast } = useLocalToast()
-  const portal = useClientPortal()
-  applyScope(portal.scope)
+  const [notifTick, setNotifTick] = useState(0)
+  const [scope, setScope] = useState<PortalScope>(EMPTY_PORTAL_SCOPE)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [ready, setReady] = useState(false)
+  applyScope(scope)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+
+  // Identidade real do cliente + escopo liberado, direto do banco.
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const session = readPortalSession()
+      const ctx = await getClientPortalContext(
+        session ? { id: session.id, email: session.email } : null,
+      )
+      if (!alive) return
+      CLIENT = ctx
+      const s = await getPortalScope(ctx?.projectIds ?? [])
+      if (!alive) return
+      applyScope(s)
+      setScope(s)
+      setUnreadCount(await countClientUnreadReplies(ctx))
+      setReady(true)
+    })()
+    return () => { alive = false }
+  }, [])
+
+  // Recontagem de não-lidas a cada interação com notificações.
+  useEffect(() => {
+    if (!ready) return
+    let alive = true
+    void countClientUnreadReplies(CLIENT).then(n => { if (alive) setUnreadCount(n) })
+    return () => { alive = false }
+  }, [notifTick, ready])
 
   // Select every visible project as soon as the client scope hydrates.
   useEffect(() => {
@@ -1855,7 +1887,8 @@ export default function ClientPortalPage({
       const valid = new Set([...prev].filter(id => PROJECTS.some(p => p.id === id)))
       return valid.size > 0 ? prev : new Set(PROJECTS.map(p => p.id))
     })
-  }, [portal.scope])
+  }, [scope])
+
   const [notifTick, setNotifTick] = useState(0)
   const [showPwdModal, setShowPwdModal] = useState(mustChangePassword)
   const [showVoluntaryPwdModal, setShowVoluntaryPwdModal] = useState(false)
