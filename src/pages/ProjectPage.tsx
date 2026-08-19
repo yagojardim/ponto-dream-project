@@ -1661,8 +1661,6 @@ function BoardTab({
           availableSprints={activeSprints}
           availableEpics={availableEpics}
           availableMembers={availableMembers}
-          filterAssignees={filterAssignees}
-          setFilterA={setFilterA}
         />
       )}
 
@@ -2837,6 +2835,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           onLocalPatch={patchDbIssue}
           availableEpics={availableEpics}
           availableMembers={availableMembers}
+          filterAssignees={filterAssignees}
+          setFilterA={setFilterA}
           projectName={boardData?.project?.name ?? '—'}
           onReloadBoard={loadBoard}
         />
