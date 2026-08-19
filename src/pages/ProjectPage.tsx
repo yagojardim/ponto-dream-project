@@ -1090,7 +1090,7 @@ function BoardTab({
   // filters
   const [activeSprint, setActiveSprint] = useState('')
   const [swimlane, setSwimlane]     = useState<SwimlaneMode>('none')
-  const [filterAssignees, setFilterA] = useState<string[]>([])
+  
   const [filterPriority, setFilterP]  = useState<Priority[]>([])
   const [filterType, setFilterType]   = useState<IssueType[]>([])
 
