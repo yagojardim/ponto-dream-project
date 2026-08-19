@@ -1321,24 +1321,6 @@ function BoardTab({
               )}
             </button>
           }>
-          {/* Responsável */}
-          <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Responsável</span>
-            <div className="flex flex-wrap gap-1.5">
-              {availableMembers.map(m=>{
-                const active = filterAssignees.length===0 || filterAssignees.includes(m.id)
-                return (
-                  <button key={m.id} onClick={()=>setFilterA(prev=>toggleArr(prev,m.id))}
-                    title={m.name}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white transition-all"
-                    style={{ background:m.color??DS.text3, opacity:active?1:.35, outline:filterAssignees.includes(m.id)?'2px solid '+DS.accent:'2px solid transparent' }}>
-                    {m.initials}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div className="w-full h-px" style={{ background:S.border, margin:'4px 0' }} />
           {/* Prioridade */}
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Prioridade</span>
