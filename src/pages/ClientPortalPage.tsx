@@ -701,13 +701,13 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
                     <button
                       onClick={() => {
                         setApproved(prev => new Set([...prev, v.id]))
-                        addClientSignal({
-                          type: 'approval', item_id: v.id, item_title: v.title,
-                          project: v.project, tenant_id: MOCK_TENANT.tenant_id,
-                          responsible_po: 'u_po', author: 'João Silva',
-                          author_initials: 'JS', created_at: new Date().toISOString(),
-                          read_by_po: false,
-                        })
+                        const pid = portalProjectId(v.project)
+                        if (pid) {
+                          void addClientApproval({
+                            projectId: pid, workItemId: v.id, itemTitle: v.title,
+                            author: CLIENT_AUTHOR,
+                          })
+                        }
                         onComment(`✓ Aprovação registrada: "${v.title}"`)
                       }}
                       className="h-7 px-3 rounded-lg text-xs font-semibold transition-all"
