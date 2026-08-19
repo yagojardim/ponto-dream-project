@@ -1,23 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useClientPortal } from '../data/clientPortalStore'
-import type {
-  PortalScope, ScopeProject, ScopeSprint, ScopeDelivery, ScopeMilestone,
-} from '../data/clientPortalStore'
-import {
-  getClientUnreadReplies, markReplyReadByClient, markAllClientRepliesRead,
-  type ClientSignal,
-} from '../data/clientSignals'
 import {
   addClientMessage, addClientApproval, listThreadMessages, listProjectChat,
-  markSignalReadByPo, DEFAULT_TENANT_ID, type ClientChatMessage,
+  markSignalReadByPo, markReplyReadByClient, setPortalPasswordChanged,
+  getClientPortalContext, listClientUnreadReplies, countClientUnreadReplies,
+  markClientRepliesRead, getPortalScope, EMPTY_PORTAL_SCOPE,
+  type ClientChatMessage, type ClientPortalContext, type ClientReplyNotice,
+  type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
 } from '../data/db/clientPortal'
-import { getClientPermissions, getClientAccess, updateClientPassword } from '../data/clientAccess'
+import { readPortalSession } from '../lib/portalSession'
 
-/** Tenant real (Supabase) — nunca o mock. */
-const MOCK_TENANT = { tenant_id: DEFAULT_TENANT_ID }
+/** Identidade real do cliente logado no portal (resolvida do banco). */
+let CLIENT: ClientPortalContext | null = null
 
-// Inspection Mode: the portal client is always "João Silva" (mock)
-const CLIENT_AUTHOR = 'João Silva'
 
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
