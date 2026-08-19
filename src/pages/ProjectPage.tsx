@@ -1162,9 +1162,12 @@ function BoardTab({
     return arr.includes(val) ? arr.filter(x=>x!==val) : [...arr, val]
   }
 
+  const memberById = useMemo(() => new Map(availableMembers.map(m => [m.id, m])), [availableMembers])
+
   const swimlaneKeys: string[] = swimlane==='none' ? ['_all']
-    : swimlane==='assignee' ? [...new Set(filtered.map(i=>i.assignee))].sort()
+    : swimlane==='assignee' ? [...new Set(filtered.map(i=>i.assigneeId ?? ''))].sort()
     : [...new Set(filtered.map(i=>i.epic ?? 'Sem épico'))]
+
 
   const visibleCols = hasUnmapped
     ? [...orderedCols, {id:'unmapped',label:'⚠ Não mapeados',statuses:[],dot:DS.crit} as ColState]
