@@ -4,7 +4,7 @@ import { useSession } from '../data/SessionContext'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import {
   listProjectsWithClientSignals, listProjectChat, addClientMessage,
-  markProjectSignalsReadByPo, listResponsibleProjectIds,
+  markProjectSignalsReadByPo, listResponsibleProjectIds, listResponsibleProjects,
   type ProjectSignalSummary, type ClientChatMessage,
 } from '../data/db/clientPortal'
 
