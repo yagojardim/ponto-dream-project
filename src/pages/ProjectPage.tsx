@@ -1172,7 +1172,7 @@ function BoardTab({
         <select value={activeSprint} onChange={e=>setActiveSprint(e.target.value)}
           className="h-7 px-2 text-[11px] rounded-lg border outline-none appearance-none pr-5 font-[inherit]"
           style={{ background:S.surface2, border:`1px solid ${S.border}`, color:DS.accent }}>
-          {selectableSprints.map(s=>(
+          {projectSprints.map(s=>(
             <option key={s.id} value={s.id} style={{ background:S.surface2 }}>{s.name} {s.state==='active'?'▶':''}</option>
           ))}
         </select>
