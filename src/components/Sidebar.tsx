@@ -114,7 +114,7 @@ const ROLE_NAV_MAP: Record<RoleContext, string[]> = {
   ProductOwner:   ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','client','client-access'],
   ScrumMaster:    ['home','my-tasks','calendar','projects-list','boards-list','list','gantt','timeline','filters','navigator','reports'],
   TechLead:       ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','filters','navigator','reports'],
-  Dev:            ['home','my-tasks','calendar','projects-list','boards-list','list','filters','navigator'],
+  Dev:            ['home','my-tasks','calendar','boards-list','list','filters','navigator'],
   UX:             ['home','my-tasks','calendar','projects-list','boards-list','list','filters','navigator'],
   QA:             ['home','my-tasks','calendar','projects-list','boards-list','list','filters','navigator'],
 }
