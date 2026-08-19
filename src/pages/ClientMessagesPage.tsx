@@ -11,6 +11,12 @@ import {
 import { create as createNotification } from '../data/db/notifications'
 
 // ─── @menções ────────────────────────────────────────────────────────────────
+const TODOS_MENTION: { id: '@todos'; name: 'Todos os responsáveis' } = {
+  id: '@todos',
+  name: 'Todos os responsáveis',
+}
+type MentionMenuItem = MentionProfile | typeof TODOS_MENTION
+
 /** Detecta o token "@..." em edição imediatamente antes do cursor. */
 function mentionQuery(text: string, caret: number): { query: string; start: number } | null {
   const upto = text.slice(0, caret)
