@@ -555,7 +555,7 @@ function SimulateClientMessage({ conv, onSent }: {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function ClientMessagesPage() {
+export default function ClientMessagesPage({ initialProjectId }: { initialProjectId?: string | null }) {
   const { activeUser } = useSession()
   const isSupervisor = !!activeUser?.tenant_owner || activeUser?.role_context === 'Admin'
   const [convs, setConvs]       = useState<ProjectSignalSummary[]>([])
@@ -600,6 +600,11 @@ export default function ClientMessagesPage() {
   const visible = isSupervisor ? convs : convs.filter(c => (myIds ?? []).includes(c.projectId))
   const filtered = visible.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
   const noResponsibility = !isSupervisor && myIds !== null && myIds.length === 0
+
+  useEffect(() => {
+    if (initialProjectId) { setSelected(initialProjectId); return }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialProjectId])
 
   useEffect(() => {
     if (!selected && filtered.length > 0) setSelected(filtered[0].projectId)

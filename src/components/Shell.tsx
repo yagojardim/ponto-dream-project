@@ -16,6 +16,7 @@ interface ShellProps {
   currentView:  View
   onViewChange: (v: View) => void
   onCreateIssue?: () => void
+  onOpenClientMessages?: (projectId: string) => void
 }
 
 const VALID_VIEWS: View[] = [
@@ -27,7 +28,7 @@ const VALID_VIEWS: View[] = [
   'profile','preferences','storage',
 ]
 
-export function Shell({ children, currentView, onViewChange, onCreateIssue }: ShellProps) {
+export function Shell({ children, currentView, onViewChange, onCreateIssue, onOpenClientMessages }: ShellProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [activeNav, setActiveNav] = useState<string>(currentView)
 
@@ -44,6 +45,7 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue }: Sh
           currentView={currentView}
           onViewChange={v => { onViewChange(v as View); setActiveNav(v) }}
           onCreateIssue={onCreateIssue}
+          onOpenClientMessages={onOpenClientMessages}
         />
         <main className="flex-1 min-w-0 overflow-x-hidden" style={{ overflowY: 'auto' }}>{children}</main>
       </div>

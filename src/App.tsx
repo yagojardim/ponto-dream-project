@@ -371,6 +371,7 @@ function ShellWithRole({
   setView: (v: View) => void
 }) {
   const [createOpen, setCreate] = useState(false)
+  const [clientMsgProjectId, setClientMsgProjectId] = useState<string | null>(null)
   const [inviteOpen, setInvite] = useState(false)
   const [selectedBoardId, setSelectedBoardId] = useState<string | undefined>()
   const [selectedProjectId, setSelectedProjectId] =
@@ -418,6 +419,7 @@ function ShellWithRole({
             setView(v)
           }}
           onCreateIssue={() => setCreate(true)}
+          onOpenClientMessages={(pid) => { setClientMsgProjectId(pid); setView("client-messages") }}
         >
           <ErrorBoundary scope={`view:${view}`} key={view}>
             {view === "home" && (
@@ -542,7 +544,7 @@ function ShellWithRole({
             )}
             {view === "client-messages" && (
               <div className="h-full min-w-0 w-full overflow-hidden dark-shell">
-                <ClientMessagesPage />
+                <ClientMessagesPage initialProjectId={clientMsgProjectId} />
               </div>
             )}
             {view === "timesheet" && (
