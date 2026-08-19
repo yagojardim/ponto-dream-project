@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { T } from '../components/ds/tokens'
-import { useClientPortal } from '../data/clientPortalStore'
 import { portalLogin, type PortalLoginUser } from '../data/db/clientPortal'
+import { savePortalSession } from '../lib/portalSession'
+
 
 interface Props {
   onSuccess: (permission: 'viewer' | 'admin', mustChangePassword: boolean) => void
