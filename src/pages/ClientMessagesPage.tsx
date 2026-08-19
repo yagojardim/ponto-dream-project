@@ -472,7 +472,7 @@ function SimulateClientMessage({ conv, onSent }: {
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [people, setPeople] = useState<MentionProfile[]>([])
-  const [menu, setMenu] = useState<{ items: MentionProfile[]; start: number } | null>(null)
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
   const [picked, setPicked] = useState<MentionProfile[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -486,11 +486,16 @@ function SimulateClientMessage({ conv, onSent }: {
     return () => { alive = false }
   }, [conv?.projectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function pick(p: MentionProfile) {
+  function pick(item: MentionMenuItem) {
     if (!menu) return
     const caret = inputRef.current?.selectionStart ?? text.length
-    setText(`${text.slice(0, menu.start)}@${p.name} ${text.slice(caret)}`)
-    setPicked(prev => (prev.some(x => x.id === p.id) ? prev : [...prev, p]))
+    if (item.id === '@todos') {
+      setText(`${text.slice(0, menu.start)}@todos ${text.slice(caret)}`)
+      setPicked(people)
+    } else {
+      setText(`${text.slice(0, menu.start)}@${item.name} ${text.slice(caret)}`)
+      setPicked(prev => (prev.some(x => x.id === item.id) ? prev : [...prev, item]))
+    }
     setMenu(null)
     requestAnimationFrame(() => inputRef.current?.focus())
   }
@@ -500,7 +505,7 @@ function SimulateClientMessage({ conv, onSent }: {
     setBusy(true)
     const body = text.trim()
     const author = conv.clientName || 'Cliente (teste)'
-    const mentions = picked.filter(p => body.includes(`@${p.name}`)).map(p => p.id)
+    const mentions = resolveMentions(body, picked, people)
     await addClientMessage({ projectId: conv.projectId, body, author, source: 'client', mentions })
     await notifyMentions(mentions, author, conv, body)
     setText('')
@@ -508,6 +513,7 @@ function SimulateClientMessage({ conv, onSent }: {
     setBusy(false)
     onSent()
   }
+
 
   return (
     <div style={{
