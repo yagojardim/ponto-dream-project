@@ -5,8 +5,10 @@ import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import {
   listProjectsWithClientSignals, listProjectChat, addClientMessage,
   markProjectSignalsReadByPo, listResponsibleProjectIds, listResponsibleProjects,
-  listProjectResponsibleProfiles,
+  listProjectResponsibleProfiles, listProjectThreads, listThreadMessages,
+  listProjectWorkItems,
   type ProjectSignalSummary, type ClientChatMessage, type MentionProfile,
+  type ProjectThreadSummary, type ProjectWorkItemOption,
 } from '../data/db/clientPortal'
 import { create as createNotification } from '../data/db/notifications'
 
