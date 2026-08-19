@@ -1396,7 +1396,7 @@ function BoardTab({
       <>
       {/* ── Board area ─────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto min-h-0">
-        <div className="flex gap-3 h-full px-4 pb-4" style={{ minWidth: visibleCols.length*224+80 }}>
+        <div className="flex gap-3 items-start px-4 pb-4" style={{ minWidth: visibleCols.length*224+80 }}>
 
           {visibleCols.map((col) => {
             const colIssues  = getColIssues(col)
