@@ -4,7 +4,7 @@ import { useSession } from '../data/SessionContext'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import {
   listProjectsWithClientSignals, listProjectChat, addClientMessage,
-  markProjectSignalsReadByPo, listResponsibleProjectIds,
+  markProjectSignalsReadByPo, listResponsibleProjectIds, listResponsibleProjects,
   type ProjectSignalSummary, type ClientChatMessage,
 } from '../data/db/clientPortal'
 
@@ -43,9 +43,12 @@ function Av({ initials, size = 28 }: { initials: string; size?: number }) {
 function ConvItem({ conv, active, onClick }: {
   conv: ProjectSignalSummary; active: boolean; onClick: () => void
 }) {
-  const preview = conv.lastSource === 'management'
-    ? `${conv.lastAuthor}: ${conv.lastBody}`
-    : conv.lastBody
+  const isEmpty = conv.lastBody === 'Sem mensagens ainda'
+  const preview = isEmpty
+    ? conv.lastBody
+    : conv.lastSource === 'management'
+      ? `${conv.lastAuthor}: ${conv.lastBody}`
+      : conv.lastBody
 
   return (
     <button
@@ -75,7 +78,7 @@ function ConvItem({ conv, active, onClick }: {
           }}>
             {conv.name}
           </span>
-          <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{fmtDate(conv.lastAt)}</span>
+          <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{isEmpty ? '' : fmtDate(conv.lastAt)}</span>
         </div>
         <p style={{
           fontSize: 11, color: T.text2, margin: 0, lineHeight: 1.4,
@@ -377,10 +380,24 @@ export default function ClientMessagesPage() {
   const [loading, setLoading]   = useState(true)
 
   const reloadConvs = useCallback(async () => {
-    const rows = await listProjectsWithClientSignals()
+    if (!activeUser?.user_id) { setConvs([]); setLoading(false); return }
+    const [signals, responsible] = await Promise.all([
+      listProjectsWithClientSignals(),
+      listResponsibleProjects(activeUser.user_id, isSupervisor),
+    ])
+    const merged = new Map<string, ProjectSignalSummary>()
+    for (const r of responsible) merged.set(r.projectId, r)
+    for (const s of signals) merged.set(s.projectId, s)
+    const rows = [...merged.values()].sort((a, b) => {
+      const aEmpty = a.lastBody === 'Sem mensagens ainda'
+      const bEmpty = b.lastBody === 'Sem mensagens ainda'
+      if (aEmpty && !bEmpty) return 1
+      if (!aEmpty && bEmpty) return -1
+      return new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime()
+    })
     setConvs(rows)
     setLoading(false)
-  }, [])
+  }, [activeUser?.user_id, isSupervisor])
 
   useEffect(() => { void reloadConvs() }, [reloadConvs])
 

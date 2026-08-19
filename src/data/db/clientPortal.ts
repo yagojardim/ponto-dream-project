@@ -663,6 +663,66 @@ export interface ProjectSignalSummary {
   lastSource: 'client' | 'management'
 }
 
+/** Projects for which the active user is a client-messages responsible.
+ *  For supervisors, returns every project that has a responsible assigned or a
+ *  client portal user. Empty channels (no signals yet) are returned with
+ *  unread:0 and a placeholder last message so the channel is selectable.
+ */
+async function listResponsibleProjects__raw(
+  profileId: string, isSupervisor: boolean,
+): Promise<ProjectSignalSummary[]> {
+  const tid = DEFAULT_TENANT_ID
+  let projectIds: string[] = []
+
+  if (isSupervisor) {
+    const [respRes, portalRes] = await Promise.all([
+      tbl('project_client_responsibles').select('project_id').eq('tenant_id', tid),
+      tbl('client_portal_users').select('project_id').eq('tenant_id', tid).is('archived_at', null),
+    ])
+    if (respRes.error) throw tenantError('project_client_responsibles', respRes.error.message)
+    if (portalRes.error) throw tenantError('client_portal_users', portalRes.error.message)
+    const ids = new Set([
+      ...((respRes.data ?? []).map((r: any) => r.project_id)),
+      ...((portalRes.data ?? []).map((r: any) => r.project_id)),
+    ])
+    projectIds = [...ids].filter(Boolean)
+  } else {
+    const { data, error } = await tbl('project_client_responsibles')
+      .select('project_id')
+      .eq('tenant_id', tid)
+      .eq('profile_id', profileId)
+    if (error) throw tenantError('project_client_responsibles', error.message)
+    projectIds = (data ?? []).map((r: any) => r.project_id).filter(Boolean)
+  }
+
+  if (projectIds.length === 0) return []
+
+  const { data, error } = await supabase.from('projects')
+    .select('id, name, client_name')
+    .eq('tenant_id', tid)
+    .in('id', projectIds)
+    .is('archived_at', null)
+    .order('name')
+  if (error) throw tenantError('projects', error.message)
+
+  const emptyDate = new Date(0).toISOString()
+  return (data ?? []).map((p: any) => ({
+    projectId:  p.id,
+    name:       p.name ?? 'Projeto',
+    clientName: p.client_name ?? null,
+    unread:     0,
+    lastAt:     emptyDate,
+    lastBody:   'Sem mensagens ainda',
+    lastAuthor: '—',
+    lastSource: 'client' as const,
+  }))
+}
+
+export const listResponsibleProjects = (
+  profileId: string, isSupervisor: boolean,
+): Promise<ProjectSignalSummary[]> =>
+  safeCall('clientPortal.listResponsibleProjects', () => listResponsibleProjects__raw(profileId, isSupervisor), [], { profileId, isSupervisor })
+
 function signalSource(row: ClientSignalRow): 'client' | 'management' {
   const m = (row.metadata ?? {}) as Record<string, unknown>
   return m.source === 'management' ? 'management' : 'client'
