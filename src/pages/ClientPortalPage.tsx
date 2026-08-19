@@ -1453,33 +1453,47 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   }
 
   const project = PROJECTS.find(p => p.id === selId) ?? PROJECTS[0]
-  const rawSignals = project ? getSignalsForProject(project.name, MOCK_TENANT.tenant_id) : []
-  const thread = flattenClientThread(rawSignals, CLIENT_AUTHOR)
+  const [chat, setChat] = useState<ClientChatMessage[]>([])
+
+  useEffect(() => {
+    let alive = true
+    if (!project) { setChat([]); return }
+    ;(async () => {
+      const rows = await listProjectChat(project.id)
+      if (alive) setChat(rows)
+    })()
+    return () => { alive = false }
+  }, [project?.id, tick]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const thread: ChatBubble[] = chat.map(m => ({
+    id: m.id,
+    side: m.side,
+    author: m.side === 'client' ? m.author : m.author,
+    initials: m.author.split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase(),
+    body: m.body,
+    timestamp: m.createdAt,
+    badge: m.type === 'approval' ? '✓ Aprovação' : undefined,
+    itemTitle: m.itemTitle ?? undefined,
+  }))
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [selId, tick])
+  }, [selId, tick, chat.length])
 
-  function handleSend() {
+  async function handleSend() {
     const body = draft.trim()
     if (!body || !project || !chatCanComment) return
-    addClientSignal({
-      project: project.name,
-      tenant_id: MOCK_TENANT.tenant_id,
-      type: 'comment',
+    setDraft('')
+    await addClientMessage({
+      projectId: project.id,
       body,
       author: CLIENT_AUTHOR,
-      author_initials: 'JS',
-      item_id: `portal-chat-${Date.now()}`,
-      item_title: 'Chat geral do projeto',
-      responsible_po: 'u_po',
-      created_at: new Date().toISOString(),
-      read_by_po: false,
+      source: 'client',
     })
-    setDraft('')
     setTick(t => t + 1)
     onToast('Mensagem enviada.')
   }
+
 
   // Group thread by day
   type DayGroup = { day: string; bubbles: ChatBubble[] }
