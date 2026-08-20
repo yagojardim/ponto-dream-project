@@ -210,7 +210,9 @@ export async function uploadAttachment({ tenantId, workItemId, file, profileId }
   if (insert.error) {
     // Never leave an orphan object behind when the row could not be written.
     await supabase.storage.from(BUCKET).remove([path])
-    throw new Error(friendlyDbError(insert.error.message))
+    const friendly = friendlyDbError(insert.error.message)
+    logger.error('attachments.insertAttachment', insert.error, { message: insert.error.message, path, tenantId, workItemId })
+    throw new Error(friendly)
   }
 
   const r = insert.data
