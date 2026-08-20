@@ -448,6 +448,9 @@ export interface UnifiedHistoryEntry {
   summary?: string
   /** true quando o evento veio do épico e não do item. */
   fromEpic?: boolean
+  /** Preenchido em eventos de anexo — permite baixar o arquivo pelo histórico. */
+  attachmentName?: string
+  attachmentPath?: string
 }
 
 const PT_FIELD: Record<string, string> = {
@@ -489,7 +492,12 @@ function auditSummary(action: string, before: unknown, after: unknown): string {
     case 'work_item.title_updated': return `Alterou o título para “${a ?? '—'}”`
     case 'work_item.description_updated': return 'Atualizou a descrição'
     case 'work_item.labels_updated': return `Atualizou as labels${a ? `: ${a}` : ''}`
-    case 'work_item.comment_added': return 'Comentou na demanda'
+    case 'work_item.comment_added': {
+      const body = pick(after, 'body', 'text', 'comment')
+      if (!body) return 'Comentou na demanda'
+      const t = body.length > 140 ? `${body.slice(0, 140)}…` : body
+      return `Comentou: “${t}”`
+    }
     case 'attachment_added': return `Anexou o arquivo ${pick(after, 'name') ?? ''}`.trim()
     case 'attachment_deleted': return `Removeu o anexo ${pick(before, 'name') ?? ''}`.trim()
     default: {
@@ -611,6 +619,11 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
         id: string; action: string; actor_id: string | null; actor_name: string | null
         before: unknown; after: unknown; created_at: string
       }[]) {
+        const att = raw.action === 'attachment_added'
+          ? (raw.after as Record<string, unknown> | null)
+          : raw.action === 'attachment_deleted'
+            ? (raw.before as Record<string, unknown> | null)
+            : null
         out.push({
           id: `au-${raw.id}`,
           createdAt: raw.created_at,
@@ -619,7 +632,9 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
           action: AUDIT_ACTION_LABEL[raw.action] ?? raw.action.replace(/^(work_item|epic)\./, '').replace(/_/g, ' '),
           detail: deUuid(auditDetail(raw.before, raw.after)),
           summary: deUuid(auditSummary(raw.action, raw.before, raw.after)),
-
+          attachmentName: typeof att?.name === 'string' ? att.name : undefined,
+          attachmentPath: raw.action === 'attachment_added' && typeof att?.storage_path === 'string'
+            ? att.storage_path : undefined,
           fromEpic,
         })
       }

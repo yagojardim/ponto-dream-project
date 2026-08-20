@@ -1786,6 +1786,17 @@ const FIELD_LABEL: Record<string, string> = {
   epic_id: 'épico', fix_version: 'versão',
 }
 
+async function downloadAttachment(storagePath: string, name?: string) {
+  const url = await getDownloadUrl(storagePath)
+  if (!url) return
+  const a = document.createElement('a')
+  a.href = url
+  if (name) a.download = name
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
 function HistoryModal({ rows, onClose }: { rows: UnifiedHistoryEntry[] | null; onClose: () => void }) {
   return (
     <div onClick={e=>{ if(e.target===e.currentTarget) onClose() }}
@@ -1812,7 +1823,15 @@ function HistoryModal({ rows, onClose }: { rows: UnifiedHistoryEntry[] | null; o
               <div style={{ flex:1, minWidth:0 }}>
                 <p style={{ margin:0, fontSize:12, color:T.text1, lineHeight:1.5 }}>
                   <strong style={{ fontWeight:600 }}>{ev.actorName}</strong>{' '}
-                  {ev.summary
+                  {ev.attachmentPath
+                    ? <>
+                        <span style={{ color:T.text2 }}>Anexou o arquivo </span>
+                        <button
+                          onClick={() => downloadAttachment(ev.attachmentPath!, ev.attachmentName)}
+                          style={{ background:'none', border:'none', padding:0, cursor:'pointer', color:T.accent, textDecoration:'underline', fontSize:12 }}
+                        >{ev.attachmentName ?? 'arquivo'}</button>
+                      </>
+                    : ev.summary
                     ? <span style={{ color:T.text2 }}>{ev.summary}</span>
                     : ev.kind === 'field'
                       ? <>alterou <em style={{ fontStyle:'normal', color:T.text2 }}>{FIELD_LABEL[ev.field ?? ''] ?? ev.field}</em> de “{ev.fromValue || '—'}” para “{ev.toValue || '—'}”</>
