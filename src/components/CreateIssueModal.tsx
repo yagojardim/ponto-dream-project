@@ -142,7 +142,7 @@ function StepsField({ steps, onChange }: { steps: string[]; onChange:(s:string[]
   )
 }
 
-export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSprintId }: CreateIssueModalProps) {
+export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSprintId, members, sprints, projectId }: CreateIssueModalProps) {
   // Permission-gated issue types
   const activeUser = getActiveUser()
   const perms = activeUser?.permissions ?? []
@@ -157,17 +157,37 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     return false
   })
 
-  // Map defaultSprintId to a display string
-  const defaultSprintLabel = defaultSprintId === 's14' ? SPRINTS[0]
-    : defaultSprintId === 's15' ? SPRINTS[1]
-    : SPRINTS[0]
+  // ── Dados reais (membros/sprints). Se não vierem por prop, carrega do projeto.
+  const [loadedMembers, setLoadedMembers] = useState<ModalMember[]>([])
+  const [loadedSprints, setLoadedSprints] = useState<ModalSprint[]>([])
+
+  useEffect(() => {
+    if (members && sprints) return
+    if (!projectId) return
+    let alive = true
+    void (async () => {
+      try {
+        const data = await fetchBoardData(projectId)
+        if (!alive) return
+        setLoadedMembers(data.profiles.map(p => ({ id: p.id, name: p.name })))
+        setLoadedSprints(data.sprints.map(s => ({ id: s.id, name: s.name, state: s.state ?? undefined })))
+      } catch (err) {
+        logger.error('CreateIssueModal: falha ao carregar membros/sprints', err)
+      }
+    })()
+    return () => { alive = false }
+  }, [members, sprints, projectId])
+
+  const memberOptions: ModalMember[] = members ?? loadedMembers
+  const sprintOptions: ModalSprint[] = (sprints ?? loadedSprints).filter(s => s.state !== 'completed')
 
   const [type,        setType]       = useState<IssueType>(allowedTypes[0] ?? 'task')
   const [summary,     setSummary]    = useState('')
   const [description, setDesc]       = useState('')
   const [priority,    setPriority]   = useState<Priority>('medium')
-  const [assignee,    setAssignee]   = useState('')
-  const [sprint,      setSprint]     = useState(defaultSprintLabel)
+  const [assigneeId,  setAssigneeId] = useState('')
+  const [sprintId,    setSprintId]   = useState(defaultSprintId ?? '')
+
   const [epic,        setEpic]       = useState(EPICS[0])
   const [points,      setPoints]     = useState('')
   const [labels,      setLabels]     = useState('')
