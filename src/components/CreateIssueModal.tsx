@@ -445,7 +445,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
               <Field label="Sprint">
                 <ValueSelect
                   value={sprintId}
-                  onChange={setSprintId}
+                  onChange={v=>{ setSprintTouched(true); setSprintId(v) }}
                   options={[...sprintOptions.map(s=>({ value:s.id, label: s.state === 'active' ? `${s.name} (Ativa)` : s.name })), { value:'', label: BACKLOG_LABEL }]}
                 />
               </Field>
