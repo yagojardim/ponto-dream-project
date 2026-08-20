@@ -212,3 +212,18 @@ export async function createEpic(input: CreateEpicInput): Promise<EpicRow> {
   }
 }
 
+/** Creates a feature (row in `features`) under an epic. */
+export async function createFeature(input: {
+  epicId: string; name: string; description?: string | null; actorName?: string
+}): Promise<EpicFeatureRow> {
+  const { data, error } = await supabase.from('features').insert({
+    tenant_id: DEFAULT_TENANT_ID,
+    epic_id: input.epicId,
+    name: input.name,
+    description: input.description ?? null,
+  }).select('id, epic_id, name, description').single()
+  if (error || !data) throw new Error(missingTableMessage('features', error?.message ?? 'Falha ao criar a funcionalidade.'))
+  await writeAudit('feature', data.id, 'feature.created', input.actorName ?? 'Sistema', null, { name: data.name, epic_id: data.epic_id })
+  return data as EpicFeatureRow
+}
+
