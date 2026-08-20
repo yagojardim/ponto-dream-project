@@ -12,11 +12,20 @@ import { can } from '../data/permissions'
 type IssueType = 'epic' | 'story' | 'task' | 'bug' | 'subtask'
 type Priority  = 'critical' | 'high' | 'medium' | 'low'
 
+export interface ModalMember { id: string; name: string }
+export interface ModalSprint { id: string; name: string; state?: string }
+
 interface CreateIssueModalProps {
   onClose:        () => void
   onCreate:       (data: Record<string, unknown>) => void
   defaultStatus?: string
   defaultSprintId?: string
+  /** Membros reais do projeto (profiles ativos). Se ausente, carrega via projectId. */
+  members?:       ModalMember[]
+  /** Sprints reais do projeto. Se ausente, carrega via projectId. */
+  sprints?:       ModalSprint[]
+  /** Projeto de origem quando o modal é aberto fora do board (Header "+ Demanda"). */
+  projectId?:     string
 }
 
 const TYPE_CFG: Record<IssueType, { icon: string; color: string; label: string; desc: string }> = {
@@ -36,14 +45,8 @@ const PRIORITY_CFG: Record<Priority, { label: string; color: string; icon: strin
 
 const ENVIRONMENTS = ['iOS','Android','Web','Desktop','Todos']
 const EPICS = ['EP-01 Website Relaunch','EP-02 Infra & Eng','EP-03 Pesquisa & Conteúdo']
-const SPRINTS = ['Sprint 14 (Ativa)','Sprint 15 (Planejado)','Backlog']
-const ASSIGNEES = [
-  { id:'AL', name:'Ana Lima'    },
-  { id:'JN', name:'João Nunes'  },
-  { id:'CS', name:'Clara Silva' },
-  { id:'NM', name:'Nicolas Melo'},
-  { id:'LF', name:'Lucas Ferreira'},
-]
+const BACKLOG_LABEL = 'Backlog'
+
 const EPIC_COLORS = [T.accent, T.warn, T.success, T.crit, T.purple, '#38bdf8']
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
