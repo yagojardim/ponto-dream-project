@@ -205,6 +205,8 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
   const memberOptions: ModalMember[] = members ?? loadedMembers
   const sprintOptions: ModalSprint[] = (sprints ?? loadedSprints).filter(s => s.state !== 'completed')
+  const [sprintTouched, setSprintTouched] = useState(false)
+
 
   const [type,        setType]       = useState<IssueType>(allowedTypes[0] ?? 'task')
   const [summary,     setSummary]    = useState('')
