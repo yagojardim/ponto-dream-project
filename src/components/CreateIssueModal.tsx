@@ -342,7 +342,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
   const [epic,        setEpic]       = useState(EPICS[0])
   const [points,      setPoints]     = useState('')
-  const [labels,      setLabels]     = useState('')
+  const [labelList,   setLabelList]  = useState<string[]>([])
   const [parentIssue, setParent]     = useState('')
   // Epic-specific
   const [epicColor, setEpicColor] = useState<string>(T.warn)
@@ -351,10 +351,50 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const [steps,       setSteps]      = useState(['','',''])
   const [expected,    setExpected]   = useState('')
   const [found,       setFound]      = useState('')
-  const [environment, setEnv]        = useState('Todos')
+  const [environment, setEnv]        = useState('')
   const [evidence,    setEvidence]   = useState('')
   const [createAnother, setCreateAnother] = useState(false)
   const [showCreated, setShowCreated] = useState(false)
+
+  // Catálogos creatable por tenant
+  const [envOptions, setEnvOptions] = useState<string[]>([])
+  const [labelOptions, setLabelOptions] = useState<string[]>([])
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const [envs, labs] = await Promise.all([listBugEnvironments(), listTenantLabels()])
+        if (!alive) return
+        setEnvOptions(envs.map(e => e.name))
+        setLabelOptions(labs.map(l => l.name))
+      } catch (err) {
+        logger.error('CreateIssueModal: falha ao carregar catálogos do tenant', err)
+      }
+    })()
+    return () => { alive = false }
+  }, [])
+
+  async function handleCreateEnv(name: string) {
+    const created = await createBugEnvironment(name)
+    const value = created?.name ?? name.trim()
+    setEnvOptions(prev => (prev.some(o => o.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value].sort()))
+    setEnv(value)
+  }
+
+  async function handleCreateLabel(name: string) {
+    const created = await createTenantLabel(name)
+    const value = created?.name ?? name.trim()
+    setLabelOptions(prev => (prev.some(o => o.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value].sort()))
+    setLabelList(prev => (prev.some(l => l.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]))
+  }
+
+  function toggleLabel(name: string) {
+    setLabelList(prev => (prev.some(l => l.toLowerCase() === name.toLowerCase())
+      ? prev.filter(l => l.toLowerCase() !== name.toLowerCase())
+      : [...prev, name]))
+  }
+
 
   useEffect(() => {
     if (showCreated) {
