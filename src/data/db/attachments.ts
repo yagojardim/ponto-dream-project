@@ -184,7 +184,11 @@ export async function uploadAttachment({ tenantId, workItemId, file, profileId }
     contentType: file.type || 'application/octet-stream',
     upsert: false,
   })
-  if (up.error) throw new Error(friendlyDbError(up.error.message))
+  if (up.error) {
+    const friendly = friendlyDbError(up.error.message)
+    logger.error('attachments.uploadStorage', up.error, { message: up.error.message, path })
+    throw new Error(friendly)
+  }
 
   const insert = await supabase
     .from('attachments')
