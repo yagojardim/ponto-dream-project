@@ -2,11 +2,13 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { WorkItemDetail } from '../components/WorkItemDetail'
 import { T } from '../components/ds/tokens'
 import {
-  listEpics, createEpicIssue, linkItemToEpic, createEpic, nextEpicKey, epicColor as epicColorOf,
+  listEpics, createEpicIssue, linkItemToEpic, createEpic, createFeature, nextEpicKey, epicColor as epicColorOf,
   type EpicsData, type EpicItemRow, type EpicRow,
 } from '../data/db/epics'
+import { listProjects, projectUsesFeatures } from '../data/db/projects'
 import { DB_STATUS_CFG } from '../data/db/timeline'
 import { getActiveUser } from '../data/session'
+import { can } from '../data/permissions'
 
 const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done'] as const
 
@@ -349,8 +351,26 @@ export default function EpicsPage() {
   const [newEpicOpen, setNewEpicOpen] = useState(false)
   const [newEpicError, setNewEpicError] = useState<string | null>(null)
   const [suggestedKey, setSuggestedKey] = useState('')
+  const [featureProjects, setFeatureProjects] = useState<Set<string>>(new Set())
+  const [featureEpic, setFeatureEpic] = useState<{ id: string; name: string } | null>(null)
+  const [featureName, setFeatureName] = useState('')
+  const [featureDesc, setFeatureDesc] = useState('')
+  const [featureError, setFeatureError] = useState<string | null>(null)
 
   const activeUser = getActiveUser()
+  const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const { projects } = await listProjects()
+        if (!alive) return
+        setFeatureProjects(new Set(projects.filter(p => projectUsesFeatures(p)).map(p => p.id)))
+      } catch { /* silencioso — sem features disponíveis */ }
+    })()
+    return () => { alive = false }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -405,6 +425,28 @@ export default function EpicsPage() {
     } catch (err) { setNewEpicError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
   }
+
+  function openNewFeature(epic: EpicRow) {
+    setFeatureEpic({ id: epic.id, name: epic.name })
+    setFeatureName(''); setFeatureDesc(''); setFeatureError(null)
+  }
+
+  async function handleCreateFeature() {
+    if (!featureEpic || !featureName.trim()) return
+    setBusy(true); setFeatureError(null)
+    try {
+      await createFeature({
+        epicId: featureEpic.id,
+        name: featureName.trim(),
+        description: featureDesc.trim() || null,
+        actorName: activeUser?.name,
+      })
+      setFeatureEpic(null)
+      await load()
+    } catch (err) { setFeatureError(err instanceof Error ? err.message : String(err)) }
+    finally { setBusy(false) }
+  }
+
 
   const epics = data?.epics ?? []
   const items = data?.items ?? []
@@ -526,7 +568,7 @@ export default function EpicsPage() {
                 </div>
 
                 {/* Features */}
-                {features.length > 0 && (
+                {(features.length > 0 || (featureProjects.has(epic.project_id) && canCreateFeature)) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
                     <span style={{ fontSize: 11, color: T.text3 }}>Funcionalidades:</span>
                     {features.map(f => (
@@ -535,6 +577,16 @@ export default function EpicsPage() {
                         border: `1px solid ${T.border}`, borderRadius: 20, padding: '2px 10px',
                       }}>{f.name}</span>
                     ))}
+                    {featureProjects.has(epic.project_id) && canCreateFeature && (
+                      <button
+                        onClick={() => openNewFeature(epic)}
+                        style={{
+                          fontSize: 11, color: T.purple, background: T.purpleDim,
+                          border: `1px dashed ${T.purple}55`, borderRadius: 20,
+                          padding: '2px 10px', cursor: 'pointer', fontWeight: 600,
+                        }}
+                      >+ Funcionalidade</button>
+                    )}
                   </div>
                 )}
 
@@ -657,6 +709,56 @@ export default function EpicsPage() {
         onCreate={input => { void handleCreateEpic(input) }}
       />
     )}
+
+    {featureEpic && (
+      <div
+        onClick={e => { if (e.target === e.currentTarget) setFeatureEpic(null) }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(8,10,14,0.72)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+        }}
+      >
+        <div style={{
+          width: '100%', maxWidth: 440, background: T.bgSurface,
+          border: `1px solid ${T.border2}`, borderRadius: 12, boxShadow: T.shadowModal,
+          padding: 20, display: 'flex', flexDirection: 'column', gap: 12,
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>Nova funcionalidade</div>
+          <div style={{ fontSize: 12, color: T.text3 }}>Épico: {featureEpic.name}</div>
+
+          <div>
+            <label style={labelStyle}>Nome *</label>
+            <input value={featureName} onChange={e => setFeatureName(e.target.value)}
+              placeholder="Ex.: Login com Google" style={fieldStyle} />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Descrição</label>
+            <textarea value={featureDesc} onChange={e => setFeatureDesc(e.target.value)} rows={3}
+              style={{ ...fieldStyle, resize: 'vertical' }} />
+          </div>
+
+          {featureError && <div style={{ fontSize: 12, color: T.crit }}>{featureError}</div>}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+            <button onClick={() => setFeatureEpic(null)}
+              style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, cursor: 'pointer' }}
+            >Cancelar</button>
+            <button
+              disabled={!featureName.trim() || busy}
+              onClick={() => { void handleCreateFeature() }}
+              style={{
+                fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none',
+                background: featureName.trim() && !busy ? T.purple : T.neutralDim,
+                color: featureName.trim() && !busy ? '#fff' : T.text3,
+                cursor: featureName.trim() && !busy ? 'pointer' : 'not-allowed',
+              }}
+            >{busy ? 'Criando…' : 'Criar'}</button>
+          </div>
+        </div>
+      </div>
+    )}
+
 
     </>
   )
