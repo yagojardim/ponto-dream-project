@@ -710,6 +710,56 @@ export default function EpicsPage() {
       />
     )}
 
+    {featureEpic && (
+      <div
+        onClick={e => { if (e.target === e.currentTarget) setFeatureEpic(null) }}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(8,10,14,0.72)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+        }}
+      >
+        <div style={{
+          width: '100%', maxWidth: 440, background: T.bgSurface,
+          border: `1px solid ${T.border2}`, borderRadius: 12, boxShadow: T.shadowModal,
+          padding: 20, display: 'flex', flexDirection: 'column', gap: 12,
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>Nova funcionalidade</div>
+          <div style={{ fontSize: 12, color: T.text3 }}>Épico: {featureEpic.name}</div>
+
+          <div>
+            <label style={labelStyle}>Nome *</label>
+            <input value={featureName} onChange={e => setFeatureName(e.target.value)}
+              placeholder="Ex.: Login com Google" style={fieldStyle} />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Descrição</label>
+            <textarea value={featureDesc} onChange={e => setFeatureDesc(e.target.value)} rows={3}
+              style={{ ...fieldStyle, resize: 'vertical' }} />
+          </div>
+
+          {featureError && <div style={{ fontSize: 12, color: T.crit }}>{featureError}</div>}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+            <button onClick={() => setFeatureEpic(null)}
+              style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, cursor: 'pointer' }}
+            >Cancelar</button>
+            <button
+              disabled={!featureName.trim() || busy}
+              onClick={() => { void handleCreateFeature() }}
+              style={{
+                fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none',
+                background: featureName.trim() && !busy ? T.purple : T.neutralDim,
+                color: featureName.trim() && !busy ? '#fff' : T.text3,
+                cursor: featureName.trim() && !busy ? 'pointer' : 'not-allowed',
+              }}
+            >{busy ? 'Criando…' : 'Criar'}</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+
     </>
   )
 }
