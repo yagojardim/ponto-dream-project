@@ -266,6 +266,7 @@ export async function createWorkItem(
       board_column_id: input.column.id,
       sprint_id: input.sprintId ?? null,
       epic_id: input.epicId ?? null,
+      feature_id: input.featureId ?? null,
       assignee_id: input.assigneeId ?? null,
       key,
       type: input.type ?? 'story',
