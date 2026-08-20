@@ -426,6 +426,28 @@ export default function EpicsPage() {
     finally { setBusy(false) }
   }
 
+  function openNewFeature(epic: EpicRow) {
+    setFeatureEpic({ id: epic.id, name: epic.name })
+    setFeatureName(''); setFeatureDesc(''); setFeatureError(null)
+  }
+
+  async function handleCreateFeature() {
+    if (!featureEpic || !featureName.trim()) return
+    setBusy(true); setFeatureError(null)
+    try {
+      await createFeature({
+        epicId: featureEpic.id,
+        name: featureName.trim(),
+        description: featureDesc.trim() || null,
+        actorName: activeUser?.name,
+      })
+      setFeatureEpic(null)
+      await load()
+    } catch (err) { setFeatureError(err instanceof Error ? err.message : String(err)) }
+    finally { setBusy(false) }
+  }
+
+
   const epics = data?.epics ?? []
   const items = data?.items ?? []
   const profileById = new Map((data?.profiles ?? []).map(p => [p.id, p]))
