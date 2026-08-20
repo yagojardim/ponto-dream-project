@@ -1215,6 +1215,12 @@ export function WorkItemDetail({ data: dataProp, itemId: itemIdProp, onUpdate, o
         <div style={{ flexShrink:0, borderBottom:`1px solid ${T.border}` }}>
           {/* Breadcrumb */}
           <div style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 18px 0', fontSize:11, color:T.text3 }}>
+            {navStack.length > 0 && (
+              <button onClick={goBack}
+                style={{ background:'transparent', border:`1px solid ${T.border}`, color:T.text2, borderRadius:6, padding:'2px 8px', fontSize:11, cursor:'pointer', marginRight:2 }}>
+                ‹ Voltar
+              </button>
+            )}
             {local.epicLabel ? (
               <>
                 <span style={{ color:local.epicColor ?? T.warn }}>{local.epicLabel}</span>
