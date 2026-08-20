@@ -307,10 +307,12 @@ export default function ProjectsListPage({ onNav }: Props) {
       clientName: input.clientName,
       boardType: input.boardType,
       leadId: input.leadId,
+      usesFeatures: input.usesFeatures,
       actorName: activeUser.name,
     })
     await load()
   }
+
 
   return (
     <>
