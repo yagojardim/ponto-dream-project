@@ -557,7 +557,13 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Ambiente" required>
-                  <NativeSelect value={environment} onChange={setEnv} options={ENVIRONMENTS} />
+                  <CreatableCombobox
+                    options={envOptions}
+                    value={environment}
+                    onSelect={setEnv}
+                    onCreate={handleCreateEnv}
+                    placeholder="Selecionar ou criar ambiente..."
+                  />
                 </Field>
                 <Field label="Evidência (link ou arquivo)">
                   <TextInput value={evidence} onChange={e=>setEvidence((e.target as HTMLInputElement).value)} placeholder="https://... ou nome do arquivo" />
