@@ -22,7 +22,7 @@ import {
 // ─── Exported data interfaces ──────────────────────────────────────────────────
 export interface WIComment      { author: string; authorName?: string; body: string; time: string }
 export interface WILinkedIssue  { relType: string; key: string; title: string; status: string; priority: string; assigneeInitials?: string }
-export interface WIChild        { key: string; title: string; type: string; status: string; assigneeInitials?: string }
+export interface WIChild        { id?: string; key: string; title: string; type: string; status: string; assigneeInitials?: string }
 export interface WIAcItem       { id: string; text: string; done: boolean }
 export interface WIMember       { id: string; name: string; initials: string }
 export interface WISprint       { id: string; name: string }
@@ -716,7 +716,7 @@ function toWorkItemData(d: WorkItemDetailData): WorkItemData {
     points: it.story_points == null ? undefined : Number(it.story_points),
     acItems: d.acceptance.map(a => ({ id: a.id, text: a.text, done: a.is_done })),
     children: d.subtasks.map(s => ({
-      key: s.key, title: s.title, type: s.type,
+      id: s.id, key: s.key, title: s.title, type: s.type,
       status: uiStatusFromDb(s.status), assigneeInitials: initials(s.assignee_id),
     })),
     linkedIssues: d.dependencies.map(dep => ({
@@ -878,7 +878,7 @@ const EMPTY_WORK_ITEM: WorkItemData = {
   labels: [], assigneeInitials: '',
 }
 
-export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode = 'drawer' }: {
+export function WorkItemDetail({ data: dataProp, itemId: itemIdProp, onUpdate, onClose, mode = 'drawer' }: {
   /** Optional when itemId is given — the row is then loaded from Supabase. */
   data?:     WorkItemData
   /** When provided, the panel reads and persists the real Supabase row. */
@@ -891,6 +891,11 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
   const isAuthenticated = sessionStatus === 'authenticated'
   const canEdit = can(activeUser.permissions, 'edit:workitem')
   const data = dataProp ?? EMPTY_WORK_ITEM
+
+  // Navegação interna (abrir subtarefas sem sair do drawer)
+  const [itemId,   setItemId]   = useState<string | undefined>(itemIdProp)
+  const [navStack, setNavStack] = useState<string[]>([])
+  useEffect(() => { setItemId(itemIdProp); setNavStack([]) }, [itemIdProp])
 
   // ── Local state (all mutable fields) ────────────────────────────────────────
   const [local,       setLocal]      = useState<WorkItemData>(data)
@@ -907,7 +912,7 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
   const [commentText, setCommentText]= useState('')
   const [children,    setChildren]   = useState<WIChild[]>(data.children ?? [])
   const [linkedIssues,setLinkedIssues]=useState<WILinkedIssue[]>(data.linkedIssues ?? [])
-  const [loading,     setLoading]    = useState(mode === 'drawer' || !!itemId)
+  const [loading,     setLoading]    = useState(mode === 'drawer' || !!itemIdProp)
   const [toast,       setToast]      = useState<string | null>(null)
   const [history,     setHistory]    = useState<WIHistoryEntry[]>(data.history ?? [])
   const [dbError,     setDbError]    = useState<string | null>(null)
@@ -1153,14 +1158,28 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
     void listItemHistory(itemId, dbRef.current?.item.epic_id ?? null).then(setHistRows)
   }, [itemId])
 
+  function openChild(childId?: string) {
+    if (!childId) return
+    setNavStack(s => [...s, itemId ?? '__root__'])
+    setItemId(childId)
+  }
+  function goBack() {
+    setNavStack(s => {
+      const prev = s[s.length - 1]
+      if (prev === undefined) return s
+      setItemId(prev === '__root__' ? itemIdProp : prev)
+      return s.slice(0, -1)
+    })
+  }
+
   // ── Subtarefas ───────────────────────────────────────────────────────────────
   const subtaskMembers = (dbRef.current?.profiles ?? []).map(p => ({ id: p.id, name: p.name }))
 
-  const handleCreateSubtask = useCallback(async (sub: { title:string; assigneeId:string|null; storyPoints:number }) => {
+  const handleCreateSubtask = useCallback(async (sub: { title:string; description:string; priority:'critical'|'high'|'medium'|'low'; assigneeId:string|null; storyPoints:number }) => {
     const parent = dbRef.current?.item
     if (!itemId || !parent) { setToast('Item ainda não carregado.'); return }
     try {
-      await addSubtask(parent, sub.title, activeUser.name, { assigneeId: sub.assigneeId, storyPoints: sub.storyPoints })
+      await addSubtask(parent, sub.title, activeUser.name, { assigneeId: sub.assigneeId, storyPoints: sub.storyPoints, description: sub.description, priority: sub.priority })
       const fresh = await getWorkItem(itemId)
       applyDetail(fresh)
       setToast('Subtarefa criada')
@@ -1292,7 +1311,7 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
               {/* Action bar */}
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:18, flexWrap:'wrap' }}>
                 {[
-                  { label:'+ Child issue', icon:null, onClick:()=>setSubtaskOpen(true) },
+                  { label:'+ Subtarefa', icon:null, onClick:()=>setSubtaskOpen(true) },
                   { label:'Vincular demanda', icon:null, onClick:()=>setAddRelOpen(true) },
                 ].map(btn => (
                   <button key={btn.label} onClick={btn.onClick}
@@ -1350,7 +1369,7 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
               {/* Child issues */}
               {(
                 <section style={{ marginBottom:22 }}>
-                  <SecHeader title="Child Issues" count={children.length} help="Quebra da demanda em passos menores. A barra mostra quantas subtarefas já foram concluídas." />
+                  <SecHeader title="Subtarefas" count={children.length} help="Quebra da demanda em passos menores. A barra mostra quantas subtarefas já foram concluídas." />
                   {/* Progress bar */}
                   <div style={{ marginBottom:10 }}>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
@@ -1365,7 +1384,8 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
                     {children.map(ch => {
                       const ct = TYPE_CFG[ch.type] ?? TYPE_CFG.task
                       return (
-                        <div key={ch.key} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', borderRadius:8, cursor:'default' }}
+                        <div key={ch.key} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', borderRadius:8, cursor:'pointer' }}
+                          onClick={()=>openChild(ch.id)}
                           onMouseEnter={e=>{(e.currentTarget as HTMLDivElement).style.background=T.bgSurface2}}
                           onMouseLeave={e=>{(e.currentTarget as HTMLDivElement).style.background='transparent'}}>
                           <span style={{ fontSize:12, color:ct.color, flexShrink:0 }}>{ct.icon}</span>
@@ -1383,7 +1403,7 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
                   <button onClick={()=>setSubtaskOpen(true)}
                     style={{ marginTop:6, fontSize:11, border:'none', background:'transparent', color:T.text3, cursor:'pointer', padding:'2px 4px', borderRadius:4 }}
                     onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.color=T.accent}}
-                    onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.color=T.text3}}>+ Adicionar child issue</button>
+                    onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.color=T.text3}}>+ Adicionar subtarefa</button>
                 </section>
               )}
 
