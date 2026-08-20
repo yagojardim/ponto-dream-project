@@ -2785,6 +2785,27 @@ export type Database = {
           },
         ]
       }
+      tenant_bug_environments: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       tenant_modules: {
         Row: {
           activation_status: string | null
