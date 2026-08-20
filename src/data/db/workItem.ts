@@ -597,6 +597,14 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
       })
     }
 
+    /** Troca UUIDs soltos em textos de auditoria por nomes conhecidos. */
+    const deUuid = <T extends string | undefined>(text: T): T => (
+      typeof text === 'string'
+        ? (text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+            m => nameById.get(m) ?? sprintById.get(m) ?? epicById.get(m) ?? m) as T)
+        : text
+    )
+
 
     const pushAudit = (rows: unknown[], fromEpic: boolean) => {
       for (const raw of rows as {
