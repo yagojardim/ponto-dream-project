@@ -2,11 +2,13 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { WorkItemDetail } from '../components/WorkItemDetail'
 import { T } from '../components/ds/tokens'
 import {
-  listEpics, createEpicIssue, linkItemToEpic, createEpic, nextEpicKey, epicColor as epicColorOf,
+  listEpics, createEpicIssue, linkItemToEpic, createEpic, createFeature, nextEpicKey, epicColor as epicColorOf,
   type EpicsData, type EpicItemRow, type EpicRow,
 } from '../data/db/epics'
+import { listProjects, projectUsesFeatures } from '../data/db/projects'
 import { DB_STATUS_CFG } from '../data/db/timeline'
 import { getActiveUser } from '../data/session'
+import { can } from '../data/permissions'
 
 const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done'] as const
 
