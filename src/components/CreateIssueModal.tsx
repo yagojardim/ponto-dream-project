@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { T } from './ds/tokens'
 import { getActiveUser } from '../data/session'
 import { can } from '../data/permissions'
+import { fetchBoardData } from '../data/db/board'
+import { logger } from '../utils/logger'
+
 
 // ─── Create Issue — campos condicionais quando tipo=Bug
 // Bug: passos, esperado vs encontrado, ambiente, evidência
