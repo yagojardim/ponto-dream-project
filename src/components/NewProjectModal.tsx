@@ -9,7 +9,9 @@ export interface NewProjectInput {
   clientName: string | null
   boardType: 'scrum' | 'kanban'
   leadId: string | null
+  usesFeatures: boolean
 }
+
 
 interface Props {
   onClose: () => void
@@ -75,9 +77,11 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
   const [type, setType] = useState<'scrum' | 'kanban'>('scrum')
   const [lead, setLead] = useState<string>(leads?.[0]?.id ?? '')
   const [desc, setDesc] = useState('')
+  const [usesFeatures, setUsesFeatures] = useState(false)
   const [success, setSuccess] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
 
   const takenKeys = (existingKeys ?? []).map(k => k.toUpperCase())
   const isDuplicate = key.length > 0 && takenKeys.includes(key.toUpperCase())
@@ -109,7 +113,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
     if (!onCreate) { setSuccess(true); return }
     setSaving(true)
     try {
-      await onCreate({ name: name.trim(), key, description: desc.trim(), clientName: client.trim() || null, boardType: type, leadId: lead || null })
+      await onCreate({ name: name.trim(), key, description: desc.trim(), clientName: client.trim() || null, boardType: type, leadId: lead || null, usesFeatures })
       setSuccess(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível criar o projeto.')
@@ -117,6 +121,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
       setSaving(false)
     }
   }
+
 
   function handleReset() {
     setName('')
@@ -126,9 +131,11 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
     setType('scrum')
     setLead(leads?.[0]?.id ?? '')
     setDesc('')
+    setUsesFeatures(false)
     setSuccess(false)
     setError(null)
   }
+
 
   return (
     <div style={overlay} onClick={onClose}>
@@ -307,7 +314,20 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                 </div>
               </div>
 
+              {/* Work structure / Features toggle */}
+              <div>
+                <label style={labelStyle}>Estrutura de trabalho <HelpHint title="Usar Funcionalidades" text="Ative para incluir um nível de 'Funcionalidade' entre o Épico e a História (Épico → Funcionalidade → História → Subtarefa). Desligado, a hierarquia é Épico → História → Subtarefa. Pode ser mudado depois nas configurações do projeto." /></label>
+                <button type="button" onClick={() => setUsesFeatures(v => !v)}
+                  style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', padding:'12px 14px', borderRadius:10, border:`1px solid ${usesFeatures?T.accentBorder:T.border}`, background:usesFeatures?T.accentDim:T.bgSurface2, color:usesFeatures?T.accent:T.text2, cursor:'pointer', fontSize:13, fontWeight:600 }}>
+                  <span>Usar Funcionalidades {usesFeatures ? '(ativado)' : '(desativado)'}</span>
+                  <span style={{ width:36, height:20, borderRadius:999, background:usesFeatures?T.accent:T.border, position:'relative', transition:'all .15s' }}>
+                    <span style={{ position:'absolute', top:2, left:usesFeatures?18:2, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'all .15s' }} />
+                  </span>
+                </button>
+              </div>
+
               {/* Lead */}
+
               <div>
                 <label style={labelStyle}>Responsável <HelpHint text="Lead do projeto — responsável principal. É adicionado automaticamente como membro do projeto." /></label>
                 <select
