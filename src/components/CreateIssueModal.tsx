@@ -128,6 +128,91 @@ function ValueSelect({ value, onChange, options }: { value:string; onChange:(v:s
   )
 }
 
+// ── Creatable combobox: lista opções do tenant e permite criar novas ─────────
+function CreatableCombobox({
+  options, value, values, onSelect, onCreate, placeholder, multiple = false,
+}: {
+  options: string[]
+  value?: string
+  values?: string[]
+  onSelect: (v: string) => void
+  onCreate: (v: string) => void | Promise<void>
+  placeholder?: string
+  multiple?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) { setOpen(false); setQuery('') }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const q = query.trim()
+  const selected = multiple ? (values ?? []) : []
+  const filtered = options.filter(o =>
+    (!q || o.toLowerCase().includes(q.toLowerCase())) &&
+    (!multiple || !selected.some(s => s.toLowerCase() === o.toLowerCase())),
+  )
+  const canCreate = !!q && !options.some(o => o.toLowerCase() === q.toLowerCase())
+
+  function commit(v: string, isNew: boolean) {
+    if (isNew) void onCreate(v)
+    else onSelect(v)
+    setQuery('')
+    if (!multiple) setOpen(false)
+  }
+
+  return (
+    <div ref={boxRef} className="relative">
+      {multiple && selected.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {selected.map(s => (
+            <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px]"
+              style={{ background:T.accentDim, color:T.accent, border:`1px solid ${T.accentBorder}` }}>
+              {s}
+              <button onClick={()=>onSelect(s)} className="leading-none text-[12px]" style={{ color:T.accent }}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        value={multiple ? query : (open ? query : (value ?? ''))}
+        onChange={e=>{ setQuery(e.target.value); setOpen(true) }}
+        onFocus={e=>{ setOpen(true); e.currentTarget.style.borderColor=T.accent }}
+        onBlur={e=>{ e.currentTarget.style.borderColor=T.border }}
+        onKeyDown={e=>{
+          if (e.key === 'Enter' && q) { e.preventDefault(); commit(q, canCreate) }
+        }}
+        placeholder={placeholder}
+        className="h-9 px-3 text-[13px] rounded-lg border outline-none w-full"
+        style={{ background:T.bgSurface2, border:`1px solid ${T.border}`, color:T.text1 }}
+      />
+      {open && (filtered.length > 0 || canCreate) && (
+        <div className="absolute z-[70] left-0 right-0 top-full mt-1 rounded-lg overflow-hidden"
+          style={{ background:T.bgSurface, border:`1px solid ${T.border}`, boxShadow:T.shadowModal, maxHeight:200, overflowY:'auto' }}>
+          {canCreate && (
+            <button onClick={()=>commit(q, true)}
+              className="w-full text-left px-3 py-2 text-[12px]" style={{ color:T.accent }}>
+              + Criar “{q}”
+            </button>
+          )}
+          {filtered.map(o => (
+            <button key={o} onClick={()=>commit(o, false)}
+              className="w-full text-left px-3 py-2 text-[13px]" style={{ color:T.text1 }}
+              onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background=T.bgSurface2}}
+              onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent'}}
+            >{o}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 
 // Bug — numbered step list
