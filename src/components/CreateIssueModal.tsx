@@ -426,7 +426,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     if (!summary.trim()) return
     const assigneeName = memberOptions.find(m => m.id === assigneeId)?.name ?? ''
     const sprintName = sprintOptions.find(s => s.id === sprintId)?.name ?? BACKLOG_LABEL
-    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epic, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
+    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: epicId || null, featureId: featureId || null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
 
     if (createAnother) {
       setSummary('')
@@ -537,7 +537,15 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
           {/* Epic parent (story/task) */}
           {needsEpic && (
             <Field label="Épico">
-              <NativeSelect value={epic} onChange={setEpic} options={['—', ...EPICS]} />
+              <ValueSelect value={epicId} onChange={v => { setEpicId(v); setFeatureId('') }}
+                options={[{ value:'', label:'—' }, ...epicOptions.map(e => ({ value:e.id, label:e.name }))]} />
+            </Field>
+          )}
+
+          {needsEpic && projectUsesFeat && (
+            <Field label="Funcionalidade">
+              <ValueSelect value={featureId} onChange={setFeatureId}
+                options={[{ value:'', label:'—' }, ...featureOptions.filter(f => f.epicId === epicId).map(f => ({ value:f.id, label:f.name }))]} />
             </Field>
           )}
 
