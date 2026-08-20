@@ -1798,7 +1798,7 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
 
         {/* Sprint containers */}
         {sprints.map(sprint => {
-          const sprintIssues = issues.filter(i => i.sprint === sprint.id)
+          const sprintIssues = visibleIssues.filter(i => i.sprint === sprint.id)
           const totalPts = sprintIssues.reduce((s, i) => s + i.points, 0)
           const donePts  = sprintIssues.filter(i => i.status === 'done').reduce((s, i) => s + i.points, 0)
           const isOpen   = !collapsed.has(sprint.id)
