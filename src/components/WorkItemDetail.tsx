@@ -1786,6 +1786,17 @@ const FIELD_LABEL: Record<string, string> = {
   epic_id: 'épico', fix_version: 'versão',
 }
 
+async function downloadAttachment(storagePath: string, name?: string) {
+  const url = await getDownloadUrl(storagePath)
+  if (!url) return
+  const a = document.createElement('a')
+  a.href = url
+  if (name) a.download = name
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
 function HistoryModal({ rows, onClose }: { rows: UnifiedHistoryEntry[] | null; onClose: () => void }) {
   return (
     <div onClick={e=>{ if(e.target===e.currentTarget) onClose() }}
