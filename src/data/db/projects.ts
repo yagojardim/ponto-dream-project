@@ -107,7 +107,14 @@ export interface CreateProjectInput {
   boardType?: 'scrum' | 'kanban'
   leadId?: string | null
   actorName?: string
+  usesFeatures?: boolean
 }
+
+export function projectUsesFeatures(p: { metadata?: unknown } | null | undefined): boolean {
+  const m = (p?.metadata ?? {}) as Record<string, unknown>
+  return m.uses_features === true
+}
+
 
 const SCRUM_COLUMNS: { name: string; category: string; statuses: string[] }[] = [
   { name: 'Backlog', category: 'todo', statuses: ['backlog'] },
@@ -137,7 +144,9 @@ export async function createProject(input: CreateProjectInput): Promise<ProjectR
     client_name: input.clientName ?? null,
     status: 'planned',
     lead_id: input.leadId ?? null,
+    metadata: { uses_features: input.usesFeatures ?? false },
   }).select('id, key, name, description, client_name, status, lead_id, period_start, period_end, metadata').single()
+
 
   if (error || !project) throw fail('projects', error?.message ?? 'Falha ao criar o projeto.')
 
