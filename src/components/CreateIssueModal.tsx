@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { T } from './ds/tokens'
 import { getActiveUser } from '../data/session'
 import { can } from '../data/permissions'
+import { fetchBoardData } from '../data/db/board'
+import { logger } from '../utils/logger'
+
 
 // ─── Create Issue — campos condicionais quando tipo=Bug
 // Bug: passos, esperado vs encontrado, ambiente, evidência
@@ -12,11 +15,20 @@ import { can } from '../data/permissions'
 type IssueType = 'epic' | 'story' | 'task' | 'bug' | 'subtask'
 type Priority  = 'critical' | 'high' | 'medium' | 'low'
 
+export interface ModalMember { id: string; name: string }
+export interface ModalSprint { id: string; name: string; state?: string }
+
 interface CreateIssueModalProps {
   onClose:        () => void
   onCreate:       (data: Record<string, unknown>) => void
   defaultStatus?: string
   defaultSprintId?: string
+  /** Membros reais do projeto (profiles ativos). Se ausente, carrega via projectId. */
+  members?:       ModalMember[]
+  /** Sprints reais do projeto. Se ausente, carrega via projectId. */
+  sprints?:       ModalSprint[]
+  /** Projeto de origem quando o modal é aberto fora do board (Header "+ Demanda"). */
+  projectId?:     string
 }
 
 const TYPE_CFG: Record<IssueType, { icon: string; color: string; label: string; desc: string }> = {
@@ -36,14 +48,8 @@ const PRIORITY_CFG: Record<Priority, { label: string; color: string; icon: strin
 
 const ENVIRONMENTS = ['iOS','Android','Web','Desktop','Todos']
 const EPICS = ['EP-01 Website Relaunch','EP-02 Infra & Eng','EP-03 Pesquisa & Conteúdo']
-const SPRINTS = ['Sprint 14 (Ativa)','Sprint 15 (Planejado)','Backlog']
-const ASSIGNEES = [
-  { id:'AL', name:'Ana Lima'    },
-  { id:'JN', name:'João Nunes'  },
-  { id:'CS', name:'Clara Silva' },
-  { id:'NM', name:'Nicolas Melo'},
-  { id:'LF', name:'Lucas Ferreira'},
-]
+const BACKLOG_LABEL = 'Backlog'
+
 const EPIC_COLORS = [T.accent, T.warn, T.success, T.crit, T.purple, '#38bdf8']
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
@@ -100,6 +106,28 @@ function NativeSelect({ value, onChange, options }: { value:string; onChange:(v:
   )
 }
 
+// Select com valor real (id) separado do rótulo exibido
+function ValueSelect({ value, onChange, options }: { value:string; onChange:(v:string)=>void; options:{ value:string; label:string }[] }) {
+  return (
+    <div className="relative">
+      <select
+        value={value} onChange={e=>onChange(e.target.value)}
+        className="w-full h-9 px-3 pr-8 text-[13px] rounded-lg border outline-none appearance-none font-[inherit]"
+        style={{ background:T.bgSurface2, border:`1px solid ${T.border}`, color:T.text1, colorScheme:'dark' }}
+        onFocus={e=>{e.currentTarget.style.borderColor=T.accent}}
+        onBlur={e=>{e.currentTarget.style.borderColor=T.border}}
+      >
+        {options.map(o=><option key={o.value || `_${o.label}`} value={o.value} style={{ background:T.bgSurface2 }}>{o.label}</option>)}
+      </select>
+      <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <path d="M2 3.5L5 6.5L8 3.5" stroke={T.text3} strokeWidth="1.3" strokeLinecap="round"/>
+      </svg>
+    </div>
+  )
+}
+
+
+
 // Bug — numbered step list
 function StepsField({ steps, onChange }: { steps: string[]; onChange:(s:string[])=>void }) {
   function update(i: number, val: string) {
@@ -139,7 +167,7 @@ function StepsField({ steps, onChange }: { steps: string[]; onChange:(s:string[]
   )
 }
 
-export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSprintId }: CreateIssueModalProps) {
+export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSprintId, members, sprints, projectId }: CreateIssueModalProps) {
   // Permission-gated issue types
   const activeUser = getActiveUser()
   const perms = activeUser?.permissions ?? []
@@ -154,17 +182,48 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     return false
   })
 
-  // Map defaultSprintId to a display string
-  const defaultSprintLabel = defaultSprintId === 's14' ? SPRINTS[0]
-    : defaultSprintId === 's15' ? SPRINTS[1]
-    : SPRINTS[0]
+  // ── Dados reais (membros/sprints). Se não vierem por prop, carrega do projeto.
+  const [loadedMembers, setLoadedMembers] = useState<ModalMember[]>([])
+  const [loadedSprints, setLoadedSprints] = useState<ModalSprint[]>([])
+
+  useEffect(() => {
+    if (members && sprints) return
+    if (!projectId) return
+    let alive = true
+    void (async () => {
+      try {
+        const data = await fetchBoardData(projectId)
+        if (!alive) return
+        setLoadedMembers(data.profiles.map(p => ({ id: p.id, name: p.name })))
+        setLoadedSprints(data.sprints.map(s => ({ id: s.id, name: s.name, state: s.state ?? undefined })))
+      } catch (err) {
+        logger.error('CreateIssueModal: falha ao carregar membros/sprints', err)
+      }
+    })()
+    return () => { alive = false }
+  }, [members, sprints, projectId])
+
+  const memberOptions: ModalMember[] = members ?? loadedMembers
+  const sprintOptions: ModalSprint[] = (sprints ?? loadedSprints).filter(s => s.state !== 'completed')
+  const [sprintTouched, setSprintTouched] = useState(false)
+
 
   const [type,        setType]       = useState<IssueType>(allowedTypes[0] ?? 'task')
   const [summary,     setSummary]    = useState('')
   const [description, setDesc]       = useState('')
   const [priority,    setPriority]   = useState<Priority>('medium')
-  const [assignee,    setAssignee]   = useState('')
-  const [sprint,      setSprint]     = useState(defaultSprintLabel)
+  const [assigneeId,  setAssigneeId] = useState('')
+  const [sprintId,    setSprintId]   = useState(defaultSprintId ?? '')
+
+  // Default = sprint ativa quando o chamador não indicou uma sprint
+  useEffect(() => {
+    if (defaultSprintId || sprintTouched) return
+    const active = sprintOptions.find(s => s.state === 'active')
+    if (active && !sprintId) setSprintId(active.id)
+  }, [defaultSprintId, sprintTouched, sprintOptions, sprintId])
+
+
+
   const [epic,        setEpic]       = useState(EPICS[0])
   const [points,      setPoints]     = useState('')
   const [labels,      setLabels]     = useState('')
@@ -196,7 +255,10 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
   function handleSubmit() {
     if (!summary.trim()) return
-    onCreate({ type, summary, description, priority, assignee, sprint, epic, points, labels, steps, expected, found, environment, evidence })
+    const assigneeName = memberOptions.find(m => m.id === assigneeId)?.name ?? ''
+    const sprintName = sprintOptions.find(s => s.id === sprintId)?.name ?? BACKLOG_LABEL
+    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epic, points, labels, steps, expected, found, environment, evidence })
+
     if (createAnother) {
       setSummary('')
       setDesc('')
@@ -372,18 +434,23 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             </Field>
 
             <Field label="Responsável">
-              <NativeSelect
-                value={assignee || '—'}
-                onChange={v=>setAssignee(v==='—'?'':v)}
-                options={['—', ...ASSIGNEES.map(a=>a.name)]}
+              <ValueSelect
+                value={assigneeId}
+                onChange={setAssigneeId}
+                options={[{ value:'', label: memberOptions.length ? '—' : 'Sem membros disponíveis' }, ...memberOptions.map(m=>({ value:m.id, label:m.name }))]}
               />
             </Field>
 
             {!isEpic && (
               <Field label="Sprint">
-                <NativeSelect value={sprint} onChange={setSprint} options={SPRINTS} />
+                <ValueSelect
+                  value={sprintId}
+                  onChange={v=>{ setSprintTouched(true); setSprintId(v) }}
+                  options={[...sprintOptions.map(s=>({ value:s.id, label: s.state === 'active' ? `${s.name} (Ativa)` : s.name })), { value:'', label: BACKLOG_LABEL }]}
+                />
               </Field>
             )}
+
 
             <Field label="Story Points">
               <TextInput

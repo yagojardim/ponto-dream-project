@@ -2576,15 +2576,14 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
       const projectId = board?.project_id ?? scopedProjectId
       if (!projectId || !column || !board) throw new Error('Board indisponível para criar demanda')
 
-      const sprintId = target?.sprintId ?? dbSprints.find(s => s.state === 'active')?.id ?? null
+      const sprintId = (typeof data.sprintId === 'string' && data.sprintId)
+        ? data.sprintId
+        : (data.sprintId === null ? null : (target?.sprintId ?? dbSprints.find(s => s.state === 'active')?.id ?? null))
       const epicLabel = data.epic && data.epic !== '—' ? String(data.epic) : ''
       const epicId = epicLabel
         ? (boardData?.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(' ')[0])?.id ?? null
         : null
-      const assigneeName = data.assignee && data.assignee !== '—' ? String(data.assignee) : ''
-      const assigneeId = assigneeName
-        ? (boardData?.profiles ?? []).find(p => p.name === assigneeName)?.id ?? null
-        : null
+      const assigneeId = typeof data.assigneeId === 'string' && data.assigneeId ? data.assigneeId : null
       const points = parseInt(String(data.points ?? ''), 10)
 
       const created = await createWorkItem({
@@ -2891,6 +2890,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
         onClose={()=>setQuickCreate(null)}
         defaultStatus={quickCreate.colStatus}
         defaultSprintId={quickCreate.sprintId}
+        members={availableMembers.map(m => ({ id: m.id, name: m.name }))}
+        sprints={dbSprints.map(s => ({ id: s.id, name: s.name, state: s.state }))}
         onCreate={data => { void handleCreateDemand(data) }}
 
       />
