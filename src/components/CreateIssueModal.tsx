@@ -440,13 +440,13 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             background: T.successDim, borderBottom: `1px solid ${T.success}`,
             color: T.success, fontSize: 12, fontWeight: 600,
             padding: '8px 20px', textAlign: 'center', flexShrink: 0,
-          }}>Issue criada!</div>
+          }}>Demanda criada!</div>
         )}
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom:`1px solid ${T.border}` }}>
           <div className="flex items-center gap-2.5">
             <span className="text-[16px]" style={{ color:cfg.color }}>{cfg.icon}</span>
-            <p className="text-[15px] font-bold" style={{ color:T.text1 }}>Criar issue</p>
+            <p className="text-[15px] font-bold" style={{ color:T.text1 }}>Criar demanda</p>
             <span className="text-[11px] px-2 py-0.5 rounded-lg" style={{ background:`${cfg.color}18`, color:cfg.color }}>{cfg.label}</span>
             {defaultStatus && (
               <span className="text-[10px] px-2 py-0.5 rounded-lg font-medium" style={{ background:T.accentDim, color:T.accent, border:`1px solid ${T.accentBorder}` }}>
@@ -493,7 +493,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
           {/* Parent (subtask) */}
           {isSubtask && (
-            <Field label="Issue pai" required>
+            <Field label="Demanda pai" required>
               <TextInput
                 value={parentIssue} onChange={e=>setParent((e.target as HTMLInputElement).value)}
                 placeholder="PM-xxx"
@@ -661,7 +661,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
               style={{ background:summary.trim()?T.accent:`${T.accent}50`, cursor:summary.trim()?'pointer':'not-allowed' }}
               onMouseEnter={e=>{ if(summary.trim()) (e.currentTarget as HTMLButtonElement).style.filter='brightness(1.15)' }}
               onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.filter='none'}}
-            >Criar issue</button>
+            >Criar demanda</button>
           </div>
         </div>
       </div>
