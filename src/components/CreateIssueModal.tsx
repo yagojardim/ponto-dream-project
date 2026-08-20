@@ -279,6 +279,9 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   // props podem chegar vazias, então o modal se auto-hidrata.
   const [loadedMembers, setLoadedMembers] = useState<ModalMember[]>([])
   const [loadedSprints, setLoadedSprints] = useState<ModalSprint[]>([])
+  const [epicOptions, setEpicOptions] = useState<{ id:string; name:string }[]>([])
+  const [featureOptions, setFeatureOptions] = useState<{ id:string; name:string; epicId:string }[]>([])
+  const [projectUsesFeat, setProjectUsesFeat] = useState(false)
 
 
   useEffect(() => {
@@ -349,7 +352,8 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
 
 
-  const [epic,        setEpic]       = useState(EPICS[0])
+  const [epicId,      setEpicId]     = useState('')
+  const [featureId,   setFeatureId]  = useState('')
   const [points,      setPoints]     = useState('')
   const [labelList,   setLabelList]  = useState<string[]>([])
   const [parentIssue, setParent]     = useState('')
