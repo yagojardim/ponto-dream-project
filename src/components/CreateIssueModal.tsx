@@ -266,7 +266,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const allowedTypes: IssueType[] = (['epic','feature','story','bug','subtask'] as IssueType[]).filter(t => {
     if (!canCreateProjects) return t === 'story' || t === 'subtask' || t === 'bug'
     if (t === 'epic')    return can(perms, 'create:epic')
-    if (t === 'feature') return projectUsesFeatures && can(perms, 'create:feature')
+    if (t === 'feature') return usesFeatures && can(perms, 'create:feature')
     if (t === 'story')   return can(perms, 'create:story')
     if (t === 'bug')     return can(perms, 'create:bug')
     if (t === 'subtask') return can(perms, 'create:subtask')
@@ -274,10 +274,13 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   })
 
 
+
   // ── Dados reais (membros do tenant + sprints do projeto). Sempre do banco:
   // props podem chegar vazias, então o modal se auto-hidrata.
   const [loadedMembers, setLoadedMembers] = useState<ModalMember[]>([])
   const [loadedSprints, setLoadedSprints] = useState<ModalSprint[]>([])
+  const [usesFeatures, setUsesFeatures] = useState(false)
+
 
   useEffect(() => {
     let alive = true
@@ -303,11 +306,14 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     void (async () => {
       try {
         let pid = projectId
+        let project = null
         if (!pid) {
           const { projects } = await listProjects()
-          pid = (projects.find(p => p.status === 'active') ?? projects[0])?.id
+          project = projects.find(p => p.status === 'active') ?? projects[0]
+          pid = project?.id
         }
         if (!pid) return
+        setUsesFeatures(checkProjectUsesFeatures(project))
         const rows = await listSprints(pid)
         if (!alive) return
         setLoadedSprints(rows.map(s => ({ id: s.id, name: s.name, state: normalizeState(s.state) })))
@@ -317,6 +323,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     })()
     return () => { alive = false }
   }, [projectId])
+
 
   const memberOptions: ModalMember[] = loadedMembers.length ? loadedMembers : (members ?? [])
   const sprintOptions: ModalSprint[] = (loadedSprints.length ? loadedSprints : (sprints ?? []))
