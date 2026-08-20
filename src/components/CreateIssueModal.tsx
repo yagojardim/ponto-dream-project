@@ -624,10 +624,13 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             </Field>
 
             <Field label="Labels">
-              <TextInput
-                value={labels}
-                onChange={e=>setLabels((e.target as HTMLInputElement).value)}
-                placeholder="Eng, Design, ..."
+              <CreatableCombobox
+                multiple
+                options={labelOptions}
+                values={labelList}
+                onSelect={toggleLabel}
+                onCreate={handleCreateLabel}
+                placeholder="Selecionar ou criar label..."
               />
             </Field>
           </div>
