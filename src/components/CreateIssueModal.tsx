@@ -395,18 +395,23 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             </Field>
 
             <Field label="Responsável">
-              <NativeSelect
-                value={assignee || '—'}
-                onChange={v=>setAssignee(v==='—'?'':v)}
-                options={['—', ...ASSIGNEES.map(a=>a.name)]}
+              <ValueSelect
+                value={assigneeId}
+                onChange={setAssigneeId}
+                options={[{ value:'', label: memberOptions.length ? '—' : 'Sem membros disponíveis' }, ...memberOptions.map(m=>({ value:m.id, label:m.name }))]}
               />
             </Field>
 
             {!isEpic && (
               <Field label="Sprint">
-                <NativeSelect value={sprint} onChange={setSprint} options={SPRINTS} />
+                <ValueSelect
+                  value={sprintId}
+                  onChange={setSprintId}
+                  options={[...sprintOptions.map(s=>({ value:s.id, label: s.state === 'active' ? `${s.name} (Ativa)` : s.name })), { value:'', label: BACKLOG_LABEL }]}
+                />
               </Field>
             )}
+
 
             <Field label="Story Points">
               <TextInput
