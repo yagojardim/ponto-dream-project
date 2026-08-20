@@ -215,6 +215,15 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const [assigneeId,  setAssigneeId] = useState('')
   const [sprintId,    setSprintId]   = useState(defaultSprintId ?? '')
 
+  // Default = sprint ativa quando o chamador não indicou uma sprint
+  useEffect(() => {
+    if (defaultSprintId || sprintTouched) return
+    const active = sprintOptions.find(s => s.state === 'active')
+    if (active && !sprintId) setSprintId(active.id)
+  }, [defaultSprintId, sprintTouched, sprintOptions, sprintId])
+
+
+
   const [epic,        setEpic]       = useState(EPICS[0])
   const [points,      setPoints]     = useState('')
   const [labels,      setLabels]     = useState('')
