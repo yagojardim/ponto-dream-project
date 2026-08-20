@@ -619,6 +619,11 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
         id: string; action: string; actor_id: string | null; actor_name: string | null
         before: unknown; after: unknown; created_at: string
       }[]) {
+        const att = raw.action === 'attachment_added'
+          ? (raw.after as Record<string, unknown> | null)
+          : raw.action === 'attachment_deleted'
+            ? (raw.before as Record<string, unknown> | null)
+            : null
         out.push({
           id: `au-${raw.id}`,
           createdAt: raw.created_at,
@@ -627,7 +632,9 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
           action: AUDIT_ACTION_LABEL[raw.action] ?? raw.action.replace(/^(work_item|epic)\./, '').replace(/_/g, ' '),
           detail: deUuid(auditDetail(raw.before, raw.after)),
           summary: deUuid(auditSummary(raw.action, raw.before, raw.after)),
-
+          attachmentName: typeof att?.name === 'string' ? att.name : undefined,
+          attachmentPath: raw.action === 'attachment_added' && typeof att?.storage_path === 'string'
+            ? att.storage_path : undefined,
           fromEpic,
         })
       }
