@@ -106,6 +106,28 @@ function NativeSelect({ value, onChange, options }: { value:string; onChange:(v:
   )
 }
 
+// Select com valor real (id) separado do rótulo exibido
+function ValueSelect({ value, onChange, options }: { value:string; onChange:(v:string)=>void; options:{ value:string; label:string }[] }) {
+  return (
+    <div className="relative">
+      <select
+        value={value} onChange={e=>onChange(e.target.value)}
+        className="w-full h-9 px-3 pr-8 text-[13px] rounded-lg border outline-none appearance-none font-[inherit]"
+        style={{ background:T.bgSurface2, border:`1px solid ${T.border}`, color:T.text1, colorScheme:'dark' }}
+        onFocus={e=>{e.currentTarget.style.borderColor=T.accent}}
+        onBlur={e=>{e.currentTarget.style.borderColor=T.border}}
+      >
+        {options.map(o=><option key={o.value || `_${o.label}`} value={o.value} style={{ background:T.bgSurface2 }}>{o.label}</option>)}
+      </select>
+      <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <path d="M2 3.5L5 6.5L8 3.5" stroke={T.text3} strokeWidth="1.3" strokeLinecap="round"/>
+      </svg>
+    </div>
+  )
+}
+
+
+
 // Bug — numbered step list
 function StepsField({ steps, onChange }: { steps: string[]; onChange:(s:string[])=>void }) {
   function update(i: number, val: string) {
