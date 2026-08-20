@@ -62,6 +62,30 @@ export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose,
               onKeyDown={e=>e.key==='Enter'&&handleCreate()} style={inputStyle} />
           </div>
 
+          <div>
+            <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Descrição</label>
+            <textarea rows={3} value={description} onChange={e=>setDescription(e.target.value)}
+              placeholder="Detalhe o que precisa ser feito (opcional)"
+              style={{ ...inputStyle, resize:'vertical', fontFamily:'inherit' }} />
+          </div>
+
+          <div>
+            <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Prioridade</label>
+            <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6 }}>
+              {PRIORITY_OPTS.map(p => (
+                <button key={p.k} type="button" onClick={()=>setPriority(p.k)}
+                  style={{ padding:'6px 4px',borderRadius:8,cursor:'pointer',fontSize:11,fontWeight:600,
+                    background: priority===p.k ? `${p.color}18` : 'transparent',
+                    border: `1px solid ${priority===p.k ? p.color : T.border}`,
+                    color: priority===p.k ? p.color : T.text3 }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+
+
           <div style={{ display:'grid',gridTemplateColumns:'1fr 120px',gap:12 }}>
             <div>
               <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Responsável</label>
