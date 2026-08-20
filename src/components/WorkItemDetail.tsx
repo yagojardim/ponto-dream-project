@@ -15,7 +15,7 @@ import {
   type WorkItemDetailData, type EditableField,
 } from '../data/db/workItem'
 import {
-  listAttachments, uploadAttachment, getDownloadUrl, bytesToHuman, ACCEPT_ATTR,
+  listAttachments, uploadAttachment, getDownloadUrl, bytesToHuman, ACCEPT_ATTR, friendlyAttachmentError,
   type AttachmentRow,
 } from '@/data/db/attachments'
 
