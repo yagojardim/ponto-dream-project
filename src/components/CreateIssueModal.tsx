@@ -3,7 +3,8 @@ import { T } from './ds/tokens'
 import { getActiveUser } from '../data/session'
 import { can } from '../data/permissions'
 import { getMembers } from '../data/db/members'
-import { listProjects } from '../data/db/projects'
+import { listProjects, projectUsesFeatures } from '../data/db/projects'
+import { listEpics } from '../data/db/epics'
 import { listSprints, normalizeState } from '../data/db/sprints'
 import {
   listBugEnvironments, createBugEnvironment,
@@ -53,7 +54,7 @@ const PRIORITY_CFG: Record<Priority, { label: string; color: string; icon: strin
 }
 
 
-const EPICS = ['EP-01 Website Relaunch','EP-02 Infra & Eng','EP-03 Pesquisa & Conteúdo']
+
 const BACKLOG_LABEL = 'Backlog'
 
 const EPIC_COLORS = [T.accent, T.warn, T.success, T.crit, T.purple, '#38bdf8']
