@@ -3,7 +3,8 @@ import { T } from './ds/tokens'
 import { getActiveUser } from '../data/session'
 import { can } from '../data/permissions'
 import { getMembers } from '../data/db/members'
-import { listProjects } from '../data/db/projects'
+import { listProjects, projectUsesFeatures } from '../data/db/projects'
+import { listEpics } from '../data/db/epics'
 import { listSprints, normalizeState } from '../data/db/sprints'
 import {
   listBugEnvironments, createBugEnvironment,
@@ -53,7 +54,7 @@ const PRIORITY_CFG: Record<Priority, { label: string; color: string; icon: strin
 }
 
 
-const EPICS = ['EP-01 Website Relaunch','EP-02 Infra & Eng','EP-03 Pesquisa & Conteúdo']
+
 const BACKLOG_LABEL = 'Backlog'
 
 const EPIC_COLORS = [T.accent, T.warn, T.success, T.crit, T.purple, '#38bdf8']
@@ -278,6 +279,9 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   // props podem chegar vazias, então o modal se auto-hidrata.
   const [loadedMembers, setLoadedMembers] = useState<ModalMember[]>([])
   const [loadedSprints, setLoadedSprints] = useState<ModalSprint[]>([])
+  const [epicOptions, setEpicOptions] = useState<{ id:string; name:string }[]>([])
+  const [featureOptions, setFeatureOptions] = useState<{ id:string; name:string; epicId:string }[]>([])
+  const [projectUsesFeat, setProjectUsesFeat] = useState(false)
 
 
   useEffect(() => {
@@ -303,15 +307,19 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     let alive = true
     void (async () => {
       try {
-        let pid = projectId
-        if (!pid) {
-          const { projects } = await listProjects()
-          pid = (projects.find(p => p.status === 'active') ?? projects[0])?.id
-        }
+        const { projects } = await listProjects()
+        const proj = projectId
+          ? projects.find(p => p.id === projectId) ?? null
+          : (projects.find(p => p.status === 'active') ?? projects[0] ?? null)
+        const pid = projectId ?? proj?.id
         if (!pid) return
-        const rows = await listSprints(pid)
+
+        const [rows, ed] = await Promise.all([listSprints(pid), listEpics([pid])])
         if (!alive) return
         setLoadedSprints(rows.map(s => ({ id: s.id, name: s.name, state: normalizeState(s.state) })))
+        setEpicOptions(ed.epics.map(e => ({ id: e.id, name: e.name })))
+        setFeatureOptions((ed.features ?? []).map(f => ({ id: f.id, name: f.name, epicId: f.epic_id })))
+        setProjectUsesFeat(projectUsesFeatures(proj))
       } catch (err) {
         logger.error('CreateIssueModal: falha ao carregar sprints do projeto', err)
       }
@@ -344,7 +352,8 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
 
 
-  const [epic,        setEpic]       = useState(EPICS[0])
+  const [epicId,      setEpicId]     = useState('')
+  const [featureId,   setFeatureId]  = useState('')
   const [points,      setPoints]     = useState('')
   const [labelList,   setLabelList]  = useState<string[]>([])
   const [parentIssue, setParent]     = useState('')
@@ -417,7 +426,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     if (!summary.trim()) return
     const assigneeName = memberOptions.find(m => m.id === assigneeId)?.name ?? ''
     const sprintName = sprintOptions.find(s => s.id === sprintId)?.name ?? BACKLOG_LABEL
-    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epic, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
+    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: epicId || null, featureId: featureId || null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
 
     if (createAnother) {
       setSummary('')
@@ -528,7 +537,15 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
           {/* Epic parent (story/task) */}
           {needsEpic && (
             <Field label="Épico">
-              <NativeSelect value={epic} onChange={setEpic} options={['—', ...EPICS]} />
+              <ValueSelect value={epicId} onChange={v => { setEpicId(v); setFeatureId('') }}
+                options={[{ value:'', label:'—' }, ...epicOptions.map(e => ({ value:e.id, label:e.name }))]} />
+            </Field>
+          )}
+
+          {needsEpic && projectUsesFeat && (
+            <Field label="Funcionalidade">
+              <ValueSelect value={featureId} onChange={setFeatureId}
+                options={[{ value:'', label:'—' }, ...featureOptions.filter(f => f.epicId === epicId).map(f => ({ value:f.id, label:f.name }))]} />
             </Field>
           )}
 

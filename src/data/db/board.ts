@@ -228,6 +228,7 @@ export interface CreateWorkItemInput {
   type?: string
   priority?: 'critical' | 'high' | 'medium' | 'low'
   epicId?: string | null
+  featureId?: string | null
   assigneeId?: string | null
   storyPoints?: number | null
   description?: string | null
@@ -265,6 +266,7 @@ export async function createWorkItem(
       board_column_id: input.column.id,
       sprint_id: input.sprintId ?? null,
       epic_id: input.epicId ?? null,
+      feature_id: input.featureId ?? null,
       assignee_id: input.assigneeId ?? null,
       key,
       type: input.type ?? 'story',

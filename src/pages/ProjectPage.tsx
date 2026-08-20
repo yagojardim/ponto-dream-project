@@ -2593,9 +2593,12 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
         : (target?.sprintId ?? null)
 
       const epicLabel = data.epic && data.epic !== '—' ? String(data.epic) : ''
-      const epicId = epicLabel
-        ? (boardData?.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(' ')[0])?.id ?? null
-        : null
+      const epicId = (typeof data.epicId === 'string' && data.epicId)
+        ? data.epicId
+        : (epicLabel
+            ? (boardData?.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(' ')[0])?.id ?? null
+            : null)
+      const featureId = (typeof data.featureId === 'string' && data.featureId) ? data.featureId : null
       const assigneeId = typeof data.assigneeId === 'string' && data.assigneeId ? data.assigneeId : null
       const points = parseInt(String(data.points ?? ''), 10)
 
@@ -2605,6 +2608,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
         column,
         sprintId,
         epicId,
+        featureId,
         assigneeId,
         title: String(data.summary ?? '').trim() || 'Nova demanda',
         type: String(data.type ?? 'story'),
