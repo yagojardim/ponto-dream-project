@@ -489,7 +489,12 @@ function auditSummary(action: string, before: unknown, after: unknown): string {
     case 'work_item.title_updated': return `Alterou o título para “${a ?? '—'}”`
     case 'work_item.description_updated': return 'Atualizou a descrição'
     case 'work_item.labels_updated': return `Atualizou as labels${a ? `: ${a}` : ''}`
-    case 'work_item.comment_added': return 'Comentou na demanda'
+    case 'work_item.comment_added': {
+      const body = pick(after, 'body', 'text', 'comment')
+      if (!body) return 'Comentou na demanda'
+      const t = body.length > 140 ? `${body.slice(0, 140)}…` : body
+      return `Comentou: “${t}”`
+    }
     case 'attachment_added': return `Anexou o arquivo ${pick(after, 'name') ?? ''}`.trim()
     case 'attachment_deleted': return `Removeu o anexo ${pick(before, 'name') ?? ''}`.trim()
     default: {
