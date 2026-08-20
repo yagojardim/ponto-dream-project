@@ -52,7 +52,7 @@ const PRIORITY_CFG: Record<Priority, { label: string; color: string; icon: strin
   low:     { label:'Baixa',   color:T.text3,  icon:'↓'  },
 }
 
-const ENVIRONMENTS = ['iOS','Android','Web','Desktop','Todos']
+
 const EPICS = ['EP-01 Website Relaunch','EP-02 Infra & Eng','EP-03 Pesquisa & Conteúdo']
 const BACKLOG_LABEL = 'Backlog'
 
