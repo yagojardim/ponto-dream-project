@@ -15,10 +15,10 @@ import { logger } from '../utils/logger'
 // ─── Create Issue — campos condicionais quando tipo=Bug
 // Bug: passos, esperado vs encontrado, ambiente, evidência
 // Epic: cor, trimestre alvo
-// Story/Task: épico pai
-// Subtask: issue pai
+// Story: épico pai
+// Subtask: demanda pai
 
-type IssueType = 'epic' | 'story' | 'task' | 'bug' | 'subtask'
+type IssueType = 'epic' | 'story' | 'bug' | 'subtask'
 type Priority  = 'critical' | 'high' | 'medium' | 'low'
 
 export interface ModalMember { id: string; name: string }
@@ -38,11 +38,10 @@ interface CreateIssueModalProps {
 }
 
 const TYPE_CFG: Record<IssueType, { icon: string; color: string; label: string; desc: string }> = {
-  epic:    { icon:'⚡', color:T.warn,   label:'Epic',    desc:'Objetivo de grande escala' },
-  story:   { icon:'◇', color:T.accent,  label:'Story',   desc:'Funcionalidade do usuário' },
-  task:    { icon:'☑', color:T.text2,   label:'Task',    desc:'Trabalho técnico ou operacional' },
-  bug:     { icon:'⬟', color:T.crit,   label:'Bug',     desc:'Erro ou comportamento inesperado' },
-  subtask: { icon:'◻', color:T.text3,  label:'Subtask', desc:'Parte de outra issue' },
+  epic:    { icon:'⚡', color:T.warn,   label:'Épico',     desc:'Objetivo de grande escala' },
+  story:   { icon:'◇', color:T.accent,  label:'História',  desc:'Necessidade ou valor para o usuário' },
+  bug:     { icon:'⬟', color:T.crit,   label:'Bug',       desc:'Erro ou comportamento inesperado' },
+  subtask: { icon:'◻', color:T.text3,  label:'Subtarefa', desc:'Parte de uma demanda maior' },
 }
 
 const PRIORITY_CFG: Record<Priority, { label: string; color: string; icon: string }> = {
@@ -263,11 +262,10 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const activeUser = getActiveUser()
   const perms = activeUser?.permissions ?? []
   const canCreateProjects = can(perms, 'project:create')
-  const allowedTypes: IssueType[] = (['epic','story','task','bug','subtask'] as IssueType[]).filter(t => {
+  const allowedTypes: IssueType[] = (['epic','story','bug','subtask'] as IssueType[]).filter(t => {
     if (!canCreateProjects) return t === 'story' || t === 'subtask' || t === 'bug'
     if (t === 'epic')    return can(perms, 'create:epic')
     if (t === 'story')   return can(perms, 'create:story')
-    if (t === 'task')    return can(perms, 'create:task')
     if (t === 'bug')     return can(perms, 'create:bug')
     if (t === 'subtask') return can(perms, 'create:subtask')
     return false
@@ -324,7 +322,8 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const [sprintTouched, setSprintTouched] = useState(false)
 
 
-  const [type,        setType]       = useState<IssueType>(allowedTypes[0] ?? 'task')
+  const [type,        setType]       = useState<IssueType>(allowedTypes[0] ?? 'story')
+
   const [summary,     setSummary]    = useState('')
   const [description, setDesc]       = useState('')
   const [priority,    setPriority]   = useState<Priority>('medium')
@@ -407,7 +406,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const isBug     = type === 'bug'
   const isEpic    = type === 'epic'
   const isSubtask = type === 'subtask'
-  const needsEpic = type === 'story' || type === 'task'
+  const needsEpic = type === 'story'
 
   function handleSubmit() {
     if (!summary.trim()) return
