@@ -50,6 +50,9 @@ import OAuthGoogleReturn from "./pages/OAuthGoogleReturn"
 import { initAppPrefs } from "./lib/appPrefs"
 import { RESET_PATH } from "./lib/passwordReset"
 import { GOOGLE_RETURN_PATH } from "./lib/googleCalendar"
+import { fetchBoardData, createWorkItem } from "./data/db/board"
+import { listProjects } from "./data/db/projects"
+import { T } from "./components/ds/tokens"
 
 const ALL_VIEWS: View[] = [
   "home",
@@ -149,7 +152,7 @@ export default function App() {
 }
 
 function AppInner() {
-  const { setActiveUser, status, enterInspection, mustChangePassword } =
+  const { setActiveUser, status, enterInspection, mustChangePassword, activeUser } =
     useSession()
   const [view, setView] = useState<View>("home")
   const [clientMustChangePwd, setClientMustChangePwd] = useState(false)
@@ -371,7 +374,9 @@ function ShellWithRole({
   view: View
   setView: (v: View) => void
 }) {
+  const { activeUser } = useSession()
   const [createOpen, setCreate] = useState(false)
+  const [demandToast, setDemandToast] = useState<string | null>(null)
   const [clientMsgProjectId, setClientMsgProjectId] = useState<string | null>(null)
   const [inviteOpen, setInvite] = useState(false)
   const [selectedBoardId, setSelectedBoardId] = useState<string | undefined>()
@@ -380,6 +385,59 @@ function ShellWithRole({
   const [selectedIssueId, setSelectedIssueId] = useState<string | undefined>()
   const [teamInitialTab, setTeamInitialTab] =
     useState<"membros" | "convites" | "permissoes" | "dashboards">("membros")
+
+  async function handleGlobalCreateDemand(data: Record<string, unknown>) {
+    try {
+      // Resolve o projeto: o selecionado, senão o primeiro ativo, senão o primeiro
+      let projectId = selectedProjectId
+      if (!projectId) {
+        const { projects } = await listProjects()
+        projectId = (projects.find(p => p.status === "active") ?? projects[0])?.id
+      }
+      if (!projectId) throw new Error("Nenhum projeto disponível para criar a demanda")
+
+      const boardData = await fetchBoardData(projectId)
+      const board = boardData.board
+      const columns = boardData.columns ?? []
+      if (!board || columns.length === 0) throw new Error("Board indisponível para o projeto")
+
+      // Sem sprint => coluna Backlog; senão primeira coluna
+      const hasSprintField = Object.prototype.hasOwnProperty.call(data, "sprintId")
+      const sprintId = hasSprintField && typeof data.sprintId === "string" && data.sprintId
+        ? data.sprintId
+        : null
+      const backlogCol = columns.find(c => c.category === "backlog" || c.statuses.includes("backlog"))
+      const column = (!sprintId ? backlogCol : undefined) ?? columns[0]
+
+      const epicLabel = data.epic && data.epic !== "—" ? String(data.epic) : ""
+      const epicId = epicLabel
+        ? (boardData.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(" ")[0])?.id ?? null
+        : null
+      const assigneeId = typeof data.assigneeId === "string" && data.assigneeId ? data.assigneeId : null
+      const points = parseInt(String(data.points ?? ""), 10)
+
+      const created = await createWorkItem({
+        projectId,
+        boardId: board.id,
+        column,
+        sprintId,
+        epicId,
+        assigneeId,
+        title: String(data.summary ?? "").trim() || "Nova demanda",
+        type: String(data.type ?? "story"),
+        priority: (data.priority as "critical" | "high" | "medium" | "low") ?? "medium",
+        storyPoints: Number.isFinite(points) ? points : null,
+        description: data.description ? String(data.description) : null,
+      }, activeUser.name)
+
+      setDemandToast(`Demanda ${created.key} criada`)
+    } catch (err) {
+      setDemandToast(`Falha ao criar a demanda: ${err instanceof Error ? err.message : "erro desconhecido"}`)
+    } finally {
+      setCreate(false)
+      setTimeout(() => setDemandToast(null), 3500)
+    }
+  }
 
   /** Navegação vinda das páginas — aceita um id de alvo opcional. */
   function navTo(v: string, targetId?: string) {
@@ -410,10 +468,17 @@ function ShellWithRole({
           <CreateIssueModal
             projectId={selectedProjectId}
             onClose={() => setCreate(false)}
-            onCreate={() => setCreate(false)}
+            onCreate={data => { void handleGlobalCreateDemand(data) }}
           />
         )}
         {inviteOpen && <InviteMemberModal onClose={() => setInvite(false)} />}
+        {demandToast && (
+          <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 80,
+            background: T.bgSurface, border: `1px solid ${T.border}`, color: T.text1,
+            padding: "10px 16px", borderRadius: 12, boxShadow: T.shadowModal, fontSize: 13 }}>
+            {demandToast}
+          </div>
+        )}
         <Shell
           currentView={view}
           onViewChange={(v) => {
