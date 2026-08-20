@@ -3,19 +3,30 @@ import { T } from './ds/tokens'
 
 export interface SubtaskMember { id: string; name: string }
 
+type SubPriority = 'critical' | 'high' | 'medium' | 'low'
+
+const PRIORITY_OPTS: { k: SubPriority; label: string; color: string }[] = [
+  { k:'critical', label:'Crítica', color:T.crit   },
+  { k:'high',     label:'Alta',    color:T.warn   },
+  { k:'medium',   label:'Média',   color:T.accent },
+  { k:'low',      label:'Baixa',   color:T.text3  },
+]
+
 interface Props {
   parentKey:   string
   parentTitle: string
   /** Perfis reais do tenant. */
   members?:    SubtaskMember[]
   onClose:     () => void
-  onCreate:    (sub: { title:string; assigneeId:string|null; storyPoints:number }) => void
+  onCreate:    (sub: { title:string; description:string; priority:SubPriority; assigneeId:string|null; storyPoints:number }) => void
 }
 
 export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose, onCreate }: Props) {
-  const [title,    setTitle]    = useState('')
-  const [assignee, setAssignee] = useState('')
-  const [estimate, setEstimate] = useState(1)
+  const [title,       setTitle]       = useState('')
+  const [description, setDescription] = useState('')
+  const [priority,    setPriority]    = useState<SubPriority>('medium')
+  const [assignee,    setAssignee]    = useState('')
+  const [estimate,    setEstimate]    = useState(1)
 
   const inputStyle: React.CSSProperties = {
     width:'100%', background:T.bgSurface2, border:`1px solid ${T.border}`,
@@ -24,9 +35,10 @@ export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose,
 
   function handleCreate() {
     if (!title.trim()) return
-    onCreate({ title: title.trim(), assigneeId: assignee || null, storyPoints: estimate })
+    onCreate({ title: title.trim(), description: description.trim(), priority, assigneeId: assignee || null, storyPoints: estimate })
     onClose()
   }
+
 
   return (
     <div onClick={e=>{if(e.target===e.currentTarget)onClose()}} style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.72)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000 }}>
