@@ -211,6 +211,59 @@ function AppInner() {
     setView("home")
   }
 
+  async function handleGlobalCreateDemand(data: Record<string, unknown>) {
+    try {
+      // Resolve o projeto: o selecionado, senão o primeiro ativo, senão o primeiro
+      let projectId = selectedProjectId
+      if (!projectId) {
+        const { projects } = await listProjects()
+        projectId = (projects.find(p => p.status === "active") ?? projects[0])?.id
+      }
+      if (!projectId) throw new Error("Nenhum projeto disponível para criar a demanda")
+
+      const boardData = await fetchBoardData(projectId)
+      const board = boardData.board
+      const columns = boardData.columns ?? []
+      if (!board || columns.length === 0) throw new Error("Board indisponível para o projeto")
+
+      // Sem sprint => coluna Backlog; senão primeira coluna
+      const hasSprintField = Object.prototype.hasOwnProperty.call(data, "sprintId")
+      const sprintId = hasSprintField && typeof data.sprintId === "string" && data.sprintId
+        ? data.sprintId
+        : null
+      const backlogCol = columns.find(c => c.category === "backlog" || c.statuses.includes("backlog"))
+      const column = (!sprintId ? backlogCol : undefined) ?? columns[0]
+
+      const epicLabel = data.epic && data.epic !== "—" ? String(data.epic) : ""
+      const epicId = epicLabel
+        ? (boardData.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(" ")[0])?.id ?? null
+        : null
+      const assigneeId = typeof data.assigneeId === "string" && data.assigneeId ? data.assigneeId : null
+      const points = parseInt(String(data.points ?? ""), 10)
+
+      const created = await createWorkItem({
+        projectId,
+        boardId: board.id,
+        column,
+        sprintId,
+        epicId,
+        assigneeId,
+        title: String(data.summary ?? "").trim() || "Nova demanda",
+        type: String(data.type ?? "story"),
+        priority: (data.priority as "critical" | "high" | "medium" | "low") ?? "medium",
+        storyPoints: Number.isFinite(points) ? points : null,
+        description: data.description ? String(data.description) : null,
+      }, activeUser.name)
+
+      setDemandToast(`Demanda ${created.key} criada`)
+    } catch (err) {
+      setDemandToast(`Falha ao criar a demanda: ${err instanceof Error ? err.message : "erro desconhecido"}`)
+    } finally {
+      setCreate(false)
+      setTimeout(() => setDemandToast(null), 3500)
+    }
+  }
+
   if (status === "loading") {
     return (
       <div
