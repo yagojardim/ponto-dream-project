@@ -3,7 +3,7 @@
 // Same pattern as the other db/* modules: tenant-scoped, safeCall, no `any`.
 import { supabase } from '@/integrations/supabase/client'
 import type { Database } from '@/integrations/supabase/types'
-import { safeCall } from '@/utils/logger'
+import { logger, safeCall } from '@/utils/logger'
 
 type Tables = Database['public']['Tables']
 
@@ -86,13 +86,36 @@ async function sha256Hex(file: File): Promise<string | null> {
   }
 }
 
-/** Maps the storage-limit trigger errors to friendly Portuguese messages. */
-function friendlyDbError(message: string): string {
+const PERMISSION_ERROR_PATTERNS = [
+  'row-level security',
+  'violates row-level security',
+  'permission denied',
+  'unauthorized',
+  'jwt expired',
+  'insufficient privilege',
+  'policy',
+]
+
+function isPermissionError(message: string): boolean {
+  const lower = message.toLowerCase()
+  return PERMISSION_ERROR_PATTERNS.some(p => lower.includes(p.toLowerCase()))
+}
+
+/** Maps Supabase/RLS/storage errors to friendly Portuguese messages for uploads. */
+export function friendlyAttachmentError(message: string): string {
+  if (isPermissionError(message)) return 'Sem permissão para anexar arquivos neste ambiente.'
   if (message.includes('FILE_TOO_LARGE')) return 'Arquivo maior que o limite do plano'
   if (message.includes('TENANT_QUOTA_EXCEEDED')) return 'Cota de armazenamento do tenant esgotada'
   if (message.includes('PROJECT_FILE_LIMIT')) return 'Limite de arquivos do projeto atingido'
-  return message
+  if (message.includes('Tipo de arquivo não permitido')) return message
+  if (message.includes('Arquivo excede o limite do plano')) return message
+  if (message.includes('Sem permissão para anexar arquivos neste ambiente')) return message
+  if (message.includes('Não foi possível anexar o arquivo')) return message
+  return 'Não foi possível anexar o arquivo. Tente novamente.'
 }
+
+/** @deprecated internal helper kept for the file; prefer {@link friendlyAttachmentError}. */
+function friendlyDbError(message: string): string { return friendlyAttachmentError(message) }
 
 // ─── Reads ────────────────────────────────────────────────────────────────────
 type ProfileLite = Pick<Tables['profiles']['Row'], 'id' | 'name'>
@@ -168,7 +191,11 @@ export async function uploadAttachment({ tenantId, workItemId, file, profileId }
     contentType: file.type || 'application/octet-stream',
     upsert: false,
   })
-  if (up.error) throw new Error(friendlyDbError(up.error.message))
+  if (up.error) {
+    const friendly = friendlyDbError(up.error.message)
+    logger.error('attachments.uploadStorage', up.error, { message: up.error.message, path })
+    throw new Error(friendly)
+  }
 
   const insert = await supabase
     .from('attachments')
@@ -190,7 +217,9 @@ export async function uploadAttachment({ tenantId, workItemId, file, profileId }
   if (insert.error) {
     // Never leave an orphan object behind when the row could not be written.
     await supabase.storage.from(BUCKET).remove([path])
-    throw new Error(friendlyDbError(insert.error.message))
+    const friendly = friendlyDbError(insert.error.message)
+    logger.error('attachments.insertAttachment', insert.error, { message: insert.error.message, path, tenantId, workItemId })
+    throw new Error(friendly)
   }
 
   const r = insert.data

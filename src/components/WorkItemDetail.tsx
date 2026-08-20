@@ -15,7 +15,7 @@ import {
   type WorkItemDetailData, type EditableField,
 } from '../data/db/workItem'
 import {
-  listAttachments, uploadAttachment, getDownloadUrl, bytesToHuman, ACCEPT_ATTR,
+  listAttachments, uploadAttachment, getDownloadUrl, bytesToHuman, ACCEPT_ATTR, friendlyAttachmentError,
   type AttachmentRow,
 } from '@/data/db/attachments'
 
@@ -800,7 +800,8 @@ function AttachmentsSection({ tenantId, workItemId, profileId, canUpload, onCoun
       await uploadAttachment({ tenantId, workItemId, file, profileId })
       await reload()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
+      const raw = err instanceof Error ? err.message : String(err)
+      const msg = friendlyAttachmentError(raw)
       setError(msg); onErrorRef.current(msg)
     } finally {
       setBusy(false)
