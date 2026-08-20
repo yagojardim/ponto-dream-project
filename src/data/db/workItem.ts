@@ -455,9 +455,39 @@ export interface UnifiedHistoryEntry {
 
 const PT_FIELD: Record<string, string> = {
   status: 'status', title: 'título', description: 'descrição', priority: 'prioridade',
-  severity: 'severidade', assignee_id: 'responsável', reporter_id: 'reporter',
+  severity: 'severidade', assignee_id: 'responsável', reporter_id: 'relator',
   story_points: 'estimativa', due_date: 'prazo', start_date: 'data de início',
   sprint_id: 'sprint', epic_id: 'épico', fix_version: 'versão',
+  column: 'coluna', column_id: 'coluna', column_changed: 'coluna', status_changed: 'coluna',
+  labels: 'labels', type: 'tipo', parent_id: 'item pai', order_index: 'ordem',
+  estimate: 'estimativa', time_spent: 'tempo gasto', archived_at: 'arquivamento',
+}
+
+/** Rótulos PT para chaves de status/coluna do board. */
+const PT_STATUS: Record<string, string> = {
+  backlog: 'Backlog', todo: 'A Fazer', to_do: 'A Fazer', ready: 'Pronto',
+  in_progress: 'Em Andamento', 'in-progress': 'Em Andamento', doing: 'Em Andamento',
+  in_review: 'Em Revisão', 'in-review': 'Em Revisão', review: 'Em Revisão',
+  testing: 'Em Teste', qa: 'Em Teste', blocked: 'Bloqueado',
+  done: 'Concluído', completed: 'Concluído', cancelled: 'Cancelado', canceled: 'Cancelado',
+}
+
+/** Rótulos PT para prioridades e tipos. */
+const PT_VALUE: Record<string, string> = {
+  critical: 'Crítica', high: 'Alta', medium: 'Média', low: 'Baixa',
+  story: 'História', bug: 'Bug', task: 'Tarefa', subtask: 'Subtarefa',
+  epic: 'Épico', feature: 'Funcionalidade',
+  true: 'Sim', false: 'Não', null: '—',
+}
+
+/** Traduz um valor cru (status, coluna, prioridade, tipo) para PT quando conhecido. */
+function ptValue(field: string | undefined, value: string | null | undefined): string {
+  const v = (value ?? '').trim()
+  if (!v) return '—'
+  const k = v.toLowerCase()
+  const isStatusField = !field || /^(status|column|column_id|column_changed|status_changed)$/.test(field)
+  if (isStatusField && PT_STATUS[k]) return PT_STATUS[k]
+  return PT_STATUS[k] ?? PT_VALUE[k] ?? v
 }
 
 function pick(v: unknown, ...keys: string[]): string | undefined {
@@ -474,8 +504,10 @@ function pick(v: unknown, ...keys: string[]): string | undefined {
 
 /** Resumo legível de um evento de auditoria a partir de action + before/after. */
 function auditSummary(action: string, before: unknown, after: unknown): string {
-  const a = pick(after)
-  const b = pick(before)
+  const rawA = pick(after)
+  const rawB = pick(before)
+  const a = rawA == null ? undefined : ptValue(undefined, rawA)
+  const b = rawB == null ? undefined : ptValue(undefined, rawB)
   switch (action) {
     case 'work_item.created': return 'Criou a demanda'
     case 'work_item.priority_updated': return `Alterou a prioridade de ${b ?? '—'} para ${a ?? '—'}`
@@ -489,7 +521,7 @@ function auditSummary(action: string, before: unknown, after: unknown): string {
     case 'work_item.subtask_added': return `Adicionou subtarefa ${pick(after, 'key', 'title') ?? ''}`.trim()
     case 'work_item.assignee_id':
     case 'work_item.assignee_updated': return `Alterou o responsável para ${a ?? '—'}`
-    case 'work_item.title_updated': return `Alterou o título para “${a ?? '—'}”`
+    case 'work_item.title_updated': return `Alterou o título para “${rawA ?? '—'}”`
     case 'work_item.description_updated': return 'Atualizou a descrição'
     case 'work_item.labels_updated': return `Atualizou as labels${a ? `: ${a}` : ''}`
     case 'work_item.comment_added': {
@@ -503,10 +535,12 @@ function auditSummary(action: string, before: unknown, after: unknown): string {
     default: {
       const m = /^(?:work_item|epic)\.(.+?)(?:_updated)?$/.exec(action)
       const fieldKey = m?.[1] ?? action
-      const label = PT_FIELD[fieldKey] ?? fieldKey.replace(/_/g, ' ')
-      if (b && a) return `Alterou ${label} de ${b} para ${a}`
-      if (a) return `Alterou ${label} para ${a}`
-      return `Atualizou ${label}`
+      const label = PT_FIELD[fieldKey] ?? PT_FIELD[fieldKey.replace(/_changed$/, '')] ?? fieldKey.replace(/_/g, ' ')
+      const fa = rawA == null ? undefined : ptValue(fieldKey, rawA)
+      const fb = rawB == null ? undefined : ptValue(fieldKey, rawB)
+      if (fb && fa) return `Alterou a ${label} de ${fb} para ${fa}`
+      if (fa) return `Alterou a ${label} para ${fa}`
+      return `Atualizou a ${label}`
     }
   }
 }
@@ -520,6 +554,20 @@ const AUDIT_ACTION_LABEL: Record<string, string> = {
   'work_item.moved': 'moveu de coluna',
   'work_item.status': 'mudou o status',
   'work_item.assignee_id': 'mudou o responsável',
+  'work_item.assignee_updated': 'mudou o responsável',
+  'work_item.status_updated': 'mudou o status',
+  'work_item.priority_updated': 'mudou a prioridade',
+  'work_item.title_updated': 'alterou o título',
+  'work_item.description_updated': 'atualizou a descrição',
+  'work_item.epic_linked': 'vinculou um épico',
+  'work_item.epic_id_updated': 'alterou o épico',
+  'work_item.due_date_updated': 'alterou o prazo',
+  'work_item.start_date_updated': 'alterou a data de início',
+  'work_item.column_changed': 'moveu de coluna',
+  'work_item.updated': 'atualizou a demanda',
+  'work_item.deleted': 'removeu a demanda',
+  'attachment_added': 'anexou um arquivo',
+  'attachment_deleted': 'removeu um anexo',
 }
 
 function auditDetail(before: unknown, after: unknown): string | undefined {
@@ -580,6 +628,9 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
         return nameById.get(v) ?? (UUID_RE.test(v) ? 'Desconhecido' : v)
       }
       if (!v) return '—'
+      if (/^(status|column|column_id|column_changed|status_changed|priority|type|severity)$/.test(field)) {
+        return ptValue(field, v)
+      }
       if (field === 'sprint_id') return sprintById.get(v) ?? (UUID_RE.test(v) ? 'Sprint removida' : v)
       if (field === 'epic_id') return epicById.get(v) ?? (UUID_RE.test(v) ? 'Épico removido' : v)
       if (UUID_RE.test(v)) return nameById.get(v) ?? sprintById.get(v) ?? epicById.get(v) ?? v
@@ -599,9 +650,9 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
         field: h.field,
         fromValue: from,
         toValue: to,
-        summary: h.field === 'status'
+        summary: /^(status|column|column_id|column_changed|status_changed)$/.test(h.field)
           ? `Moveu de ${from} para ${to}`
-          : `Alterou o ${PT_FIELD[h.field] ?? h.field.replace(/_/g, ' ')} de ${from} para ${to}`,
+          : `Alterou o ${PT_FIELD[h.field] ?? PT_FIELD[h.field.replace(/_changed$/, '')] ?? h.field.replace(/_/g, ' ')} de ${from} para ${to}`,
       })
     }
 
@@ -629,7 +680,12 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
           createdAt: raw.created_at,
           actorName: raw.actor_name || (raw.actor_id && nameById.get(raw.actor_id)) || 'Sistema',
           kind: 'action',
-          action: AUDIT_ACTION_LABEL[raw.action] ?? raw.action.replace(/^(work_item|epic)\./, '').replace(/_/g, ' '),
+          action: AUDIT_ACTION_LABEL[raw.action] ?? (() => {
+            const m = /^(?:work_item|epic)\.(.+?)(?:_updated)?$/.exec(raw.action)
+            const key = m?.[1] ?? raw.action
+            const label = PT_FIELD[key] ?? PT_FIELD[key.replace(/_changed$/, '')]
+            return label ? `alterou a ${label}` : key.replace(/_/g, ' ')
+          })(),
           detail: deUuid(auditDetail(raw.before, raw.after)),
           summary: deUuid(auditSummary(raw.action, raw.before, raw.after)),
           attachmentName: typeof att?.name === 'string' ? att.name : undefined,

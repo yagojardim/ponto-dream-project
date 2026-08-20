@@ -4,6 +4,7 @@ import { HelpHint } from './ds/HelpHint'
 import { AddRelationModal } from './AddRelationModal'
 import { AddSubtaskModal } from './AddSubtaskModal'
 import { useSession } from '../data/SessionContext'
+import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import { can } from '../data/permissions'
 import {
   getWorkItem, updateWorkItemField, addComment as dbAddComment,
@@ -915,7 +916,8 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
   const localRef = useRef<WorkItemData>(local)
   localRef.current = local
 
-  const actorProfileId = dbRef.current?.profiles.find(p => p.name === activeUser.name)?.id ?? null
+  const actorProfileId = dbRef.current?.profiles.find(p => p.name === activeUser.name)?.id
+    ?? (INSPECTION_MODE_ENABLED ? (activeUser.user_id ?? null) : null)
 
   function applyDetail(d: WorkItemDetailData) {
     dbRef.current = d
@@ -1465,7 +1467,7 @@ export function WorkItemDetail({ data: dataProp, itemId, onUpdate, onClose, mode
                 tenantId={dbRef.current?.item.tenant_id ?? null}
                 workItemId={itemId ?? null}
                 profileId={actorProfileId}
-                canUpload={isAuthenticated}
+                canUpload={isAuthenticated || INSPECTION_MODE_ENABLED}
                 onCountChange={handleAttachmentCount}
                 onError={handleAttachmentError}
               />
