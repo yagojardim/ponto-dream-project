@@ -1,10 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { T } from './ds/tokens'
 import { getActiveUser } from '../data/session'
 import { can } from '../data/permissions'
 import { getMembers } from '../data/db/members'
 import { listProjects } from '../data/db/projects'
 import { listSprints, normalizeState } from '../data/db/sprints'
+import {
+  listBugEnvironments, createBugEnvironment,
+  listTenantLabels, createTenantLabel,
+} from '../data/db/catalogs'
 import { logger } from '../utils/logger'
 
 
@@ -48,7 +52,7 @@ const PRIORITY_CFG: Record<Priority, { label: string; color: string; icon: strin
   low:     { label:'Baixa',   color:T.text3,  icon:'↓'  },
 }
 
-const ENVIRONMENTS = ['iOS','Android','Web','Desktop','Todos']
+
 const EPICS = ['EP-01 Website Relaunch','EP-02 Infra & Eng','EP-03 Pesquisa & Conteúdo']
 const BACKLOG_LABEL = 'Backlog'
 
@@ -128,6 +132,91 @@ function ValueSelect({ value, onChange, options }: { value:string; onChange:(v:s
   )
 }
 
+// ── Creatable combobox: lista opções do tenant e permite criar novas ─────────
+function CreatableCombobox({
+  options, value, values, onSelect, onCreate, placeholder, multiple = false,
+}: {
+  options: string[]
+  value?: string
+  values?: string[]
+  onSelect: (v: string) => void
+  onCreate: (v: string) => void | Promise<void>
+  placeholder?: string
+  multiple?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) { setOpen(false); setQuery('') }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const q = query.trim()
+  const selected = multiple ? (values ?? []) : []
+  const filtered = options.filter(o =>
+    (!q || o.toLowerCase().includes(q.toLowerCase())) &&
+    (!multiple || !selected.some(s => s.toLowerCase() === o.toLowerCase())),
+  )
+  const canCreate = !!q && !options.some(o => o.toLowerCase() === q.toLowerCase())
+
+  function commit(v: string, isNew: boolean) {
+    if (isNew) void onCreate(v)
+    else onSelect(v)
+    setQuery('')
+    if (!multiple) setOpen(false)
+  }
+
+  return (
+    <div ref={boxRef} className="relative">
+      {multiple && selected.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {selected.map(s => (
+            <span key={s} className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px]"
+              style={{ background:T.accentDim, color:T.accent, border:`1px solid ${T.accentBorder}` }}>
+              {s}
+              <button onClick={()=>onSelect(s)} className="leading-none text-[12px]" style={{ color:T.accent }}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        value={multiple ? query : (open ? query : (value ?? ''))}
+        onChange={e=>{ setQuery(e.target.value); setOpen(true) }}
+        onFocus={e=>{ setOpen(true); e.currentTarget.style.borderColor=T.accent }}
+        onBlur={e=>{ e.currentTarget.style.borderColor=T.border }}
+        onKeyDown={e=>{
+          if (e.key === 'Enter' && q) { e.preventDefault(); commit(q, canCreate) }
+        }}
+        placeholder={placeholder}
+        className="h-9 px-3 text-[13px] rounded-lg border outline-none w-full"
+        style={{ background:T.bgSurface2, border:`1px solid ${T.border}`, color:T.text1 }}
+      />
+      {open && (filtered.length > 0 || canCreate) && (
+        <div className="absolute z-[70] left-0 right-0 top-full mt-1 rounded-lg overflow-hidden"
+          style={{ background:T.bgSurface, border:`1px solid ${T.border}`, boxShadow:T.shadowModal, maxHeight:200, overflowY:'auto' }}>
+          {canCreate && (
+            <button onClick={()=>commit(q, true)}
+              className="w-full text-left px-3 py-2 text-[12px]" style={{ color:T.accent }}>
+              + Criar “{q}”
+            </button>
+          )}
+          {filtered.map(o => (
+            <button key={o} onClick={()=>commit(o, false)}
+              className="w-full text-left px-3 py-2 text-[13px]" style={{ color:T.text1 }}
+              onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background=T.bgSurface2}}
+              onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent'}}
+            >{o}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 
 // Bug — numbered step list
@@ -253,7 +342,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
   const [epic,        setEpic]       = useState(EPICS[0])
   const [points,      setPoints]     = useState('')
-  const [labels,      setLabels]     = useState('')
+  const [labelList,   setLabelList]  = useState<string[]>([])
   const [parentIssue, setParent]     = useState('')
   // Epic-specific
   const [epicColor, setEpicColor] = useState<string>(T.warn)
@@ -262,10 +351,50 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const [steps,       setSteps]      = useState(['','',''])
   const [expected,    setExpected]   = useState('')
   const [found,       setFound]      = useState('')
-  const [environment, setEnv]        = useState('Todos')
+  const [environment, setEnv]        = useState('')
   const [evidence,    setEvidence]   = useState('')
   const [createAnother, setCreateAnother] = useState(false)
   const [showCreated, setShowCreated] = useState(false)
+
+  // Catálogos creatable por tenant
+  const [envOptions, setEnvOptions] = useState<string[]>([])
+  const [labelOptions, setLabelOptions] = useState<string[]>([])
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const [envs, labs] = await Promise.all([listBugEnvironments(), listTenantLabels()])
+        if (!alive) return
+        setEnvOptions(envs.map(e => e.name))
+        setLabelOptions(labs.map(l => l.name))
+      } catch (err) {
+        logger.error('CreateIssueModal: falha ao carregar catálogos do tenant', err)
+      }
+    })()
+    return () => { alive = false }
+  }, [])
+
+  async function handleCreateEnv(name: string) {
+    const created = await createBugEnvironment(name)
+    const value = created?.name ?? name.trim()
+    setEnvOptions(prev => (prev.some(o => o.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value].sort()))
+    setEnv(value)
+  }
+
+  async function handleCreateLabel(name: string) {
+    const created = await createTenantLabel(name)
+    const value = created?.name ?? name.trim()
+    setLabelOptions(prev => (prev.some(o => o.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value].sort()))
+    setLabelList(prev => (prev.some(l => l.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]))
+  }
+
+  function toggleLabel(name: string) {
+    setLabelList(prev => (prev.some(l => l.toLowerCase() === name.toLowerCase())
+      ? prev.filter(l => l.toLowerCase() !== name.toLowerCase())
+      : [...prev, name]))
+  }
+
 
   useEffect(() => {
     if (showCreated) {
@@ -284,7 +413,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     if (!summary.trim()) return
     const assigneeName = memberOptions.find(m => m.id === assigneeId)?.name ?? ''
     const sprintName = sprintOptions.find(s => s.id === sprintId)?.name ?? BACKLOG_LABEL
-    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epic, points, labels, steps, expected, found, environment, evidence })
+    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epic, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
 
     if (createAnother) {
       setSummary('')
@@ -428,7 +557,13 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
 
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Ambiente" required>
-                  <NativeSelect value={environment} onChange={setEnv} options={ENVIRONMENTS} />
+                  <CreatableCombobox
+                    options={envOptions}
+                    value={environment}
+                    onSelect={setEnv}
+                    onCreate={handleCreateEnv}
+                    placeholder="Selecionar ou criar ambiente..."
+                  />
                 </Field>
                 <Field label="Evidência (link ou arquivo)">
                   <TextInput value={evidence} onChange={e=>setEvidence((e.target as HTMLInputElement).value)} placeholder="https://... ou nome do arquivo" />
@@ -489,10 +624,13 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             </Field>
 
             <Field label="Labels">
-              <TextInput
-                value={labels}
-                onChange={e=>setLabels((e.target as HTMLInputElement).value)}
-                placeholder="Eng, Design, ..."
+              <CreatableCombobox
+                multiple
+                options={labelOptions}
+                values={labelList}
+                onSelect={toggleLabel}
+                onCreate={handleCreateLabel}
+                placeholder="Selecionar ou criar label..."
               />
             </Field>
           </div>
