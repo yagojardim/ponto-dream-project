@@ -536,7 +536,7 @@ function auditDetail(before: unknown, after: unknown): string | undefined {
 export async function listItemHistory(workItemId: string, epicId?: string | null): Promise<UnifiedHistoryEntry[]> {
   return safeCall('workItem.listItemHistory', async () => {
     const tid = DEFAULT_TENANT_ID
-    const [statusRes, itemAuditRes, epicAuditRes, profilesRes] = await Promise.all([
+    const [statusRes, itemAuditRes, epicAuditRes, profilesRes, sprintsRes, epicsRes] = await Promise.all([
       supabase.from('item_status_history')
         .select('id, field, from_value, to_value, actor_id, created_at')
         .eq('tenant_id', tid).eq('work_item_id', workItemId)
@@ -552,27 +552,51 @@ export async function listItemHistory(workItemId: string, epicId?: string | null
             .order('created_at', { ascending: false }).limit(200)
         : Promise.resolve({ data: [], error: null } as never),
       supabase.from('profiles').select('id, name').eq('tenant_id', tid),
+      supabase.from('sprints').select('id, name').eq('tenant_id', tid),
+      supabase.from('epics').select('id, name').eq('tenant_id', tid),
     ])
 
     const nameById = new Map<string, string>()
     for (const p of (profilesRes.data ?? []) as { id: string; name: string }[]) nameById.set(p.id, p.name)
+    const sprintById = new Map<string, string>()
+    for (const s of (sprintsRes.data ?? []) as { id: string; name: string }[]) sprintById.set(s.id, s.name)
+    const epicById = new Map<string, string>()
+    for (const e of (epicsRes.data ?? []) as { id: string; name: string }[]) epicById.set(e.id, e.name)
+
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    /** Resolve o valor cru de um campo para texto legível. */
+    const readable = (field: string, value: string | null | undefined): string => {
+      const v = (value ?? '').trim()
+      if (field === 'assignee_id' || field === 'reporter_id') {
+        if (!v) return 'Ninguém'
+        return nameById.get(v) ?? (UUID_RE.test(v) ? 'Desconhecido' : v)
+      }
+      if (!v) return '—'
+      if (field === 'sprint_id') return sprintById.get(v) ?? (UUID_RE.test(v) ? 'Sprint removida' : v)
+      if (field === 'epic_id') return epicById.get(v) ?? (UUID_RE.test(v) ? 'Épico removido' : v)
+      if (UUID_RE.test(v)) return nameById.get(v) ?? sprintById.get(v) ?? epicById.get(v) ?? v
+      return v
+    }
 
     const out: UnifiedHistoryEntry[] = []
 
     for (const h of (statusRes.data ?? []) as HistoryRow[]) {
+      const from = readable(h.field, h.from_value)
+      const to = readable(h.field, h.to_value)
       out.push({
         id: `sh-${h.id}`,
         createdAt: h.created_at,
         actorName: (h.actor_id && nameById.get(h.actor_id)) || 'Sistema',
         kind: 'field',
         field: h.field,
-        fromValue: h.from_value,
-        toValue: h.to_value,
+        fromValue: from,
+        toValue: to,
         summary: h.field === 'status'
-          ? `Moveu de ${h.from_value || '—'} para ${h.to_value || '—'}`
-          : `Alterou ${PT_FIELD[h.field] ?? h.field} de ${h.from_value || '—'} para ${h.to_value || '—'}`,
+          ? `Moveu de ${from} para ${to}`
+          : `Alterou o ${PT_FIELD[h.field] ?? h.field.replace(/_/g, ' ')} de ${from} para ${to}`,
       })
     }
+
 
     const pushAudit = (rows: unknown[], fromEpic: boolean) => {
       for (const raw of rows as {
