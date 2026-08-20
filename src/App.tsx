@@ -408,6 +408,7 @@ function ShellWithRole({
       <>
         {createOpen && (
           <CreateIssueModal
+            projectId={selectedProjectId}
             onClose={() => setCreate(false)}
             onCreate={() => setCreate(false)}
           />
