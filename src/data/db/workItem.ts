@@ -358,7 +358,7 @@ export async function addSubtask(
   parent: Pick<WorkItemRow, 'id' | 'project_id' | 'board_id' | 'board_column_id' | 'sprint_id' | 'epic_id' | 'status'>,
   title: string,
   actorName = 'Sistema',
-  opts?: { assigneeId?: string | null; storyPoints?: number | null },
+  opts?: { assigneeId?: string | null; storyPoints?: number | null; description?: string | null; priority?: 'critical'|'high'|'medium'|'low' },
 ): Promise<RelatedItemRow> {
   const tid = DEFAULT_TENANT_ID
 
@@ -387,7 +387,8 @@ export async function addSubtask(
       type: 'subtask',
       title,
       status: 'todo',
-      priority: 'media',
+      priority: PRIORITY_TO_DB[opts?.priority ?? 'medium'] ?? 'media',
+      description: opts?.description ?? null,
       assignee_id: opts?.assigneeId ?? null,
       story_points: opts?.storyPoints ?? null,
     })
