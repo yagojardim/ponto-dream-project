@@ -448,6 +448,9 @@ export interface UnifiedHistoryEntry {
   summary?: string
   /** true quando o evento veio do épico e não do item. */
   fromEpic?: boolean
+  /** Preenchido em eventos de anexo — permite baixar o arquivo pelo histórico. */
+  attachmentName?: string
+  attachmentPath?: string
 }
 
 const PT_FIELD: Record<string, string> = {
