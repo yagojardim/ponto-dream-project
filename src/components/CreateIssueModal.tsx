@@ -3,7 +3,7 @@ import { T } from './ds/tokens'
 import { getActiveUser } from '../data/session'
 import { can } from '../data/permissions'
 import { getMembers } from '../data/db/members'
-import { listProjects, projectUsesFeatures as checkProjectUsesFeatures } from '../data/db/projects'
+import { listProjects } from '../data/db/projects'
 import { listSprints, normalizeState } from '../data/db/sprints'
 import {
   listBugEnvironments, createBugEnvironment,
@@ -18,7 +18,7 @@ import { logger } from '../utils/logger'
 // Story: épico pai
 // Subtask: demanda pai
 
-type IssueType = 'epic' | 'feature' | 'story' | 'bug' | 'subtask'
+type IssueType = 'epic' | 'story' | 'bug' | 'subtask'
 type Priority  = 'critical' | 'high' | 'medium' | 'low'
 
 export interface ModalMember { id: string; name: string }
@@ -39,7 +39,7 @@ interface CreateIssueModalProps {
 
 const TYPE_CFG: Record<IssueType, { icon: string; color: string; label: string; desc: string }> = {
   epic:    { icon:'⚡', color:T.warn,   label:'Épico',     desc:'Objetivo de grande escala' },
-  feature: { icon:'▣', color:T.purple, label:'Funcionalidade', desc:'Conjunto de histórias que entregam um recurso' },
+  
   story:   { icon:'◇', color:T.accent,  label:'História',  desc:'Necessidade ou valor para o usuário' },
   bug:     { icon:'⬟', color:T.crit,   label:'Bug',       desc:'Erro ou comportamento inesperado' },
   subtask: { icon:'◻', color:T.text3,  label:'Subtarefa', desc:'Parte de uma demanda maior' },
@@ -263,10 +263,9 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const activeUser = getActiveUser()
   const perms = activeUser?.permissions ?? []
   const canCreateProjects = can(perms, 'project:create')
-  const allowedTypes: IssueType[] = (['epic','feature','story','bug','subtask'] as IssueType[]).filter(t => {
+  const allowedTypes: IssueType[] = (['epic','story','bug','subtask'] as IssueType[]).filter(t => {
     if (!canCreateProjects) return t === 'story' || t === 'subtask' || t === 'bug'
     if (t === 'epic')    return can(perms, 'create:epic')
-    if (t === 'feature') return usesFeatures && can(perms, 'create:feature')
     if (t === 'story')   return can(perms, 'create:story')
     if (t === 'bug')     return can(perms, 'create:bug')
     if (t === 'subtask') return can(perms, 'create:subtask')
@@ -279,7 +278,6 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   // props podem chegar vazias, então o modal se auto-hidrata.
   const [loadedMembers, setLoadedMembers] = useState<ModalMember[]>([])
   const [loadedSprints, setLoadedSprints] = useState<ModalSprint[]>([])
-  const [usesFeatures, setUsesFeatures] = useState(false)
 
 
   useEffect(() => {
@@ -306,14 +304,11 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     void (async () => {
       try {
         let pid = projectId
-        let project = null
         if (!pid) {
           const { projects } = await listProjects()
-          project = projects.find(p => p.status === 'active') ?? projects[0]
-          pid = project?.id
+          pid = (projects.find(p => p.status === 'active') ?? projects[0])?.id
         }
         if (!pid) return
-        setUsesFeatures(checkProjectUsesFeatures(project))
         const rows = await listSprints(pid)
         if (!alive) return
         setLoadedSprints(rows.map(s => ({ id: s.id, name: s.name, state: normalizeState(s.state) })))
