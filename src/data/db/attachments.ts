@@ -203,7 +203,13 @@ export async function uploadAttachment({ tenantId, workItemId, file, profileId }
       entity_id: workItemId,
       action: 'attachment_added',
       actor_id: profileId,
-      after: { name: file.name },
+      after: {
+        name: file.name,
+        storage_path: path,
+        size_bytes: file.size,
+        attachment_id: r.id,
+        work_item_id: workItemId,
+      },
     })
     return null
   }, null, { workItemId })
