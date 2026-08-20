@@ -568,7 +568,7 @@ export default function EpicsPage() {
                 </div>
 
                 {/* Features */}
-                {features.length > 0 && (
+                {(features.length > 0 || (featureProjects.has(epic.project_id) && canCreateFeature)) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
                     <span style={{ fontSize: 11, color: T.text3 }}>Funcionalidades:</span>
                     {features.map(f => (
@@ -577,6 +577,16 @@ export default function EpicsPage() {
                         border: `1px solid ${T.border}`, borderRadius: 20, padding: '2px 10px',
                       }}>{f.name}</span>
                     ))}
+                    {featureProjects.has(epic.project_id) && canCreateFeature && (
+                      <button
+                        onClick={() => openNewFeature(epic)}
+                        style={{
+                          fontSize: 11, color: T.purple, background: T.purpleDim,
+                          border: `1px dashed ${T.purple}55`, borderRadius: 20,
+                          padding: '2px 10px', cursor: 'pointer', fontWeight: 600,
+                        }}
+                      >+ Funcionalidade</button>
+                    )}
                   </div>
                 )}
 
