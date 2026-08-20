@@ -413,7 +413,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     if (!summary.trim()) return
     const assigneeName = memberOptions.find(m => m.id === assigneeId)?.name ?? ''
     const sprintName = sprintOptions.find(s => s.id === sprintId)?.name ?? BACKLOG_LABEL
-    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epic, points, labels, steps, expected, found, environment, evidence })
+    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epic, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
 
     if (createAnother) {
       setSummary('')
