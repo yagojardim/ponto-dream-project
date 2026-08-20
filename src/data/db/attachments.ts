@@ -3,7 +3,7 @@
 // Same pattern as the other db/* modules: tenant-scoped, safeCall, no `any`.
 import { supabase } from '@/integrations/supabase/client'
 import type { Database } from '@/integrations/supabase/types'
-import { safeCall } from '@/utils/logger'
+import { logger, safeCall } from '@/utils/logger'
 
 type Tables = Database['public']['Tables']
 
@@ -86,12 +86,28 @@ async function sha256Hex(file: File): Promise<string | null> {
   }
 }
 
-/** Maps the storage-limit trigger errors to friendly Portuguese messages. */
+const PERMISSION_ERROR_PATTERNS = [
+  'row-level security',
+  'violates row-level security',
+  'permission denied',
+  'unauthorized',
+  'jwt expired',
+  'insufficient privilege',
+  'policy',
+]
+
+function isPermissionError(message: string): boolean {
+  const lower = message.toLowerCase()
+  return PERMISSION_ERROR_PATTERNS.some(p => lower.includes(p.toLowerCase()))
+}
+
+/** Maps Supabase/RLS/storage errors to friendly Portuguese messages. */
 function friendlyDbError(message: string): string {
+  if (isPermissionError(message)) return 'Sem permissão para anexar arquivos neste ambiente.'
   if (message.includes('FILE_TOO_LARGE')) return 'Arquivo maior que o limite do plano'
   if (message.includes('TENANT_QUOTA_EXCEEDED')) return 'Cota de armazenamento do tenant esgotada'
   if (message.includes('PROJECT_FILE_LIMIT')) return 'Limite de arquivos do projeto atingido'
-  return message
+  return 'Não foi possível anexar o arquivo. Tente novamente.'
 }
 
 // ─── Reads ────────────────────────────────────────────────────────────────────
