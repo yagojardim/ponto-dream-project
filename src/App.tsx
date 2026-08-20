@@ -156,7 +156,6 @@ function AppInner() {
     useSession()
   const [view, setView] = useState<View>("home")
   const [clientMustChangePwd, setClientMustChangePwd] = useState(false)
-  const [demandToast, setDemandToast] = useState<string | null>(null)
   const [activateToken, setActivateToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null
     if (window.location.pathname !== "/activate") return null
