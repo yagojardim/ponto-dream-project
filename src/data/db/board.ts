@@ -228,6 +228,7 @@ export interface CreateWorkItemInput {
   type?: string
   priority?: 'critical' | 'high' | 'medium' | 'low'
   epicId?: string | null
+  featureId?: string | null
   assigneeId?: string | null
   storyPoints?: number | null
   description?: string | null
