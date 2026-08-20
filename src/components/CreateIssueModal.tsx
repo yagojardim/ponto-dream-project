@@ -304,15 +304,19 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     let alive = true
     void (async () => {
       try {
-        let pid = projectId
-        if (!pid) {
-          const { projects } = await listProjects()
-          pid = (projects.find(p => p.status === 'active') ?? projects[0])?.id
-        }
+        const { projects } = await listProjects()
+        const proj = projectId
+          ? projects.find(p => p.id === projectId) ?? null
+          : (projects.find(p => p.status === 'active') ?? projects[0] ?? null)
+        const pid = projectId ?? proj?.id
         if (!pid) return
-        const rows = await listSprints(pid)
+
+        const [rows, ed] = await Promise.all([listSprints(pid), listEpics([pid])])
         if (!alive) return
         setLoadedSprints(rows.map(s => ({ id: s.id, name: s.name, state: normalizeState(s.state) })))
+        setEpicOptions(ed.epics.map(e => ({ id: e.id, name: e.name })))
+        setFeatureOptions((ed.features ?? []).map(f => ({ id: f.id, name: f.name, epicId: f.epic_id })))
+        setProjectUsesFeat(projectUsesFeatures(proj))
       } catch (err) {
         logger.error('CreateIssueModal: falha ao carregar sprints do projeto', err)
       }
