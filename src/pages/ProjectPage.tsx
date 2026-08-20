@@ -1742,7 +1742,7 @@ function BacklogRow({ issue, epicColor, onOpen }: { issue: Issue; epicColor: str
 }
 
 // ─── Backlog tab ──────────────────────────────────────────────────────────────
-function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onCompleteSprint, onUpdateIssue, availableEpics, availableMembers }: {
+function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onCompleteSprint, onUpdateIssue, availableEpics, availableMembers, filterAssignees = [] }: {
   issues: Issue[]
   sprints: SprintDef[]
   canManageSprint: boolean
@@ -1751,7 +1751,10 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
   onUpdateIssue: (updated: Issue) => void
   availableEpics: { id: string; label: string; color: string }[]
   availableMembers: { id: string; initials: string; name: string }[]
+  /** Filtro de responsável por id único (mesmo estado do Board). */
+  filterAssignees?: string[]
 }) {
+
   const [collapsed, setCollapsed]       = useState<Set<string>>(new Set())
   const [startingSprint, setStarting]   = useState<SprintDef | null>(null)
   const [sprintStates, setSprintStates] = useState<Record<string,string>>({})
@@ -1772,7 +1775,13 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
 
   const getEpicColor = (epicId?: string) => availableEpics.find(e => e.id === epicId)?.color ?? DS.text3
 
-  const backlogIssues = issues.filter(i => !i.sprint)
+  // Filtro por responsável: sempre por id único (nunca por iniciais).
+  const visibleIssues = filterAssignees.length
+    ? issues.filter(i => filterAssignees.includes(i.assigneeId ?? ''))
+    : issues
+
+  const backlogIssues = visibleIssues.filter(i => !i.sprint)
+
 
   return (
     <div className="flex-1 overflow-y-auto min-h-0">
@@ -1789,7 +1798,7 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
 
         {/* Sprint containers */}
         {sprints.map(sprint => {
-          const sprintIssues = issues.filter(i => i.sprint === sprint.id)
+          const sprintIssues = visibleIssues.filter(i => i.sprint === sprint.id)
           const totalPts = sprintIssues.reduce((s, i) => s + i.points, 0)
           const donePts  = sprintIssues.filter(i => i.status === 'done').reduce((s, i) => s + i.points, 0)
           const isOpen   = !collapsed.has(sprint.id)
@@ -2576,9 +2585,13 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
       const projectId = board?.project_id ?? scopedProjectId
       if (!projectId || !column || !board) throw new Error('Board indisponível para criar demanda')
 
-      const sprintId = (typeof data.sprintId === 'string' && data.sprintId)
-        ? data.sprintId
-        : (data.sprintId === null ? null : (target?.sprintId ?? dbSprints.find(s => s.state === 'active')?.id ?? null))
+      // O modal sempre envia sprintId explícito: string = sprint escolhida,
+      // null/'' = "Backlog". Só caímos no fallback quando o campo não veio.
+      const hasSprintField = Object.prototype.hasOwnProperty.call(data, 'sprintId')
+      const sprintId = hasSprintField
+        ? (typeof data.sprintId === 'string' && data.sprintId ? data.sprintId : null)
+        : (target?.sprintId ?? null)
+
       const epicLabel = data.epic && data.epic !== '—' ? String(data.epic) : ''
       const epicId = epicLabel
         ? (boardData?.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(' ')[0])?.id ?? null
@@ -2855,6 +2868,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           onUpdateIssue={updated=>patchDbIssue(updated.key, updated)}
           availableEpics={availableEpics}
           availableMembers={availableMembers}
+          filterAssignees={filterAssignees}
         />
       )}
       {tab === 'Sprints' && (
