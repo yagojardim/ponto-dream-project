@@ -2864,6 +2864,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           onUpdateIssue={updated=>patchDbIssue(updated.key, updated)}
           availableEpics={availableEpics}
           availableMembers={availableMembers}
+          filterAssignees={filterAssignees}
         />
       )}
       {tab === 'Sprints' && (
