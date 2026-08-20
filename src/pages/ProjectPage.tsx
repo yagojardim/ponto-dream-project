@@ -1742,7 +1742,7 @@ function BacklogRow({ issue, epicColor, onOpen }: { issue: Issue; epicColor: str
 }
 
 // ─── Backlog tab ──────────────────────────────────────────────────────────────
-function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onCompleteSprint, onUpdateIssue, availableEpics, availableMembers }: {
+function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onCompleteSprint, onUpdateIssue, availableEpics, availableMembers, filterAssignees = [] }: {
   issues: Issue[]
   sprints: SprintDef[]
   canManageSprint: boolean
@@ -1751,7 +1751,10 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
   onUpdateIssue: (updated: Issue) => void
   availableEpics: { id: string; label: string; color: string }[]
   availableMembers: { id: string; initials: string; name: string }[]
+  /** Filtro de responsável por id único (mesmo estado do Board). */
+  filterAssignees?: string[]
 }) {
+
   const [collapsed, setCollapsed]       = useState<Set<string>>(new Set())
   const [startingSprint, setStarting]   = useState<SprintDef | null>(null)
   const [sprintStates, setSprintStates] = useState<Record<string,string>>({})
