@@ -351,8 +351,26 @@ export default function EpicsPage() {
   const [newEpicOpen, setNewEpicOpen] = useState(false)
   const [newEpicError, setNewEpicError] = useState<string | null>(null)
   const [suggestedKey, setSuggestedKey] = useState('')
+  const [featureProjects, setFeatureProjects] = useState<Set<string>>(new Set())
+  const [featureEpic, setFeatureEpic] = useState<{ id: string; name: string } | null>(null)
+  const [featureName, setFeatureName] = useState('')
+  const [featureDesc, setFeatureDesc] = useState('')
+  const [featureError, setFeatureError] = useState<string | null>(null)
 
   const activeUser = getActiveUser()
+  const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const { projects } = await listProjects()
+        if (!alive) return
+        setFeatureProjects(new Set(projects.filter(p => projectUsesFeatures(p)).map(p => p.id)))
+      } catch { /* silencioso — sem features disponíveis */ }
+    })()
+    return () => { alive = false }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
