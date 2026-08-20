@@ -101,14 +101,21 @@ function isPermissionError(message: string): boolean {
   return PERMISSION_ERROR_PATTERNS.some(p => lower.includes(p.toLowerCase()))
 }
 
-/** Maps Supabase/RLS/storage errors to friendly Portuguese messages. */
-function friendlyDbError(message: string): string {
+/** Maps Supabase/RLS/storage errors to friendly Portuguese messages for uploads. */
+export function friendlyAttachmentError(message: string): string {
   if (isPermissionError(message)) return 'Sem permissão para anexar arquivos neste ambiente.'
   if (message.includes('FILE_TOO_LARGE')) return 'Arquivo maior que o limite do plano'
   if (message.includes('TENANT_QUOTA_EXCEEDED')) return 'Cota de armazenamento do tenant esgotada'
   if (message.includes('PROJECT_FILE_LIMIT')) return 'Limite de arquivos do projeto atingido'
+  if (message.includes('Tipo de arquivo não permitido')) return message
+  if (message.includes('Arquivo excede o limite do plano')) return message
+  if (message.includes('Sem permissão para anexar arquivos neste ambiente')) return message
+  if (message.includes('Não foi possível anexar o arquivo')) return message
   return 'Não foi possível anexar o arquivo. Tente novamente.'
 }
+
+/** @deprecated internal helper kept for the file; prefer {@link friendlyAttachmentError}. */
+function friendlyDbError(message: string): string { return friendlyAttachmentError(message) }
 
 // ─── Reads ────────────────────────────────────────────────────────────────────
 type ProfileLite = Pick<Tables['profiles']['Row'], 'id' | 'name'>
