@@ -1775,7 +1775,13 @@ function BacklogTab({ issues, sprints, canManageSprint, onCreateIssue, onComplet
 
   const getEpicColor = (epicId?: string) => availableEpics.find(e => e.id === epicId)?.color ?? DS.text3
 
-  const backlogIssues = issues.filter(i => !i.sprint)
+  // Filtro por responsável: sempre por id único (nunca por iniciais).
+  const visibleIssues = filterAssignees.length
+    ? issues.filter(i => filterAssignees.includes(i.assigneeId ?? ''))
+    : issues
+
+  const backlogIssues = visibleIssues.filter(i => !i.sprint)
+
 
   return (
     <div className="flex-1 overflow-y-auto min-h-0">
