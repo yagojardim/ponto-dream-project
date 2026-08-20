@@ -416,7 +416,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const isBug     = type === 'bug'
   const isEpic    = type === 'epic'
   const isSubtask = type === 'subtask'
-  const needsEpic = type === 'story'
+  const needsEpic = type === 'story' || type === 'feature'
 
   function handleSubmit() {
     if (!summary.trim()) return
