@@ -2585,9 +2585,13 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
       const projectId = board?.project_id ?? scopedProjectId
       if (!projectId || !column || !board) throw new Error('Board indisponível para criar demanda')
 
-      const sprintId = (typeof data.sprintId === 'string' && data.sprintId)
-        ? data.sprintId
-        : (data.sprintId === null ? null : (target?.sprintId ?? dbSprints.find(s => s.state === 'active')?.id ?? null))
+      // O modal sempre envia sprintId explícito: string = sprint escolhida,
+      // null/'' = "Backlog". Só caímos no fallback quando o campo não veio.
+      const hasSprintField = Object.prototype.hasOwnProperty.call(data, 'sprintId')
+      const sprintId = hasSprintField
+        ? (typeof data.sprintId === 'string' && data.sprintId ? data.sprintId : null)
+        : (target?.sprintId ?? null)
+
       const epicLabel = data.epic && data.epic !== '—' ? String(data.epic) : ''
       const epicId = epicLabel
         ? (boardData?.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(' ')[0])?.id ?? null
