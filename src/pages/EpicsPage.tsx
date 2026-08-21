@@ -347,8 +347,10 @@ export default function EpicsPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({})
   const [detailId, setDetailId] = useState<string | null>(null)
   const [newEpicOpen, setNewEpicOpen] = useState(false)
+  const [newEpicProjectId, setNewEpicProjectId] = useState<string>('')
   const [newEpicError, setNewEpicError] = useState<string | null>(null)
   const [suggestedKey, setSuggestedKey] = useState('')
   const [featureProjects, setFeatureProjects] = useState<Set<string>>(new Set())
@@ -359,6 +361,7 @@ export default function EpicsPage() {
 
   const activeUser = getActiveUser()
   const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
+  const canCreateEpic = can(activeUser?.permissions ?? [], 'create:epic')
 
   useEffect(() => {
     let alive = true
