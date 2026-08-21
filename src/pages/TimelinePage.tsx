@@ -54,6 +54,11 @@ function addDays(iso: string, n: number): string {
 function diffDays(a: string, b: string): number {
   return Math.round((toDate(b).getTime() - toDate(a).getTime()) / MS_DAY)
 }
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const d = toDate(iso)
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 function monthLabel(iso: string): string {
   const d = toDate(iso)
@@ -721,9 +726,12 @@ export default function TimelinePage() {
       {!loading && !error && (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Sidebar */}
-          <div style={{ width: 240, flexShrink: 0, borderRight: `1px solid ${T.border}`, background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ height: HEADER_H, borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0 }}>
-              <span style={{ color: T.text3, fontSize: 11, fontWeight: 700 }}>{sidebarTitle}</span>
+          <div style={{ width: 470, flexShrink: 0, borderRight: `1px solid ${T.border}`, background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ height: HEADER_H, borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0, gap: 0 }}>
+              <span style={{ flex: 1, color: T.text3, fontSize: 10, fontWeight: 700 }}>{sidebarTitle}</span>
+              <span style={{ width: 90, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Status</span>
+              <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Início</span>
+              <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Venc.</span>
             </div>
             <div style={{ flex: 1, overflowY: 'auto' }}>
               {rows.map(row => {
@@ -750,12 +758,25 @@ export default function TimelinePage() {
                   )
                 }
                 const wi = row.item
+                const span = spans[row.id]
+                const statusCfg = DB_STATUS_CFG[wi.status]
+                const statusLabel = statusCfg?.label ?? wi.status
+                const statusColor = statusCfg?.color ?? T.text3
                 return (
                   <div key={`i-${row.id}`}
                     style={{ height: ROW_H, display: 'flex', alignItems: 'center', padding: '0 12px 0 32px', borderBottom: `1px solid ${T.border}`, background: hovered === row.id ? T.bgSurface2 : T.bgSurface }}
                     onMouseEnter={() => setHovered(row.id)} onMouseLeave={() => setHovered(null)}>
-                    <span style={{ color: T.accent, fontSize: 10, fontWeight: 700, marginRight: 5, flexShrink: 0 }}>{wi.key}</span>
-                    <span style={{ color: T.text2, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={wi.title}>{wi.title}</span>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ color: T.accent, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{wi.key}</span>
+                      <span style={{ color: T.text2, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={wi.title}>{wi.title}</span>
+                    </div>
+                    <div style={{ width: 90, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: `${statusColor}18`, color: statusColor }}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <div style={{ width: 66, flexShrink: 0, fontSize: 10, color: T.text3 }}>{fmtDate(span?.start)}</div>
+                    <div style={{ width: 66, flexShrink: 0, fontSize: 10, color: T.text3 }}>{fmtDate(span?.end)}</div>
                   </div>
                 )
               })}
