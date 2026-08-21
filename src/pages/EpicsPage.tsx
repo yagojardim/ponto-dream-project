@@ -358,6 +358,9 @@ export default function EpicsPage() {
   const [featureName, setFeatureName] = useState('')
   const [featureDesc, setFeatureDesc] = useState('')
   const [featureError, setFeatureError] = useState<string | null>(null)
+  const [featureProjectId, setFeatureProjectId] = useState<string | null>(null)
+  const [featureEpicId, setFeatureEpicId] = useState('')
+  const [newMenuProjectId, setNewMenuProjectId] = useState<string | null>(null)
 
   const activeUser = getActiveUser()
   const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
