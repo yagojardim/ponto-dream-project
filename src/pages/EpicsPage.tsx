@@ -868,21 +868,26 @@ export default function EpicsPage() {
 
           {featureError && <div style={{ fontSize: 12, color: T.crit }}>{featureError}</div>}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-            <button onClick={() => setFeatureEpic(null)}
-              style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, cursor: 'pointer' }}
-            >Cancelar</button>
-            <button
-              disabled={!featureName.trim() || busy}
-              onClick={() => { void handleCreateFeature() }}
-              style={{
-                fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none',
-                background: featureName.trim() && !busy ? T.purple : T.neutralDim,
-                color: featureName.trim() && !busy ? '#fff' : T.text3,
-                cursor: featureName.trim() && !busy ? 'pointer' : 'not-allowed',
-              }}
-            >{busy ? 'Criando…' : 'Criar'}</button>
-          </div>
+          {(() => {
+            const canSubmit = Boolean(featureName.trim()) && Boolean(featureEpic?.id ?? featureEpicId) && !busy
+            return (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+                <button onClick={closeFeatureModal}
+                  style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, cursor: 'pointer' }}
+                >Cancelar</button>
+                <button
+                  disabled={!canSubmit}
+                  onClick={() => { void handleCreateFeature() }}
+                  style={{
+                    fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none',
+                    background: canSubmit ? T.purple : T.neutralDim,
+                    color: canSubmit ? '#fff' : T.text3,
+                    cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  }}
+                >{busy ? 'Criando…' : 'Criar'}</button>
+              </div>
+            )
+          })()}
         </div>
       </div>
     )}
