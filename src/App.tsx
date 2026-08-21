@@ -388,8 +388,11 @@ function ShellWithRole({
 
   async function handleGlobalCreateDemand(data: Record<string, unknown>) {
     try {
-      // Resolve o projeto: o selecionado, senão o primeiro ativo, senão o primeiro
-      let projectId = selectedProjectId
+      // Resolve o projeto: o escolhido no modal, senão o selecionado,
+      // senão o primeiro ativo, senão o primeiro.
+      let projectId = (typeof data.projectId === 'string' && data.projectId)
+        ? data.projectId
+        : selectedProjectId
       if (!projectId) {
         const { projects } = await listProjects()
         projectId = (projects.find(p => p.status === "active") ?? projects[0])?.id

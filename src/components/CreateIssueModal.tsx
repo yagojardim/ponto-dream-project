@@ -259,7 +259,7 @@ function StepsField({ steps, onChange }: { steps: string[]; onChange:(s:string[]
   )
 }
 
-export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSprintId, members, sprints, projectId }: CreateIssueModalProps) {
+export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSprintId, members, sprints, projectId: initialProjectId }: CreateIssueModalProps) {
   // Permission-gated issue types
   const activeUser = getActiveUser()
   const perms = activeUser?.permissions ?? []
@@ -280,6 +280,8 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const [epicOptions, setEpicOptions] = useState<{ id:string; name:string }[]>([])
   const [featureOptions, setFeatureOptions] = useState<{ id:string; name:string; epicId:string }[]>([])
   const [projectUsesFeat, setProjectUsesFeat] = useState(false)
+  const [projectsList, setProjectsList] = useState<{ id:string; name:string }[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState('')
 
 
   useEffect(() => {
@@ -301,17 +303,36 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     return () => { alive = false }
   }, [])
 
+  // Carrega a lista de projetos (uma vez) e define o projeto inicial.
   useEffect(() => {
     let alive = true
     void (async () => {
       try {
         const { projects } = await listProjects()
-        const proj = projectId
-          ? projects.find(p => p.id === projectId) ?? null
-          : (projects.find(p => p.status === 'active') ?? projects[0] ?? null)
-        const pid = projectId ?? proj?.id
-        if (!pid) return
+        if (!alive) return
+        setProjectsList(projects.map(p => ({ id: p.id, name: p.name })))
+        const initial = (initialProjectId && projects.find(p => p.id === initialProjectId))
+          ?? projects.find(p => p.status === 'active')
+          ?? projects[0]
+        if (initial) setSelectedProjectId(initial.id)
+      } catch (err) {
+        logger.error('CreateIssueModal: falha ao carregar projetos do tenant', err)
+      }
+    })()
+    return () => { alive = false }
+  }, [initialProjectId])
 
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      const pid = selectedProjectId
+      if (!pid) {
+        setLoadedSprints([]); setEpicOptions([]); setFeatureOptions([]); setProjectUsesFeat(false)
+        return
+      }
+      try {
+        const { projects } = await listProjects()
+        const proj = projects.find(p => p.id === pid) ?? null
         const [rows, ed] = await Promise.all([listSprints(pid), listEpics([pid])])
         if (!alive) return
         setLoadedSprints(rows.map(s => ({ id: s.id, name: s.name, state: normalizeState(s.state) })))
@@ -323,7 +344,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
       }
     })()
     return () => { alive = false }
-  }, [projectId])
+  }, [selectedProjectId])
 
 
   const memberOptions: ModalMember[] = loadedMembers.length ? loadedMembers : (members ?? [])
@@ -419,7 +440,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const isEpic    = type === 'epic'
   const isSubtask = type === 'subtask'
   const linkOk = projectUsesFeat ? !!featureId : !!epicId
-  const canSubmit = !!summary.trim() && linkOk
+  const canSubmit = !!summary.trim() && !!selectedProjectId && linkOk
 
   function handleSubmit() {
     if (!canSubmit) return
@@ -428,7 +449,7 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
     const derivedEpicId = projectUsesFeat
       ? (featureOptions.find(f => f.id === featureId)?.epicId ?? null)
       : (epicId || null)
-    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: derivedEpicId, featureId: projectUsesFeat ? (featureId || null) : null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
+    onCreate({ projectId: selectedProjectId, type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: derivedEpicId, featureId: projectUsesFeat ? (featureId || null) : null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
 
     if (createAnother) {
       setSummary('')
@@ -499,6 +520,13 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             </div>
           </Field>
 
+          {/* Project selector */}
+          <Field label="Projeto" required>
+            <ValueSelect value={selectedProjectId}
+              onChange={v => { setSelectedProjectId(v); setEpicId(''); setFeatureId(''); setSprintId('') }}
+              options={[{ value:'', label:'Selecione um projeto' }, ...projectsList.map(p => ({ value:p.id, label:p.name }))]} />
+          </Field>
+
           {/* Summary */}
           <Field label="Resumo" required>
             <TextInput
@@ -537,7 +565,9 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
           )}
 
           {/* Epic parent (story/task) */}
-          {projectUsesFeat ? (
+          {!selectedProjectId ? (
+            <p className="text-[11px]" style={{ color:T.text3 }}>Selecione um projeto primeiro.</p>
+          ) : projectUsesFeat ? (
             <div className="space-y-1">
               <Field label="Funcionalidade" required>
                 <ValueSelect value={featureId} onChange={setFeatureId}
