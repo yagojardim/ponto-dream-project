@@ -434,20 +434,31 @@ export default function EpicsPage() {
 
   function openNewFeature(epic: EpicRow) {
     setFeatureEpic({ id: epic.id, name: epic.name })
+    setFeatureProjectId(null); setFeatureEpicId('')
     setFeatureName(''); setFeatureDesc(''); setFeatureError(null)
   }
 
+  function openNewFeatureForProject(projectId: string) {
+    setFeatureEpic(null); setFeatureProjectId(projectId); setFeatureEpicId('')
+    setFeatureName(''); setFeatureDesc(''); setFeatureError(null)
+  }
+
+  function closeFeatureModal() {
+    setFeatureEpic(null); setFeatureProjectId(null); setFeatureEpicId('')
+  }
+
   async function handleCreateFeature() {
-    if (!featureEpic || !featureName.trim()) return
+    const epicId = featureEpic?.id ?? featureEpicId
+    if (!epicId || !featureName.trim()) return
     setBusy(true); setFeatureError(null)
     try {
       await createFeature({
-        epicId: featureEpic.id,
+        epicId,
         name: featureName.trim(),
         description: featureDesc.trim() || null,
         actorName: activeUser?.name,
       })
-      setFeatureEpic(null)
+      closeFeatureModal()
       await load()
     } catch (err) { setFeatureError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
