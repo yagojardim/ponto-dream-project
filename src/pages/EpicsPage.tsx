@@ -347,8 +347,10 @@ export default function EpicsPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({})
   const [detailId, setDetailId] = useState<string | null>(null)
   const [newEpicOpen, setNewEpicOpen] = useState(false)
+  const [newEpicProjectId, setNewEpicProjectId] = useState<string>('')
   const [newEpicError, setNewEpicError] = useState<string | null>(null)
   const [suggestedKey, setSuggestedKey] = useState('')
   const [featureProjects, setFeatureProjects] = useState<Set<string>>(new Set())
@@ -359,6 +361,7 @@ export default function EpicsPage() {
 
   const activeUser = getActiveUser()
   const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
+  const canCreateEpic = can(activeUser?.permissions ?? [], 'create:epic')
 
   useEffect(() => {
     let alive = true
@@ -405,12 +408,11 @@ export default function EpicsPage() {
     catch { setSuggestedKey('') }
   }, [])
 
-  function openNewEpic() {
+  function openNewEpic(projectId: string) {
+    setNewEpicProjectId(projectId)
     setNewEpicError(null)
     setNewEpicOpen(true)
-    const projects = data?.projects ?? []
-    if (projects.length === 1) void refreshSuggestedKey(projects[0].id)
-    else setSuggestedKey('')
+    void refreshSuggestedKey(projectId)
   }
 
   async function handleCreateEpic(input: {
@@ -421,6 +423,7 @@ export default function EpicsPage() {
     try {
       await createEpic({ ...input, actorName: activeUser?.name })
       setNewEpicOpen(false)
+      setNewEpicProjectId('')
       await load()
     } catch (err) { setNewEpicError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
@@ -451,18 +454,10 @@ export default function EpicsPage() {
   const epics = data?.epics ?? []
   const items = data?.items ?? []
   const profileById = new Map((data?.profiles ?? []).map(p => [p.id, p]))
-  const projectById = new Map((data?.projects ?? []).map(p => [p.id, p]))
 
-  const epicsByProject = (() => {
-    const groups = new Map<string, { project: { id: string; name: string } | undefined; epics: typeof epics }>()
-    for (const epic of epics) {
-      const g = groups.get(epic.project_id) ?? { project: projectById.get(epic.project_id), epics: [] as typeof epics }
-      g.epics.push(epic)
-      groups.set(epic.project_id, g)
-    }
-    return [...groups.values()].sort((a, b) =>
-      (a.project?.name ?? '').localeCompare(b.project?.name ?? ''))
-  })()
+  const projects = (data?.projects ?? []).slice().sort((a, b) => a.name.localeCompare(b.name))
+
+  const isOpen = (id: string) => openProjects[id] !== false
 
   return (
     <>
@@ -472,240 +467,282 @@ export default function EpicsPage() {
         <span style={{ fontSize: 13, color: T.text3, background: T.neutralDim, borderRadius: 20, padding: '2px 10px' }}>
           {epics.length} épicos
         </span>
-        <button
-          onClick={openNewEpic}
-          style={{
-            marginLeft: 'auto', fontSize: 12, fontWeight: 600, padding: '7px 14px',
-            borderRadius: 8, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer',
-          }}
-        >+ Novo épico</button>
       </div>
-
 
       {loading && <StateBox>Carregando épicos…</StateBox>}
       {!loading && error && (
         <StateBox><span style={{ color: T.crit }}>Erro ao carregar épicos: {error}</span></StateBox>
       )}
-      {!loading && !error && epics.length === 0 && (
-        <StateBox>Nenhum épico cadastrado neste tenant.</StateBox>
+      {!loading && !error && projects.length === 0 && (
+        <StateBox>Nenhum projeto cadastrado neste tenant.</StateBox>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {!loading && !error && epicsByProject.map(group => (
-          <div key={group.project?.id ?? 'sem-projeto'} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>{group.project?.name ?? 'Sem projeto'}</span>
-              <span style={{ fontSize: 12, color: T.text3, background: T.neutralDim, borderRadius: 20, padding: '2px 10px' }}>
-                {group.epics.length} {group.epics.length === 1 ? 'épico' : 'épicos'}
-              </span>
-              <div style={{ flex: 1, height: 1, background: T.border }} />
-            </div>
-            {group.epics.map(epic => {
-              const color = epicColorOf(epic.color)
-              const epicItems = items.filter(i => i.epic_id === epic.id)
-              const done = epicItems.filter(i => i.status === 'done').length
-              const total = epicItems.length
-              const pct = total > 0 ? Math.round((done / total) * 100) : 0
-              const points = epicItems.reduce((s, i) => s + Number(i.story_points ?? 0), 0)
-              const features = (data?.features ?? []).filter(f => f.epic_id === epic.id)
-              const assignees = [...new Set(epicItems.map(i => i.assignee_id).filter(Boolean))] as string[]
-              const isExpanded = expanded[epic.id]
-              const owner = epic.owner_id ? profileById.get(epic.owner_id) : undefined
-              const project = projectById.get(epic.project_id)
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {!loading && !error && projects.map(project => {
+          const projectEpics = epics.filter(e => e.project_id === project.id)
+          const open = isOpen(project.id)
+          const hasFeatures = featureProjects.has(project.id)
+          return (
+            <div key={project.id} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Project accordion header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 10,
+                padding: '12px 16px',
+              }}>
+                <button
+                  onClick={() => setOpenProjects(prev => ({ ...prev, [project.id]: !open }))}
+                  style={{
+                    background: 'none', border: 'none', color: T.text2, cursor: 'pointer',
+                    fontSize: 13, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 22, height: 22,
+                  }}
+                  aria-label={open ? 'Recolher projeto' : 'Expandir projeto'}
+                >
+                  {open ? '▾' : '▸'}
+                </button>
 
-              const statusCounts = Object.fromEntries(
-                STATUSES.map(s => [s, epicItems.filter(i => i.status === s).length])
-              )
+                <span style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>{project.name}</span>
+                <span style={{ fontSize: 12, color: T.text3, background: T.neutralDim, borderRadius: 20, padding: '2px 10px' }}>
+                  {projectEpics.length} {projectEpics.length === 1 ? 'épico' : 'épicos'}
+                </span>
 
-              return (
-                <div key={epic.id} style={{
-                  background: T.bgSurface, border: `1px solid ${T.border}`,
-                  borderRadius: 12, overflow: 'hidden',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)', display: 'flex',
-                }}>
-                  <div style={{ width: 6, minHeight: 180, background: color, flexShrink: 0 }} />
+                {hasFeatures && (
+                  <span style={{
+                    fontSize: 11, color: T.purple, background: T.purpleDim,
+                    borderRadius: 20, padding: '2px 10px', fontWeight: 600,
+                  }}>
+                    Funcionalidades
+                  </span>
+                )}
 
-                  <div style={{ flex: 1, padding: '20px 24px', minWidth: 0 }}>
-                    {/* Header */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color, fontFamily: 'monospace', letterSpacing: 1 }}>
-                        {epic.key}
-                      </span>
-                      <span style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>{epic.name}</span>
-                      {project && (
-                        <span style={{ fontSize: 11, color: T.text3, background: T.neutralDim, borderRadius: 20, padding: '2px 10px', border: `1px solid ${T.border}` }}>
-                          {project.name}
-                        </span>
-                      )}
-                      {epic.quarter && (
-                        <span style={{
-                          fontSize: 11, color: T.text3, background: T.neutralDim,
-                          borderRadius: 20, padding: '2px 10px', border: `1px solid ${T.border}`,
-                        }}>{epic.quarter}</span>
-                      )}
-                      {owner && (
-                        <div style={{ marginLeft: 'auto' }}>
-                          <Avatar initials={owner.avatar_initials ?? owner.name.slice(0, 2).toUpperCase()} color={owner.avatar_color} size={28} />
-                        </div>
-                      )}
-                    </div>
+                <div style={{ flex: 1 }} />
 
-                    {epic.description && (
-                      <p style={{ fontSize: 13, color: T.text2, margin: '0 0 16px', lineHeight: 1.5 }}>{epic.description}</p>
-                    )}
+                {canCreateEpic && (
+                  <button
+                    onClick={() => openNewEpic(project.id)}
+                    style={{
+                      fontSize: 12, fontWeight: 600, padding: '6px 12px',
+                      borderRadius: 8, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer',
+                    }}
+                  >
+                    + Novo épico
+                  </button>
+                )}
+              </div>
 
-                    {/* Progress + stats row */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap', marginBottom: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <DonutRing pct={pct} color={color} />
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: T.text1 }}>{done}/{total} issues</div>
-                          <div style={{ fontSize: 11, color: T.text3 }}>concluídas</div>
-                        </div>
-                      </div>
+              {/* Expanded project body */}
+              {open && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingLeft: 4, paddingRight: 4 }}>
+                  {projectEpics.length === 0 ? (
+                    <p style={{ fontSize: 13, color: T.text3, padding: '8px 12px' }}>
+                      Nenhum épico neste projeto ainda.
+                    </p>
+                  ) : (
+                    projectEpics.map(epic => {
+                      const color = epicColorOf(epic.color)
+                      const epicItems = items.filter(i => i.epic_id === epic.id)
+                      const done = epicItems.filter(i => i.status === 'done').length
+                      const total = epicItems.length
+                      const pct = total > 0 ? Math.round((done / total) * 100) : 0
+                      const points = epicItems.reduce((s, i) => s + Number(i.story_points ?? 0), 0)
+                      const features = (data?.features ?? []).filter(f => f.epic_id === epic.id)
+                      const assignees = [...new Set(epicItems.map(i => i.assignee_id).filter(Boolean))] as string[]
+                      const isExpanded = expanded[epic.id]
+                      const owner = epic.owner_id ? profileById.get(epic.owner_id) : undefined
 
-                      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                        {STATUSES.map(s => {
-                          const cnt = statusCounts[s] ?? 0
-                          const cfg = statusCfg(s)
-                          return (
-                            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                              <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
-                              <span style={{ fontSize: 12, color: cnt > 0 ? T.text2 : T.text3 }}>{cnt}</span>
-                              <span style={{ fontSize: 11, color: T.text3 }}>{cfg.label}</span>
-                            </div>
-                          )
-                        })}
-                      </div>
+                      const statusCounts = Object.fromEntries(
+                        STATUSES.map(s => [s, epicItems.filter(i => i.status === s).length])
+                      )
 
-                      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 11, color: T.text3 }}>Story points:</span>
-                        <span style={{
-                          fontSize: 12, fontWeight: 700, color, background: `${color}18`,
-                          borderRadius: 6, padding: '2px 8px',
-                        }}>{points}</span>
-                      </div>
-                    </div>
+                      return (
+                        <div key={epic.id} style={{
+                          background: T.bgSurface, border: `1px solid ${T.border}`,
+                          borderRadius: 12, overflow: 'hidden',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.3)', display: 'flex',
+                        }}>
+                          <div style={{ width: 6, minHeight: 180, background: color, flexShrink: 0 }} />
 
-                    {/* Features */}
-                    {(features.length > 0 || (featureProjects.has(epic.project_id) && canCreateFeature)) && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-                        <span style={{ fontSize: 11, color: T.text3 }}>Funcionalidades:</span>
-                        {features.map(f => (
-                          <span key={f.id} title={f.description ?? undefined} style={{
-                            fontSize: 11, color: T.text2, background: T.bgSurface2,
-                            border: `1px solid ${T.border}`, borderRadius: 20, padding: '2px 10px',
-                          }}>{f.name}</span>
-                        ))}
-                        {featureProjects.has(epic.project_id) && canCreateFeature && (
-                          <button
-                            onClick={() => openNewFeature(epic)}
-                            style={{
-                              fontSize: 11, color: T.purple, background: T.purpleDim,
-                              border: `1px dashed ${T.purple}55`, borderRadius: 20,
-                              padding: '2px 10px', cursor: 'pointer', fontWeight: 600,
-                            }}
-                          >+ Funcionalidade</button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Assignees */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-                      {assignees.slice(0, 6).map(id => {
-                        const p = profileById.get(id)
-                        return <Avatar key={id} initials={p?.avatar_initials ?? p?.name.slice(0, 2).toUpperCase() ?? '??'} color={p?.avatar_color} size={24} />
-                      })}
-                      {assignees.length > 6 && (
-                        <span style={{ fontSize: 11, color: T.text3, marginLeft: 4 }}>+{assignees.length - 6}</span>
-                      )}
-                    </div>
-
-                    {/* Expand button */}
-                    <button
-                      onClick={() => setExpanded(prev => ({ ...prev, [epic.id]: !prev[epic.id] }))}
-                      style={{
-                        fontSize: 12, color, background: `${color}18`,
-                        border: `1px solid ${color}40`, borderRadius: 6, padding: '5px 14px',
-                        cursor: 'pointer', fontWeight: 600,
-                      }}
-                    >
-                      {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${total})`}
-                    </button>
-
-                    {/* Expanded issue list */}
-                    {isExpanded && (
-                      <div style={{ marginTop: 16, borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
-                        {epicItems.length === 0 ? (
-                          <p style={{ fontSize: 13, color: T.text3 }}>Nenhuma issue neste épico.</p>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {epicItems.map(item => {
-                              const ti = typeGlyph(item.type)
-                              const sc = statusCfg(item.status)
-                              const isActive = detailId === item.id
-                              const p = item.assignee_id ? profileById.get(item.assignee_id) : undefined
-                              return (
-                                <div
-                                  key={item.id}
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={() => setDetailId(item.id)}
-                                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetailId(item.id) } }}
-                                  style={{
-                                    display: 'flex', alignItems: 'center', gap: 10,
-                                    padding: '8px 10px', borderRadius: 8,
-                                    background: isActive ? `${color}14` : T.bgSurface2,
-                                    border: `1px solid ${isActive ? color + '60' : T.border}`,
-                                    cursor: 'pointer', transition: 'all 0.12s', outline: 'none',
-                                  }}
-                                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = `${color}0A`; e.currentTarget.style.borderColor = `${color}40` }}
-                                  onMouseLeave={e => { e.currentTarget.style.background = isActive ? `${color}14` : T.bgSurface2; e.currentTarget.style.borderColor = isActive ? `${color}60` : T.border }}
-                                >
-                                  <span style={{ color: ti.color, fontSize: 14, flexShrink: 0 }}>{ti.icon}</span>
-                                  <span style={{ fontSize: 11, color: T.text3, fontFamily: 'monospace', width: 62, flexShrink: 0 }}>{item.key}</span>
-                                  <span style={{ fontSize: 13, color: T.text1, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {item.title}
-                                  </span>
-                                  {item.is_blocked && <span style={{ fontSize: 11, color: T.crit }}>🔴</span>}
-                                  <span style={{
-                                    fontSize: 11, color: sc.color, background: `${sc.color}18`,
-                                    borderRadius: 20, padding: '2px 8px', flexShrink: 0,
-                                  }}>{sc.label}</span>
-                                  {p && <Avatar initials={p.avatar_initials ?? p.name.slice(0, 2).toUpperCase()} color={p.avatar_color} size={22} />}
-                                  <span style={{
-                                    fontSize: 11, color: T.text3, background: T.neutralDim,
-                                    borderRadius: 4, padding: '1px 6px', flexShrink: 0,
-                                  }}>{Number(item.story_points ?? 0)}pt</span>
-                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, opacity: isActive ? 1 : 0.3, transition: 'opacity 0.12s' }}>
-                                    <path d="M4 2.5l3.5 3.5L4 9.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
+                          <div style={{ flex: 1, padding: '20px 24px', minWidth: 0 }}>
+                            {/* Header */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color, fontFamily: 'monospace', letterSpacing: 1 }}>
+                                {epic.key}
+                              </span>
+                              <span style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>{epic.name}</span>
+                              {epic.quarter && (
+                                <span style={{
+                                  fontSize: 11, color: T.text3, background: T.neutralDim,
+                                  borderRadius: 20, padding: '2px 10px', border: `1px solid ${T.border}`,
+                                }}>{epic.quarter}</span>
+                              )}
+                              {owner && (
+                                <div style={{ marginLeft: 'auto' }}>
+                                  <Avatar initials={owner.avatar_initials ?? owner.name.slice(0, 2).toUpperCase()} color={owner.avatar_color} size={28} />
                                 </div>
-                              )
-                            })}
+                              )}
+                            </div>
+
+                            {epic.description && (
+                              <p style={{ fontSize: 13, color: T.text2, margin: '0 0 16px', lineHeight: 1.5 }}>{epic.description}</p>
+                            )}
+
+                            {/* Progress + stats row */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap', marginBottom: 16 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <DonutRing pct={pct} color={color} />
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: T.text1 }}>{done}/{total} issues</div>
+                                  <div style={{ fontSize: 11, color: T.text3 }}>concluídas</div>
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                                {STATUSES.map(s => {
+                                  const cnt = statusCounts[s] ?? 0
+                                  const cfg = statusCfg(s)
+                                  return (
+                                    <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.color, flexShrink: 0 }} />
+                                      <span style={{ fontSize: 12, color: cnt > 0 ? T.text2 : T.text3 }}>{cnt}</span>
+                                      <span style={{ fontSize: 11, color: T.text3 }}>{cfg.label}</span>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+
+                              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ fontSize: 11, color: T.text3 }}>Story points:</span>
+                                <span style={{
+                                  fontSize: 12, fontWeight: 700, color, background: `${color}18`,
+                                  borderRadius: 6, padding: '2px 8px',
+                                }}>{points}</span>
+                              </div>
+                            </div>
+
+                            {/* Features */}
+                            {(features.length > 0 || (hasFeatures && canCreateFeature)) && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+                                <span style={{ fontSize: 11, color: T.text3 }}>Funcionalidades:</span>
+                                {features.map(f => (
+                                  <span key={f.id} title={f.description ?? undefined} style={{
+                                    fontSize: 11, color: T.text2, background: T.bgSurface2,
+                                    border: `1px solid ${T.border}`, borderRadius: 20, padding: '2px 10px',
+                                  }}>{f.name}</span>
+                                ))}
+                                {hasFeatures && canCreateFeature && (
+                                  <button
+                                    onClick={() => openNewFeature(epic)}
+                                    style={{
+                                      fontSize: 11, color: T.purple, background: T.purpleDim,
+                                      border: `1px dashed ${T.purple}55`, borderRadius: 20,
+                                      padding: '2px 10px', cursor: 'pointer', fontWeight: 600,
+                                    }}
+                                  >+ Funcionalidade</button>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Assignees */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+                              {assignees.slice(0, 6).map(id => {
+                                const p = profileById.get(id)
+                                return <Avatar key={id} initials={p?.avatar_initials ?? p?.name.slice(0, 2).toUpperCase() ?? '??'} color={p?.avatar_color} size={24} />
+                              })}
+                              {assignees.length > 6 && (
+                                <span style={{ fontSize: 11, color: T.text3, marginLeft: 4 }}>+{assignees.length - 6}</span>
+                              )}
+                            </div>
+
+                            {/* Expand button */}
+                            <button
+                              onClick={() => setExpanded(prev => ({ ...prev, [epic.id]: !prev[epic.id] }))}
+                              style={{
+                                fontSize: 12, color, background: `${color}18`,
+                                border: `1px solid ${color}40`, borderRadius: 6, padding: '5px 14px',
+                                cursor: 'pointer', fontWeight: 600,
+                              }}
+                            >
+                              {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${total})`}
+                            </button>
+
+                            {/* Expanded issue list */}
+                            {isExpanded && (
+                              <div style={{ marginTop: 16, borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
+                                {epicItems.length === 0 ? (
+                                  <p style={{ fontSize: 13, color: T.text3 }}>Nenhuma issue neste épico.</p>
+                                ) : (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                    {epicItems.map(item => {
+                                      const ti = typeGlyph(item.type)
+                                      const sc = statusCfg(item.status)
+                                      const isActive = detailId === item.id
+                                      const p = item.assignee_id ? profileById.get(item.assignee_id) : undefined
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          role="button"
+                                          tabIndex={0}
+                                          onClick={() => setDetailId(item.id)}
+                                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetailId(item.id) } }}
+                                          style={{
+                                            display: 'flex', alignItems: 'center', gap: 10,
+                                            padding: '8px 10px', borderRadius: 8,
+                                            background: isActive ? `${color}14` : T.bgSurface2,
+                                            border: `1px solid ${isActive ? color + '60' : T.border}`,
+                                            cursor: 'pointer', transition: 'all 0.12s', outline: 'none',
+                                          }}
+                                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = `${color}0A`; e.currentTarget.style.borderColor = `${color}40` }}
+                                          onMouseLeave={e => { e.currentTarget.style.background = isActive ? `${color}14` : T.bgSurface2; e.currentTarget.style.borderColor = isActive ? `${color}60` : T.border }}
+                                        >
+                                          <span style={{ color: ti.color, fontSize: 14, flexShrink: 0 }}>{ti.icon}</span>
+                                          <span style={{ fontSize: 11, color: T.text3, fontFamily: 'monospace', width: 62, flexShrink: 0 }}>{item.key}</span>
+                                          <span style={{ fontSize: 13, color: T.text1, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {item.title}
+                                          </span>
+                                          {item.is_blocked && <span style={{ fontSize: 11, color: T.crit }}>🔴</span>}
+                                          <span style={{
+                                            fontSize: 11, color: sc.color, background: `${sc.color}18`,
+                                            borderRadius: 20, padding: '2px 8px', flexShrink: 0,
+                                          }}>{sc.label}</span>
+                                          {p && <Avatar initials={p.avatar_initials ?? p.name.slice(0, 2).toUpperCase()} color={p.avatar_color} size={22} />}
+                                          <span style={{
+                                            fontSize: 11, color: T.text3, background: T.neutralDim,
+                                            borderRadius: 4, padding: '1px 6px', flexShrink: 0,
+                                          }}>{Number(item.story_points ?? 0)}pt</span>
+                                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, opacity: isActive ? 1 : 0.3, transition: 'opacity 0.12s' }}>
+                                            <path d="M4 2.5l3.5 3.5L4 9.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                )}
+
+                                <IssueSearchDropdown
+                                  epicId={epic.id}
+                                  color={color}
+                                  items={items.filter(i => i.project_id === epic.project_id)}
+                                  onLink={id => void handleLink(epic.id, id)}
+                                />
+
+                                <InlineCreateIssue
+                                  color={color}
+                                  busy={busy}
+                                  onCreate={(title, type) => void handleCreate(epic, title, type)}
+                                />
+                              </div>
+                            )}
                           </div>
-                        )}
-
-                        <IssueSearchDropdown
-                          epicId={epic.id}
-                          color={color}
-                          items={items.filter(i => i.project_id === epic.project_id)}
-                          onLink={id => void handleLink(epic.id, id)}
-                        />
-
-                        <InlineCreateIssue
-                          color={color}
-                          busy={busy}
-                          onCreate={(title, type) => void handleCreate(epic, title, type)}
-                        />
-                      </div>
-                    )}
-                  </div>
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
-              )
-            })}
-          </div>
-        ))}
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
 
@@ -721,13 +758,13 @@ export default function EpicsPage() {
 
     {newEpicOpen && (
       <NewEpicModal
-        projects={data?.projects ?? []}
+        projects={newEpicProjectId ? (data?.projects ?? []).filter(p => p.id === newEpicProjectId) : (data?.projects ?? [])}
         profiles={data?.profiles ?? []}
         busy={busy}
         error={newEpicError}
         suggestedKey={suggestedKey}
         onKeyRefresh={id => { void refreshSuggestedKey(id) }}
-        onClose={() => setNewEpicOpen(false)}
+        onClose={() => { setNewEpicOpen(false); setNewEpicProjectId('') }}
         onCreate={input => { void handleCreateEpic(input) }}
       />
     )}
