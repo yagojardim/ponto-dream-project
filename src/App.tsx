@@ -51,7 +51,7 @@ import { initAppPrefs } from "./lib/appPrefs"
 import { RESET_PATH } from "./lib/passwordReset"
 import { GOOGLE_RETURN_PATH } from "./lib/googleCalendar"
 import { fetchBoardData, createWorkItem } from "./data/db/board"
-import { listProjects } from "./data/db/projects"
+import { listProjects, projectUsesFeatures } from "./data/db/projects"
 import { T } from "./components/ds/tokens"
 
 const ALL_VIEWS: View[] = [
@@ -409,13 +409,17 @@ function ShellWithRole({
       const backlogCol = columns.find(c => c.category === "backlog" || c.statuses.includes("backlog"))
       const column = (!sprintId ? backlogCol : undefined) ?? columns[0]
 
-      const epicLabel = data.epic && data.epic !== "—" ? String(data.epic) : ""
-      const epicId = (typeof data.epicId === "string" && data.epicId)
-        ? data.epicId
-        : (epicLabel
-            ? (boardData.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(" ")[0])?.id ?? null
-            : null)
+      const epicId = (typeof data.epicId === "string" && data.epicId) ? data.epicId : null
       const featureId = (typeof data.featureId === "string" && data.featureId) ? data.featureId : null
+
+      const demandType = String(data.type ?? "story")
+      if (demandType === "story" || demandType === "bug") {
+        const { projects: allProjects } = await listProjects()
+        const proj = allProjects.find(p => p.id === projectId)
+        const usesFeatures = projectUsesFeatures(proj)
+        if (usesFeatures && !featureId) throw new Error("Selecione uma Funcionalidade para esta demanda")
+        if (!usesFeatures && !epicId) throw new Error("Selecione um Épico para esta demanda")
+      }
       const assigneeId = typeof data.assigneeId === "string" && data.assigneeId ? data.assigneeId : null
       const points = parseInt(String(data.points ?? ""), 10)
 

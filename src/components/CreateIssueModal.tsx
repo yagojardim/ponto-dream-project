@@ -264,12 +264,10 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const activeUser = getActiveUser()
   const perms = activeUser?.permissions ?? []
   const canCreateProjects = can(perms, 'project:create')
-  const allowedTypes: IssueType[] = (['epic','story','bug','subtask'] as IssueType[]).filter(t => {
-    if (!canCreateProjects) return t === 'story' || t === 'subtask' || t === 'bug'
-    if (t === 'epic')    return can(perms, 'create:epic')
+  const allowedTypes: IssueType[] = (['story','bug'] as IssueType[]).filter(t => {
+    if (!canCreateProjects) return true
     if (t === 'story')   return can(perms, 'create:story')
     if (t === 'bug')     return can(perms, 'create:bug')
-    if (t === 'subtask') return can(perms, 'create:subtask')
     return false
   })
 
@@ -420,13 +418,17 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const isBug     = type === 'bug'
   const isEpic    = type === 'epic'
   const isSubtask = type === 'subtask'
-  const needsEpic = type === 'story'
+  const linkOk = projectUsesFeat ? !!featureId : !!epicId
+  const canSubmit = !!summary.trim() && linkOk
 
   function handleSubmit() {
-    if (!summary.trim()) return
+    if (!canSubmit) return
     const assigneeName = memberOptions.find(m => m.id === assigneeId)?.name ?? ''
     const sprintName = sprintOptions.find(s => s.id === sprintId)?.name ?? BACKLOG_LABEL
-    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: epicId || null, featureId: featureId || null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
+    const derivedEpicId = projectUsesFeat
+      ? (featureOptions.find(f => f.id === featureId)?.epicId ?? null)
+      : (epicId || null)
+    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: derivedEpicId, featureId: projectUsesFeat ? (featureId || null) : null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
 
     if (createAnother) {
       setSummary('')
@@ -535,17 +537,21 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
           )}
 
           {/* Epic parent (story/task) */}
-          {needsEpic && (
-            <Field label="Épico">
-              <ValueSelect value={epicId} onChange={v => { setEpicId(v); setFeatureId('') }}
-                options={[{ value:'', label:'—' }, ...epicOptions.map(e => ({ value:e.id, label:e.name }))]} />
-            </Field>
-          )}
-
-          {needsEpic && projectUsesFeat && (
-            <Field label="Funcionalidade">
-              <ValueSelect value={featureId} onChange={setFeatureId}
-                options={[{ value:'', label:'—' }, ...featureOptions.filter(f => f.epicId === epicId).map(f => ({ value:f.id, label:f.name }))]} />
+          {projectUsesFeat ? (
+            <div className="space-y-1">
+              <Field label="Funcionalidade" required>
+                <ValueSelect value={featureId} onChange={setFeatureId}
+                  options={[{ value:'', label:'Selecione uma funcionalidade' },
+                    ...featureOptions.map(f => ({ value:f.id, label:`${epicOptions.find(e=>e.id===f.epicId)?.name ?? 'Épico'} › ${f.name}` }))]} />
+              </Field>
+              <p className="text-[11px]" style={{ color:T.text3 }}>
+                Épico: {epicOptions.find(e => e.id === featureOptions.find(f => f.id === featureId)?.epicId)?.name ?? '—'}
+              </p>
+            </div>
+          ) : (
+            <Field label="Épico" required>
+              <ValueSelect value={epicId} onChange={setEpicId}
+                options={[{ value:'', label:'Selecione um épico' }, ...epicOptions.map(e => ({ value:e.id, label:e.name }))]} />
             </Field>
           )}
 
@@ -678,10 +684,10 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             >Cancelar</button>
             <button
               onClick={handleSubmit}
-              disabled={!summary.trim()}
+              disabled={!canSubmit}
               className="h-8 px-4 text-[13px] font-semibold rounded-lg text-white transition-all"
-              style={{ background:summary.trim()?T.accent:`${T.accent}50`, cursor:summary.trim()?'pointer':'not-allowed' }}
-              onMouseEnter={e=>{ if(summary.trim()) (e.currentTarget as HTMLButtonElement).style.filter='brightness(1.15)' }}
+              style={{ background:canSubmit?T.accent:`${T.accent}50`, cursor:canSubmit?'pointer':'not-allowed' }}
+              onMouseEnter={e=>{ if(canSubmit) (e.currentTarget as HTMLButtonElement).style.filter='brightness(1.15)' }}
               onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.filter='none'}}
             >Criar demanda</button>
           </div>
