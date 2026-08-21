@@ -54,6 +54,11 @@ function addDays(iso: string, n: number): string {
 function diffDays(a: string, b: string): number {
   return Math.round((toDate(b).getTime() - toDate(a).getTime()) / MS_DAY)
 }
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const d = toDate(iso)
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 function monthLabel(iso: string): string {
   const d = toDate(iso)
