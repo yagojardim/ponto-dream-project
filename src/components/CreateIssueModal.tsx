@@ -684,10 +684,10 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
             >Cancelar</button>
             <button
               onClick={handleSubmit}
-              disabled={!summary.trim()}
+              disabled={!canSubmit}
               className="h-8 px-4 text-[13px] font-semibold rounded-lg text-white transition-all"
-              style={{ background:summary.trim()?T.accent:`${T.accent}50`, cursor:summary.trim()?'pointer':'not-allowed' }}
-              onMouseEnter={e=>{ if(summary.trim()) (e.currentTarget as HTMLButtonElement).style.filter='brightness(1.15)' }}
+              style={{ background:canSubmit?T.accent:`${T.accent}50`, cursor:canSubmit?'pointer':'not-allowed' }}
+              onMouseEnter={e=>{ if(canSubmit) (e.currentTarget as HTMLButtonElement).style.filter='brightness(1.15)' }}
               onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.filter='none'}}
             >Criar demanda</button>
           </div>
