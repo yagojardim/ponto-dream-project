@@ -533,17 +533,21 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
           )}
 
           {/* Epic parent (story/task) */}
-          {needsEpic && (
-            <Field label="Épico">
-              <ValueSelect value={epicId} onChange={v => { setEpicId(v); setFeatureId('') }}
-                options={[{ value:'', label:'—' }, ...epicOptions.map(e => ({ value:e.id, label:e.name }))]} />
-            </Field>
-          )}
-
-          {needsEpic && projectUsesFeat && (
-            <Field label="Funcionalidade">
-              <ValueSelect value={featureId} onChange={setFeatureId}
-                options={[{ value:'', label:'—' }, ...featureOptions.filter(f => f.epicId === epicId).map(f => ({ value:f.id, label:f.name }))]} />
+          {projectUsesFeat ? (
+            <div className="space-y-1">
+              <Field label="Funcionalidade" required>
+                <ValueSelect value={featureId} onChange={setFeatureId}
+                  options={[{ value:'', label:'Selecione uma funcionalidade' },
+                    ...featureOptions.map(f => ({ value:f.id, label:`${epicOptions.find(e=>e.id===f.epicId)?.name ?? 'Épico'} › ${f.name}` }))]} />
+              </Field>
+              <p className="text-[11px]" style={{ color:T.text3 }}>
+                Épico: {epicOptions.find(e => e.id === featureOptions.find(f => f.id === featureId)?.epicId)?.name ?? '—'}
+              </p>
+            </div>
+          ) : (
+            <Field label="Épico" required>
+              <ValueSelect value={epicId} onChange={setEpicId}
+                options={[{ value:'', label:'Selecione um épico' }, ...epicOptions.map(e => ({ value:e.id, label:e.name }))]} />
             </Field>
           )}
 
