@@ -2578,12 +2578,15 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     const target = quickCreate
     setQuickCreate(null)
     try {
-      const columns = boardData?.columns ?? []
+      const requestedProjectId = typeof data.projectId === 'string' && data.projectId ? data.projectId : null
+      const useOther = !!requestedProjectId && requestedProjectId !== boardData?.board?.project_id
+      const source = useOther ? await fetchBoardData(requestedProjectId!) : boardData
+      const columns = source?.columns ?? []
       const column = (target?.colStatus
         ? columns.find(c => c.statuses.includes(target.colStatus!) || c.category === target.colStatus)
         : undefined) ?? columns[0]
-      const board = boardData?.board
-      const projectId = board?.project_id ?? scopedProjectId
+      const board = source?.board
+      const projectId = board?.project_id ?? requestedProjectId ?? scopedProjectId
       if (!projectId || !column || !board) throw new Error('Board indisponível para criar demanda')
 
       // O modal sempre envia sprintId explícito: string = sprint escolhida,
