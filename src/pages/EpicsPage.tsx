@@ -817,9 +817,9 @@ export default function EpicsPage() {
       />
     )}
 
-    {featureEpic && (
+    {(featureEpic || featureProjectId) && (
       <div
-        onClick={e => { if (e.target === e.currentTarget) setFeatureEpic(null) }}
+        onClick={e => { if (e.target === e.currentTarget) closeFeatureModal() }}
         style={{
           position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(8,10,14,0.72)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
@@ -831,7 +831,28 @@ export default function EpicsPage() {
           padding: 20, display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>Nova funcionalidade</div>
-          <div style={{ fontSize: 12, color: T.text3 }}>Épico: {featureEpic.name}</div>
+          {featureEpic ? (
+            <div style={{ fontSize: 12, color: T.text3 }}>Épico: {featureEpic.name}</div>
+          ) : (
+            (() => {
+              const projectEpicOptions = epics.filter(e => e.project_id === featureProjectId)
+              return projectEpicOptions.length === 0 ? (
+                <div style={{ fontSize: 12, color: T.text3 }}>
+                  Crie um Épico antes de adicionar uma Funcionalidade.
+                </div>
+              ) : (
+                <div>
+                  <label style={labelStyle}>Épico *</label>
+                  <select value={featureEpicId} onChange={e => setFeatureEpicId(e.target.value)} style={fieldStyle}>
+                    <option value="">Selecione um épico…</option>
+                    {projectEpicOptions.map(e => (
+                      <option key={e.id} value={e.id}>{e.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )
+            })()
+          )}
 
           <div>
             <label style={labelStyle}>Nome *</label>
