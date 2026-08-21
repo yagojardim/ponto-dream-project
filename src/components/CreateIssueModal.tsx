@@ -264,12 +264,10 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const activeUser = getActiveUser()
   const perms = activeUser?.permissions ?? []
   const canCreateProjects = can(perms, 'project:create')
-  const allowedTypes: IssueType[] = (['epic','story','bug','subtask'] as IssueType[]).filter(t => {
-    if (!canCreateProjects) return t === 'story' || t === 'subtask' || t === 'bug'
-    if (t === 'epic')    return can(perms, 'create:epic')
+  const allowedTypes: IssueType[] = (['story','bug'] as IssueType[]).filter(t => {
+    if (!canCreateProjects) return true
     if (t === 'story')   return can(perms, 'create:story')
     if (t === 'bug')     return can(perms, 'create:bug')
-    if (t === 'subtask') return can(perms, 'create:subtask')
     return false
   })
 
