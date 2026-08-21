@@ -16,8 +16,9 @@ export type ProjectRow = Pick<
 >
 export type ProjectTaskRow = Pick<
   Tables['work_items']['Row'],
-  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'assignee_id' | 'start_date' | 'due_date' | 'progress'
+  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'parent_id' | 'assignee_id' | 'start_date' | 'due_date' | 'progress'
 >
+
 export type ProjectProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
 export type ProjectMemberRow = Pick<Tables['project_members']['Row'], 'project_id' | 'profile_id' | 'project_role'>
 export type ProjectBoardRow = Pick<Tables['boards']['Row'], 'id' | 'project_id' | 'name' | 'board_type'>
