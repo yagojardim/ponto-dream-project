@@ -454,7 +454,6 @@ export default function EpicsPage() {
   const epics = data?.epics ?? []
   const items = data?.items ?? []
   const profileById = new Map((data?.profiles ?? []).map(p => [p.id, p]))
-  const projectById = new Map((data?.projects ?? []).map(p => [p.id, p]))
 
   const projects = (data?.projects ?? []).slice().sort((a, b) => a.name.localeCompare(b.name))
 
