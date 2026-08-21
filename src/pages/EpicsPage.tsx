@@ -414,6 +414,24 @@ export default function EpicsPage() {
     return () => { alive = false }
   }, [])
 
+  useEffect(() => {
+    if (!newMenuProjectId) return
+    function handleMouse(e: MouseEvent) {
+      if (newMenuRef.current && !newMenuRef.current.contains(e.target as Node)) {
+        setNewMenuProjectId(null)
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setNewMenuProjectId(null)
+    }
+    document.addEventListener('mousedown', handleMouse)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleMouse)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [newMenuProjectId])
+
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     try { setData(await listEpics()) }
