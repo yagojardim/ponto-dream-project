@@ -20,6 +20,36 @@ const TYPE_GLYPH: Record<string, { icon: string; color: string }> = {
 function typeGlyph(t: string) { return TYPE_GLYPH[t] ?? { icon: '•', color: T.text3 } }
 function statusCfg(s: string) { return DB_STATUS_CFG[s] ?? { label: s, color: T.text3 } }
 
+function NewMenuItem({
+  icon, iconColor, title, desc, onClick,
+}: {
+  icon: string; iconColor: string; title: string; desc: string; onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+        width: '100%', background: 'transparent', border: 'none', textAlign: 'left',
+        transition: 'background 0.12s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = T.bgSurface2 }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      <span style={{
+        width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: `${iconColor}18`, color: iconColor, fontSize: 14,
+      }}>{icon}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+        <span style={{ fontSize: 13, color: T.text1, fontWeight: 600 }}>{title}</span>
+        <span style={{ fontSize: 11, color: T.text3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{desc}</span>
+      </div>
+    </button>
+  )
+}
+
 // ─── Issue search dropdown (link an existing item into the epic) ──────────────
 function IssueSearchDropdown({
   epicId, color, items, onLink,
@@ -227,10 +257,6 @@ const fieldStyle: React.CSSProperties = {
 }
 const labelStyle: React.CSSProperties = { fontSize: 11, color: T.text3, display: 'block', marginBottom: 4 }
 
-const menuItemStyle: React.CSSProperties = {
-  fontSize: 12, color: T.text1, background: 'transparent', border: 'none',
-  textAlign: 'left', padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
-}
 
 // ─── "New epic" modal ─────────────────────────────────────────────────────────
 function NewEpicModal({
@@ -366,6 +392,7 @@ export default function EpicsPage() {
   const [featureProjectId, setFeatureProjectId] = useState<string | null>(null)
   const [featureEpicId, setFeatureEpicId] = useState('')
   const [newMenuProjectId, setNewMenuProjectId] = useState<string | null>(null)
+  const newMenuRef = useRef<HTMLDivElement>(null)
 
   const activeUser = getActiveUser()
   const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
@@ -382,6 +409,24 @@ export default function EpicsPage() {
     })()
     return () => { alive = false }
   }, [])
+
+  useEffect(() => {
+    if (!newMenuProjectId) return
+    function handleMouse(e: MouseEvent) {
+      if (newMenuRef.current && !newMenuRef.current.contains(e.target as Node)) {
+        setNewMenuProjectId(null)
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setNewMenuProjectId(null)
+    }
+    document.addEventListener('mousedown', handleMouse)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleMouse)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [newMenuProjectId])
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -538,42 +583,42 @@ export default function EpicsPage() {
                 <div style={{ flex: 1 }} />
 
                 {canCreateEpic && (
-                  <div style={{ position: 'relative' }}>
+                  <div ref={newMenuRef} style={{ position: 'relative' }}>
                     <button
                       onClick={() => {
                         if (!hasFeatures) { setNewMenuProjectId(null); openNewEpic(project.id); return }
                         setNewMenuProjectId(prev => (prev === project.id ? null : project.id))
                       }}
                       style={{
-                        fontSize: 12, fontWeight: 600, padding: '6px 12px',
+                        fontSize: 12, fontWeight: 600, padding: '7px 14px',
                         borderRadius: 8, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 6,
                       }}
                     >
-                      + Novo
+                      + Novo {hasFeatures && <span style={{ fontSize: 10 }}>▾</span>}
                     </button>
 
-                    {newMenuProjectId === project.id && (
-                      <>
-                        <div
-                          onClick={() => setNewMenuProjectId(null)}
-                          style={{ position: 'fixed', inset: 0, zIndex: 300 }}
+                    {newMenuProjectId === project.id && hasFeatures && (
+                      <div style={{
+                        position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 80,
+                        minWidth: 210, background: T.bgSurface, border: `1px solid ${T.border2}`,
+                        borderRadius: 10, boxShadow: T.shadowModal, padding: 4, overflow: 'hidden',
+                      }}>
+                        <NewMenuItem
+                          icon="⚡"
+                          iconColor={T.warn}
+                          title="Épico"
+                          desc="Agrupador de planejamento"
+                          onClick={() => { setNewMenuProjectId(null); openNewEpic(project.id) }}
                         />
-                        <div style={{
-                          position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 301,
-                          minWidth: 180, background: T.bgSurface, border: `1px solid ${T.border2}`,
-                          borderRadius: 10, boxShadow: T.shadowModal, padding: 4,
-                          display: 'flex', flexDirection: 'column',
-                        }}>
-                          <button
-                            onClick={() => { setNewMenuProjectId(null); openNewEpic(project.id) }}
-                            style={menuItemStyle}
-                          >Épico</button>
-                          <button
-                            onClick={() => { setNewMenuProjectId(null); openNewFeatureForProject(project.id) }}
-                            style={menuItemStyle}
-                          >Funcionalidade</button>
-                        </div>
-                      </>
+                        <NewMenuItem
+                          icon="▣"
+                          iconColor={T.purple}
+                          title="Funcionalidade"
+                          desc="Recurso dentro de um épico"
+                          onClick={() => { setNewMenuProjectId(null); openNewFeatureForProject(project.id) }}
+                        />
+                      </div>
                     )}
                   </div>
                 )}
