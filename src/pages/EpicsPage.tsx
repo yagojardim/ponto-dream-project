@@ -20,6 +20,36 @@ const TYPE_GLYPH: Record<string, { icon: string; color: string }> = {
 function typeGlyph(t: string) { return TYPE_GLYPH[t] ?? { icon: '•', color: T.text3 } }
 function statusCfg(s: string) { return DB_STATUS_CFG[s] ?? { label: s, color: T.text3 } }
 
+function NewMenuItem({
+  icon, iconColor, title, desc, onClick,
+}: {
+  icon: string; iconColor: string; title: string; desc: string; onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+        width: '100%', background: 'transparent', border: 'none', textAlign: 'left',
+        transition: 'background 0.12s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = T.bgSurface2 }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      <span style={{
+        width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: `${iconColor}18`, color: iconColor, fontSize: 14,
+      }}>{icon}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+        <span style={{ fontSize: 13, color: T.text1, fontWeight: 600 }}>{title}</span>
+        <span style={{ fontSize: 11, color: T.text3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{desc}</span>
+      </div>
+    </button>
+  )
+}
+
 // ─── Issue search dropdown (link an existing item into the epic) ──────────────
 function IssueSearchDropdown({
   epicId, color, items, onLink,
