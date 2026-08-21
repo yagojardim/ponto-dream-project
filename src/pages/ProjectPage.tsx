@@ -24,6 +24,7 @@ import {
 import { StoryIcon, EpicIcon } from '../components/ds/AltechIcons'
 import { generateSprintCeremonies, DEFAULT_TENANT_ID, type CeremonySlot } from '@/data/db/calendarEvents'
 import { epicColor } from '@/data/db/timeline'
+import { listProjects, projectUsesFeatures } from '@/data/db/projects'
 import { SprintCeremoniesModal } from '@/components/SprintCeremoniesModal'
 import { DailyModal } from '../components/DailyModal'
 
@@ -2592,13 +2593,17 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
         ? (typeof data.sprintId === 'string' && data.sprintId ? data.sprintId : null)
         : (target?.sprintId ?? null)
 
-      const epicLabel = data.epic && data.epic !== '—' ? String(data.epic) : ''
-      const epicId = (typeof data.epicId === 'string' && data.epicId)
-        ? data.epicId
-        : (epicLabel
-            ? (boardData?.epics ?? []).find(e => e.name === epicLabel || e.id === epicLabel.split(' ')[0])?.id ?? null
-            : null)
+      const epicId = (typeof data.epicId === 'string' && data.epicId) ? data.epicId : null
       const featureId = (typeof data.featureId === 'string' && data.featureId) ? data.featureId : null
+
+      const demandType = String(data.type ?? 'story')
+      if (demandType === 'story' || demandType === 'bug') {
+        const { projects: allProjects } = await listProjects()
+        const proj = allProjects.find(p => p.id === projectId)
+        const usesFeatures = projectUsesFeatures(proj)
+        if (usesFeatures && !featureId) throw new Error('Selecione uma Funcionalidade para esta demanda')
+        if (!usesFeatures && !epicId) throw new Error('Selecione um Épico para esta demanda')
+      }
       const assigneeId = typeof data.assigneeId === 'string' && data.assigneeId ? data.assigneeId : null
       const points = parseInt(String(data.points ?? ''), 10)
 
