@@ -257,10 +257,6 @@ const fieldStyle: React.CSSProperties = {
 }
 const labelStyle: React.CSSProperties = { fontSize: 11, color: T.text3, display: 'block', marginBottom: 4 }
 
-const menuItemStyle: React.CSSProperties = {
-  fontSize: 12, color: T.text1, background: 'transparent', border: 'none',
-  textAlign: 'left', padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
-}
 
 // ─── "New epic" modal ─────────────────────────────────────────────────────────
 function NewEpicModal({
