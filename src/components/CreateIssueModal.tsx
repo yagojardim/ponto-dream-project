@@ -418,13 +418,17 @@ export function CreateIssueModal({ onClose, onCreate, defaultStatus, defaultSpri
   const isBug     = type === 'bug'
   const isEpic    = type === 'epic'
   const isSubtask = type === 'subtask'
-  const needsEpic = type === 'story'
+  const linkOk = projectUsesFeat ? !!featureId : !!epicId
+  const canSubmit = !!summary.trim() && linkOk
 
   function handleSubmit() {
-    if (!summary.trim()) return
+    if (!canSubmit) return
     const assigneeName = memberOptions.find(m => m.id === assigneeId)?.name ?? ''
     const sprintName = sprintOptions.find(s => s.id === sprintId)?.name ?? BACKLOG_LABEL
-    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: epicId || null, featureId: featureId || null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
+    const derivedEpicId = projectUsesFeat
+      ? (featureOptions.find(f => f.id === featureId)?.epicId ?? null)
+      : (epicId || null)
+    onCreate({ type, summary, description, priority, assigneeId: assigneeId || null, assignee: assigneeName, sprintId: sprintId || null, sprint: sprintName, epicId: derivedEpicId, featureId: projectUsesFeat ? (featureId || null) : null, points, labels: labelList.join(', '), labelList, steps, expected, found, environment, evidence })
 
     if (createAnother) {
       setSummary('')
