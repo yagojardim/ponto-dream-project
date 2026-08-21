@@ -42,7 +42,7 @@ function getOperators(field: FieldKey): { key: OperatorKey; label: string }[] {
 }
 
 function getEnumOptions(field: FieldKey): { value: string; label: string }[] {
-  if (field === 'type') return (['story','bug','task','subtask','epic','feature'] as IssueType[]).map(t => ({ value: t, label: TYPE_ICON[t].icon + ' ' + t }))
+  if (field === 'type') return (['story','bug','subtask','epic','feature'] as IssueType[]).map(t => ({ value: t, label: TYPE_ICON[t].icon + ' ' + t }))
   if (field === 'status') return (['backlog','todo','in-progress','in-review','done'] as IssueStatus[]).map(s => ({ value: s, label: STATUS_CFG[s].label }))
   if (field === 'priority') return (['critical','high','medium','low'] as Priority[]).map(p => ({ value: p, label: PRIORITY_CFG[p].label }))
   if (field === 'assignee') return ['AL','NM','JN','CS','RM','LF'].map(a => ({ value: a, label: a }))

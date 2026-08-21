@@ -85,7 +85,6 @@ const DEFAULT_CATALOG: Catalog = {
       isDefault: true,
     },
     { id: "t2", name: "Bug", icon: "⬟", color: "#f0805c" },
-    { id: "t3", name: "Tarefa", icon: "☑", color: "#a2a8ba" },
     { id: "t4", name: "Subtarefa", icon: "◻", color: "#6a7390" },
     { id: "t5", name: "Épico", icon: "⚡", color: "#e6b23c" },
     { id: "t6", name: "Feature", icon: "▣", color: "#a78bfa" },

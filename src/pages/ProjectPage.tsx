@@ -1347,7 +1347,7 @@ function BoardTab({
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Tipo</span>
             <div className="flex flex-wrap gap-1.5">
-              {(['story','bug','task'] as IssueType[]).map(t=>(
+              {(['story','bug'] as IssueType[]).map(t=>(
                 <button key={t} onClick={()=>setFilterType(prev=>toggleArr(prev,t))}
                   className="flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-medium transition-all"
                   style={{ background:filterType.includes(t)?S.surface2:'transparent', border:`1px solid ${filterType.includes(t)?S.border2:'transparent'}`, color:filterType.includes(t)?S.t1:S.t3 }}>
