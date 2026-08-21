@@ -453,6 +453,17 @@ export default function EpicsPage() {
   const profileById = new Map((data?.profiles ?? []).map(p => [p.id, p]))
   const projectById = new Map((data?.projects ?? []).map(p => [p.id, p]))
 
+  const epicsByProject = (() => {
+    const groups = new Map<string, { project: { id: string; name: string } | undefined; epics: typeof epics }>()
+    for (const epic of epics) {
+      const g = groups.get(epic.project_id) ?? { project: projectById.get(epic.project_id), epics: [] as typeof epics }
+      g.epics.push(epic)
+      groups.set(epic.project_id, g)
+    }
+    return [...groups.values()].sort((a, b) =>
+      (a.project?.name ?? '').localeCompare(b.project?.name ?? ''))
+  })()
+
   return (
     <>
     <div style={{ padding: 32, maxWidth: 900, margin: '0 auto' }}>
