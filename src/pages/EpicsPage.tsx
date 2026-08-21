@@ -227,6 +227,11 @@ const fieldStyle: React.CSSProperties = {
 }
 const labelStyle: React.CSSProperties = { fontSize: 11, color: T.text3, display: 'block', marginBottom: 4 }
 
+const menuItemStyle: React.CSSProperties = {
+  fontSize: 12, color: T.text1, background: 'transparent', border: 'none',
+  textAlign: 'left', padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
+}
+
 // ─── "New epic" modal ─────────────────────────────────────────────────────────
 function NewEpicModal({
   projects, profiles, busy, error, suggestedKey, onKeyRefresh, onClose, onCreate,
@@ -358,6 +363,9 @@ export default function EpicsPage() {
   const [featureName, setFeatureName] = useState('')
   const [featureDesc, setFeatureDesc] = useState('')
   const [featureError, setFeatureError] = useState<string | null>(null)
+  const [featureProjectId, setFeatureProjectId] = useState<string | null>(null)
+  const [featureEpicId, setFeatureEpicId] = useState('')
+  const [newMenuProjectId, setNewMenuProjectId] = useState<string | null>(null)
 
   const activeUser = getActiveUser()
   const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
@@ -431,20 +439,31 @@ export default function EpicsPage() {
 
   function openNewFeature(epic: EpicRow) {
     setFeatureEpic({ id: epic.id, name: epic.name })
+    setFeatureProjectId(null); setFeatureEpicId('')
     setFeatureName(''); setFeatureDesc(''); setFeatureError(null)
   }
 
+  function openNewFeatureForProject(projectId: string) {
+    setFeatureEpic(null); setFeatureProjectId(projectId); setFeatureEpicId('')
+    setFeatureName(''); setFeatureDesc(''); setFeatureError(null)
+  }
+
+  function closeFeatureModal() {
+    setFeatureEpic(null); setFeatureProjectId(null); setFeatureEpicId('')
+  }
+
   async function handleCreateFeature() {
-    if (!featureEpic || !featureName.trim()) return
+    const epicId = featureEpic?.id ?? featureEpicId
+    if (!epicId || !featureName.trim()) return
     setBusy(true); setFeatureError(null)
     try {
       await createFeature({
-        epicId: featureEpic.id,
+        epicId,
         name: featureName.trim(),
         description: featureDesc.trim() || null,
         actorName: activeUser?.name,
       })
-      setFeatureEpic(null)
+      closeFeatureModal()
       await load()
     } catch (err) { setFeatureError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
@@ -519,15 +538,44 @@ export default function EpicsPage() {
                 <div style={{ flex: 1 }} />
 
                 {canCreateEpic && (
-                  <button
-                    onClick={() => openNewEpic(project.id)}
-                    style={{
-                      fontSize: 12, fontWeight: 600, padding: '6px 12px',
-                      borderRadius: 8, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer',
-                    }}
-                  >
-                    + Novo épico
-                  </button>
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => {
+                        if (!hasFeatures) { setNewMenuProjectId(null); openNewEpic(project.id); return }
+                        setNewMenuProjectId(prev => (prev === project.id ? null : project.id))
+                      }}
+                      style={{
+                        fontSize: 12, fontWeight: 600, padding: '6px 12px',
+                        borderRadius: 8, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer',
+                      }}
+                    >
+                      + Novo
+                    </button>
+
+                    {newMenuProjectId === project.id && (
+                      <>
+                        <div
+                          onClick={() => setNewMenuProjectId(null)}
+                          style={{ position: 'fixed', inset: 0, zIndex: 300 }}
+                        />
+                        <div style={{
+                          position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 301,
+                          minWidth: 180, background: T.bgSurface, border: `1px solid ${T.border2}`,
+                          borderRadius: 10, boxShadow: T.shadowModal, padding: 4,
+                          display: 'flex', flexDirection: 'column',
+                        }}>
+                          <button
+                            onClick={() => { setNewMenuProjectId(null); openNewEpic(project.id) }}
+                            style={menuItemStyle}
+                          >Épico</button>
+                          <button
+                            onClick={() => { setNewMenuProjectId(null); openNewFeatureForProject(project.id) }}
+                            style={menuItemStyle}
+                          >Funcionalidade</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -769,9 +817,9 @@ export default function EpicsPage() {
       />
     )}
 
-    {featureEpic && (
+    {(featureEpic || featureProjectId) && (
       <div
-        onClick={e => { if (e.target === e.currentTarget) setFeatureEpic(null) }}
+        onClick={e => { if (e.target === e.currentTarget) closeFeatureModal() }}
         style={{
           position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(8,10,14,0.72)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
@@ -783,7 +831,28 @@ export default function EpicsPage() {
           padding: 20, display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>Nova funcionalidade</div>
-          <div style={{ fontSize: 12, color: T.text3 }}>Épico: {featureEpic.name}</div>
+          {featureEpic ? (
+            <div style={{ fontSize: 12, color: T.text3 }}>Épico: {featureEpic.name}</div>
+          ) : (
+            (() => {
+              const projectEpicOptions = epics.filter(e => e.project_id === featureProjectId)
+              return projectEpicOptions.length === 0 ? (
+                <div style={{ fontSize: 12, color: T.text3 }}>
+                  Crie um Épico antes de adicionar uma Funcionalidade.
+                </div>
+              ) : (
+                <div>
+                  <label style={labelStyle}>Épico *</label>
+                  <select value={featureEpicId} onChange={e => setFeatureEpicId(e.target.value)} style={fieldStyle}>
+                    <option value="">Selecione um épico…</option>
+                    {projectEpicOptions.map(e => (
+                      <option key={e.id} value={e.id}>{e.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )
+            })()
+          )}
 
           <div>
             <label style={labelStyle}>Nome *</label>
@@ -799,21 +868,26 @@ export default function EpicsPage() {
 
           {featureError && <div style={{ fontSize: 12, color: T.crit }}>{featureError}</div>}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-            <button onClick={() => setFeatureEpic(null)}
-              style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, cursor: 'pointer' }}
-            >Cancelar</button>
-            <button
-              disabled={!featureName.trim() || busy}
-              onClick={() => { void handleCreateFeature() }}
-              style={{
-                fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none',
-                background: featureName.trim() && !busy ? T.purple : T.neutralDim,
-                color: featureName.trim() && !busy ? '#fff' : T.text3,
-                cursor: featureName.trim() && !busy ? 'pointer' : 'not-allowed',
-              }}
-            >{busy ? 'Criando…' : 'Criar'}</button>
-          </div>
+          {(() => {
+            const canSubmit = Boolean(featureName.trim()) && Boolean(featureEpic?.id ?? featureEpicId) && !busy
+            return (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+                <button onClick={closeFeatureModal}
+                  style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, cursor: 'pointer' }}
+                >Cancelar</button>
+                <button
+                  disabled={!canSubmit}
+                  onClick={() => { void handleCreateFeature() }}
+                  style={{
+                    fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none',
+                    background: canSubmit ? T.purple : T.neutralDim,
+                    color: canSubmit ? '#fff' : T.text3,
+                    cursor: canSubmit ? 'pointer' : 'not-allowed',
+                  }}
+                >{busy ? 'Criando…' : 'Criar'}</button>
+              </div>
+            )
+          })()}
         </div>
       </div>
     )}
