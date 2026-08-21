@@ -533,15 +533,44 @@ export default function EpicsPage() {
                 <div style={{ flex: 1 }} />
 
                 {canCreateEpic && (
-                  <button
-                    onClick={() => openNewEpic(project.id)}
-                    style={{
-                      fontSize: 12, fontWeight: 600, padding: '6px 12px',
-                      borderRadius: 8, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer',
-                    }}
-                  >
-                    + Novo épico
-                  </button>
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => {
+                        if (!hasFeatures) { setNewMenuProjectId(null); openNewEpic(project.id); return }
+                        setNewMenuProjectId(prev => (prev === project.id ? null : project.id))
+                      }}
+                      style={{
+                        fontSize: 12, fontWeight: 600, padding: '6px 12px',
+                        borderRadius: 8, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer',
+                      }}
+                    >
+                      + Novo
+                    </button>
+
+                    {newMenuProjectId === project.id && (
+                      <>
+                        <div
+                          onClick={() => setNewMenuProjectId(null)}
+                          style={{ position: 'fixed', inset: 0, zIndex: 300 }}
+                        />
+                        <div style={{
+                          position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 301,
+                          minWidth: 180, background: T.bgSurface, border: `1px solid ${T.border2}`,
+                          borderRadius: 10, boxShadow: T.shadowModal, padding: 4,
+                          display: 'flex', flexDirection: 'column',
+                        }}>
+                          <button
+                            onClick={() => { setNewMenuProjectId(null); openNewEpic(project.id) }}
+                            style={menuItemStyle}
+                          >Épico</button>
+                          <button
+                            onClick={() => { setNewMenuProjectId(null); openNewFeatureForProject(project.id) }}
+                            style={menuItemStyle}
+                          >Funcionalidade</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 
