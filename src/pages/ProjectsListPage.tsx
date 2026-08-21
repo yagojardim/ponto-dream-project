@@ -19,6 +19,9 @@ interface SubTask {
   pct:         number
   status:      TaskStatus
   responsible: string
+  type:        string
+  parentId:    string | null
+  children:    SubTask[]
 }
 
 interface Project {
@@ -102,6 +105,17 @@ function ProgressBar({ pct, color }: { pct: number; color: string }) {
   )
 }
 
+function countAllTasks(project: Project): number {
+  return project.tasks.reduce((s, t) => s + 1 + t.children.length, 0)
+}
+
+function countDone(project: Project): number {
+  return project.tasks.reduce(
+    (s, t) => s + (t.status === 'concluído' ? 1 : 0) + t.children.filter(c => c.status === 'concluído').length,
+    0,
+  )
+}
+
 // ─── Project row ──────────────────────────────────────────────────────────────
 interface ProjectRowProps {
   project:     Project
@@ -111,6 +125,7 @@ interface ProjectRowProps {
 
 function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
   const [expanded, setExpanded] = useState(true)
+  const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
 
   return (
     <>
@@ -166,7 +181,7 @@ function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
         </td>
       </tr>
 
-      {/* Sub-tasks */}
+      {/* Tasks and sub-tasks */}
       {expanded && project.tasks.length === 0 && (
         <tr style={{ borderBottom: '1px solid #162032' }}>
           <td />
@@ -175,40 +190,113 @@ function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
           </td>
         </tr>
       )}
-      {expanded && project.tasks.map((task) => (
-        <tr
-          key={task.id}
-          role="button"
-          tabIndex={0}
-          className="cursor-pointer transition-colors"
-          onClick={() => onOpenTask(task, project)}
-          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenTask(task, project) } }}
-          style={{ borderBottom: '1px solid #162032' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.02)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}
-        >
-          <td className="pl-4 py-2 pr-2" style={{ width: 24 }} />
-          <td className="py-2 pr-4">
-            <div className="flex items-center gap-2.5 pl-8">
-              <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: project.color, opacity: 0.5 }} />
-              <span className="text-xs truncate" style={{ color: '#8a9ab8' }}>{task.name}</span>
-            </div>
-          </td>
-          <td className="py-2 pr-6 text-[11px] whitespace-nowrap" style={{ color: '#3a4d65' }}>{task.period}</td>
-          <td className="py-2 pr-6" style={{ minWidth: 120 }}>
-            <ProgressBar pct={task.pct} color={project.color} />
-          </td>
-          <td className="py-2 pr-6">
-            <StatusBadge status={task.status} />
-          </td>
-          <td className="py-2 pr-4">
-            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-              <Avatar name={task.responsible} size="xs" />
-              <span className="text-[11px] truncate max-w-[90px]" style={{ color: '#546278' }}>{task.responsible}</span>
-            </div>
-          </td>
-        </tr>
-      ))}
+      {expanded && project.tasks.map((task) => {
+        const hasChildren = task.children.length > 0
+        const isOpen = openTasks[task.id] ?? false
+        return (
+          <>
+            <tr
+              key={task.id}
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer transition-colors"
+              onClick={() => onOpenTask(task, project)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenTask(task, project) } }}
+              style={{ borderBottom: '1px solid #162032' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.02)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}
+            >
+              <td className="pl-4 py-2 pr-2" style={{ width: 24 }}>
+                {hasChildren && (
+                  <button
+                    onClick={e => { e.stopPropagation(); setOpenTasks(prev => ({ ...prev, [task.id]: !isOpen })) }}
+                    onKeyDown={e => e.stopPropagation()}
+                    className="flex items-center justify-center w-5 h-5 rounded transition-colors hover:bg-white/10 flex-shrink-0"
+                    style={{ color: '#546278' }}
+                    aria-label={isOpen ? 'Recolher subtarefas' : 'Expandir subtarefas'}
+                  >
+                    <svg
+                      width="10" height="10" viewBox="0 0 10 10" fill="none"
+                      className="transition-transform"
+                      style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                    >
+                      <path d="M3.5 2L6.5 5L3.5 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                )}
+              </td>
+              <td className="py-2 pr-4">
+                <div className="flex items-center gap-2.5">
+                  {!hasChildren && (
+                    <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: project.color, opacity: 0.5 }} />
+                  )}
+                  <span className="text-xs truncate" style={{ color: '#8a9ab8' }}>{task.name}</span>
+                  {hasChildren && (
+                    <span
+                      className="text-[10px] px-1.5 py-0.5 rounded border"
+                      style={{ color: '#546278', borderColor: '#1c2c45' }}
+                    >
+                      {task.children.length} subtarefa{task.children.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              </td>
+              <td className="py-2 pr-6 text-[11px] whitespace-nowrap" style={{ color: '#3a4d65' }}>{task.period}</td>
+              <td className="py-2 pr-6" style={{ minWidth: 120 }}>
+                <ProgressBar pct={task.pct} color={project.color} />
+              </td>
+              <td className="py-2 pr-6">
+                <StatusBadge status={task.status} />
+              </td>
+              <td className="py-2 pr-4">
+                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                  <Avatar name={task.responsible} size="xs" />
+                  <span className="text-[11px] truncate max-w-[90px]" style={{ color: '#546278' }}>{task.responsible}</span>
+                </div>
+              </td>
+            </tr>
+            {hasChildren && isOpen && task.children.map(child => (
+              <tr
+                key={child.id}
+                role="button"
+                tabIndex={0}
+                className="cursor-pointer transition-colors"
+                onClick={() => onOpenTask(child, project)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenTask(child, project) } }}
+                style={{ borderBottom: '1px solid #162032' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.02)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}
+              >
+                <td className="pl-4 py-2 pr-2" style={{ width: 24 }} />
+                <td className="py-2 pr-4">
+                  <div className="flex items-center gap-2.5 pl-8">
+                    <span
+                      className="text-[10px] w-4 h-4 flex items-center justify-center border rounded-sm flex-shrink-0"
+                      style={{ borderColor: '#3a4d65', color: '#3a4d65' }}
+                    >
+                      ◻
+                    </span>
+                    <span className="text-xs truncate" style={{ color: '#8a9ab8' }}>{child.name}</span>
+                  </div>
+                </td>
+                <td className="py-2 pr-6 text-[11px] whitespace-nowrap" style={{ color: '#3a4d65' }}>{child.period}</td>
+                <td className="py-2 pr-6" style={{ minWidth: 120 }}>
+                  <ProgressBar pct={child.pct} color={project.color} />
+                </td>
+                <td className="py-2 pr-6">
+                  <StatusBadge status={child.status} />
+                </td>
+                <td className="py-2 pr-4">
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <Avatar name={child.responsible} size="xs" />
+                    <span className="text-[11px] truncate max-w-[90px]" style={{ color: '#546278' }}>{child.responsible}</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </>
+        )
+      })}
     </>
   )
 }
@@ -221,9 +309,26 @@ function buildProjects(
   boards: ProjectBoardRow[],
 ): Project[] {
   const profileById = new Map(profiles.map(p => [p.id, p]))
+
+  function toSubTask(t: ProjectTaskRow): SubTask {
+    return {
+      id: t.id,
+      name: `${t.key} · ${t.title}`,
+      period: fmtPeriod(t.start_date, t.due_date),
+      pct: t.status === 'done' ? 100 : (t.progress ?? 0),
+      status: ITEM_STATUS_MAP[t.status] ?? 'pendente',
+      responsible: (t.assignee_id && profileById.get(t.assignee_id)?.name) || 'Não atribuído',
+      type: t.type ?? '',
+      parentId: t.parent_id ?? null,
+      children: [],
+    }
+  }
+
   return rows.map((p, i) => {
     const own = tasks.filter(t => t.project_id === p.id)
     const board = boards.find(b => b.project_id === p.id) ?? null
+    const top = own.filter(t => t.parent_id == null)
+    const sub = own.filter(t => t.parent_id != null)
     return {
       id: p.id,
       name: p.name,
@@ -234,14 +339,7 @@ function buildProjects(
       status: PROJECT_STATUS_MAP[p.status] ?? 'pendente',
       responsible: (p.lead_id && profileById.get(p.lead_id)?.name) || 'Sem responsável',
       boardId: board?.id ?? null,
-      tasks: own.map(t => ({
-        id: t.id,
-        name: `${t.key} · ${t.title}`,
-        period: fmtPeriod(t.start_date, t.due_date),
-        pct: t.status === 'done' ? 100 : (t.progress ?? 0),
-        status: ITEM_STATUS_MAP[t.status] ?? 'pendente',
-        responsible: (t.assignee_id && profileById.get(t.assignee_id)?.name) || 'Não atribuído',
-      })),
+      tasks: top.map(t => ({ ...toSubTask(t), children: sub.filter(s => s.parent_id === t.id).map(toSubTask) })),
     }
   })
 }
@@ -287,9 +385,9 @@ export default function ProjectsListPage({ onNav }: Props) {
     [rows, tasks, profiles, boards],
   )
 
-  const totalTasks = projects.reduce((s, p) => s + p.tasks.length, 0)
+  const totalTasks = projects.reduce((s, p) => s + countAllTasks(p), 0)
   const inProgress = projects.filter(p => p.status === 'em progresso').length
-  const done       = projects.reduce((s, p) => s + p.tasks.filter(t => t.status === 'concluído').length, 0)
+  const done       = projects.reduce((s, p) => s + countDone(p), 0)
 
   function handleOpenProject(p: Project) {
     onNav?.('project', p.id)
