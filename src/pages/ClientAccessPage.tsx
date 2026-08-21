@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import { T } from '../components/ds/tokens'
 import { generateTempPassword } from '../data/security'
-import { createClientAccess } from '../data/clientAccess'
-import { MOCK_TENANT, ROLE_LABEL, roleChoiceLabel, type RoleChoice, type RoleContext } from '../data/session'
+import { ROLE_LABEL, roleChoiceLabel, type RoleChoice, type RoleContext } from '../data/session'
 import { useSession } from '../data/SessionContext'
-import { useClientPortal } from '../data/clientPortalStore'
 import { copyToClipboard } from '../utils/copyToClipboard'
 import {
-  listProjectResponsibleCandidates, setProjectResponsibles,
+  createClientPortalUsers,
+  listProjectResponsibleCandidates,
+  setProjectResponsibles,
   type ResponsibleCandidate,
 } from '../data/db/clientPortal'
+import { listProjects } from '../data/db/projects'
 
 interface Props {
   onBack: () => void
@@ -17,18 +18,19 @@ interface Props {
 
 const PROJ_PALETTE = ['#7d92ff', '#35c9ae', '#a78bfa', '#e6b23c', '#f0805c']
 
+interface ProjectItem {
+  id: string
+  name: string
+  code: string
+  quarter: string
+  status: string
+  issues: number
+  color: string
+}
+
 export default function ClientAccessPage({ onBack }: Props) {
   const { activeUser } = useSession()
-  const portal = useClientPortal()
-  const PROJECTS = portal.projects.map((p, i) => ({
-    id: p.id,
-    name: p.name,
-    code: p.name.slice(0, 2).toUpperCase(),
-    quarter: p.period_end ? p.period_end.slice(0, 7) : '—',
-    status: p.status,
-    issues: 0,
-    color: PROJ_PALETTE[i % PROJ_PALETTE.length],
-  }))
+  const [projects, setProjects] = useState<ProjectItem[]>([])
   const [step, setStep] = useState(1)
   const [clientName, setClientName] = useState('')
   const [clientEmail, setClientEmail] = useState('')
@@ -44,6 +46,34 @@ export default function ClientAccessPage({ onBack }: Props) {
   const [copied, setCopied] = useState(false)
   const [pwdCopied, setPwdCopied] = useState(false)
   const [copyErr, setCopyErr] = useState('')
+  const [submitError, setSubmitError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Carrega projetos reais do Supabase.
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        const data = await listProjects()
+        if (!alive) return
+        setProjects(
+          data.projects.map((p, i) => ({
+            id: p.id,
+            name: p.name,
+            code: p.name.slice(0, 2).toUpperCase(),
+            quarter: p.period_end ? p.period_end.slice(0, 7) : '—',
+            status: p.status ?? '—',
+            issues: 0,
+            color: PROJ_PALETTE[i % PROJ_PALETTE.length],
+          })),
+        )
+      } catch (err) {
+        if (!alive) return
+        setSubmitError(err instanceof Error ? err.message : 'Falha ao carregar projetos.')
+      }
+    })()
+    return () => { alive = false }
+  }, [])
 
   // Carrega os candidatos elegíveis (membros do projeto com permissão de mensagens).
   useEffect(() => {
@@ -62,40 +92,57 @@ export default function ClientAccessPage({ onBack }: Props) {
     return () => { alive = false }
   }, [selectedProjects])
 
-  useEffect(() => {
-    if (done) {
-      const hash = Math.random().toString(36).slice(2, 10)
-      setGeneratedUrl(`https://altechproject.com/portal/${hash}`)
-      setGeneratedPwd(generateTempPassword())
-    }
-  }, [done])
-
   function toggleProject(id: string) {
     setSelectedProjects(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id],
     )
   }
 
-  function handleSubmit() {
-    createClientAccess({
-      tenant_id:          MOCK_TENANT.tenant_id,
-      client_name:        clientName.trim(),
-      client_email:       clientEmail.trim(),
-      permission,
-      client_can_approve: clientCanApprove,
-      client_can_preview: clientCanPreview,
-      project_names:      PROJECTS.filter(p => selectedProjects.includes(p.id)).map(p => p.name),
-      actor_name:         activeUser?.name,
-    })
-    for (const projectId of selectedProjects) {
-      const eligible = (candidatesByProject[projectId] ?? []).map(c => c.id)
-      void setProjectResponsibles(
-        projectId,
-        responsibles.filter(id => eligible.includes(id)),
-        activeUser?.name,
+  async function handleSubmit() {
+    if (selectedProjects.length === 0) return
+    setSubmitError('')
+    setIsSubmitting(true)
+
+    const pwd = generateTempPassword()
+    const hash = Math.random().toString(36).slice(2, 10)
+    setGeneratedPwd(pwd)
+    setGeneratedUrl(`https://altechproject.com/portal/${hash}`)
+
+    try {
+      const created = await createClientPortalUsers({
+        projectIds: selectedProjects,
+        name: clientName.trim(),
+        email: clientEmail.trim(),
+        portalRole: permission === 'admin' ? 'portal-admin' : 'viewer',
+        canApprove: clientCanApprove,
+        canPreview: clientCanPreview,
+        canComment: true,
+        tempPassword: pwd,
+        actorName: activeUser?.name,
+      })
+
+      if (created.length === 0) {
+        throw new Error('Não foi possível criar o acesso do cliente. Verifique as permissões e tente novamente.')
+      }
+
+      await Promise.all(
+        selectedProjects.map(async projectId => {
+          const eligible = (candidatesByProject[projectId] ?? []).map(c => c.id)
+          await setProjectResponsibles(
+            projectId,
+            responsibles.filter(id => eligible.includes(id)),
+            activeUser?.name,
+          )
+        }),
       )
+
+      setDone(true)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Falha ao criar o acesso do cliente.'
+      setSubmitError(message)
+    } finally {
+      setIsSubmitting(false)
     }
-    setDone(true)
   }
 
   function reset() {
@@ -113,6 +160,8 @@ export default function ClientAccessPage({ onBack }: Props) {
     setGeneratedPwd('')
     setCopied(false)
     setPwdCopied(false)
+    setCopyErr('')
+    setSubmitError('')
   }
 
   async function copyUrl() {
@@ -127,7 +176,7 @@ export default function ClientAccessPage({ onBack }: Props) {
     else { setCopyErr('Não foi possível copiar a senha. Selecione e copie manualmente.'); setTimeout(() => setCopyErr(''), 4000) }
   }
 
-  const selectedProjectObjs = PROJECTS.filter(p => selectedProjects.includes(p.id))
+  const selectedProjectObjs = projects.filter(p => selectedProjects.includes(p.id))
   const permissionLabel = permission === 'viewer' ? 'Visualizador' : 'Administrador'
 
   // --- Stepper ---
@@ -293,6 +342,15 @@ export default function ClientAccessPage({ onBack }: Props) {
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <Stepper />
 
+        {submitError && (
+          <div style={{
+            marginBottom: 20, padding: '12px 16px', borderRadius: 8,
+            background: `${T.crit}14`, border: `1px solid ${T.crit}50`, color: T.crit, fontSize: 13,
+          }}>
+            ✗ {submitError}
+          </div>
+        )}
+
         <div style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 16, padding: 36 }}>
           {/* STEP 1 */}
           {step === 1 && (
@@ -350,7 +408,7 @@ export default function ClientAccessPage({ onBack }: Props) {
                 </span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
-                {PROJECTS.map(p => {
+                {projects.map(p => {
                   const selected = selectedProjects.includes(p.id)
                   return (
                     <div
@@ -599,11 +657,15 @@ export default function ClientAccessPage({ onBack }: Props) {
                 </button>
                 <button
                   onClick={handleSubmit}
+                  disabled={isSubmitting}
                   style={{
-                    background: T.success, border: 'none', color: '#fff',
-                    borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                    background: isSubmitting ? T.border2 : T.success,
+                    border: 'none', color: '#fff',
+                    borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 600,
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    opacity: isSubmitting ? 0.6 : 1,
                   }}>
-                  Criar acesso e enviar convite
+                  {isSubmitting ? 'Criando acesso...' : 'Criar acesso e enviar convite'}
                 </button>
               </div>
             </div>
