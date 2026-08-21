@@ -408,12 +408,11 @@ export default function EpicsPage() {
     catch { setSuggestedKey('') }
   }, [])
 
-  function openNewEpic() {
+  function openNewEpic(projectId: string) {
+    setNewEpicProjectId(projectId)
     setNewEpicError(null)
     setNewEpicOpen(true)
-    const projects = data?.projects ?? []
-    if (projects.length === 1) void refreshSuggestedKey(projects[0].id)
-    else setSuggestedKey('')
+    void refreshSuggestedKey(projectId)
   }
 
   async function handleCreateEpic(input: {
@@ -424,6 +423,7 @@ export default function EpicsPage() {
     try {
       await createEpic({ ...input, actorName: activeUser?.name })
       setNewEpicOpen(false)
+      setNewEpicProjectId('')
       await load()
     } catch (err) { setNewEpicError(err instanceof Error ? err.message : String(err)) }
     finally { setBusy(false) }
