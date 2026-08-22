@@ -6,7 +6,7 @@ import { WorkItemDetail } from '../components/WorkItemDetail'
 import { T } from '../components/ds/tokens'
 import {
   fetchDashboardAggregates,
-  type DashboardAggregates, type RagProject,
+  type DashboardAggregates, type RagProject, type FeatureAggregate,
 } from '../data/db/dashboards'
 import type { WorkItem, RagStatus } from '../components/ds/DashboardKit'
 
@@ -213,6 +213,75 @@ function HealthCard({ p, onOpen }: { p: RagProject; onOpen: () => void }) {
   )
 }
 
+// ─── Funcionalidades card ─────────────────────────────────────────────────────
+function FeaturesCard({ f }: { f: FeatureAggregate }) {
+  if (f.total === 0) {
+    return (
+      <div style={{ padding:'14px 16px', borderRadius:12, border:'1px dashed var(--border-subtle,#1c2c45)', fontSize:12, color:'var(--text-muted,#546278)' }}>
+        Nenhuma funcionalidade nos projetos selecionados.
+      </div>
+    )
+  }
+  return (
+    <div className="p-4 rounded-xl" style={{ background:'var(--bg-surface,#111d33)', border:'1px solid var(--border-subtle,#1c2c45)' }}>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <span style={{ color:T.purple, fontSize:13 }}>▣</span>
+          <span className="text-sm font-semibold" style={{ color:'var(--text-primary,#e8ecf4)' }}>Funcionalidades</span>
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ color:T.purple, background:`${T.purple}1f` }}>
+            {f.total} no escopo
+          </span>
+        </div>
+        <span className="text-sm font-bold" style={{ color:T.purple }}>{f.pct}%</span>
+      </div>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background:'var(--border-subtle,#1c2c45)' }}>
+        <div className="h-full rounded-full" style={{ width:`${f.pct}%`, background:T.purple }} />
+      </div>
+      <div className="flex justify-between mt-2 text-[10px]" style={{ color:'var(--text-muted,#546278)' }}>
+        <span>{f.done}/{f.total} funcionalidades concluídas</span>
+        <span>{f.donePoints} de {f.totalPoints} pontos concluídos</span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Projeto encerrado ────────────────────────────────────────────────────────
+function ClosedProjectCard({ p, onOpen }: { p: RagProject; onOpen: () => void }) {
+  const c = '#06C18A'
+  return (
+    <div role="button" tabIndex={0} onClick={onOpen}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}
+      className="flex flex-col gap-3 p-4 rounded-xl min-w-0 cursor-pointer"
+      style={{ background:'var(--bg-surface,#111d33)', border:'1px solid var(--border-subtle,#1c2c45)', opacity:0.92 }}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-mono mb-1" style={{ color:'var(--text-muted,#546278)' }}>{p.key}</p>
+          <p className="text-sm font-semibold leading-tight truncate" style={{ color:'var(--text-primary,#e8ecf4)' }}>{p.name}</p>
+        </div>
+        <Pill color={c} tint="rgba(6,193,138,0.12)" border="rgba(6,193,138,0.3)">Concluído</Pill>
+      </div>
+      <div>
+        <div className="flex justify-between mb-1.5">
+          <span className="text-[10px]" style={{ color:'var(--text-muted,#546278)' }}>Progresso final · {p.done}/{p.total} itens</span>
+          <span className="text-[10px] font-semibold" style={{ color:'var(--text-secondary,#8a9ab8)' }}>{p.pct}%</span>
+        </div>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background:'var(--border-subtle,#1c2c45)' }}>
+          <div className="h-full rounded-full" style={{ width:`${p.pct}%`, background:c }}/>
+        </div>
+      </div>
+      {p.finalizeNote && (
+        <p className="text-xs" style={{ color:'var(--text-secondary,#8a9ab8)' }}>{p.finalizeNote}</p>
+      )}
+      <div className="flex items-center justify-between">
+        <span className="text-[10px]" style={{ color:'var(--text-muted,#546278)' }}>
+          {p.finalizedAt ? `Finalizado em ${fmtDate(p.finalizedAt)}` : 'Encerrado'}
+        </span>
+        <span className="text-xs" style={{ color:'var(--primary,#4d82ff)' }}>Ver projeto →</span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?: string) => void }) {
   const [agg, setAgg]         = useState<DashboardAggregates | null>(null)
@@ -243,6 +312,9 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
   const blockers    = agg?.blockers ?? []
   const deliveries  = agg?.upcoming ?? []
   const sprint      = agg?.currentSprints?.[0] ?? null
+
+  const activeProjects    = useMemo(() => visProjects.filter(p => p.status !== 'completed'), [visProjects])
+  const completedProjects = useMemo(() => visProjects.filter(p => p.status === 'completed'), [visProjects])
 
   const consolidatedPct = agg?.consolidatedPct ?? 0
   const sparkPoints = useMemo(() => visProjects.map(p => p.donePoints), [visProjects])
