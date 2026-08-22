@@ -649,7 +649,7 @@ export default function TimelinePage() {
     const startX = e.clientX
     const startW = sidebarWidth
     function onMove(ev: MouseEvent) {
-      const next = Math.min(800, Math.max(280, startW + (ev.clientX - startX)))
+      const next = Math.min(800, Math.max(120, startW + (ev.clientX - startX)))
       setSidebarWidth(next)
     }
     function onUp() {
@@ -659,6 +659,9 @@ export default function TimelinePage() {
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
   }
+
+  const showMeta = sidebarWidth >= 420
+  const showTitle = sidebarWidth >= 260
 
   const gridW = totalDays * DAY_PX
 
@@ -764,10 +767,14 @@ export default function TimelinePage() {
           {/* Sidebar */}
           <div style={{ width: sidebarWidth, flexShrink: 0, background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ height: HEADER_H, borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0, gap: 0 }}>
-              <span style={{ flex: 1, color: T.text3, fontSize: 10, fontWeight: 700 }}>{sidebarTitle}</span>
-              <span style={{ width: 90, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Status</span>
-              <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Início</span>
-              <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Venc.</span>
+              <span style={{ flex: 1, color: T.text3, fontSize: 10, fontWeight: 700 }}>{showTitle ? sidebarTitle : '#'}</span>
+              {showMeta && (
+                <>
+                  <span style={{ width: 90, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Status</span>
+                  <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Início</span>
+                  <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Venc.</span>
+                </>
+              )}
             </div>
             <div ref={leftBodyRef} onScroll={() => syncScroll('left')} style={{ flex: 1, overflowY: 'auto' }}>
 
