@@ -608,6 +608,60 @@ export default function ProjectsListPage({ onNav }: Props) {
           tenantName={tenantName}
         />
       )}
+
+      {/* Confirm status change */}
+      {confirm.open && confirm.project && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
+          onClick={() => setConfirm({ open: false, project: null, action: 'complete' })}
+        >
+          <div
+            className="w-full max-w-md p-5 rounded-xl fade-rise"
+            style={{ background: '#1c2130', border: '1px solid #2f3547' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold mb-2" style={{ color: '#e8ecf4' }}>
+              {confirm.action === 'complete' ? 'Finalizar projeto' : 'Reabrir projeto'}
+            </h3>
+            <p className="text-xs mb-5 leading-relaxed" style={{ color: '#8a9ab8' }}>
+              {confirm.action === 'complete'
+                ? <>Finalizar <strong>{confirm.project.name}</strong>? As demandas em aberto continuarão registradas.</>
+                : <>Reabrir <strong>{confirm.project.name}</strong>? O projeto voltará ao status ativo.</>}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirm({ open: false, project: null, action: 'complete' })}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executeStatusUpdate}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: '#3B82F6', color: '#fff' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#2563EB' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#3B82F6' }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline toast */}
+      {toast.show && (
+        <div
+          className="fixed bottom-5 right-5 z-[100] px-4 py-2.5 rounded-lg text-xs font-medium shadow-lg fade-rise"
+          style={{ background: '#1c2130', color: '#e8ecf4', border: '1px solid #2f3547' }}
+        >
+          {toast.msg}
+        </div>
+      )}
     </>
   )
 }
