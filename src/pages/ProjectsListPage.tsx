@@ -434,16 +434,12 @@ export default function ProjectsListPage({ onNav }: Props) {
   const [rows, setRows] = useState<ProjectRow[]>([])
   const [tasks, setTasks] = useState<ProjectTaskRow[]>([])
   const [profiles, setProfiles] = useState<ProjectProfileRow[]>([])
+  const [members, setMembers] = useState<ProjectMemberRow[]>([])
   const [boards, setBoards] = useState<ProjectBoardRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
-  const [confirm, setConfirm] = useState<ConfirmState>({ open: false, project: null, action: 'complete' })
-  const [note, setNote] = useState('')
-  const [editDesc, setEditDesc] = useState('')
-  const [editStart, setEditStart] = useState('')
-  const [editEnd, setEditEnd] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState<Project | null>(null)
   const [toast, setToast] = useState<{ msg: string; show: boolean }>({ msg: '', show: false })
 
   const load = useCallback(async () => {
@@ -454,6 +450,7 @@ export default function ProjectsListPage({ onNav }: Props) {
       setRows(data.projects)
       setTasks(data.tasks)
       setProfiles(data.profiles)
+      setMembers(data.members)
       setBoards(data.boards)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Falha ao carregar os projetos.')
@@ -468,6 +465,11 @@ export default function ProjectsListPage({ onNav }: Props) {
     () => buildProjects(rows, tasks, profiles, boards),
     [rows, tasks, profiles, boards],
   )
+
+  // Keep the open modal in sync with reloaded data
+  useEffect(() => {
+    setEditing(prev => (prev ? projects.find(p => p.id === prev.id) ?? null : null))
+  }, [projects])
 
   const totalTasks = projects.reduce((s, p) => s + countAllTasks(p), 0)
   const inProgress = projects.filter(p => p.status === 'em progresso').length
@@ -500,58 +502,6 @@ export default function ProjectsListPage({ onNav }: Props) {
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000)
   }
 
-  function handleConfirm(p: Project, action: ProjectAction) {
-    setNote('')
-    setEditDesc(p.raw.description ?? '')
-    setEditStart(p.raw.period_start ?? '')
-    setEditEnd(p.raw.period_end ?? '')
-    setConfirm({ open: true, project: p, action })
-  }
-
-  function closeDialog() {
-    setConfirm({ open: false, project: null, action: 'complete' })
-    setNote('')
-  }
-
-  async function executeAction() {
-    if (!confirm.project || saving) return
-    const p = confirm.project
-    const action = confirm.action
-    const base = (p.raw.metadata ?? {}) as Record<string, unknown>
-    const now = new Date().toISOString()
-    setSaving(true)
-    try {
-      if (action === 'edit') {
-        await updateProject(p.raw, {
-          description: editDesc.trim() || null,
-          periodStart: editStart || null,
-          periodEnd: editEnd || null,
-        }, activeUser.name)
-        showToast('Projeto atualizado')
-      } else if (action === 'archive') {
-        await updateProject(p.raw, {
-          archivedAt: now,
-          metadata: { ...base, archive_note: note.trim(), archived_by: activeUser.name, archived_at: now },
-        }, activeUser.name)
-        showToast('Projeto arquivado')
-      } else if (action === 'complete') {
-        await updateProject(p.raw, {
-          status: 'completed',
-          metadata: { ...base, finalize_note: note.trim(), finalized_by: activeUser.name, finalized_at: now },
-        }, activeUser.name)
-        showToast('Projeto finalizado')
-      } else {
-        await updateProject(p.raw, { status: 'active' }, activeUser.name)
-        showToast('Projeto reaberto')
-      }
-      await load()
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.')
-    } finally {
-      setSaving(false)
-      closeDialog()
-    }
-  }
 
 
   return (
