@@ -329,6 +329,273 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onEdit }: 
   )
 }
 
+// ─── Edit project modal ───────────────────────────────────────────────────────
+const inputStyle = { background: '#141926', border: '1px solid #2f3547', color: '#e8ecf4' } as const
+
+interface EditProjectModalProps {
+  project:   Project
+  tasks:     ProjectTaskRow[]
+  members:   ProjectMemberRow[]
+  profiles:  ProjectProfileRow[]
+  actorName: string
+  onClose:   () => void
+  onDone:    (msg: string, close: boolean) => Promise<void> | void
+}
+
+function EditProjectModal({ project, tasks, members, profiles, actorName, onClose, onDone }: EditProjectModalProps) {
+  const raw = project.raw
+  const own = useMemo(() => tasks.filter(t => t.project_id === raw.id), [tasks, raw.id])
+
+  const derivedStart = useMemo(() => {
+    const ds = own.map(t => t.start_date).filter((d): d is string => !!d).sort()
+    return ds[0] ?? ''
+  }, [own])
+  const derivedEnd = useMemo(() => {
+    const ds = own.map(t => t.due_date).filter((d): d is string => !!d).sort()
+    return ds[ds.length - 1] ?? ''
+  }, [own])
+
+  const team = useMemo(() => {
+    const byId = new Map(profiles.map(p => [p.id, p]))
+    const ids = new Set<string>()
+    for (const m of members) if (m.project_id === raw.id && m.profile_id) ids.add(m.profile_id)
+    for (const t of own) if (t.assignee_id) ids.add(t.assignee_id)
+    if (raw.lead_id) ids.add(raw.lead_id)
+    return [...ids].map(id => byId.get(id)).filter((p): p is ProjectProfileRow => !!p)
+  }, [members, profiles, own, raw.id, raw.lead_id])
+
+  const [desc, setDesc] = useState(raw.description ?? '')
+  const [start, setStart] = useState(raw.period_start ?? derivedStart)
+  const [end, setEnd] = useState(raw.period_end ?? derivedEnd)
+  const [mode, setMode] = useState<'none' | 'complete' | 'archive'>('none')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const isCompleted = raw.status === 'completed'
+
+  async function run(fn: () => Promise<void>, msg: string, close: boolean) {
+    if (busy) return
+    setBusy(true)
+    try {
+      await fn()
+      await onDone(msg, close)
+      setMode('none'); setNote('')
+    } catch (e) {
+      await onDone(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.', false)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const save = () => run(
+    () => updateProject(raw, {
+      description: desc.trim() || null,
+      periodStart: start || null,
+      periodEnd: end || null,
+    }, actorName),
+    'Projeto atualizado', false,
+  )
+
+  const finalize = () => {
+    const now = new Date().toISOString()
+    const metadata = {
+      ...((raw.metadata ?? {}) as Record<string, unknown>),
+      finalize_note: note.trim(), finalized_by: actorName, finalized_at: now,
+    }
+    return run(() => updateProject(raw, { status: 'completed', metadata }, actorName), 'Projeto finalizado', true)
+  }
+
+  const reopen = () => run(() => updateProject(raw, { status: 'active' }, actorName), 'Projeto reaberto', false)
+
+  const archive = () => {
+    const now = new Date().toISOString()
+    const metadata = {
+      ...((raw.metadata ?? {}) as Record<string, unknown>),
+      archive_note: note.trim(), archived_by: actorName, archived_at: now,
+    }
+    return run(() => updateProject(raw, { archivedAt: now, metadata }, actorName), 'Projeto arquivado', true)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full rounded-xl fade-rise flex flex-col"
+        style={{ maxWidth: 640, maxHeight: '85vh', background: '#1c2130', border: '1px solid #2f3547' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #2f3547' }}>
+          <span className="w-2.5 h-2.5 rounded-sm mt-1.5 flex-shrink-0" style={{ background: project.color }} />
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold truncate" style={{ color: '#e8ecf4' }}>
+              Editar projeto — {project.name}
+            </h3>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              <span className="text-[11px] px-1.5 py-0.5 rounded border" style={{ color: '#8a9ab8', borderColor: '#2f3547' }}>
+                {raw.key}
+              </span>
+              <span className="text-[11px]" style={{ color: '#546278' }}>{project.client}</span>
+              <StatusBadge status={project.status} />
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0"
+            style={{ color: '#8a9ab8', background: '#141926' }}
+            aria-label="Fechar"
+          >
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M1.5 1.5L9.5 9.5M9.5 1.5L1.5 9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Descrição</span>
+            <textarea
+              rows={4}
+              value={desc}
+              onChange={e => setDesc(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
+              style={inputStyle}
+              placeholder="Descreva o objetivo do projeto…"
+            />
+          </label>
+
+          <div>
+            <p className="text-[11px] font-medium mb-1.5" style={{ color: '#8a9ab8' }}>Período</p>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase tracking-wider" style={{ color: '#546278' }}>Início</span>
+                <input
+                  type="date" value={start} onChange={e => setStart(e.target.value)}
+                  className="w-full h-9 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase tracking-wider" style={{ color: '#546278' }}>Fim</span>
+                <input
+                  type="date" value={end} onChange={e => setEnd(e.target.value)}
+                  className="w-full h-9 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-medium mb-2" style={{ color: '#8a9ab8' }}>Equipe ativa</p>
+            {team.length === 0 ? (
+              <p className="text-xs" style={{ color: '#546278' }}>Nenhum membro atribuído</p>
+            ) : (
+              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+                {team.map(m => (
+                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: '#141926' }}>
+                    <Avatar name={m.name} size="xs" color={m.avatar_color ?? undefined} />
+                    <span className="text-xs truncate" style={{ color: '#8a9ab8' }}>{m.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => { void save() }}
+              disabled={busy}
+              className="px-3.5 py-2 rounded-lg text-xs font-medium"
+              style={{ background: '#3B82F6', color: '#fff', opacity: busy ? 0.5 : 1 }}
+            >
+              {busy ? 'Salvando…' : 'Salvar alterações'}
+            </button>
+          </div>
+
+          {/* Lifecycle zone */}
+          <div className="pt-4 flex flex-col gap-3" style={{ borderTop: '1px solid #2f3547' }}>
+            <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#546278' }}>
+              Ciclo de vida
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {isCompleted ? (
+                <button
+                  onClick={() => { void reopen() }}
+                  disabled={busy}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
+                >
+                  Reabrir projeto
+                </button>
+              ) : (
+                <button
+                  onClick={() => { setMode(m => (m === 'complete' ? 'none' : 'complete')); setNote('') }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ color: '#06C18A', border: '1px solid #0f4030', background: '#0a2520' }}
+                >
+                  Finalizar projeto
+                </button>
+              )}
+              <button
+                onClick={() => { setMode(m => (m === 'archive' ? 'none' : 'archive')); setNote('') }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{ color: '#f0805c', border: '1px solid #4a2018', background: '#2a1210' }}
+              >
+                Arquivar projeto
+              </button>
+            </div>
+
+            {mode !== 'none' && (
+              <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: '#141926', border: '1px solid #2f3547' }}>
+                <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>
+                  Observação <span style={{ color: '#f0805c' }}>*</span>
+                </span>
+                <textarea
+                  rows={3}
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
+                  style={{ background: '#0f131d', border: '1px solid #2f3547', color: '#e8ecf4' }}
+                  placeholder={mode === 'archive'
+                    ? 'Por que este projeto está sendo arquivado?'
+                    : 'Registre o encerramento do projeto…'}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => { setMode('none'); setNote('') }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => { void (mode === 'archive' ? archive() : finalize()) }}
+                    disabled={busy || note.trim().length === 0}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{
+                      background: mode === 'archive' ? '#b23c22' : '#0f7a58',
+                      color: '#fff',
+                      opacity: busy || note.trim().length === 0 ? 0.45 : 1,
+                      cursor: busy || note.trim().length === 0 ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {mode === 'archive' ? 'Confirmar arquivamento' : 'Confirmar finalização'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // ─── Mapping ──────────────────────────────────────────────────────────────────
 function buildProjects(
   rows: ProjectRow[],
