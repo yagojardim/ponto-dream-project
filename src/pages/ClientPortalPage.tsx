@@ -1908,7 +1908,7 @@ function PortalHeader({
           A
         </div>
         <div>
-          <p className="text-sm font-bold leading-tight" style={{ color: C.txt }}>Altech Agency</p>
+          <p className="text-sm font-bold leading-tight" style={{ color: C.txt }}>Dash View</p>
           <p className="text-[10px]" style={{ color: C.txt3 }}>Portal do cliente</p>
         </div>
       </div>
@@ -1940,9 +1940,18 @@ function PortalHeader({
           onMouseLeave={e => { if (!isChatMode) { (e.currentTarget as HTMLButtonElement).style.borderColor = C.border; (e.currentTarget as HTMLButtonElement).style.color = C.txt2 } }}
           aria-label={isChatMode ? 'Voltar ao dashboard' : 'Abrir mensagens'}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M12 9a1 1 0 01-1 1H4l-2 2V3a1 1 0 011-1h8a1 1 0 011 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-          </svg>
+          {isChatMode ? (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="2" y="2" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="8" y="2" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="2" y="8" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="8" y="8" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M12 9a1 1 0 01-1 1H4l-2 2V3a1 1 0 011-1h8a1 1 0 011 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+            </svg>
+          )}
           <span>{isChatMode ? 'Dashboard' : 'Mensagens'}</span>
           {!isChatMode && unreadCount > 0 && (
             <span
