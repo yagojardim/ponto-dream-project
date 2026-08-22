@@ -1378,7 +1378,59 @@ interface ChatBubble {
   timestamp: string
   badge?: string
   itemTitle?: string
+  mentions?: string[]
 }
+
+// ─── @menções (espelha ClientMessagesPage) ───────────────────────────────────
+const TODOS_MENTION: { id: '@todos'; name: 'Todos os responsáveis' } = {
+  id: '@todos', name: 'Todos os responsáveis',
+}
+type MentionMenuItem = MentionProfile | typeof TODOS_MENTION
+
+function mentionQuery(text: string, caret: number): { query: string; start: number } | null {
+  const upto = text.slice(0, caret)
+  const at = upto.lastIndexOf('@')
+  if (at < 0) return null
+  const before = at === 0 ? ' ' : upto[at - 1]
+  if (!/\s/.test(before)) return null
+  const query = upto.slice(at + 1)
+  if (/\s/.test(query)) return null
+  return { query, start: at }
+}
+
+function matchPeople(people: MentionProfile[], query: string): MentionMenuItem[] {
+  const q = query.trim().toLowerCase()
+  const matches = people.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 6)
+  const todosVisible = !q || 'todos os responsáveis'.includes(q) || '@todos'.includes(q)
+  return todosVisible ? [TODOS_MENTION, ...matches] : matches
+}
+
+function resolveMentions(text: string, picked: MentionProfile[], allPeople: MentionProfile[]): string[] {
+  const individual = picked.filter(p => text.includes(`@${p.name}`)).map(p => p.id)
+  if (!text.includes('@todos')) return [...new Set(individual)]
+  return [...new Set([...allPeople.map(p => p.id), ...individual])]
+}
+
+function renderMentionBody(body: string, names: string[]): ReactNode[] {
+  const all = [...names, 'todos'].filter(Boolean)
+  if (!all.length) return [body]
+  const escaped = all
+    .sort((a, b) => b.length - a.length)
+    .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const re = new RegExp(`@(${escaped.join('|')})`, 'g')
+  const out: ReactNode[] = []
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = re.exec(body))) {
+    if (m.index > last) out.push(body.slice(last, m.index))
+    out.push(<span key={`${m.index}-${m[0]}`} style={{ color: C.accent, fontWeight: 700 }}>{m[0]}</span>)
+    last = m.index + m[0].length
+  }
+  if (last < body.length) out.push(body.slice(last))
+  return out
+}
+
+
 
 
 
