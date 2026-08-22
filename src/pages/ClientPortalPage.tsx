@@ -841,9 +841,10 @@ function EmptyState() {
 
 // ─── CLIENT NOTIFICATION BELL ────────────────────────────────────────────────
 function ClientNotifBell({
-  tick, onRead,
+  tick, onRead, onOpenChat,
 }: {
   tick: number; onRead: (msg: string) => void
+  onOpenChat?: (projectId: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const [localTick, setLocalTick] = useState(0)
@@ -874,7 +875,9 @@ function ClientNotifBell({
     setLocalTick(t => t + 1)
     setOpen(false)
     onRead(`${sig.poReplyBy ?? 'Equipe Altech'} respondeu: "${sig.poReply.slice(0, 80)}${sig.poReply.length > 80 ? '…' : ''}"`)
+    onOpenChat?.(sig.projectId)
   }
+
 
   function handleMarkAll() {
     void markClientRepliesRead(CLIENT)
@@ -1390,14 +1393,18 @@ function fmtDay(iso: string) {
   } catch { return '' }
 }
 
-function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
-  const [selId, setSelId] = useState<string>(PROJECTS[0]?.id ?? '')
+function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string) => void; initialProjectId?: string | null }) {
+  const [selId, setSelId] = useState<string>(initialProjectId ?? PROJECTS[0]?.id ?? '')
   const chatCanComment = CLIENT?.canComment ?? false
   const [draft, setDraft] = useState('')
   const [tick, setTick] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   void tick
+
+  useEffect(() => {
+    if (initialProjectId) setSelId(initialProjectId)
+  }, [initialProjectId])
 
   // Unread per project (management replies the client hasn't read)
   const [allUnread, setAllUnread] = useState<ClientReplyNotice[]>([])
@@ -1439,6 +1446,7 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [selId, tick, chat.length])
+
 
   async function handleSend() {
     const body = draft.trim()
@@ -1758,13 +1766,16 @@ function ProjectSelector({ selected, onToggle }: { selected: Set<string>; onTogg
 function PortalHeader({
   selected, onToggle, notifTick, onNotifRead, unreadCount,
   isChatMode, onChatToggle, onLogout, onChangePasswordRequest,
+  onOpenChat,
 }: {
   selected: Set<string>; onToggle: (id: string) => void
   notifTick: number; onNotifRead: (msg: string) => void
   unreadCount: number
   isChatMode: boolean; onChatToggle: () => void
   onLogout: () => void; onChangePasswordRequest: () => void
+  onOpenChat: (projectId: string) => void
 }) {
+
 
 
   return (
@@ -1827,9 +1838,10 @@ function PortalHeader({
           )}
         </button>
 
-        <ClientNotifBell tick={notifTick} onRead={onNotifRead} />
+        <ClientNotifBell tick={notifTick} onRead={onNotifRead} onOpenChat={onOpenChat} />
 
         <ClientProfileMenu onLogout={onLogout} onChangePassword={onChangePasswordRequest} />
+
       </div>
     </header>
   )
@@ -1894,6 +1906,13 @@ export default function ClientPortalPage({
   const [showPwdModal, setShowPwdModal] = useState(mustChangePassword)
   const [showVoluntaryPwdModal, setShowVoluntaryPwdModal] = useState(false)
   const [portalView, setPortalView] = useState<'dashboard' | 'chat'>('dashboard')
+  const [chatProjectId, setChatProjectId] = useState<string | null>(null)
+
+  function openChatFor(pid: string) {
+    setChatProjectId(pid)
+    setPortalView('chat')
+  }
+
 
   function handlePasswordSaved() {
     setShowPwdModal(false)
@@ -1930,7 +1949,7 @@ export default function ClientPortalPage({
         notifTick={notifTick}
         onNotifRead={handleNotifRead}
         unreadCount={unreadCount}
-
+        onOpenChat={openChatFor}
         isChatMode={portalView === 'chat'}
         onChatToggle={() => setPortalView(v => v === 'chat' ? 'dashboard' : 'chat')}
         onLogout={onLogout ?? (() => {})}
@@ -1939,8 +1958,9 @@ export default function ClientPortalPage({
 
       {portalView === 'chat' ? (
         <div className="flex-1 overflow-hidden">
-          <ClientChatPanel onToast={msg => showToast(msg, 'info')} />
+          <ClientChatPanel onToast={msg => showToast(msg, 'info')} initialProjectId={chatProjectId} />
         </div>
+
       ) : (
         <>
           {/* State label strip */}
