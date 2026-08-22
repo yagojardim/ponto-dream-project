@@ -439,6 +439,11 @@ export default function ProjectsListPage({ onNav }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState>({ open: false, project: null, action: 'complete' })
+  const [note, setNote] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+  const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ msg: string; show: boolean }>({ msg: '', show: false })
 
   const load = useCallback(async () => {
