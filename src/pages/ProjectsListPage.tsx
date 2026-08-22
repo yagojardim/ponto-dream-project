@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { Avatar } from '../components/ds/Avatar'
 import { NewProjectModal, type NewProjectInput } from '../components/NewProjectModal'
 import { WorkItemDetail } from '../components/WorkItemDetail'
 import { useSession } from '../data/SessionContext'
 import { can } from '../data/permissions'
 import {
-  listProjects, createProject, projectColor, projectProgress,
+  listProjects, createProject, updateProject, projectColor, projectProgress,
   type ProjectRow, type ProjectTaskRow, type ProjectProfileRow, type ProjectBoardRow,
 } from '../data/db/projects'
 
