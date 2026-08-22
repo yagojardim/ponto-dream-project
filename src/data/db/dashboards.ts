@@ -20,8 +20,10 @@ type ItemRow = Pick<
   | 'id' | 'key' | 'title' | 'description' | 'type' | 'status' | 'priority' | 'severity'
   | 'project_id' | 'sprint_id' | 'epic_id' | 'assignee_id' | 'reporter_id' | 'story_points'
   | 'is_blocked' | 'blocked_reason' | 'due_date' | 'created_at' | 'updated_at' | 'completed_at'
-  | 'acceptance_status' | 'progress'
+  | 'acceptance_status' | 'progress' | 'feature_id'
 >
+type FeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name'>
+type EpicRow = Pick<Tables['epics']['Row'], 'id' | 'project_id'>
 type DependencyRow = Pick<Tables['dependencies']['Row'], 'source_id' | 'target_id' | 'relation_type'>
 type LabelJoinRow = { work_item_id: string; labels: { name: string } | { name: string }[] | null }
 
@@ -61,6 +63,9 @@ export interface RagProject {
   daysLeft: number
   daysLabel: string
   periodEnd: string | null
+  status: string | null
+  finalizedAt: string | null
+  finalizeNote: string | null
 }
 
 export interface SprintSummary {
@@ -88,7 +93,31 @@ export interface WorkloadEntry {
   points: number
 }
 
-export interface DashboardProjectOption { id: string; name: string; color: string }
+export interface DashboardProjectOption {
+  id: string
+  name: string
+  color: string
+  status?: string | null
+  finalizedAt?: string | null
+  finalizeNote?: string | null
+}
+
+/** Agregado de funcionalidades (projetos Pro) no escopo carregado. */
+export interface FeatureAggregate {
+  total: number
+  done: number
+  totalPoints: number
+  donePoints: number
+  pct: number
+}
+
+/** Lê metadados de finalização do projeto. */
+export function projectFinalizeInfo(metadata: unknown): { finalizedAt: string | null; finalizeNote: string | null } {
+  const meta = (metadata ?? null) as Record<string, unknown> | null
+  const at = meta && typeof meta.finalized_at === 'string' ? meta.finalized_at : null
+  const note = meta && typeof meta.finalize_note === 'string' ? meta.finalize_note : null
+  return { finalizedAt: at, finalizeNote: note }
+}
 
 /** Métricas de entrega calculadas das próprias demandas (sem CI/deploy). */
 export interface DeliveryMetrics {
@@ -174,6 +203,7 @@ export interface DashboardAggregates {
   }
   velocityAvg: number
   predictability: number
+  features: FeatureAggregate
 }
 
 
@@ -249,7 +279,7 @@ export async function fetchDashboardAggregates(projectIds?: string[]): Promise<D
   if (scoped) projectsQ = projectsQ.in('id', scoped)
 
   let itemsQ = supabase.from('work_items')
-    .select('id, key, title, description, type, status, priority, severity, project_id, sprint_id, epic_id, assignee_id, reporter_id, story_points, is_blocked, blocked_reason, due_date, created_at, updated_at, completed_at, acceptance_status, progress')
+    .select('id, key, title, description, type, status, priority, severity, project_id, sprint_id, epic_id, feature_id, assignee_id, reporter_id, story_points, is_blocked, blocked_reason, due_date, created_at, updated_at, completed_at, acceptance_status, progress')
     .eq('tenant_id', tid).is('archived_at', null).order('key')
   if (scoped) itemsQ = itemsQ.in('project_id', scoped)
 
@@ -258,7 +288,7 @@ export async function fetchDashboardAggregates(projectIds?: string[]): Promise<D
     .eq('tenant_id', tid).is('archived_at', null)
   if (scoped) sprintsQ = sprintsQ.in('project_id', scoped)
 
-  const [projects, items, sprints, profiles, deps, labels, history] = await Promise.all([
+  const [projects, items, sprints, profiles, deps, labels, history, features, epics] = await Promise.all([
     projectsQ.returns<ProjectRow[]>(),
     itemsQ.returns<ItemRow[]>(),
     sprintsQ.returns<SprintRow[]>(),
@@ -270,12 +300,17 @@ export async function fetchDashboardAggregates(projectIds?: string[]): Promise<D
     supabase.from('item_status_history').select('work_item_id, to_value, created_at')
       .eq('tenant_id', tid).eq('field', 'status').eq('to_value', 'in_progress')
       .order('created_at', { ascending: true }),
+    supabase.from('features').select('id, epic_id, name')
+      .eq('tenant_id', tid).is('archived_at', null).returns<FeatureRow[]>(),
+    supabase.from('epics').select('id, project_id')
+      .eq('tenant_id', tid).is('archived_at', null).returns<EpicRow[]>(),
   ])
 
 
   const failed = [
     ['projects', projects.error], ['work_items', items.error], ['sprints', sprints.error],
     ['profiles', profiles.error], ['dependencies', deps.error], ['work_item_labels', labels.error],
+    ['features', features.error], ['epics', epics.error],
   ].find(([, err]) => err) as [string, { message: string }] | undefined
   if (failed) throw new Error(missingTableMessage(failed[0], failed[1].message))
 
@@ -340,8 +375,34 @@ export async function fetchDashboardAggregates(projectIds?: string[]): Promise<D
       daysLabel: !end ? 'sem período definido'
         : daysLeft >= 0 ? `${daysLeft}d restantes` : `${Math.abs(daysLeft)}d de atraso`,
       periodEnd: p.period_end,
+      status: p.status ?? null,
+      ...projectFinalizeInfo(p.metadata),
     }
   })
+
+  // ── Funcionalidades no escopo ─────────────────────────────────────────────
+  const projectIdSet = new Set(projectRows.map(p => p.id))
+  const epicProject = new Map((epics.data ?? []).map(e => [e.id, e.project_id]))
+  const scopedFeatures = (features.data ?? []).filter(f => {
+    const pid = f.epic_id ? epicProject.get(f.epic_id) : null
+    return pid ? projectIdSet.has(pid) : false
+  })
+  const scopedFeatureIds = new Set(scopedFeatures.map(f => f.id))
+  const featureItems = itemRows.filter(i => i.feature_id && scopedFeatureIds.has(i.feature_id))
+  const featureTotalPoints = featureItems.reduce((s2, i) => s2 + Number(i.story_points ?? 0), 0)
+  const featureDonePoints = featureItems.filter(i => i.status === 'done')
+    .reduce((s2, i) => s2 + Number(i.story_points ?? 0), 0)
+  const featuresDone = scopedFeatures.filter(f => {
+    const rows = featureItems.filter(i => i.feature_id === f.id)
+    return rows.length > 0 && rows.every(i => i.status === 'done')
+  }).length
+  const featureAggregate: FeatureAggregate = {
+    total: scopedFeatures.length,
+    done: featuresDone,
+    totalPoints: featureTotalPoints,
+    donePoints: featureDonePoints,
+    pct: featureTotalPoints > 0 ? Math.round((featureDonePoints / featureTotalPoints) * 100) : 0,
+  }
 
   const totalItems = itemRows.length
   const doneItems = itemRows.filter(i => i.status === 'done').length
@@ -436,7 +497,11 @@ export async function fetchDashboardAggregates(projectIds?: string[]): Promise<D
     delivery: computeDeliveryMetrics(deliveryRows),
     deliveryRows,
 
-    projects: projectRows.map((p, i) => ({ id: p.id, name: p.name, color: dashProjectColor(p, i) })),
+    features: featureAggregate,
+    projects: projectRows.map((p, i) => ({
+      id: p.id, name: p.name, color: dashProjectColor(p, i),
+      status: p.status ?? null, ...projectFinalizeInfo(p.metadata),
+    })),
     rag,
     consolidatedPct: totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0,
     planned: totalItems,
@@ -469,10 +534,13 @@ export async function fetchDashboardAggregates(projectIds?: string[]): Promise<D
 /** Lightweight project options for filters (tenant-scoped). */
 export async function listDashboardProjects(): Promise<DashboardProjectOption[]> {
   const { data, error } = await supabase.from('projects')
-    .select('id, name, metadata')
+    .select('id, name, status, metadata')
     .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null).order('name')
   if (error) throw new Error(missingTableMessage('projects', error.message))
-  return (data ?? []).map((p, i) => ({ id: p.id, name: p.name, color: dashProjectColor(p, i) }))
+  return (data ?? []).map((p, i) => ({
+    id: p.id, name: p.name, color: dashProjectColor(p, i),
+    status: p.status ?? null, ...projectFinalizeInfo(p.metadata),
+  }))
 }
 
 // ─── Admin Master KPIs ────────────────────────────────────────────────────────
