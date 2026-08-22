@@ -228,18 +228,39 @@ function ClientCommentInput({
       className="mt-2 rounded-xl p-3 flex flex-col gap-2"
       style={{ background: C.surface2, border: `1px solid ${C.border2}` }}
     >
-      <textarea
-        value={val}
-        onChange={e => setVal(e.target.value)}
-        placeholder="Escreva seu comentário ou feedback..."
-        rows={3}
-        autoFocus
-        className="w-full text-xs rounded-lg px-3 py-2 outline-none resize-none font-[inherit]"
-        style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.txt, caretColor: C.accent }}
-        onFocus={e => { e.currentTarget.style.borderColor = C.accent + '80' }}
-        onBlur={e => { e.currentTarget.style.borderColor = C.border }}
-        onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); setVal('') } }}
-      />
+      <div className="relative">
+        {menu && menu.items.length > 0 && (
+          <div
+            className="absolute bottom-full left-0 mb-1 z-20 rounded-lg overflow-hidden min-w-[200px]"
+            style={{ background: C.surface, border: `1px solid ${C.border2}` }}
+          >
+            {menu.items.map(it => (
+              <button
+                key={it.id}
+                onMouseDown={e => { e.preventDefault(); pickMention(it) }}
+                className="w-full text-left px-3 py-1.5 text-[11px] transition-colors"
+                style={{ color: it.id === '@todos' ? C.accent : C.txt }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = C.surface2 }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+              >
+                {it.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <textarea
+          value={val}
+          onChange={e => handleChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
+          placeholder="Escreva seu comentário ou feedback... use @ para mencionar"
+          rows={3}
+          autoFocus
+          className="w-full text-xs rounded-lg px-3 py-2 outline-none resize-none font-[inherit]"
+          style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.txt, caretColor: C.accent }}
+          onFocus={e => { e.currentTarget.style.borderColor = C.accent + '80' }}
+          onBlur={e => { e.currentTarget.style.borderColor = C.border }}
+          onKeyDown={e => { if (e.key === 'Escape') { setMenu(null); setOpen(false); setVal('') } }}
+        />
+      </div>
       <div className="flex items-center justify-between">
         <p className="text-[9px]" style={{ color: C.txt3 }}>Esc para cancelar · seu comentário é enviado ao responsável pelo projeto</p>
         <div className="flex items-center gap-2">
