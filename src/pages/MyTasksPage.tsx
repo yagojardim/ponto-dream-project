@@ -271,6 +271,33 @@ function EmptyQueue() {
   )
 }
 
+function AllDoneEmpty({ count, onShow }: { count: number; onShow: () => void }) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', padding: '60px 32px', gap: 12,
+    }}>
+      <span style={{ fontSize: 36 }}>🎉</span>
+      <p style={{ fontSize: 14, fontWeight: 600, color: T.text2, margin: 0 }}>
+        Tudo concluído por aqui
+      </p>
+      <p style={{ fontSize: 12, color: T.text3, margin: 0, textAlign: 'center' }}>
+        Você tem {count} issue{count === 1 ? '' : 's'} concluída{count === 1 ? '' : 's'}.
+      </p>
+      <button
+        onClick={onShow}
+        style={{
+          padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+          background: T.success + '18', color: T.success,
+          border: `1px solid ${T.success}44`, cursor: 'pointer',
+        }}
+      >
+        Mostrar concluídas
+      </button>
+    </div>
+  )
+}
+
 // ─── Stat strip ──────────────────────────────────────────────────────────────
 
 function StatStrip({ items }: { items: WorkItem[] }) {
