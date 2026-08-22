@@ -487,7 +487,7 @@ export default function ListPage() {
 
   const sortableCols: Partial<Record<ColId, SortKey>> = {
     key:'key', title:'title', status:'status', priority:'priority',
-    assignee:'assignee', points:'points', dueDate:'dueDate',
+    assignee:'assignee', points:'points', epic:'epic', feature:'feature', dueDate:'dueDate',
   }
 
   const selectStyle: React.CSSProperties = {
