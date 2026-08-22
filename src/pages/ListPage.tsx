@@ -471,6 +471,10 @@ export default function ListPage() {
       const epic = epics.find(e => e.id === row.epicId)
       return <div style={cellStyle}><span style={{color: epic ? epicColor(epic.color) : T.text3, fontSize:11}}>{epic?.name ?? '—'}</span></div>
     }
+    if (col === 'feature') {
+      const feature = features.find(f => f.id === row.featureId)
+      return <div style={cellStyle}><span style={{color: feature ? T.purple : T.text3, fontSize:11}}>{feature?.name ?? '—'}</span></div>
+    }
     if (col === 'sprint') {
       const sp = sprints.find(s => s.id === row.sprintId)
       return <div style={cellStyle}><span style={{color:T.text2,fontSize:11}}>{sp?.name ?? '—'}</span></div>
