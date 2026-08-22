@@ -7,6 +7,7 @@ import { can } from '../data/permissions'
 import {
   listProjects, createProject, updateProject, projectColor, projectProgress,
   type ProjectRow, type ProjectTaskRow, type ProjectProfileRow, type ProjectBoardRow,
+  type ProjectMemberRow,
 } from '../data/db/projects'
 
 // ─── View model ───────────────────────────────────────────────────────────────
@@ -117,42 +118,20 @@ function countDone(project: Project): number {
   )
 }
 
-type ProjectAction = 'complete' | 'reopen' | 'archive' | 'edit'
-
-interface ConfirmState {
-  open: boolean
-  project: Project | null
-  action: ProjectAction
-}
-
 // ─── Project row ──────────────────────────────────────────────────────────────
 interface ProjectRowProps {
   project:     Project
   canManage:   boolean
   onOpenProj:  (p: Project) => void
   onOpenTask:  (task: SubTask, project: Project) => void
-  onConfirm:   (p: Project, action: ProjectAction) => void
+  onEdit:      (p: Project) => void
 }
 
-function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm }: ProjectRowProps) {
+function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onEdit }: ProjectRowProps) {
   const [expanded, setExpanded] = useState(true)
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    function close(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
-    }
-    if (menuOpen) {
-      document.addEventListener('mousedown', close)
-      return () => document.removeEventListener('mousedown', close)
-    }
-  }, [menuOpen])
 
-  const rawStatus = project.raw.status
-  const isCompleted = rawStatus === 'completed'
-  const menuLabel = isCompleted ? 'Reabrir projeto' : 'Finalizar projeto'
 
   return (
     <>
@@ -208,14 +187,15 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm 
         </td>
         <td className="py-3 pr-4" style={{ width: 40 }}>
           {canManage && (
-            <div ref={menuRef} className="relative" onClick={e => e.stopPropagation()}>
+            <div className="relative" onClick={e => e.stopPropagation()}>
               <button
-                onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
+                onClick={e => { e.stopPropagation(); onEdit(project) }}
                 className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
                 style={{ color: '#546278' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLButtonElement).style.color = '#e8ecf4' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#546278' }}
-                aria-label="Ações do projeto"
+                aria-label="Editar projeto"
+                title="Editar projeto"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <circle cx="7" cy="3.5" r="1.2" fill="currentColor" />
@@ -223,37 +203,10 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm 
                   <circle cx="7" cy="10.5" r="1.2" fill="currentColor" />
                 </svg>
               </button>
-              {menuOpen && (
-                <div
-                  className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg fade-rise"
-                  style={{
-                    background: '#171a22',
-                    border: '1px solid #2f3547',
-                    boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
-                    minWidth: 160,
-                  }}
-                >
-                  {([
-                    ['edit', 'Editar projeto'],
-                    ['archive', 'Arquivar projeto'],
-                    [isCompleted ? 'reopen' : 'complete', menuLabel],
-                  ] as [ProjectAction, string][]).map(([action, label]) => (
-                    <button
-                      key={action}
-                      onClick={() => { setMenuOpen(false); onConfirm(project, action) }}
-                      className="w-full text-left px-3 py-2 text-[11px] transition-colors"
-                      style={{ color: '#e8ecf4' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </td>
+
       </tr>
 
       {/* Tasks and sub-tasks */}
@@ -376,6 +329,273 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm 
   )
 }
 
+// ─── Edit project modal ───────────────────────────────────────────────────────
+const inputStyle = { background: '#141926', border: '1px solid #2f3547', color: '#e8ecf4' } as const
+
+interface EditProjectModalProps {
+  project:   Project
+  tasks:     ProjectTaskRow[]
+  members:   ProjectMemberRow[]
+  profiles:  ProjectProfileRow[]
+  actorName: string
+  onClose:   () => void
+  onDone:    (msg: string, close: boolean) => Promise<void> | void
+}
+
+function EditProjectModal({ project, tasks, members, profiles, actorName, onClose, onDone }: EditProjectModalProps) {
+  const raw = project.raw
+  const own = useMemo(() => tasks.filter(t => t.project_id === raw.id), [tasks, raw.id])
+
+  const derivedStart = useMemo(() => {
+    const ds = own.map(t => t.start_date).filter((d): d is string => !!d).sort()
+    return ds[0] ?? ''
+  }, [own])
+  const derivedEnd = useMemo(() => {
+    const ds = own.map(t => t.due_date).filter((d): d is string => !!d).sort()
+    return ds[ds.length - 1] ?? ''
+  }, [own])
+
+  const team = useMemo(() => {
+    const byId = new Map(profiles.map(p => [p.id, p]))
+    const ids = new Set<string>()
+    for (const m of members) if (m.project_id === raw.id && m.profile_id) ids.add(m.profile_id)
+    for (const t of own) if (t.assignee_id) ids.add(t.assignee_id)
+    if (raw.lead_id) ids.add(raw.lead_id)
+    return [...ids].map(id => byId.get(id)).filter((p): p is ProjectProfileRow => !!p)
+  }, [members, profiles, own, raw.id, raw.lead_id])
+
+  const [desc, setDesc] = useState(raw.description ?? '')
+  const [start, setStart] = useState(raw.period_start ?? derivedStart)
+  const [end, setEnd] = useState(raw.period_end ?? derivedEnd)
+  const [mode, setMode] = useState<'none' | 'complete' | 'archive'>('none')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const isCompleted = raw.status === 'completed'
+
+  async function run(fn: () => Promise<void>, msg: string, close: boolean) {
+    if (busy) return
+    setBusy(true)
+    try {
+      await fn()
+      await onDone(msg, close)
+      setMode('none'); setNote('')
+    } catch (e) {
+      await onDone(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.', false)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const save = () => run(
+    () => updateProject(raw, {
+      description: desc.trim() || null,
+      periodStart: start || null,
+      periodEnd: end || null,
+    }, actorName),
+    'Projeto atualizado', false,
+  )
+
+  const finalize = () => {
+    const now = new Date().toISOString()
+    const metadata = {
+      ...((raw.metadata ?? {}) as Record<string, unknown>),
+      finalize_note: note.trim(), finalized_by: actorName, finalized_at: now,
+    }
+    return run(() => updateProject(raw, { status: 'completed', metadata }, actorName), 'Projeto finalizado', true)
+  }
+
+  const reopen = () => run(() => updateProject(raw, { status: 'active' }, actorName), 'Projeto reaberto', false)
+
+  const archive = () => {
+    const now = new Date().toISOString()
+    const metadata = {
+      ...((raw.metadata ?? {}) as Record<string, unknown>),
+      archive_note: note.trim(), archived_by: actorName, archived_at: now,
+    }
+    return run(() => updateProject(raw, { archivedAt: now, metadata }, actorName), 'Projeto arquivado', true)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full rounded-xl fade-rise flex flex-col"
+        style={{ maxWidth: 640, maxHeight: '85vh', background: '#1c2130', border: '1px solid #2f3547' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start gap-3 px-5 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #2f3547' }}>
+          <span className="w-2.5 h-2.5 rounded-sm mt-1.5 flex-shrink-0" style={{ background: project.color }} />
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold truncate" style={{ color: '#e8ecf4' }}>
+              Editar projeto — {project.name}
+            </h3>
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              <span className="text-[11px] px-1.5 py-0.5 rounded border" style={{ color: '#8a9ab8', borderColor: '#2f3547' }}>
+                {raw.key}
+              </span>
+              <span className="text-[11px]" style={{ color: '#546278' }}>{project.client}</span>
+              <StatusBadge status={project.status} />
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0"
+            style={{ color: '#8a9ab8', background: '#141926' }}
+            aria-label="Fechar"
+          >
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M1.5 1.5L9.5 9.5M9.5 1.5L1.5 9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Descrição</span>
+            <textarea
+              rows={4}
+              value={desc}
+              onChange={e => setDesc(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
+              style={inputStyle}
+              placeholder="Descreva o objetivo do projeto…"
+            />
+          </label>
+
+          <div>
+            <p className="text-[11px] font-medium mb-1.5" style={{ color: '#8a9ab8' }}>Período</p>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase tracking-wider" style={{ color: '#546278' }}>Início</span>
+                <input
+                  type="date" value={start} onChange={e => setStart(e.target.value)}
+                  className="w-full h-9 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase tracking-wider" style={{ color: '#546278' }}>Fim</span>
+                <input
+                  type="date" value={end} onChange={e => setEnd(e.target.value)}
+                  className="w-full h-9 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-medium mb-2" style={{ color: '#8a9ab8' }}>Equipe ativa</p>
+            {team.length === 0 ? (
+              <p className="text-xs" style={{ color: '#546278' }}>Nenhum membro atribuído</p>
+            ) : (
+              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+                {team.map(m => (
+                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: '#141926' }}>
+                    <Avatar name={m.name} size="xs" color={m.avatar_color ?? undefined} />
+                    <span className="text-xs truncate" style={{ color: '#8a9ab8' }}>{m.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => { void save() }}
+              disabled={busy}
+              className="px-3.5 py-2 rounded-lg text-xs font-medium"
+              style={{ background: '#3B82F6', color: '#fff', opacity: busy ? 0.5 : 1 }}
+            >
+              {busy ? 'Salvando…' : 'Salvar alterações'}
+            </button>
+          </div>
+
+          {/* Lifecycle zone */}
+          <div className="pt-4 flex flex-col gap-3" style={{ borderTop: '1px solid #2f3547' }}>
+            <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#546278' }}>
+              Ciclo de vida
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {isCompleted ? (
+                <button
+                  onClick={() => { void reopen() }}
+                  disabled={busy}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
+                >
+                  Reabrir projeto
+                </button>
+              ) : (
+                <button
+                  onClick={() => { setMode(m => (m === 'complete' ? 'none' : 'complete')); setNote('') }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ color: '#06C18A', border: '1px solid #0f4030', background: '#0a2520' }}
+                >
+                  Finalizar projeto
+                </button>
+              )}
+              <button
+                onClick={() => { setMode(m => (m === 'archive' ? 'none' : 'archive')); setNote('') }}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{ color: '#f0805c', border: '1px solid #4a2018', background: '#2a1210' }}
+              >
+                Arquivar projeto
+              </button>
+            </div>
+
+            {mode !== 'none' && (
+              <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ background: '#141926', border: '1px solid #2f3547' }}>
+                <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>
+                  Observação <span style={{ color: '#f0805c' }}>*</span>
+                </span>
+                <textarea
+                  rows={3}
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
+                  style={{ background: '#0f131d', border: '1px solid #2f3547', color: '#e8ecf4' }}
+                  placeholder={mode === 'archive'
+                    ? 'Por que este projeto está sendo arquivado?'
+                    : 'Registre o encerramento do projeto…'}
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => { setMode('none'); setNote('') }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => { void (mode === 'archive' ? archive() : finalize()) }}
+                    disabled={busy || note.trim().length === 0}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                    style={{
+                      background: mode === 'archive' ? '#b23c22' : '#0f7a58',
+                      color: '#fff',
+                      opacity: busy || note.trim().length === 0 ? 0.45 : 1,
+                      cursor: busy || note.trim().length === 0 ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {mode === 'archive' ? 'Confirmar arquivamento' : 'Confirmar finalização'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // ─── Mapping ──────────────────────────────────────────────────────────────────
 function buildProjects(
   rows: ProjectRow[],
@@ -434,16 +654,12 @@ export default function ProjectsListPage({ onNav }: Props) {
   const [rows, setRows] = useState<ProjectRow[]>([])
   const [tasks, setTasks] = useState<ProjectTaskRow[]>([])
   const [profiles, setProfiles] = useState<ProjectProfileRow[]>([])
+  const [members, setMembers] = useState<ProjectMemberRow[]>([])
   const [boards, setBoards] = useState<ProjectBoardRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
-  const [confirm, setConfirm] = useState<ConfirmState>({ open: false, project: null, action: 'complete' })
-  const [note, setNote] = useState('')
-  const [editDesc, setEditDesc] = useState('')
-  const [editStart, setEditStart] = useState('')
-  const [editEnd, setEditEnd] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState<Project | null>(null)
   const [toast, setToast] = useState<{ msg: string; show: boolean }>({ msg: '', show: false })
 
   const load = useCallback(async () => {
@@ -454,6 +670,7 @@ export default function ProjectsListPage({ onNav }: Props) {
       setRows(data.projects)
       setTasks(data.tasks)
       setProfiles(data.profiles)
+      setMembers(data.members)
       setBoards(data.boards)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Falha ao carregar os projetos.')
@@ -468,6 +685,11 @@ export default function ProjectsListPage({ onNav }: Props) {
     () => buildProjects(rows, tasks, profiles, boards),
     [rows, tasks, profiles, boards],
   )
+
+  // Keep the open modal in sync with reloaded data
+  useEffect(() => {
+    setEditing(prev => (prev ? projects.find(p => p.id === prev.id) ?? null : null))
+  }, [projects])
 
   const totalTasks = projects.reduce((s, p) => s + countAllTasks(p), 0)
   const inProgress = projects.filter(p => p.status === 'em progresso').length
@@ -500,58 +722,6 @@ export default function ProjectsListPage({ onNav }: Props) {
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000)
   }
 
-  function handleConfirm(p: Project, action: ProjectAction) {
-    setNote('')
-    setEditDesc(p.raw.description ?? '')
-    setEditStart(p.raw.period_start ?? '')
-    setEditEnd(p.raw.period_end ?? '')
-    setConfirm({ open: true, project: p, action })
-  }
-
-  function closeDialog() {
-    setConfirm({ open: false, project: null, action: 'complete' })
-    setNote('')
-  }
-
-  async function executeAction() {
-    if (!confirm.project || saving) return
-    const p = confirm.project
-    const action = confirm.action
-    const base = (p.raw.metadata ?? {}) as Record<string, unknown>
-    const now = new Date().toISOString()
-    setSaving(true)
-    try {
-      if (action === 'edit') {
-        await updateProject(p.raw, {
-          description: editDesc.trim() || null,
-          periodStart: editStart || null,
-          periodEnd: editEnd || null,
-        }, activeUser.name)
-        showToast('Projeto atualizado')
-      } else if (action === 'archive') {
-        await updateProject(p.raw, {
-          archivedAt: now,
-          metadata: { ...base, archive_note: note.trim(), archived_by: activeUser.name, archived_at: now },
-        }, activeUser.name)
-        showToast('Projeto arquivado')
-      } else if (action === 'complete') {
-        await updateProject(p.raw, {
-          status: 'completed',
-          metadata: { ...base, finalize_note: note.trim(), finalized_by: activeUser.name, finalized_at: now },
-        }, activeUser.name)
-        showToast('Projeto finalizado')
-      } else {
-        await updateProject(p.raw, { status: 'active' }, activeUser.name)
-        showToast('Projeto reaberto')
-      }
-      await load()
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.')
-    } finally {
-      setSaving(false)
-      closeDialog()
-    }
-  }
 
 
   return (
@@ -623,7 +793,7 @@ export default function ProjectsListPage({ onNav }: Props) {
                     canManage={canManageProjects}
                     onOpenProj={handleOpenProject}
                     onOpenTask={handleOpenTask}
-                    onConfirm={handleConfirm}
+                    onEdit={setEditing}
                   />
                 ))}
               </tbody>
@@ -657,112 +827,23 @@ export default function ProjectsListPage({ onNav }: Props) {
         />
       )}
 
-      {/* Project actions dialog */}
-      {confirm.open && confirm.project && (() => {
-        const needsNote = confirm.action === 'archive' || confirm.action === 'complete'
-        const title = confirm.action === 'edit' ? 'Editar projeto'
-          : confirm.action === 'archive' ? 'Arquivar projeto'
-          : confirm.action === 'complete' ? 'Finalizar projeto' : 'Reabrir projeto'
-        const cta = confirm.action === 'edit' ? 'Salvar'
-          : confirm.action === 'archive' ? 'Arquivar'
-          : confirm.action === 'complete' ? 'Finalizar' : 'Confirmar'
-        const disabled = saving || (needsNote && note.trim().length === 0)
-        const inputStyle = {
-          background: '#141926', border: '1px solid #2f3547', color: '#e8ecf4',
-        } as const
-        return (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
-            onClick={closeDialog}
-          >
-            <div
-              className="w-full max-w-md p-5 rounded-xl fade-rise"
-              style={{ background: '#1c2130', border: '1px solid #2f3547' }}
-              onClick={e => e.stopPropagation()}
-            >
-              <h3 className="text-sm font-semibold mb-1" style={{ color: '#e8ecf4' }}>{title}</h3>
-              <p className="text-xs mb-4 leading-relaxed" style={{ color: '#8a9ab8' }}>
-                {confirm.project.name}
-              </p>
+      {/* Unified project edit modal */}
+      {editing && (
+        <EditProjectModal
+          project={editing}
+          tasks={tasks}
+          members={members}
+          profiles={profiles}
+          actorName={activeUser.name}
+          onClose={() => setEditing(null)}
+          onDone={async (msg, close) => {
+            await load()
+            showToast(msg)
+            if (close) setEditing(null)
+          }}
+        />
+      )}
 
-              {confirm.action === 'edit' && (
-                <div className="flex flex-col gap-3 mb-5">
-                  <label className="flex flex-col gap-1">
-                    <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Descrição</span>
-                    <textarea
-                      rows={3}
-                      value={editDesc}
-                      onChange={e => setEditDesc(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
-                      style={inputStyle}
-                      placeholder="Descreva o objetivo do projeto…"
-                    />
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Data de início</span>
-                      <input
-                        type="date" value={editStart} onChange={e => setEditStart(e.target.value)}
-                        className="w-full h-8 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Data de fim</span>
-                      <input
-                        type="date" value={editEnd} onChange={e => setEditEnd(e.target.value)}
-                        className="w-full h-8 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {needsNote && (
-                <label className="flex flex-col gap-1 mb-5">
-                  <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>
-                    Observação <span style={{ color: '#f0805c' }}>*</span>
-                  </span>
-                  <textarea
-                    rows={3}
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
-                    style={inputStyle}
-                    placeholder={confirm.action === 'archive'
-                      ? 'Por que este projeto está sendo arquivado?'
-                      : 'Registre o encerramento do projeto…'}
-                  />
-                </label>
-              )}
-
-              {confirm.action === 'reopen' && (
-                <p className="text-xs mb-5 leading-relaxed" style={{ color: '#8a9ab8' }}>
-                  O projeto voltará ao status ativo.
-                </p>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={closeDialog}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                  style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => { void executeAction() }}
-                  disabled={disabled}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                  style={{ background: '#3B82F6', color: '#fff', opacity: disabled ? 0.45 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
-                >
-                  {saving ? 'Salvando…' : cta}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Inline toast */}
       {toast.show && (
