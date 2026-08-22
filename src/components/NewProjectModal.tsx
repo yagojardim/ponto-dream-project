@@ -143,6 +143,8 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
     setKey('')
     setKeyManual(false)
     setType('scrum')
+    setStartDate('')
+    setEndDate('')
     setLead(leads?.[0]?.id ?? '')
     setDesc('')
     setUsesFeatures(false)
