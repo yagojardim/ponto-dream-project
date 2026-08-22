@@ -132,8 +132,6 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onEdit }: 
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
 
 
-  const isCompleted = rawStatus === 'completed'
-  const menuLabel = isCompleted ? 'Reabrir projeto' : 'Finalizar projeto'
 
   return (
     <>
