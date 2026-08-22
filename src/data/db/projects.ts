@@ -111,6 +111,8 @@ export interface CreateProjectInput {
   leadId?: string | null
   actorName?: string
   usesFeatures?: boolean
+  periodStart?: string | null
+  periodEnd?: string | null
 }
 
 export function projectUsesFeatures(p: { metadata?: unknown } | null | undefined): boolean {
