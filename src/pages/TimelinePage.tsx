@@ -796,7 +796,11 @@ export default function TimelinePage() {
                         <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       {!top && <span style={{ width: 8, height: 8, borderRadius: '50%', background: row.color, flexShrink: 0, marginRight: 7 }} />}
-                      <span style={{ color: row.color, fontWeight: top ? 700 : 600, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.label}</span>
+                      <span style={{
+                        color: row.color, fontWeight: top ? 700 : 600, fontSize: 12,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        flex: showTitle ? 1 : undefined,
+                      }}>{row.label}</span>
                       <span style={{ marginLeft: 'auto', fontSize: 10, color: T.text3 }}>{row.count}</span>
                     </div>
                   )
@@ -812,15 +816,21 @@ export default function TimelinePage() {
                     onMouseEnter={() => setHovered(row.id)} onMouseLeave={() => setHovered(null)}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
                       <span style={{ color: T.accent, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{wi.key}</span>
-                      <span style={{ color: T.text2, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={wi.title}>{wi.title}</span>
+                      {showTitle && (
+                        <span style={{ color: T.text2, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={wi.title}>{wi.title}</span>
+                      )}
                     </div>
-                    <div style={{ width: 90, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: `${statusColor}18`, color: statusColor }}>
-                        {statusLabel}
-                      </span>
-                    </div>
-                    <div style={{ width: 66, flexShrink: 0, fontSize: 10, color: T.text3 }}>{fmtDate(span?.start)}</div>
-                    <div style={{ width: 66, flexShrink: 0, fontSize: 10, color: T.text3 }}>{fmtDate(span?.end)}</div>
+                    {showMeta && (
+                      <>
+                        <div style={{ width: 90, flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 6, background: `${statusColor}18`, color: statusColor }}>
+                            {statusLabel}
+                          </span>
+                        </div>
+                        <div style={{ width: 66, flexShrink: 0, fontSize: 10, color: T.text3 }}>{fmtDate(span?.start)}</div>
+                        <div style={{ width: 66, flexShrink: 0, fontSize: 10, color: T.text3 }}>{fmtDate(span?.end)}</div>
+                      </>
+                    )}
                   </div>
                 )
               })}
