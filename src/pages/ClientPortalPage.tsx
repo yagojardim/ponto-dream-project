@@ -152,11 +152,39 @@ function ClientCommentInput({
   const [open, setOpen] = useState(false)
   const [val, setVal]   = useState('')
   const canComment = CLIENT?.canComment ?? false
+  const pid = portalProjectId(project)
+
+  const [mentionables, setMentionables] = useState<MentionProfile[]>([])
+  const [picked, setPicked] = useState<MentionProfile[]>([])
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    if (!open || !pid) { setMentionables([]); return }
+    void listProjectResponsibleProfiles(pid).then(rows => { if (alive) setMentionables(rows) })
+    return () => { alive = false }
+  }, [open, pid])
+
+  function handleChange(text: string, caret: number) {
+    setVal(text)
+    const q = mentionQuery(text, caret)
+    setMenu(q ? { items: matchPeople(mentionables, q.query), start: q.start } : null)
+  }
+
+  function pickMention(item: MentionMenuItem) {
+    if (!menu) return
+    const label = item.id === '@todos' ? 'todos' : item.name
+    setVal(`${val.slice(0, menu.start)}@${label} `)
+    if (item.id !== '@todos') {
+      setPicked(prev => (prev.some(p => p.id === item.id) ? prev : [...prev, item as MentionProfile]))
+    }
+    setMenu(null)
+  }
 
   async function send() {
     const body = val.trim()
-    const pid = portalProjectId(project)
     if (!body || !pid) return
+    const mentions = resolveMentions(body, picked, mentionables)
     await addClientMessage({
       projectId: pid,
       body,
@@ -164,11 +192,15 @@ function ClientCommentInput({
       source:    'client',
       itemId,
       itemTitle,
+      mentions,
     })
     onSent(body)
     setVal('')
+    setPicked([])
+    setMenu(null)
     setOpen(false)
   }
+
 
 
   if (!canComment) {
@@ -196,18 +228,39 @@ function ClientCommentInput({
       className="mt-2 rounded-xl p-3 flex flex-col gap-2"
       style={{ background: C.surface2, border: `1px solid ${C.border2}` }}
     >
-      <textarea
-        value={val}
-        onChange={e => setVal(e.target.value)}
-        placeholder="Escreva seu comentário ou feedback..."
-        rows={3}
-        autoFocus
-        className="w-full text-xs rounded-lg px-3 py-2 outline-none resize-none font-[inherit]"
-        style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.txt, caretColor: C.accent }}
-        onFocus={e => { e.currentTarget.style.borderColor = C.accent + '80' }}
-        onBlur={e => { e.currentTarget.style.borderColor = C.border }}
-        onKeyDown={e => { if (e.key === 'Escape') { setOpen(false); setVal('') } }}
-      />
+      <div className="relative">
+        {menu && menu.items.length > 0 && (
+          <div
+            className="absolute bottom-full left-0 mb-1 z-20 rounded-lg overflow-hidden min-w-[200px]"
+            style={{ background: C.surface, border: `1px solid ${C.border2}` }}
+          >
+            {menu.items.map(it => (
+              <button
+                key={it.id}
+                onMouseDown={e => { e.preventDefault(); pickMention(it) }}
+                className="w-full text-left px-3 py-1.5 text-[11px] transition-colors"
+                style={{ color: it.id === '@todos' ? C.accent : C.txt }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = C.surface2 }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+              >
+                {it.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <textarea
+          value={val}
+          onChange={e => handleChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
+          placeholder="Escreva seu comentário ou feedback... use @ para mencionar"
+          rows={3}
+          autoFocus
+          className="w-full text-xs rounded-lg px-3 py-2 outline-none resize-none font-[inherit]"
+          style={{ background: C.bg, border: `1px solid ${C.border}`, color: C.txt, caretColor: C.accent }}
+          onFocus={e => { e.currentTarget.style.borderColor = C.accent + '80' }}
+          onBlur={e => { e.currentTarget.style.borderColor = C.border }}
+          onKeyDown={e => { if (e.key === 'Escape') { setMenu(null); setOpen(false); setVal('') } }}
+        />
+      </div>
       <div className="flex items-center justify-between">
         <p className="text-[9px]" style={{ color: C.txt3 }}>Esc para cancelar · seu comentário é enviado ao responsável pelo projeto</p>
         <div className="flex items-center gap-2">
@@ -1908,7 +1961,7 @@ function PortalHeader({
           A
         </div>
         <div>
-          <p className="text-sm font-bold leading-tight" style={{ color: C.txt }}>Altech Agency</p>
+          <p className="text-sm font-bold leading-tight" style={{ color: C.txt }}>Dash View</p>
           <p className="text-[10px]" style={{ color: C.txt3 }}>Portal do cliente</p>
         </div>
       </div>
@@ -1940,9 +1993,18 @@ function PortalHeader({
           onMouseLeave={e => { if (!isChatMode) { (e.currentTarget as HTMLButtonElement).style.borderColor = C.border; (e.currentTarget as HTMLButtonElement).style.color = C.txt2 } }}
           aria-label={isChatMode ? 'Voltar ao dashboard' : 'Abrir mensagens'}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M12 9a1 1 0 01-1 1H4l-2 2V3a1 1 0 011-1h8a1 1 0 011 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-          </svg>
+          {isChatMode ? (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="2" y="2" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="8" y="2" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="2" y="8" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="8" y="8" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M12 9a1 1 0 01-1 1H4l-2 2V3a1 1 0 011-1h8a1 1 0 011 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+            </svg>
+          )}
           <span>{isChatMode ? 'Dashboard' : 'Mensagens'}</span>
           {!isChatMode && unreadCount > 0 && (
             <span
