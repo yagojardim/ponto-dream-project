@@ -334,7 +334,7 @@ export default function ListPage() {
 
   const colW: Record<ColId, number | string> = {
     key: 90, type: 44, title: 260, status: 130, priority: 110,
-    assignee: 90, points: 56, epic: 130, sprint: 110, labels: 120, dueDate: 80,
+    assignee: 90, points: 56, epic: 130, feature: 130, sprint: 110, labels: 120, dueDate: 80,
   }
 
   function renderCell(row: Row, col: ColId) {
