@@ -270,7 +270,14 @@ export default function TimelinePage() {
   const [dragging, setDragging] = useState<{ id: string; startX: number; orig: Span } | null>(null)
   const [saving, setSaving] = useState<Set<string>>(new Set())
 
+  // Scroll-sync + resizable sidebar refs/state
+  const leftBodyRef = useRef<HTMLDivElement>(null)
+  const rightBodyRef = useRef<HTMLDivElement>(null)
+  const syncing = useRef(false)
+  const [sidebarWidth, setSidebarWidth] = useState(470)
+
   // View preferences (persisted in the database, per user)
+
   const [zoom, setZoom] = useState<Zoom>('month')
   const [groupBy, setGroupBy] = useState<GroupBy>('project-epic')
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
@@ -625,7 +632,36 @@ export default function TimelinePage() {
       .finally(() => setSaving(s => { const n = new Set(s); n.delete(id); return n }))
   }, [dragging, spans, data])
 
+  // ── Scroll sync between sidebar and grid ────────────────────────────────────
+  function syncScroll(from: 'left' | 'right') {
+    if (syncing.current) return
+    const src = from === 'left' ? leftBodyRef.current : rightBodyRef.current
+    const dst = from === 'left' ? rightBodyRef.current : leftBodyRef.current
+    if (!src || !dst) return
+    syncing.current = true
+    dst.scrollTop = src.scrollTop
+    requestAnimationFrame(() => { syncing.current = false })
+  }
+
+  // ── Resizable sidebar ───────────────────────────────────────────────────────
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = sidebarWidth
+    function onMove(ev: MouseEvent) {
+      const next = Math.min(800, Math.max(280, startW + (ev.clientX - startX)))
+      setSidebarWidth(next)
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }
+
   const gridW = totalDays * DAY_PX
+
   const svgH = rows.length * ROW_H
 
   const rangeLabel = visibleItems.length > 0
@@ -726,14 +762,15 @@ export default function TimelinePage() {
       {!loading && !error && (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Sidebar */}
-          <div style={{ width: 470, flexShrink: 0, borderRight: `1px solid ${T.border}`, background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ width: sidebarWidth, flexShrink: 0, background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ height: HEADER_H, borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0, gap: 0 }}>
               <span style={{ flex: 1, color: T.text3, fontSize: 10, fontWeight: 700 }}>{sidebarTitle}</span>
               <span style={{ width: 90, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Status</span>
               <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Início</span>
               <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Venc.</span>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            <div ref={leftBodyRef} onScroll={() => syncScroll('left')} style={{ flex: 1, overflowY: 'auto' }}>
+
               {rows.map(row => {
                 if (row.kind === 'group') {
                   const isCollapsed = collapsed.has(row.id)
@@ -788,8 +825,18 @@ export default function TimelinePage() {
             </div>
           </div>
 
+          {/* Resize handle */}
+          <div
+            onMouseDown={startResize}
+            style={{ width: 6, cursor: 'col-resize', flexShrink: 0, background: 'transparent',
+              borderRight: `1px solid ${T.border}` }}
+            onMouseEnter={e => (e.currentTarget.style.background = T.accent + '40')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          />
+
           {/* Timeline grid */}
-          <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', position: 'relative' }}>
+          <div ref={rightBodyRef} onScroll={() => syncScroll('right')} style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', position: 'relative' }}>
+
             {rows.length === 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: T.text3, fontSize: 13 }}>
                 Nenhum item no período
