@@ -270,7 +270,14 @@ export default function TimelinePage() {
   const [dragging, setDragging] = useState<{ id: string; startX: number; orig: Span } | null>(null)
   const [saving, setSaving] = useState<Set<string>>(new Set())
 
+  // Scroll-sync + resizable sidebar refs/state
+  const leftBodyRef = useRef<HTMLDivElement>(null)
+  const rightBodyRef = useRef<HTMLDivElement>(null)
+  const syncing = useRef(false)
+  const [sidebarWidth, setSidebarWidth] = useState(470)
+
   // View preferences (persisted in the database, per user)
+
   const [zoom, setZoom] = useState<Zoom>('month')
   const [groupBy, setGroupBy] = useState<GroupBy>('project-epic')
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
