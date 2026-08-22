@@ -45,7 +45,7 @@ function hashColor(name: string) {
   return palette[Math.abs(h) % palette.length]
 }
 
-export function Avatar({ name, src, size = 'md', presence = 'none', color }: AvatarProps) {
+export function Avatar({ name, src, size = 'md', presence = 'none', color, initials: initialsProp }: AvatarProps) {
   const s = sizes[size]
   const bg = color ?? hashColor(name)
   return (
