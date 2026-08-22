@@ -1766,13 +1766,16 @@ function ProjectSelector({ selected, onToggle }: { selected: Set<string>; onTogg
 function PortalHeader({
   selected, onToggle, notifTick, onNotifRead, unreadCount,
   isChatMode, onChatToggle, onLogout, onChangePasswordRequest,
+  onOpenChat,
 }: {
   selected: Set<string>; onToggle: (id: string) => void
   notifTick: number; onNotifRead: (msg: string) => void
   unreadCount: number
   isChatMode: boolean; onChatToggle: () => void
   onLogout: () => void; onChangePasswordRequest: () => void
+  onOpenChat: (projectId: string) => void
 }) {
+
 
 
   return (
