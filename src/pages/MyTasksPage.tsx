@@ -527,7 +527,11 @@ export default function MyTasksPage({ onNav }: { onNav?: (view: string, targetId
         ) : error ? (
           <div style={{ padding: '48px 32px', textAlign: 'center', fontSize: 13, color: T.crit }}>Erro ao carregar: {error}</div>
         ) : filtered.length === 0 ? (
-          <EmptyQueue />
+          items.length > 0 ? (
+            <AllDoneEmpty count={items.length} onShow={() => setHide(false)} />
+          ) : (
+            <EmptyQueue />
+          )
         ) : (
           groups.map(g => (
             <GroupSection
