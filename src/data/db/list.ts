@@ -13,9 +13,10 @@ type Tables = Database['public']['Tables']
 export type ListItemRow = Pick<
   Tables['work_items']['Row'],
   'id' | 'key' | 'title' | 'type' | 'status' | 'priority' | 'assignee_id' | 'story_points'
-  | 'epic_id' | 'sprint_id' | 'project_id' | 'due_date' | 'is_blocked'
+  | 'epic_id' | 'feature_id' | 'sprint_id' | 'project_id' | 'due_date' | 'is_blocked'
 >
 export type ListEpicRow = Pick<Tables['epics']['Row'], 'id' | 'project_id' | 'name' | 'color'>
+export type ListFeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name'>
 export type ListSprintRow = Pick<Tables['sprints']['Row'], 'id' | 'project_id' | 'name' | 'state'>
 export type ListProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
 export type ListProjectRow = Pick<Tables['projects']['Row'], 'id' | 'key' | 'name'>
@@ -29,6 +30,7 @@ export interface ListFilters {
   assigneeId?: string
   sprintId?: string
   epicId?: string
+  featureId?: string
   search?: string
 }
 
@@ -36,6 +38,7 @@ export interface ListData {
   items: ListItemRow[]
   labels: ListLabelRow[]
   epics: ListEpicRow[]
+  features: ListFeatureRow[]
   sprints: ListSprintRow[]
   profiles: ListProfileRow[]
   projects: ListProjectRow[]
