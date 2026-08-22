@@ -164,6 +164,7 @@ export default function ListPage() {
   const [items, setItems] = useState<ListItemRow[]>([])
   const [labels, setLabels] = useState<ListLabelRow[]>([])
   const [epics, setEpics] = useState<ListEpicRow[]>([])
+  const [features, setFeatures] = useState<ListFeatureRow[]>([])
   const [sprints, setSprints] = useState<ListSprintRow[]>([])
   const [profiles, setProfiles] = useState<ListProfileRow[]>([])
   const [projects, setProjects] = useState<ListProjectRow[]>([])
@@ -186,8 +187,9 @@ export default function ListPage() {
     assigneeId: fAssignee || undefined,
     sprintId: fSprint || undefined,
     epicId: fEpic || undefined,
+    featureId: fFeature || undefined,
     search: search.trim() || undefined,
-  }), [fProject, fStatus, fPriority, fType, fAssignee, fSprint, fEpic, search])
+  }), [fProject, fStatus, fPriority, fType, fAssignee, fSprint, fEpic, fFeature, search])
 
   const load = useCallback(async (f: ListFilters) => {
     setLoading(true)
@@ -197,6 +199,7 @@ export default function ListPage() {
       setItems(data.items)
       setLabels(data.labels)
       setEpics(data.epics)
+      setFeatures(data.features)
       setSprints(data.sprints)
       setProfiles(data.profiles)
       setProjects(data.projects)
