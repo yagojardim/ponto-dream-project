@@ -152,11 +152,39 @@ function ClientCommentInput({
   const [open, setOpen] = useState(false)
   const [val, setVal]   = useState('')
   const canComment = CLIENT?.canComment ?? false
+  const pid = portalProjectId(project)
+
+  const [mentionables, setMentionables] = useState<MentionProfile[]>([])
+  const [picked, setPicked] = useState<MentionProfile[]>([])
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    if (!open || !pid) { setMentionables([]); return }
+    void listProjectResponsibleProfiles(pid).then(rows => { if (alive) setMentionables(rows) })
+    return () => { alive = false }
+  }, [open, pid])
+
+  function handleChange(text: string, caret: number) {
+    setVal(text)
+    const q = mentionQuery(text, caret)
+    setMenu(q ? { items: matchPeople(mentionables, q.query), start: q.start } : null)
+  }
+
+  function pickMention(item: MentionMenuItem) {
+    if (!menu) return
+    const label = item.id === '@todos' ? 'todos' : item.name
+    setVal(`${val.slice(0, menu.start)}@${label} `)
+    if (item.id !== '@todos') {
+      setPicked(prev => (prev.some(p => p.id === item.id) ? prev : [...prev, item as MentionProfile]))
+    }
+    setMenu(null)
+  }
 
   async function send() {
     const body = val.trim()
-    const pid = portalProjectId(project)
     if (!body || !pid) return
+    const mentions = resolveMentions(body, picked, mentionables)
     await addClientMessage({
       projectId: pid,
       body,
@@ -164,11 +192,15 @@ function ClientCommentInput({
       source:    'client',
       itemId,
       itemTitle,
+      mentions,
     })
     onSent(body)
     setVal('')
+    setPicked([])
+    setMenu(null)
     setOpen(false)
   }
+
 
 
   if (!canComment) {
