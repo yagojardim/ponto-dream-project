@@ -417,7 +417,8 @@ interface Props {
 }
 
 export default function ProjectsListPage({ onNav }: Props) {
-  const { activeUser, tenantName } = useSession()
+  const { activeUser, isTenantOwner } = useSession()
+  const canManageProjects = can(activeUser.permissions, 'project:create') || isTenantOwner
   const canEdit = can(activeUser.permissions, 'edit:workitem')
 
   const [newProjOpen, setNewProjOpen] = useState(false)
@@ -428,6 +429,8 @@ export default function ProjectsListPage({ onNav }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<ConfirmState>({ open: false, project: null, action: 'complete' })
+  const [toast, setToast] = useState<{ msg: string; show: boolean }>({ msg: '', show: false })
 
   const load = useCallback(async () => {
     setLoading(true)
