@@ -556,7 +556,7 @@ export default function ProjectsListPage({ onNav }: Props) {
               <thead>
                 <tr style={{ borderBottom: '1px solid #1c2c45', background: 'rgba(255,255,255,0.02)' }}>
                   <th style={{ width: 24 }} />
-                  {['Nome', 'Período', 'Progresso', 'Status', 'Responsável'].map(h => (
+                  {['Nome', 'Período', 'Progresso', 'Status', 'Responsável', 'Ações'].map(h => (
                     <th
                       key={h}
                       className="py-2.5 pr-6 text-left text-[10px] font-semibold uppercase tracking-wider"
@@ -572,8 +572,10 @@ export default function ProjectsListPage({ onNav }: Props) {
                   <ProjectListRow
                     key={p.id}
                     project={p}
+                    canManage={canManageProjects}
                     onOpenProj={handleOpenProject}
                     onOpenTask={handleOpenTask}
+                    onConfirm={handleConfirm}
                   />
                 ))}
               </tbody>
