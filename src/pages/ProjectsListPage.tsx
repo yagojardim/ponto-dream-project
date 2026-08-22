@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { toast } from 'sonner'
 import { Avatar } from '../components/ds/Avatar'
 import { NewProjectModal, type NewProjectInput } from '../components/NewProjectModal'
 import { WorkItemDetail } from '../components/WorkItemDetail'
