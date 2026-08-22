@@ -14,8 +14,9 @@ export type EpicRow = Pick<Tables['epics']['Row'], 'id' | 'project_id' | 'name' 
 export type SprintRow = Pick<Tables['sprints']['Row'], 'id' | 'project_id' | 'name' | 'start_date' | 'end_date' | 'state'>
 export type WorkItemRow = Pick<
   Tables['work_items']['Row'],
-  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'epic_id' | 'sprint_id' | 'start_date' | 'due_date' | 'assignee_id' | 'is_blocked'
+  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'epic_id' | 'feature_id' | 'sprint_id' | 'start_date' | 'due_date' | 'assignee_id' | 'is_blocked'
 >
+export type TimelineFeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name'>
 export type DependencyRow = Pick<Tables['dependencies']['Row'], 'source_id' | 'target_id' | 'relation_type'>
 export type ProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
 
@@ -24,6 +25,7 @@ export interface TimelineData {
   epics: EpicRow[]
   sprints: SprintRow[]
   workItems: WorkItemRow[]
+  features: TimelineFeatureRow[]
   dependencies: DependencyRow[]
   profiles: ProfileRow[]
 }
@@ -70,22 +72,24 @@ function missingTableMessage(table: string, message: string): string {
 export async function fetchTimelineData(): Promise<TimelineData> {
   const tid = DEFAULT_TENANT_ID
 
-  const [projects, epics, sprints, workItems, dependencies, profiles] = await Promise.all([
+  const [projects, epics, sprints, workItems, features, dependencies, profiles] = await Promise.all([
     supabase.from('projects').select('id, name, period_start, period_end, status, metadata, created_at')
       .eq('tenant_id', tid).is('archived_at', null).order('name'),
     supabase.from('epics').select('id, project_id, name, color')
       .eq('tenant_id', tid).is('archived_at', null).order('name'),
     supabase.from('sprints').select('id, project_id, name, start_date, end_date, state')
       .eq('tenant_id', tid).is('archived_at', null).order('start_date', { ascending: true, nullsFirst: false }),
-    supabase.from('work_items').select('id, key, title, type, status, project_id, epic_id, sprint_id, start_date, due_date, assignee_id, is_blocked')
+    supabase.from('work_items').select('id, key, title, type, status, project_id, epic_id, feature_id, sprint_id, start_date, due_date, assignee_id, is_blocked')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
+    supabase.from('features').select('id, epic_id, name')
+      .eq('tenant_id', tid).is('archived_at', null).order('name'),
     supabase.from('dependencies').select('source_id, target_id, relation_type').eq('tenant_id', tid),
     supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
   ])
 
   const failed = [
     ['projects', projects.error], ['epics', epics.error], ['sprints', sprints.error],
-    ['work_items', workItems.error], ['dependencies', dependencies.error], ['profiles', profiles.error],
+    ['work_items', workItems.error], ['features', features.error], ['dependencies', dependencies.error], ['profiles', profiles.error],
   ].find(([, err]) => err) as [string, { message: string }] | undefined
 
   if (failed) throw new Error(missingTableMessage(failed[0], failed[1].message))
@@ -95,6 +99,7 @@ export async function fetchTimelineData(): Promise<TimelineData> {
     epics: epics.data ?? [],
     sprints: ((sprints.data ?? []) as SprintRow[]).slice().sort(sortSprintsByStartDate),
     workItems: workItems.data ?? [],
+    features: features.data ?? [],
     dependencies: dependencies.data ?? [],
     profiles: profiles.data ?? [],
   }
