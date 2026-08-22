@@ -233,15 +233,22 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm 
                     minWidth: 160,
                   }}
                 >
-                  <button
-                    onClick={() => { setMenuOpen(false); onConfirm(project, isCompleted ? 'reopen' : 'complete') }}
-                    className="w-full text-left px-3 py-2 text-[11px] transition-colors"
-                    style={{ color: '#e8ecf4' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                  >
-                    {menuLabel}
-                  </button>
+                  {([
+                    ['edit', 'Editar projeto'],
+                    ['archive', 'Arquivar projeto'],
+                    [isCompleted ? 'reopen' : 'complete', menuLabel],
+                  ] as [ProjectAction, string][]).map(([action, label]) => (
+                    <button
+                      key={action}
+                      onClick={() => { setMenuOpen(false); onConfirm(project, action) }}
+                      className="w-full text-left px-3 py-2 text-[11px] transition-colors"
+                      style={{ color: '#e8ecf4' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
