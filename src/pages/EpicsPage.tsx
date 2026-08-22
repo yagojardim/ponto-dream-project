@@ -808,7 +808,7 @@ export default function EpicsPage() {
                             {isExpanded && (
                               <div style={{ marginTop: 16, borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
                                 {hasFeatures ? (
-                                {(() => {
+                                  (() => {
                                   const groups: { id: string; name: string; list: typeof epicItems }[] = [
                                     ...features.map(f => ({ id: f.id, name: f.name, list: epicItems.filter(i => i.feature_id === f.id) })),
                                   ]
@@ -854,7 +854,7 @@ export default function EpicsPage() {
                                       })}
                                     </div>
                                   )
-                                })()}
+                                })()
                                 ) : epicItems.length === 0 ? (
                                   <p style={{ fontSize: 13, color: T.text3 }}>Nenhuma issue neste épico.</p>
                                 ) : (
