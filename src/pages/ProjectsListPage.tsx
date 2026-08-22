@@ -35,6 +35,7 @@ interface Project {
   responsible: string
   boardId:     string | null
   tasks:       SubTask[]
+  raw:         ProjectRow
 }
 
 const ITEM_STATUS_MAP: Record<string, TaskStatus> = {
