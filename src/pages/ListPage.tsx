@@ -6,8 +6,8 @@ import { useSession } from '../data/SessionContext'
 import { can } from '../data/permissions'
 import {
   listWorkItems, epicColor, PRIORITY_FROM_DB, uiStatusFromDb,
-  type ListItemRow, type ListEpicRow, type ListSprintRow, type ListProfileRow,
-  type ListProjectRow, type ListLabelRow, type ListFilters,
+  type ListItemRow, type ListEpicRow, type ListFeatureRow, type ListSprintRow,
+  type ListProfileRow, type ListProjectRow, type ListLabelRow, type ListFilters,
 } from '../data/db/list'
 import { updateWorkItemField } from '../data/db/workItem'
 
