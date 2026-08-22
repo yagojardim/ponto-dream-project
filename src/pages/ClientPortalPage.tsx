@@ -1838,9 +1838,10 @@ function PortalHeader({
           )}
         </button>
 
-        <ClientNotifBell tick={notifTick} onRead={onNotifRead} />
+        <ClientNotifBell tick={notifTick} onRead={onNotifRead} onOpenChat={onOpenChat} />
 
         <ClientProfileMenu onLogout={onLogout} onChangePassword={onChangePasswordRequest} />
+
       </div>
     </header>
   )
