@@ -35,7 +35,7 @@ function fmtDate(d?: string): string {
   return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
-function fmtDateFull(d?: string): string {
+function fmtDateFull(d?: string | null): string {
   if (!d) return '—'
   const dt = new Date(d)
   return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
