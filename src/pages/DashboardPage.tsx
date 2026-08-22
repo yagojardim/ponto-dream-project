@@ -35,6 +35,12 @@ function fmtDate(d?: string): string {
   return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
+function fmtDateFull(d?: string): string {
+  if (!d) return '—'
+  const dt = new Date(d)
+  return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 // ─── Project multi-select dropdown ───────────────────────────────────────────
 interface ProjectOption { id: string; name: string; color: string }
 
