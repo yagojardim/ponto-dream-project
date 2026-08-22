@@ -6,22 +6,22 @@ import { useSession } from '../data/SessionContext'
 import { can } from '../data/permissions'
 import {
   listWorkItems, epicColor, PRIORITY_FROM_DB, uiStatusFromDb,
-  type ListItemRow, type ListEpicRow, type ListSprintRow, type ListProfileRow,
-  type ListProjectRow, type ListLabelRow, type ListFilters,
+  type ListItemRow, type ListEpicRow, type ListFeatureRow, type ListSprintRow,
+  type ListProfileRow, type ListProjectRow, type ListLabelRow, type ListFilters,
 } from '../data/db/list'
 import { updateWorkItemField } from '../data/db/workItem'
 
-type SortKey = 'key' | 'title' | 'status' | 'priority' | 'assignee' | 'points' | 'epic' | 'sprint' | 'dueDate'
+type SortKey = 'key' | 'title' | 'status' | 'priority' | 'assignee' | 'points' | 'epic' | 'feature' | 'sprint' | 'dueDate'
 type SortDir = 'asc' | 'desc'
 type GroupBy = 'none' | 'sprint' | 'epic'
 
-const ALL_COLS = ['key','type','title','status','priority','assignee','points','epic','sprint','labels','dueDate'] as const
+const ALL_COLS = ['key','type','title','status','priority','assignee','points','epic','feature','sprint','labels','dueDate'] as const
 type ColId = typeof ALL_COLS[number]
 
 const DEFAULT_COLS: ColId[] = ['key','type','title','status','priority','assignee','points']
 const COL_LABELS: Record<ColId, string> = {
   key:'Key', type:'Tipo', title:'Título', status:'Status', priority:'Prioridade',
-  assignee:'Responsável', points:'Pts', epic:'Épico', sprint:'Sprint', labels:'Labels', dueDate:'Venc.',
+  assignee:'Responsável', points:'Pts', epic:'Épico', feature:'Funcionalidade', sprint:'Sprint', labels:'Labels', dueDate:'Venc.',
 }
 
 /** Keys are UI status values (same format used by rows and by the filters). */
@@ -72,6 +72,7 @@ interface Row {
   assignee: string
   points: number
   epicId: string | null
+  featureId: string | null
   sprintId: string | null
   labels: string[]
   dueDate: string
@@ -120,6 +121,7 @@ function buildRows(
       assignee: p?.avatar_initials ?? (p?.name.slice(0, 2).toUpperCase() ?? '—'),
       points: Number(i.story_points ?? 0),
       epicId: i.epic_id,
+      featureId: i.feature_id,
       sprintId: i.sprint_id,
       labels: byItem.get(i.id) ?? [],
       dueDate: fmtDate(i.due_date),
@@ -151,6 +153,7 @@ export default function ListPage() {
   const [fAssignee, setFAssignee] = useState('')
   const [fSprint, setFSprint] = useState('')
   const [fEpic, setFEpic] = useState('')
+  const [fFeature, setFFeature] = useState('')
   // Deep link from a report/KPI card: open the list already filtered.
   useEffect(() => {
     const intent = takeReportNav('list')
@@ -162,6 +165,7 @@ export default function ListPage() {
   const [items, setItems] = useState<ListItemRow[]>([])
   const [labels, setLabels] = useState<ListLabelRow[]>([])
   const [epics, setEpics] = useState<ListEpicRow[]>([])
+  const [features, setFeatures] = useState<ListFeatureRow[]>([])
   const [sprints, setSprints] = useState<ListSprintRow[]>([])
   const [profiles, setProfiles] = useState<ListProfileRow[]>([])
   const [projects, setProjects] = useState<ListProjectRow[]>([])
@@ -184,8 +188,9 @@ export default function ListPage() {
     assigneeId: fAssignee || undefined,
     sprintId: fSprint || undefined,
     epicId: fEpic || undefined,
+    featureId: fFeature || undefined,
     search: search.trim() || undefined,
-  }), [fProject, fStatus, fPriority, fType, fAssignee, fSprint, fEpic, search])
+  }), [fProject, fStatus, fPriority, fType, fAssignee, fSprint, fEpic, fFeature, search])
 
   const load = useCallback(async (f: ListFilters) => {
     setLoading(true)
@@ -195,6 +200,7 @@ export default function ListPage() {
       setItems(data.items)
       setLabels(data.labels)
       setEpics(data.epics)
+      setFeatures(data.features)
       setSprints(data.sprints)
       setProfiles(data.profiles)
       setProjects(data.projects)
@@ -214,6 +220,7 @@ export default function ListPage() {
 
   const sorted = useMemo(() => {
     const epicName = (id: string | null) => epics.find(e => e.id === id)?.name ?? ''
+    const featureName = (id: string | null) => features.find(f => f.id === id)?.name ?? ''
     const sprintName = (id: string | null) => sprints.find(s => s.id === id)?.name ?? ''
     const val = (r: Row): string => {
       switch (sortKey) {
@@ -224,6 +231,7 @@ export default function ListPage() {
         case 'assignee': return r.assignee
         case 'points': return String(r.points).padStart(6, '0')
         case 'epic': return epicName(r.epicId)
+        case 'feature': return featureName(r.featureId)
         case 'sprint': return sprintName(r.sprintId)
         case 'dueDate': return r.dueDate
       }
@@ -231,7 +239,7 @@ export default function ListPage() {
     return [...rows].sort((a, b) => sortDir === 'asc'
       ? val(a).localeCompare(val(b))
       : val(b).localeCompare(val(a)))
-  }, [rows, sortKey, sortDir, epics, sprints])
+  }, [rows, sortKey, sortDir, epics, features, sprints])
 
   function toggleSort(k: SortKey) {
     if (sortKey === k) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -295,6 +303,7 @@ export default function ListPage() {
       case 'assignee': return profiles.find(p => p.id === row.assigneeId)?.name ?? '—'
       case 'points': return String(row.points)
       case 'epic': return epics.find(e => e.id === row.epicId)?.name ?? '—'
+      case 'feature': return features.find(f => f.id === row.featureId)?.name ?? '—'
       case 'sprint': return sprints.find(s => s.id === row.sprintId)?.name ?? '—'
       case 'labels': return row.labels.join('; ')
       case 'dueDate': return row.dueDate
@@ -326,7 +335,7 @@ export default function ListPage() {
 
   const colW: Record<ColId, number | string> = {
     key: 90, type: 44, title: 260, status: 130, priority: 110,
-    assignee: 90, points: 56, epic: 130, sprint: 110, labels: 120, dueDate: 80,
+    assignee: 90, points: 56, epic: 130, feature: 130, sprint: 110, labels: 120, dueDate: 80,
   }
 
   function renderCell(row: Row, col: ColId) {
@@ -462,6 +471,10 @@ export default function ListPage() {
       const epic = epics.find(e => e.id === row.epicId)
       return <div style={cellStyle}><span style={{color: epic ? epicColor(epic.color) : T.text3, fontSize:11}}>{epic?.name ?? '—'}</span></div>
     }
+    if (col === 'feature') {
+      const feature = features.find(f => f.id === row.featureId)
+      return <div style={cellStyle}><span style={{color: feature ? T.purple : T.text3, fontSize:11}}>{feature?.name ?? '—'}</span></div>
+    }
     if (col === 'sprint') {
       const sp = sprints.find(s => s.id === row.sprintId)
       return <div style={cellStyle}><span style={{color:T.text2,fontSize:11}}>{sp?.name ?? '—'}</span></div>
@@ -479,7 +492,7 @@ export default function ListPage() {
 
   const sortableCols: Partial<Record<ColId, SortKey>> = {
     key:'key', title:'title', status:'status', priority:'priority',
-    assignee:'assignee', points:'points', dueDate:'dueDate',
+    assignee:'assignee', points:'points', epic:'epic', feature:'feature', dueDate:'dueDate',
   }
 
   const selectStyle: React.CSSProperties = {
@@ -526,6 +539,10 @@ export default function ListPage() {
         <select value={fEpic} onChange={e => setFEpic(e.target.value)} style={selectStyle} aria-label="Épico">
           <option value="">Épico</option>
           {epics.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+        </select>
+        <select value={fFeature} onChange={e => setFFeature(e.target.value)} style={selectStyle} aria-label="Funcionalidade">
+          <option value="">Funcionalidade</option>
+          {features.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
         </select>
         <span style={{color:T.text3,fontSize:13,marginLeft:4}}>Agrupar:</span>
         {(['none','sprint','epic'] as GroupBy[]).map(g => (
