@@ -481,6 +481,30 @@ export default function ProjectsListPage({ onNav }: Props) {
     await load()
   }
 
+  function showToast(msg: string) {
+    setToast({ msg, show: true })
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000)
+  }
+
+  function handleConfirm(p: Project, action: 'complete' | 'reopen') {
+    setConfirm({ open: true, project: p, action })
+  }
+
+  async function executeStatusUpdate() {
+    if (!confirm.project) return
+    const p = confirm.project
+    const nextStatus = confirm.action === 'complete' ? 'completed' : 'active'
+    try {
+      await updateProject(p.raw, { status: nextStatus }, activeUser.name)
+      await load()
+      showToast(confirm.action === 'complete' ? 'Projeto finalizado' : 'Projeto reaberto')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.')
+    } finally {
+      setConfirm({ open: false, project: null, action: 'complete' })
+    }
+  }
+
 
   return (
     <>
