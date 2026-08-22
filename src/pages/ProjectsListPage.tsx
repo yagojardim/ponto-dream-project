@@ -7,6 +7,7 @@ import { can } from '../data/permissions'
 import {
   listProjects, createProject, updateProject, projectColor, projectProgress,
   type ProjectRow, type ProjectTaskRow, type ProjectProfileRow, type ProjectBoardRow,
+  type ProjectMemberRow,
 } from '../data/db/projects'
 
 // ─── View model ───────────────────────────────────────────────────────────────
