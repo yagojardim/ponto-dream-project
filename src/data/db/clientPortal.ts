@@ -188,8 +188,10 @@ async function getClientPortal__raw(projectId: string): Promise<ClientPortalScop
   }[]
 
   const clientVisible = items.filter(
-    i => sharedItemIds.has(i.id) || (i.visibility ?? '').toLowerCase() === 'client',
+    i => sharedItemIds.has(i.id) ||
+      ['client_visible', 'shared'].includes((i.visibility ?? '').toLowerCase()),
   )
+
 
   const roadmap: PortalRoadmapItem[] = (epicsRes.data ?? []).map(e => {
     const epicItems = items.filter(i => i.epic_id === e.id)
