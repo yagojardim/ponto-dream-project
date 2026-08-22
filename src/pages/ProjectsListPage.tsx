@@ -189,14 +189,15 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onEdit }: 
         </td>
         <td className="py-3 pr-4" style={{ width: 40 }}>
           {canManage && (
-            <div ref={menuRef} className="relative" onClick={e => e.stopPropagation()}>
+            <div className="relative" onClick={e => e.stopPropagation()}>
               <button
-                onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
+                onClick={e => { e.stopPropagation(); onEdit(project) }}
                 className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
                 style={{ color: '#546278' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLButtonElement).style.color = '#e8ecf4' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#546278' }}
-                aria-label="Ações do projeto"
+                aria-label="Editar projeto"
+                title="Editar projeto"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <circle cx="7" cy="3.5" r="1.2" fill="currentColor" />
@@ -204,37 +205,10 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onEdit }: 
                   <circle cx="7" cy="10.5" r="1.2" fill="currentColor" />
                 </svg>
               </button>
-              {menuOpen && (
-                <div
-                  className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg fade-rise"
-                  style={{
-                    background: '#171a22',
-                    border: '1px solid #2f3547',
-                    boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
-                    minWidth: 160,
-                  }}
-                >
-                  {([
-                    ['edit', 'Editar projeto'],
-                    ['archive', 'Arquivar projeto'],
-                    [isCompleted ? 'reopen' : 'complete', menuLabel],
-                  ] as [ProjectAction, string][]).map(([action, label]) => (
-                    <button
-                      key={action}
-                      onClick={() => { setMenuOpen(false); onConfirm(project, action) }}
-                      className="w-full text-left px-3 py-2 text-[11px] transition-colors"
-                      style={{ color: '#e8ecf4' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           )}
         </td>
+
       </tr>
 
       {/* Tasks and sub-tasks */}
