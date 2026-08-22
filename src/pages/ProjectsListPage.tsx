@@ -657,112 +657,23 @@ export default function ProjectsListPage({ onNav }: Props) {
         />
       )}
 
-      {/* Project actions dialog */}
-      {confirm.open && confirm.project && (() => {
-        const needsNote = confirm.action === 'archive' || confirm.action === 'complete'
-        const title = confirm.action === 'edit' ? 'Editar projeto'
-          : confirm.action === 'archive' ? 'Arquivar projeto'
-          : confirm.action === 'complete' ? 'Finalizar projeto' : 'Reabrir projeto'
-        const cta = confirm.action === 'edit' ? 'Salvar'
-          : confirm.action === 'archive' ? 'Arquivar'
-          : confirm.action === 'complete' ? 'Finalizar' : 'Confirmar'
-        const disabled = saving || (needsNote && note.trim().length === 0)
-        const inputStyle = {
-          background: '#141926', border: '1px solid #2f3547', color: '#e8ecf4',
-        } as const
-        return (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
-            onClick={closeDialog}
-          >
-            <div
-              className="w-full max-w-md p-5 rounded-xl fade-rise"
-              style={{ background: '#1c2130', border: '1px solid #2f3547' }}
-              onClick={e => e.stopPropagation()}
-            >
-              <h3 className="text-sm font-semibold mb-1" style={{ color: '#e8ecf4' }}>{title}</h3>
-              <p className="text-xs mb-4 leading-relaxed" style={{ color: '#8a9ab8' }}>
-                {confirm.project.name}
-              </p>
+      {/* Unified project edit modal */}
+      {editing && (
+        <EditProjectModal
+          project={editing}
+          tasks={tasks}
+          members={members}
+          profiles={profiles}
+          actorName={activeUser.name}
+          onClose={() => setEditing(null)}
+          onDone={async (msg, close) => {
+            await load()
+            showToast(msg)
+            if (close) setEditing(null)
+          }}
+        />
+      )}
 
-              {confirm.action === 'edit' && (
-                <div className="flex flex-col gap-3 mb-5">
-                  <label className="flex flex-col gap-1">
-                    <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Descrição</span>
-                    <textarea
-                      rows={3}
-                      value={editDesc}
-                      onChange={e => setEditDesc(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
-                      style={inputStyle}
-                      placeholder="Descreva o objetivo do projeto…"
-                    />
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Data de início</span>
-                      <input
-                        type="date" value={editStart} onChange={e => setEditStart(e.target.value)}
-                        className="w-full h-8 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Data de fim</span>
-                      <input
-                        type="date" value={editEnd} onChange={e => setEditEnd(e.target.value)}
-                        className="w-full h-8 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {needsNote && (
-                <label className="flex flex-col gap-1 mb-5">
-                  <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>
-                    Observação <span style={{ color: '#f0805c' }}>*</span>
-                  </span>
-                  <textarea
-                    rows={3}
-                    value={note}
-                    onChange={e => setNote(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
-                    style={inputStyle}
-                    placeholder={confirm.action === 'archive'
-                      ? 'Por que este projeto está sendo arquivado?'
-                      : 'Registre o encerramento do projeto…'}
-                  />
-                </label>
-              )}
-
-              {confirm.action === 'reopen' && (
-                <p className="text-xs mb-5 leading-relaxed" style={{ color: '#8a9ab8' }}>
-                  O projeto voltará ao status ativo.
-                </p>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={closeDialog}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                  style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => { void executeAction() }}
-                  disabled={disabled}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                  style={{ background: '#3B82F6', color: '#fff', opacity: disabled ? 0.45 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
-                >
-                  {saving ? 'Salvando…' : cta}
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
 
       {/* Inline toast */}
       {toast.show && (
