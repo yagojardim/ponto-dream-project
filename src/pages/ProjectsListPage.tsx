@@ -117,11 +117,19 @@ function countDone(project: Project): number {
   )
 }
 
+interface ConfirmState {
+  open: boolean
+  project: Project | null
+  action: 'complete' | 'reopen'
+}
+
 // ─── Project row ──────────────────────────────────────────────────────────────
 interface ProjectRowProps {
   project:     Project
+  canManage:   boolean
   onOpenProj:  (p: Project) => void
   onOpenTask:  (task: SubTask, project: Project) => void
+  onConfirm:   (p: Project, action: 'complete' | 'reopen') => void
 }
 
 function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
