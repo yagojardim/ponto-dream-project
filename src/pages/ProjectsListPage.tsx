@@ -132,9 +132,25 @@ interface ProjectRowProps {
   onConfirm:   (p: Project, action: 'complete' | 'reopen') => void
 }
 
-function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
+function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm }: ProjectRowProps) {
   const [expanded, setExpanded] = useState(true)
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', close)
+      return () => document.removeEventListener('mousedown', close)
+    }
+  }, [menuOpen])
+
+  const rawStatus = project.raw.status
+  const isCompleted = rawStatus === 'completed'
+  const menuLabel = isCompleted ? 'Reabrir projeto' : 'Finalizar projeto'
 
   return (
     <>
@@ -187,6 +203,47 @@ function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
             <Avatar name={project.responsible} size="xs" />
             <span className="text-xs" style={{ color: '#8a9ab8' }}>{project.responsible}</span>
           </div>
+        </td>
+        <td className="py-3 pr-4" style={{ width: 40 }}>
+          {canManage && (
+            <div ref={menuRef} className="relative" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
+                className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+                style={{ color: '#546278' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLButtonElement).style.color = '#e8ecf4' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#546278' }}
+                aria-label="Ações do projeto"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="3.5" r="1.2" fill="currentColor" />
+                  <circle cx="7" cy="7" r="1.2" fill="currentColor" />
+                  <circle cx="7" cy="10.5" r="1.2" fill="currentColor" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg fade-rise"
+                  style={{
+                    background: '#171a22',
+                    border: '1px solid #2f3547',
+                    boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+                    minWidth: 160,
+                  }}
+                >
+                  <button
+                    onClick={() => { setMenuOpen(false); onConfirm(project, isCompleted ? 'reopen' : 'complete') }}
+                    className="w-full text-left px-3 py-2 text-[11px] transition-colors"
+                    style={{ color: '#e8ecf4' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                  >
+                    {menuLabel}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </td>
       </tr>
 
