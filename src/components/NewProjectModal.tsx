@@ -117,7 +117,17 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
     if (!onCreate) { setSuccess(true); return }
     setSaving(true)
     try {
-      await onCreate({ name: name.trim(), key, description: desc.trim(), clientName: client.trim() || null, boardType: type, leadId: lead || null, usesFeatures })
+      await onCreate({
+        name: name.trim(),
+        key,
+        description: desc.trim(),
+        clientName: client.trim() || null,
+        boardType: type,
+        leadId: lead || null,
+        usesFeatures,
+        periodStart: startDate || null,
+        periodEnd: endDate || null,
+      })
       setSuccess(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível criar o projeto.')
