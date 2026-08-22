@@ -632,7 +632,36 @@ export default function TimelinePage() {
       .finally(() => setSaving(s => { const n = new Set(s); n.delete(id); return n }))
   }, [dragging, spans, data])
 
+  // ── Scroll sync between sidebar and grid ────────────────────────────────────
+  function syncScroll(from: 'left' | 'right') {
+    if (syncing.current) return
+    const src = from === 'left' ? leftBodyRef.current : rightBodyRef.current
+    const dst = from === 'left' ? rightBodyRef.current : leftBodyRef.current
+    if (!src || !dst) return
+    syncing.current = true
+    dst.scrollTop = src.scrollTop
+    requestAnimationFrame(() => { syncing.current = false })
+  }
+
+  // ── Resizable sidebar ───────────────────────────────────────────────────────
+  function startResize(e: React.MouseEvent) {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = sidebarWidth
+    function onMove(ev: MouseEvent) {
+      const next = Math.min(800, Math.max(280, startW + (ev.clientX - startX)))
+      setSidebarWidth(next)
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }
+
   const gridW = totalDays * DAY_PX
+
   const svgH = rows.length * ROW_H
 
   const rangeLabel = visibleItems.length > 0
