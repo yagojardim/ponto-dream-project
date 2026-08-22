@@ -417,7 +417,7 @@ interface Props {
 }
 
 export default function ProjectsListPage({ onNav }: Props) {
-  const { activeUser, isTenantOwner } = useSession()
+  const { activeUser, tenantName, isTenantOwner } = useSession()
   const canManageProjects = can(activeUser.permissions, 'project:create') || isTenantOwner
   const canEdit = can(activeUser.permissions, 'edit:workitem')
 
