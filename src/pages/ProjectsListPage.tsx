@@ -341,6 +341,7 @@ function buildProjects(
       responsible: (p.lead_id && profileById.get(p.lead_id)?.name) || 'Sem responsável',
       boardId: board?.id ?? null,
       tasks: top.map(t => ({ ...toSubTask(t), children: sub.filter(s => s.parent_id === t.id).map(toSubTask) })),
+      raw: p,
     }
   })
 }
