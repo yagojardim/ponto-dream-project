@@ -63,6 +63,7 @@ interface Issue {
   epicId?:  string
   epic?:    string
   epicColor?: string
+  feature?: string
   sprint?:  string
   blocked?: boolean
   delayed?: boolean
@@ -692,13 +693,14 @@ function StartSprintModal({ sprint, onConfirm, onClose, issueCount: issueCountPr
 }
 
 // ─── Board card ───────────────────────────────────────────────────────────────
-function BoardCard({ issue, dragging, onDragStart, onDragEnd, onOpen, canDrag }: {
+function BoardCard({ issue, dragging, onDragStart, onDragEnd, onOpen, canDrag, showFeature = false }: {
   issue: Issue
   dragging: boolean
   onDragStart: () => void
   onDragEnd: () => void
   onOpen: () => void
   canDrag: boolean
+  showFeature?: boolean
 }) {
   const [hovered, setHovered] = useState(false)
   const isBlocked = issue.blocked
@@ -758,6 +760,19 @@ function BoardCard({ issue, dragging, onDragStart, onDragEnd, onOpen, canDrag }:
         )}
         <span className="ml-auto"><PriorityDot p={issue.priority} /></span>
       </div>
+
+      {/* Breadcrumb: épico › funcionalidade (Pro) */}
+      {(issue.epic || (showFeature && issue.feature)) && (
+        <div className="flex items-center gap-1 mb-1 text-[9px] leading-tight truncate">
+          {issue.epic && <span style={{ color: S.t3 }} className="truncate">{issue.epic}</span>}
+          {showFeature && issue.feature && (
+            <>
+              {issue.epic && <span style={{ color: S.t3 }}>›</span>}
+              <span style={{ color: DS.purple }} className="truncate font-medium">{issue.feature}</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Title */}
       <p className="text-[12px] font-medium leading-snug mb-2" style={{ color: S.t1 }}>
@@ -953,6 +968,7 @@ function mapDbItem(
   it: BoardItemRow,
   profileById: Map<string, { name: string; avatar_initials: string | null }>,
   epicById: Map<string, { name: string; color: string | null }>,
+  featureById?: Map<string, { name: string }>,
 ): Issue {
   const assignee = it.assignee_id ? profileById.get(it.assignee_id) : undefined
   const reporter = it.reporter_id ? profileById.get(it.reporter_id) : undefined
@@ -978,6 +994,8 @@ function mapDbItem(
     epicId:   it.epic_id ?? undefined,
     epic:     epic?.name,
     epicColor: epicColor(epic?.color ?? null),
+    feature:  it.feature_id ? featureById?.get(it.feature_id)?.name : undefined,
+    feature_id: it.feature_id ?? undefined,
     sprint:   it.sprint_id ?? undefined,
     blocked:  it.is_blocked,
     blocked_reason: it.blocked_reason ?? undefined,
@@ -1036,7 +1054,7 @@ function BoardTab({
   issues, onCreateIssue, onCompleteSprint, canManageSprint, activeSprints,
   dbCols, loading, error, onMoveCard, onQuickCreate, onLocalPatch,
   availableEpics, availableMembers, projectName, onReloadBoard,
-  filterAssignees, setFilterA,
+  filterAssignees, setFilterA, usesFeatures = false, availableFeatures = [],
 }: {
   issues: Issue[]
   onCreateIssue: () => void
@@ -1055,6 +1073,8 @@ function BoardTab({
   onReloadBoard: () => Promise<void> | void
   filterAssignees: string[]
   setFilterA: React.Dispatch<React.SetStateAction<string[]>>
+  usesFeatures?: boolean
+  availableFeatures?: { id: string; name: string }[]
 }) {
   const { activeUser: boardUser } = useSession()
   const [dailyOpen, setDailyOpen] = useState(false)
@@ -1101,6 +1121,7 @@ function BoardTab({
   
   const [filterPriority, setFilterP]  = useState<Priority[]>([])
   const [filterType, setFilterType]   = useState<IssueType[]>([])
+  const [filterFeatures, setFilterFeatures] = useState<string[]>([])
 
   const projectSprints = activeSprints
   useEffect(() => {
@@ -1116,6 +1137,7 @@ function BoardTab({
     if (filterAssignees.length && !filterAssignees.includes(i.assigneeId ?? '')) return false
     if (filterPriority.length && !filterPriority.includes(i.priority)) return false
     if (filterType.length && !filterType.includes(i.type)) return false
+    if (filterFeatures.length && !filterFeatures.includes(i.feature_id ?? '')) return false
     return true
   })
 
@@ -1309,8 +1331,8 @@ function BoardTab({
           ▶ Iniciar Daily
         </button>
         <FilterPopover
-          activeCount={filterAssignees.length + filterPriority.length + filterType.length}
-          clearAll={() => { setFilterA([]); setFilterP([]); setFilterType([]) }}
+          activeCount={filterAssignees.length + filterPriority.length + filterType.length + filterFeatures.length}
+          clearAll={() => { setFilterA([]); setFilterP([]); setFilterType([]); setFilterFeatures([]) }}
           trigger={
             <button
               className="h-7 pl-2.5 pr-2 rounded-lg text-[11px] font-medium flex items-center gap-1.5 flex-shrink-0 transition-all"
@@ -1321,10 +1343,10 @@ function BoardTab({
               }}>
               <FilterIcon />
               Filtros
-              {filterAssignees.length + filterPriority.length + filterType.length > 0 && (
+              {filterAssignees.length + filterPriority.length + filterType.length + filterFeatures.length > 0 && (
                 <span className="ml-0.5 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full text-[10px] font-bold"
                   style={{ background: DS.accent, color: '#fff' }}>
-                  {filterAssignees.length + filterPriority.length + filterType.length}
+                  {filterAssignees.length + filterPriority.length + filterType.length + filterFeatures.length}
                 </span>
               )}
             </button>
@@ -1356,6 +1378,26 @@ function BoardTab({
               ))}
             </div>
           </div>
+          {usesFeatures && availableFeatures.length > 0 && (
+            <>
+              <div className="w-full h-px" style={{ background:S.border, margin:'4px 0' }} />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color:S.t3 }}>Funcionalidade</span>
+                <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto">
+                  {availableFeatures.map(f=>{
+                    const on = filterFeatures.includes(f.id)
+                    return (
+                      <button key={f.id} onClick={()=>setFilterFeatures(prev=>toggleArr(prev,f.id))}
+                        className="h-6 px-2 rounded-md text-[10px] font-medium transition-all max-w-full truncate"
+                        style={{ background:on?`${DS.purple}22`:S.surface2, color:on?DS.purple:S.t3, border:`1px solid ${on?`${DS.purple}50`:S.border}` }}>
+                        {f.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </FilterPopover>
         <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
           <span className="text-[10px]" style={{ color:S.t3 }}>Agrupar:</span>
@@ -1569,7 +1611,7 @@ function BoardTab({
                         onDragStart={()=>setDraggingCard(issue.key)}
                         onDragEnd={()=>{ setDraggingCard(null); setDragOver(null) }}
                         onOpen={()=>setOpenIssue(issue)}
-                        canDrag={canDrag}/>
+                        canDrag={canDrag} showFeature={usesFeatures}/>
                     ))
                   ) : (
                     swimlaneKeys.map(lane=>{
@@ -1586,7 +1628,7 @@ function BoardTab({
                                 onDragStart={()=>setDraggingCard(issue.key)}
                                 onDragEnd={()=>{ setDraggingCard(null); setDragOver(null) }}
                                 onOpen={()=>setOpenIssue(issue)}
-                                canDrag={canDrag}/>
+                                canDrag={canDrag} showFeature={usesFeatures}/>
                             </div>
                             )
                           })}
@@ -2478,7 +2520,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
   const applyBoardData = useCallback((data: BoardData) => {
     const profileById = new Map(data.profiles.map(p => [p.id, p]))
     const epicById    = new Map(data.epics.map(e => [e.id, e]))
-    setDbIssues(data.items.map<Issue>(it => mapDbItem(it, profileById, epicById)))
+    const featById    = new Map(data.features.map(f => [f.id, f]))
+    setDbIssues(data.items.map<Issue>(it => mapDbItem(it, profileById, epicById, featById)))
   }, [])
 
   const loadBoard = useCallback(async () => {
@@ -2533,6 +2576,14 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }))
   }, [boardData])
 
+  const boardUsesFeatures = projectUsesFeatures(boardData?.project)
+  const availableFeatures = useMemo(() => {
+    const projectEpicIds = new Set((boardData?.epics ?? []).map(e => e.id))
+    return (boardData?.features ?? [])
+      .filter(f => !f.epic_id || projectEpicIds.has(f.epic_id))
+      .map(f => ({ id: f.id, name: f.name }))
+  }, [boardData])
+
   const [filterAssignees, setFilterA] = useState<string[]>([])
   const availableMembers = useMemo<{ id: string; initials: string; name: string; color: string | null }[]>(() => {
     return (boardData?.profiles ?? []).map(p => ({
@@ -2569,7 +2620,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }, activeUser.name)
     const profileById = new Map(boardData.profiles.map(p => [p.id, p]))
     const epicById    = new Map(boardData.epics.map(e => [e.id, e]))
-    setDbIssues(prev => [mapDbItem(created, profileById, epicById), ...prev])
+    const featById    = new Map(boardData.features.map(f => [f.id, f]))
+    setDbIssues(prev => [mapDbItem(created, profileById, epicById, featById), ...prev])
     setBoardData(prev => prev ? { ...prev, items: [created, ...prev.items] } : prev)
   }
 
@@ -2866,6 +2918,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           availableMembers={availableMembers}
           filterAssignees={filterAssignees}
           setFilterA={setFilterA}
+          usesFeatures={boardUsesFeatures}
+          availableFeatures={availableFeatures}
           projectName={boardData?.project?.name ?? '—'}
           onReloadBoard={loadBoard}
         />
