@@ -1489,6 +1489,13 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
     return () => { alive = false }
   }, [project?.id, tick]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    let alive = true
+    if (!project) { setMentionables([]); return }
+    void listProjectResponsibleProfiles(project.id).then(rows => { if (alive) setMentionables(rows) })
+    return () => { alive = false }
+  }, [project?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const thread: ChatBubble[] = chat.map(m => ({
     id: m.id,
     side: m.side,
@@ -1498,22 +1505,43 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
     timestamp: m.createdAt,
     badge: m.type === 'approval' ? '✓ Aprovação' : undefined,
     itemTitle: m.itemTitle ?? undefined,
+    mentions: m.mentions,
   }))
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [selId, tick, chat.length])
 
+  function handleDraftChange(text: string, caret: number) {
+    setDraft(text)
+    const q = mentionQuery(text, caret)
+    setMenu(q ? { items: matchPeople(mentionables, q.query), start: q.start } : null)
+  }
+
+  function pickMention(item: MentionMenuItem) {
+    if (!menu) return
+    const label = item.id === '@todos' ? 'todos' : item.name
+    const next = `${draft.slice(0, menu.start)}@${label} `
+    setDraft(next)
+    if (item.id !== '@todos') {
+      setPicked(prev => (prev.some(p => p.id === item.id) ? prev : [...prev, item as MentionProfile]))
+    }
+    setMenu(null)
+  }
 
   async function handleSend() {
     const body = draft.trim()
     if (!body || !project || !chatCanComment) return
+    const mentions = resolveMentions(body, picked, mentionables)
     setDraft('')
+    setMenu(null)
+    setPicked([])
     await addClientMessage({
       projectId: project.id,
       body,
       author: CLIENT?.name ?? 'Cliente',
       source: 'client',
+      mentions,
     })
     setTick(t => t + 1)
     onToast('Mensagem enviada.')
