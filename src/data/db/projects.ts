@@ -149,6 +149,8 @@ export async function createProject(input: CreateProjectInput): Promise<ProjectR
     client_name: input.clientName ?? null,
     status: 'planned',
     lead_id: input.leadId ?? null,
+    period_start: input.periodStart ?? null,
+    period_end: input.periodEnd ?? null,
     metadata: { uses_features: input.usesFeatures ?? false },
   }).select('id, key, name, description, client_name, status, lead_id, period_start, period_end, metadata').single()
 
