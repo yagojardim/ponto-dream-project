@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
 import {
   addClientMessage, addClientApproval, listThreadMessages, listProjectChat,
   markSignalReadByPo, markReplyReadByClient, setPortalPasswordChanged,
   getClientPortalContext, listClientUnreadReplies, countClientUnreadReplies,
   markClientRepliesRead, getPortalScope, EMPTY_PORTAL_SCOPE,
+  listProjectResponsibleProfiles,
   type ClientChatMessage, type ClientPortalContext, type ClientReplyNotice,
+  type MentionProfile,
   type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
 } from '../data/db/clientPortal'
 import { readPortalSession } from '../lib/portalSession'
