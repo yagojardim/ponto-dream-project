@@ -303,6 +303,7 @@ export default function ListPage() {
       case 'assignee': return profiles.find(p => p.id === row.assigneeId)?.name ?? '—'
       case 'points': return String(row.points)
       case 'epic': return epics.find(e => e.id === row.epicId)?.name ?? '—'
+      case 'feature': return features.find(f => f.id === row.featureId)?.name ?? '—'
       case 'sprint': return sprints.find(s => s.id === row.sprintId)?.name ?? '—'
       case 'labels': return row.labels.join('; ')
       case 'dueDate': return row.dueDate
