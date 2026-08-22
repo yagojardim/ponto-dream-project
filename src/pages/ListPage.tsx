@@ -72,6 +72,7 @@ interface Row {
   assignee: string
   points: number
   epicId: string | null
+  featureId: string | null
   sprintId: string | null
   labels: string[]
   dueDate: string
