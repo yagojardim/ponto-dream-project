@@ -232,7 +232,7 @@ export async function updateProject(
   await writeAudit(project.id, 'project.updated', actorName, {
     name: project.name, status: project.status, period_start: project.period_start,
     period_end: project.period_end, lead_id: project.lead_id, client_name: project.client_name,
-  }, payload as AuditPayload)
+  }, payload as unknown as AuditPayload)
 
 }
 
