@@ -117,10 +117,12 @@ function countDone(project: Project): number {
   )
 }
 
+type ProjectAction = 'complete' | 'reopen' | 'archive' | 'edit'
+
 interface ConfirmState {
   open: boolean
   project: Project | null
-  action: 'complete' | 'reopen'
+  action: ProjectAction
 }
 
 // ─── Project row ──────────────────────────────────────────────────────────────
