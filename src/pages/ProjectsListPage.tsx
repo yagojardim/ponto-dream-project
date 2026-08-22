@@ -118,40 +118,20 @@ function countDone(project: Project): number {
   )
 }
 
-type ProjectAction = 'complete' | 'reopen' | 'archive' | 'edit'
-
-interface ConfirmState {
-  open: boolean
-  project: Project | null
-  action: ProjectAction
-}
-
 // ─── Project row ──────────────────────────────────────────────────────────────
 interface ProjectRowProps {
   project:     Project
   canManage:   boolean
   onOpenProj:  (p: Project) => void
   onOpenTask:  (task: SubTask, project: Project) => void
-  onConfirm:   (p: Project, action: ProjectAction) => void
+  onEdit:      (p: Project) => void
 }
 
-function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm }: ProjectRowProps) {
+function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onEdit }: ProjectRowProps) {
   const [expanded, setExpanded] = useState(true)
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    function close(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
-    }
-    if (menuOpen) {
-      document.addEventListener('mousedown', close)
-      return () => document.removeEventListener('mousedown', close)
-    }
-  }, [menuOpen])
 
-  const rawStatus = project.raw.status
   const isCompleted = rawStatus === 'completed'
   const menuLabel = isCompleted ? 'Reabrir projeto' : 'Finalizar projeto'
 
