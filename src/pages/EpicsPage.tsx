@@ -378,6 +378,7 @@ export default function EpicsPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [expandedFeatures, setExpandedFeatures] = useState<Record<string, boolean>>({})
   const [openProjects, setOpenProjects] = useState<Record<string, boolean>>({})
   const [detailId, setDetailId] = useState<string | null>(null)
   const [newEpicOpen, setNewEpicOpen] = useState(false)
@@ -648,6 +649,50 @@ export default function EpicsPage() {
                         STATUSES.map(s => [s, epicItems.filter(i => i.status === s).length])
                       )
 
+                      const renderItem = (item: EpicItemRow) => {
+                                      const ti = typeGlyph(item.type)
+                                      const sc = statusCfg(item.status)
+                                      const isActive = detailId === item.id
+                                      const p = item.assignee_id ? profileById.get(item.assignee_id) : undefined
+                                      return (
+                                        <div
+                                          key={item.id}
+                                          role="button"
+                                          tabIndex={0}
+                                          onClick={() => setDetailId(item.id)}
+                                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetailId(item.id) } }}
+                                          style={{
+                                            display: 'flex', alignItems: 'center', gap: 10,
+                                            padding: '8px 10px', borderRadius: 8,
+                                            background: isActive ? `${color}14` : T.bgSurface2,
+                                            border: `1px solid ${isActive ? color + '60' : T.border}`,
+                                            cursor: 'pointer', transition: 'all 0.12s', outline: 'none',
+                                          }}
+                                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = `${color}0A`; e.currentTarget.style.borderColor = `${color}40` }}
+                                          onMouseLeave={e => { e.currentTarget.style.background = isActive ? `${color}14` : T.bgSurface2; e.currentTarget.style.borderColor = isActive ? `${color}60` : T.border }}
+                                        >
+                                          <span style={{ color: ti.color, fontSize: 14, flexShrink: 0 }}>{ti.icon}</span>
+                                          <span style={{ fontSize: 11, color: T.text3, fontFamily: 'monospace', width: 62, flexShrink: 0 }}>{item.key}</span>
+                                          <span style={{ fontSize: 13, color: T.text1, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {item.title}
+                                          </span>
+                                          {item.is_blocked && <span style={{ fontSize: 11, color: T.crit }}>🔴</span>}
+                                          <span style={{
+                                            fontSize: 11, color: sc.color, background: `${sc.color}18`,
+                                            borderRadius: 20, padding: '2px 8px', flexShrink: 0,
+                                          }}>{sc.label}</span>
+                                          {p && <Avatar initials={p.avatar_initials ?? p.name.slice(0, 2).toUpperCase()} color={p.avatar_color} size={22} />}
+                                          <span style={{
+                                            fontSize: 11, color: T.text3, background: T.neutralDim,
+                                            borderRadius: 4, padding: '1px 6px', flexShrink: 0,
+                                          }}>{Number(item.story_points ?? 0)}pt</span>
+                                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, opacity: isActive ? 1 : 0.3, transition: 'opacity 0.12s' }}>
+                                            <path d="M4 2.5l3.5 3.5L4 9.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                          </svg>
+                                        </div>
+                                      )
+                      }
+
                       return (
                         <div key={epic.id} style={{
                           background: T.bgSurface, border: `1px solid ${T.border}`,
@@ -762,53 +807,59 @@ export default function EpicsPage() {
                             {/* Expanded issue list */}
                             {isExpanded && (
                               <div style={{ marginTop: 16, borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
-                                {epicItems.length === 0 ? (
+                                {hasFeatures ? (
+                                  (() => {
+                                  const groups: { id: string; name: string; list: typeof epicItems }[] = [
+                                    ...features.map(f => ({ id: f.id, name: f.name, list: epicItems.filter(i => i.feature_id === f.id) })),
+                                  ]
+                                  const orphans = epicItems.filter(i => !i.feature_id || !features.some(f => f.id === i.feature_id))
+                                  if (orphans.length > 0) groups.push({ id: `${epic.id}__nofeature`, name: 'Sem funcionalidade', list: orphans })
+                                  if (groups.length === 0) return <p style={{ fontSize: 13, color: T.text3 }}>Nenhuma funcionalidade neste épico.</p>
+                                  return (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                      {groups.map(g => {
+                                        const gOpen = !!expandedFeatures[g.id]
+                                        const gDone = g.list.filter(i => i.status === 'done')
+                                        const donePts = gDone.reduce((s, i) => s + Number(i.story_points ?? 0), 0)
+                                        const totalPts = g.list.reduce((s, i) => s + Number(i.story_points ?? 0), 0)
+                                        const gpct = totalPts > 0 ? Math.round((donePts / totalPts) * 100) : 0
+                                        return (
+                                          <div key={g.id} style={{ border: `1px solid ${T.border}`, borderRadius: 8, background: T.bgSurface2 }}>
+                                            <div
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={() => setExpandedFeatures(prev => ({ ...prev, [g.id]: !prev[g.id] }))}
+                                              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedFeatures(prev => ({ ...prev, [g.id]: !prev[g.id] })) } }}
+                                              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', cursor: 'pointer', outline: 'none' }}
+                                            >
+                                              <span style={{ fontSize: 11, color: T.text3, width: 10, flexShrink: 0 }}>{gOpen ? '▾' : '▸'}</span>
+                                              <span style={{ color: T.purple, fontSize: 13, flexShrink: 0 }}>▣</span>
+                                              <span style={{ fontSize: 13, fontWeight: 600, color: T.text1, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                                              <span style={{ fontSize: 11, color: T.text3, flexShrink: 0 }}>{gDone.length}/{g.list.length} itens</span>
+                                              <div style={{ width: 70, height: 6, borderRadius: 4, background: T.neutralDim, overflow: 'hidden', flexShrink: 0 }}>
+                                                <div style={{ width: `${gpct}%`, height: '100%', background: T.purple }} />
+                                              </div>
+                                              <span style={{ fontSize: 11, fontWeight: 700, color: T.purple, width: 34, textAlign: 'right', flexShrink: 0 }}>{gpct}%</span>
+                                              <span style={{ fontSize: 11, color: T.text3, background: T.neutralDim, borderRadius: 4, padding: '1px 6px', flexShrink: 0 }}>{donePts}/{totalPts}pt</span>
+                                            </div>
+                                            {gOpen && (
+                                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 10px 10px' }}>
+                                                {g.list.length === 0
+                                                  ? <p style={{ fontSize: 12, color: T.text3, margin: 0 }}>Nenhuma issue nesta funcionalidade.</p>
+                                                  : g.list.map(item => renderItem(item))}
+                                              </div>
+                                            )}
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  )
+                                })()
+                                ) : epicItems.length === 0 ? (
                                   <p style={{ fontSize: 13, color: T.text3 }}>Nenhuma issue neste épico.</p>
                                 ) : (
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    {epicItems.map(item => {
-                                      const ti = typeGlyph(item.type)
-                                      const sc = statusCfg(item.status)
-                                      const isActive = detailId === item.id
-                                      const p = item.assignee_id ? profileById.get(item.assignee_id) : undefined
-                                      return (
-                                        <div
-                                          key={item.id}
-                                          role="button"
-                                          tabIndex={0}
-                                          onClick={() => setDetailId(item.id)}
-                                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetailId(item.id) } }}
-                                          style={{
-                                            display: 'flex', alignItems: 'center', gap: 10,
-                                            padding: '8px 10px', borderRadius: 8,
-                                            background: isActive ? `${color}14` : T.bgSurface2,
-                                            border: `1px solid ${isActive ? color + '60' : T.border}`,
-                                            cursor: 'pointer', transition: 'all 0.12s', outline: 'none',
-                                          }}
-                                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = `${color}0A`; e.currentTarget.style.borderColor = `${color}40` }}
-                                          onMouseLeave={e => { e.currentTarget.style.background = isActive ? `${color}14` : T.bgSurface2; e.currentTarget.style.borderColor = isActive ? `${color}60` : T.border }}
-                                        >
-                                          <span style={{ color: ti.color, fontSize: 14, flexShrink: 0 }}>{ti.icon}</span>
-                                          <span style={{ fontSize: 11, color: T.text3, fontFamily: 'monospace', width: 62, flexShrink: 0 }}>{item.key}</span>
-                                          <span style={{ fontSize: 13, color: T.text1, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {item.title}
-                                          </span>
-                                          {item.is_blocked && <span style={{ fontSize: 11, color: T.crit }}>🔴</span>}
-                                          <span style={{
-                                            fontSize: 11, color: sc.color, background: `${sc.color}18`,
-                                            borderRadius: 20, padding: '2px 8px', flexShrink: 0,
-                                          }}>{sc.label}</span>
-                                          {p && <Avatar initials={p.avatar_initials ?? p.name.slice(0, 2).toUpperCase()} color={p.avatar_color} size={22} />}
-                                          <span style={{
-                                            fontSize: 11, color: T.text3, background: T.neutralDim,
-                                            borderRadius: 4, padding: '1px 6px', flexShrink: 0,
-                                          }}>{Number(item.story_points ?? 0)}pt</span>
-                                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, opacity: isActive ? 1 : 0.3, transition: 'opacity 0.12s' }}>
-                                            <path d="M4 2.5l3.5 3.5L4 9.5" stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                                          </svg>
-                                        </div>
-                                      )
-                                    })}
+                                    {epicItems.map(item => renderItem(item))}
                                   </div>
                                 )}
 
