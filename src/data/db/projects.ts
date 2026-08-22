@@ -203,6 +203,9 @@ export interface UpdateProjectInput {
   periodEnd?: string | null
   leadId?: string | null
   clientName?: string | null
+  description?: string | null
+  archivedAt?: string | null
+  metadata?: Record<string, unknown>
 }
 
 export async function updateProject(
@@ -217,6 +220,9 @@ export async function updateProject(
   if (patch.periodEnd !== undefined) payload.period_end = patch.periodEnd
   if (patch.leadId !== undefined) payload.lead_id = patch.leadId
   if (patch.clientName !== undefined) payload.client_name = patch.clientName
+  if (patch.description !== undefined) payload.description = patch.description
+  if (patch.archivedAt !== undefined) payload.archived_at = patch.archivedAt
+  if (patch.metadata !== undefined) payload.metadata = patch.metadata as Tables['projects']['Update']['metadata']
   if (Object.keys(payload).length === 0) return
 
   const { error } = await supabase.from('projects')
@@ -226,7 +232,7 @@ export async function updateProject(
   await writeAudit(project.id, 'project.updated', actorName, {
     name: project.name, status: project.status, period_start: project.period_start,
     period_end: project.period_end, lead_id: project.lead_id, client_name: project.client_name,
-  }, payload as AuditPayload)
+  }, payload as unknown as AuditPayload)
 
 }
 

@@ -117,10 +117,12 @@ function countDone(project: Project): number {
   )
 }
 
+type ProjectAction = 'complete' | 'reopen' | 'archive' | 'edit'
+
 interface ConfirmState {
   open: boolean
   project: Project | null
-  action: 'complete' | 'reopen'
+  action: ProjectAction
 }
 
 // ─── Project row ──────────────────────────────────────────────────────────────
@@ -129,7 +131,7 @@ interface ProjectRowProps {
   canManage:   boolean
   onOpenProj:  (p: Project) => void
   onOpenTask:  (task: SubTask, project: Project) => void
-  onConfirm:   (p: Project, action: 'complete' | 'reopen') => void
+  onConfirm:   (p: Project, action: ProjectAction) => void
 }
 
 function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm }: ProjectRowProps) {
@@ -231,15 +233,22 @@ function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm 
                     minWidth: 160,
                   }}
                 >
-                  <button
-                    onClick={() => { setMenuOpen(false); onConfirm(project, isCompleted ? 'reopen' : 'complete') }}
-                    className="w-full text-left px-3 py-2 text-[11px] transition-colors"
-                    style={{ color: '#e8ecf4' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                  >
-                    {menuLabel}
-                  </button>
+                  {([
+                    ['edit', 'Editar projeto'],
+                    ['archive', 'Arquivar projeto'],
+                    [isCompleted ? 'reopen' : 'complete', menuLabel],
+                  ] as [ProjectAction, string][]).map(([action, label]) => (
+                    <button
+                      key={action}
+                      onClick={() => { setMenuOpen(false); onConfirm(project, action) }}
+                      className="w-full text-left px-3 py-2 text-[11px] transition-colors"
+                      style={{ color: '#e8ecf4' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -430,6 +439,11 @@ export default function ProjectsListPage({ onNav }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState>({ open: false, project: null, action: 'complete' })
+  const [note, setNote] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+  const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ msg: string; show: boolean }>({ msg: '', show: false })
 
   const load = useCallback(async () => {
@@ -486,22 +500,56 @@ export default function ProjectsListPage({ onNav }: Props) {
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000)
   }
 
-  function handleConfirm(p: Project, action: 'complete' | 'reopen') {
+  function handleConfirm(p: Project, action: ProjectAction) {
+    setNote('')
+    setEditDesc(p.raw.description ?? '')
+    setEditStart(p.raw.period_start ?? '')
+    setEditEnd(p.raw.period_end ?? '')
     setConfirm({ open: true, project: p, action })
   }
 
-  async function executeStatusUpdate() {
-    if (!confirm.project) return
+  function closeDialog() {
+    setConfirm({ open: false, project: null, action: 'complete' })
+    setNote('')
+  }
+
+  async function executeAction() {
+    if (!confirm.project || saving) return
     const p = confirm.project
-    const nextStatus = confirm.action === 'complete' ? 'completed' : 'active'
+    const action = confirm.action
+    const base = (p.raw.metadata ?? {}) as Record<string, unknown>
+    const now = new Date().toISOString()
+    setSaving(true)
     try {
-      await updateProject(p.raw, { status: nextStatus }, activeUser.name)
+      if (action === 'edit') {
+        await updateProject(p.raw, {
+          description: editDesc.trim() || null,
+          periodStart: editStart || null,
+          periodEnd: editEnd || null,
+        }, activeUser.name)
+        showToast('Projeto atualizado')
+      } else if (action === 'archive') {
+        await updateProject(p.raw, {
+          archivedAt: now,
+          metadata: { ...base, archive_note: note.trim(), archived_by: activeUser.name, archived_at: now },
+        }, activeUser.name)
+        showToast('Projeto arquivado')
+      } else if (action === 'complete') {
+        await updateProject(p.raw, {
+          status: 'completed',
+          metadata: { ...base, finalize_note: note.trim(), finalized_by: activeUser.name, finalized_at: now },
+        }, activeUser.name)
+        showToast('Projeto finalizado')
+      } else {
+        await updateProject(p.raw, { status: 'active' }, activeUser.name)
+        showToast('Projeto reaberto')
+      }
       await load()
-      showToast(confirm.action === 'complete' ? 'Projeto finalizado' : 'Projeto reaberto')
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.')
     } finally {
-      setConfirm({ open: false, project: null, action: 'complete' })
+      setSaving(false)
+      closeDialog()
     }
   }
 
@@ -609,49 +657,112 @@ export default function ProjectsListPage({ onNav }: Props) {
         />
       )}
 
-      {/* Confirm status change */}
-      {confirm.open && confirm.project && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
-          onClick={() => setConfirm({ open: false, project: null, action: 'complete' })}
-        >
+      {/* Project actions dialog */}
+      {confirm.open && confirm.project && (() => {
+        const needsNote = confirm.action === 'archive' || confirm.action === 'complete'
+        const title = confirm.action === 'edit' ? 'Editar projeto'
+          : confirm.action === 'archive' ? 'Arquivar projeto'
+          : confirm.action === 'complete' ? 'Finalizar projeto' : 'Reabrir projeto'
+        const cta = confirm.action === 'edit' ? 'Salvar'
+          : confirm.action === 'archive' ? 'Arquivar'
+          : confirm.action === 'complete' ? 'Finalizar' : 'Confirmar'
+        const disabled = saving || (needsNote && note.trim().length === 0)
+        const inputStyle = {
+          background: '#141926', border: '1px solid #2f3547', color: '#e8ecf4',
+        } as const
+        return (
           <div
-            className="w-full max-w-md p-5 rounded-xl fade-rise"
-            style={{ background: '#1c2130', border: '1px solid #2f3547' }}
-            onClick={e => e.stopPropagation()}
+            className="fixed inset-0 z-[100] flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
+            onClick={closeDialog}
           >
-            <h3 className="text-sm font-semibold mb-2" style={{ color: '#e8ecf4' }}>
-              {confirm.action === 'complete' ? 'Finalizar projeto' : 'Reabrir projeto'}
-            </h3>
-            <p className="text-xs mb-5 leading-relaxed" style={{ color: '#8a9ab8' }}>
-              {confirm.action === 'complete'
-                ? <>Finalizar <strong>{confirm.project.name}</strong>? As demandas em aberto continuarão registradas.</>
-                : <>Reabrir <strong>{confirm.project.name}</strong>? O projeto voltará ao status ativo.</>}
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setConfirm({ open: false, project: null, action: 'complete' })}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={executeStatusUpdate}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                style={{ background: '#3B82F6', color: '#fff' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#2563EB' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#3B82F6' }}
-              >
-                Confirmar
-              </button>
+            <div
+              className="w-full max-w-md p-5 rounded-xl fade-rise"
+              style={{ background: '#1c2130', border: '1px solid #2f3547' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-sm font-semibold mb-1" style={{ color: '#e8ecf4' }}>{title}</h3>
+              <p className="text-xs mb-4 leading-relaxed" style={{ color: '#8a9ab8' }}>
+                {confirm.project.name}
+              </p>
+
+              {confirm.action === 'edit' && (
+                <div className="flex flex-col gap-3 mb-5">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Descrição</span>
+                    <textarea
+                      rows={3}
+                      value={editDesc}
+                      onChange={e => setEditDesc(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
+                      style={inputStyle}
+                      placeholder="Descreva o objetivo do projeto…"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Data de início</span>
+                      <input
+                        type="date" value={editStart} onChange={e => setEditStart(e.target.value)}
+                        className="w-full h-8 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Data de fim</span>
+                      <input
+                        type="date" value={editEnd} onChange={e => setEditEnd(e.target.value)}
+                        className="w-full h-8 px-2.5 rounded-lg text-xs outline-none" style={inputStyle}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {needsNote && (
+                <label className="flex flex-col gap-1 mb-5">
+                  <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>
+                    Observação <span style={{ color: '#f0805c' }}>*</span>
+                  </span>
+                  <textarea
+                    rows={3}
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-y"
+                    style={inputStyle}
+                    placeholder={confirm.action === 'archive'
+                      ? 'Por que este projeto está sendo arquivado?'
+                      : 'Registre o encerramento do projeto…'}
+                  />
+                </label>
+              )}
+
+              {confirm.action === 'reopen' && (
+                <p className="text-xs mb-5 leading-relaxed" style={{ color: '#8a9ab8' }}>
+                  O projeto voltará ao status ativo.
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={closeDialog}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => { void executeAction() }}
+                  disabled={disabled}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  style={{ background: '#3B82F6', color: '#fff', opacity: disabled ? 0.45 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+                >
+                  {saving ? 'Salvando…' : cta}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Inline toast */}
       {toast.show && (
