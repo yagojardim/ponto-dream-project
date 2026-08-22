@@ -22,10 +22,11 @@ export type BoardSprintRow = Pick<
 export type BoardItemRow = Pick<
   Tables['work_items']['Row'],
   | 'id' | 'key' | 'title' | 'description' | 'type' | 'status' | 'priority' | 'severity'
-  | 'project_id' | 'board_id' | 'board_column_id' | 'sprint_id' | 'epic_id'
+  | 'project_id' | 'board_id' | 'board_column_id' | 'sprint_id' | 'epic_id' | 'feature_id'
   | 'assignee_id' | 'reporter_id' | 'story_points' | 'position' | 'is_blocked'
   | 'blocked_reason' | 'due_date'
 >
+export type BoardFeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name'>
 export type BoardEpicRow = Pick<Tables['epics']['Row'], 'id' | 'project_id' | 'key' | 'name' | 'color'>
 export type BoardProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
 export type BoardProjectRow = Pick<Tables['projects']['Row'], 'id' | 'name'>
@@ -43,6 +44,7 @@ export interface BoardData {
   items: BoardItemRow[]
   sprints: BoardSprintRow[]
   epics: BoardEpicRow[]
+  features: BoardFeatureRow[]
   profiles: BoardProfileRow[]
 }
 
@@ -106,15 +108,15 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
     boards[0] ?? null
 
   if (!board) {
-    return { board: null, project: null, boards, columns: [], items: [], sprints: [], epics: [], profiles: [] }
+    return { board: null, project: null, boards, columns: [], items: [], sprints: [], epics: [], features: [], profiles: [] }
   }
 
-  const [columnsRes, statusesRes, itemsRes, sprintsRes, epicsRes, profilesRes, projectRes] = await Promise.all([
+  const [columnsRes, statusesRes, itemsRes, sprintsRes, epicsRes, featuresRes, profilesRes, projectRes] = await Promise.all([
     supabase.from('board_columns').select('id, board_id, name, category, position, wip_limit')
       .eq('tenant_id', tid).eq('board_id', board.id).order('position'),
     supabase.from('board_column_statuses').select('board_column_id, status_key').eq('tenant_id', tid),
     supabase.from('work_items')
-      .select('id, key, title, description, type, status, priority, severity, project_id, board_id, board_column_id, sprint_id, epic_id, assignee_id, reporter_id, story_points, position, is_blocked, blocked_reason, due_date')
+      .select('id, key, title, description, type, status, priority, severity, project_id, board_id, board_column_id, sprint_id, epic_id, feature_id, assignee_id, reporter_id, story_points, position, is_blocked, blocked_reason, due_date')
       .eq('tenant_id', tid).eq('project_id', board.project_id).is('archived_at', null)
       .order('position'),
     supabase.from('sprints').select('id, project_id, name, goal, state, start_date, end_date, velocity, metadata')
@@ -122,6 +124,8 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
       .order('start_date', { ascending: true, nullsFirst: false }),
     supabase.from('epics').select('id, project_id, key, name, color')
       .eq('tenant_id', tid).eq('project_id', board.project_id).is('archived_at', null),
+    supabase.from('features').select('id, epic_id, name')
+      .eq('tenant_id', tid).is('archived_at', null),
     supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, name').eq('id', board.project_id).eq('tenant_id', tid).maybeSingle(),
   ])
@@ -129,7 +133,7 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
   const failed = [
     ['board_columns', columnsRes.error], ['board_column_statuses', statusesRes.error],
     ['work_items', itemsRes.error], ['sprints', sprintsRes.error],
-    ['epics', epicsRes.error], ['profiles', profilesRes.error],
+    ['epics', epicsRes.error], ['features', featuresRes.error], ['profiles', profilesRes.error],
     ['projects', projectRes.error],
   ].find(([, err]) => err) as [string, { message: string }] | undefined
   if (failed) throw new Error(missingTableMessage(failed[0], failed[1].message))
@@ -154,6 +158,7 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
     items: itemsRes.data ?? [],
     sprints: ((sprintsRes.data ?? []) as BoardSprintRow[]).slice().sort(sortSprintsByStartDate),
     epics: epicsRes.data ?? [],
+    features: featuresRes.data ?? [],
     profiles: profilesRes.data ?? [],
   }
 }
@@ -276,7 +281,7 @@ export async function createWorkItem(
       priority: PRIORITY_TO_DB[input.priority ?? 'medium'] ?? 'media',
       story_points: input.storyPoints ?? null,
     })
-    .select('id, key, title, description, type, status, priority, severity, project_id, board_id, board_column_id, sprint_id, epic_id, assignee_id, reporter_id, story_points, position, is_blocked, blocked_reason, due_date')
+    .select('id, key, title, description, type, status, priority, severity, project_id, board_id, board_column_id, sprint_id, epic_id, feature_id, assignee_id, reporter_id, story_points, position, is_blocked, blocked_reason, due_date')
     .single()
 
   if (error) throw new Error(error.message)
