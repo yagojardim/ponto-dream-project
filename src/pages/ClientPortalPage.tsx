@@ -1906,6 +1906,13 @@ export default function ClientPortalPage({
   const [showPwdModal, setShowPwdModal] = useState(mustChangePassword)
   const [showVoluntaryPwdModal, setShowVoluntaryPwdModal] = useState(false)
   const [portalView, setPortalView] = useState<'dashboard' | 'chat'>('dashboard')
+  const [chatProjectId, setChatProjectId] = useState<string | null>(null)
+
+  function openChatFor(pid: string) {
+    setChatProjectId(pid)
+    setPortalView('chat')
+  }
+
 
   function handlePasswordSaved() {
     setShowPwdModal(false)
