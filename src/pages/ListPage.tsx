@@ -11,17 +11,17 @@ import {
 } from '../data/db/list'
 import { updateWorkItemField } from '../data/db/workItem'
 
-type SortKey = 'key' | 'title' | 'status' | 'priority' | 'assignee' | 'points' | 'epic' | 'sprint' | 'dueDate'
+type SortKey = 'key' | 'title' | 'status' | 'priority' | 'assignee' | 'points' | 'epic' | 'feature' | 'sprint' | 'dueDate'
 type SortDir = 'asc' | 'desc'
 type GroupBy = 'none' | 'sprint' | 'epic'
 
-const ALL_COLS = ['key','type','title','status','priority','assignee','points','epic','sprint','labels','dueDate'] as const
+const ALL_COLS = ['key','type','title','status','priority','assignee','points','epic','feature','sprint','labels','dueDate'] as const
 type ColId = typeof ALL_COLS[number]
 
 const DEFAULT_COLS: ColId[] = ['key','type','title','status','priority','assignee','points']
 const COL_LABELS: Record<ColId, string> = {
   key:'Key', type:'Tipo', title:'Título', status:'Status', priority:'Prioridade',
-  assignee:'Responsável', points:'Pts', epic:'Épico', sprint:'Sprint', labels:'Labels', dueDate:'Venc.',
+  assignee:'Responsável', points:'Pts', epic:'Épico', feature:'Funcionalidade', sprint:'Sprint', labels:'Labels', dueDate:'Venc.',
 }
 
 /** Keys are UI status values (same format used by rows and by the filters). */
