@@ -121,6 +121,7 @@ function buildRows(
       assignee: p?.avatar_initials ?? (p?.name.slice(0, 2).toUpperCase() ?? '—'),
       points: Number(i.story_points ?? 0),
       epicId: i.epic_id,
+      featureId: i.feature_id,
       sprintId: i.sprint_id,
       labels: byItem.get(i.id) ?? [],
       dueDate: fmtDate(i.due_date),
