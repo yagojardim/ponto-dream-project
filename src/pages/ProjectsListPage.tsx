@@ -131,7 +131,7 @@ interface ProjectRowProps {
   canManage:   boolean
   onOpenProj:  (p: Project) => void
   onOpenTask:  (task: SubTask, project: Project) => void
-  onConfirm:   (p: Project, action: 'complete' | 'reopen') => void
+  onConfirm:   (p: Project, action: ProjectAction) => void
 }
 
 function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm }: ProjectRowProps) {
