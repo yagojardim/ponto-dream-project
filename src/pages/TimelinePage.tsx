@@ -4,6 +4,7 @@ import {
   fetchTimelineData, updateWorkItemDates, projectColor, epicColor, DB_STATUS_CFG,
   type TimelineData, type WorkItemRow,
 } from '../data/db/timeline'
+import { projectUsesFeatures } from '../data/db/projects'
 import { getUserPref, saveUserPref } from '../data/db/userPrefs'
 import { useSession } from '../data/SessionContext'
 
@@ -17,12 +18,25 @@ type Zoom = 'week' | 'month' | 'quarter'
 const ZOOM_PX: Record<Zoom, number> = { week: 28, month: 9, quarter: 3.4 }
 const ZOOM_LABEL: Record<Zoom, string> = { week: 'Semana', month: 'Mês', quarter: 'Quarter' }
 
-type GroupBy = 'project-epic' | 'sprint' | 'assignee' | 'epic'
+type GroupBy = 'project-epic' | 'project-feature' | 'sprint' | 'assignee' | 'epic' | 'feature'
 const GROUP_LABEL: Record<GroupBy, string> = {
   'project-epic': 'Projeto → Épico',
+  'project-feature': 'Projeto → Funcionalidade',
   sprint: 'Sprint',
   assignee: 'Responsável',
   epic: 'Épico',
+  feature: 'Funcionalidade',
+}
+const FEATURE_GROUPS: GroupBy[] = ['project-feature', 'feature']
+
+/** Glyph per work item type, shown before the key in the sidebar. */
+const TYPE_GLYPH: Record<string, { glyph: string; color: string }> = {
+  story: { glyph: '◇', color: T.accent },
+  bug: { glyph: '⬟', color: T.crit },
+  epic: { glyph: '⚡', color: T.warn },
+  feature: { glyph: '▣', color: T.purple },
+  subtask: { glyph: '◻', color: T.text3 },
+  sub_task: { glyph: '◻', color: T.text3 },
 }
 
 interface Filters {
@@ -366,6 +380,11 @@ export default function TimelinePage() {
     [data],
   )
   const epicById = useMemo(() => new Map((data?.epics ?? []).map(e => [e.id, e])), [data])
+  const featureById = useMemo(() => new Map((data?.features ?? []).map(f => [f.id, f])), [data])
+  const hasProProject = useMemo(
+    () => (data?.projects ?? []).some(p => projectUsesFeatures(p) && (!selectedProjects || selectedProjects.has(p.id))),
+    [data, selectedProjects],
+  )
   const sprintById = useMemo(() => new Map((data?.sprints ?? []).map(s => [s.id, s])), [data])
 
   // ── Filter options (always derived from real data) ──────────────────────────
@@ -458,6 +477,36 @@ export default function TimelinePage() {
       return out
     }
 
+    if (groupBy === 'project-feature') {
+      data.projects.forEach(project => {
+        const items = filteredItems.filter(w => w.project_id === project.id)
+        if (items.length === 0) return
+        const color = projectColorById.get(project.id) ?? T.accent
+        const pKey = `project:${project.id}`
+        out.push({ kind: 'group', id: pKey, level: 0, label: project.name, color, count: items.length })
+        if (collapsed.has(pKey)) return
+
+        const groups = new Map<string, { label: string; items: WorkItemRow[] }>()
+        items.forEach(item => {
+          const f = item.feature_id ? featureById.get(item.feature_id) : null
+          const key = f?.id ?? '__none'
+          let g = groups.get(key)
+          if (!g) { g = { label: f?.name ?? 'Sem funcionalidade', items: [] }; groups.set(key, g) }
+          g.items.push(item)
+        })
+        ;[...groups.entries()]
+          .sort((a, b) => (a[0] === '__none' ? 1 : b[0] === '__none' ? -1 : a[1].label.localeCompare(b[1].label)))
+          .forEach(([key, g]) => {
+            const fc = key === '__none' ? T.text3 : T.purple
+            const fKey = `project:${project.id}:feature:${key}`
+            out.push({ kind: 'group', id: fKey, level: 1, label: g.label, color: fc, count: g.items.length })
+            if (collapsed.has(fKey)) return
+            g.items.forEach(item => out.push({ kind: 'item', id: item.id, item, color: fc }))
+          })
+      })
+      return out
+    }
+
     // Flat groupings
     const buckets = new Map<string, { label: string; color: string; items: WorkItemRow[] }>()
     const ensure = (key: string, label: string, color: string) => {
@@ -475,6 +524,10 @@ export default function TimelinePage() {
         const p = item.assignee_id ? profileById.get(item.assignee_id) : null
         const key = `assignee:${p?.id ?? '__none'}`
         ensure(key, p?.name ?? 'Sem responsável', p?.avatar_color ?? T.text3).items.push(item)
+      } else if (groupBy === 'feature') {
+        const f = item.feature_id ? featureById.get(item.feature_id) : null
+        const key = `feature:${f?.id ?? '__none'}`
+        ensure(key, f?.name ?? 'Sem funcionalidade', f ? T.purple : T.text3).items.push(item)
       } else {
         const e = item.epic_id ? epicById.get(item.epic_id) : null
         const key = `epic:${e?.id ?? '__none'}`
@@ -491,7 +544,7 @@ export default function TimelinePage() {
       })
 
     return out
-  }, [data, filteredItems, groupBy, collapsed, projectColorById, epicById, sprintById, profileById])
+  }, [data, filteredItems, groupBy, collapsed, projectColorById, epicById, featureById, sprintById, profileById])
 
   const rowIndexById = useMemo(() => {
     const m: Record<string, number> = {}
@@ -678,7 +731,9 @@ export default function TimelinePage() {
 
   const sidebarTitle = groupBy === 'project-epic'
     ? 'PROJETO / ÉPICO / ISSUE'
-    : `${GROUP_LABEL[groupBy].toUpperCase()} / ISSUE`
+    : groupBy === 'project-feature'
+      ? 'PROJETO / FUNCIONALIDADE / ISSUE'
+      : `${GROUP_LABEL[groupBy].toUpperCase()} / ISSUE`
 
   const filtersActive = Object.values(filters).some(Boolean)
 
@@ -724,7 +779,7 @@ export default function TimelinePage() {
             background: T.bgPage, border: `1px solid ${T.border}`, color: T.text1, outline: 'none',
           }}
         >
-          {(Object.keys(GROUP_LABEL) as GroupBy[]).map(g => (
+          {(Object.keys(GROUP_LABEL) as GroupBy[]).filter(g => hasProProject || !FEATURE_GROUPS.includes(g)).map(g => (
             <option key={g} value={g}>{GROUP_LABEL[g]}</option>
           ))}
         </select>
@@ -820,6 +875,12 @@ export default function TimelinePage() {
                     style={{ height: ROW_H, display: 'flex', alignItems: 'center', padding: '0 12px 0 32px', borderBottom: `1px solid ${T.border}`, background: hovered === row.id ? T.bgSurface2 : T.bgSurface }}
                     onMouseEnter={() => setHovered(row.id)} onMouseLeave={() => setHovered(null)}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      {(() => {
+                        const g = TYPE_GLYPH[String(wi.type ?? '').toLowerCase()]
+                        return g ? (
+                          <span title={wi.type ?? ''} style={{ color: g.color, fontSize: 11, flexShrink: 0, lineHeight: 1 }}>{g.glyph}</span>
+                        ) : null
+                      })()}
                       <span style={{ color: T.accent, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{wi.key}</span>
                       {showTitle && (
                         <span style={{ color: T.text2, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={wi.title}>{wi.title}</span>
