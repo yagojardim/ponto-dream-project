@@ -1297,6 +1297,51 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          author_name: string | null
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          profile_id: string | null
+          rating: number | null
+          screen_label: string | null
+          screen_url: string | null
+          status: string
+          tenant_id: string
+          type: string
+        }
+        Insert: {
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          profile_id?: string | null
+          rating?: number | null
+          screen_label?: string | null
+          screen_url?: string | null
+          status?: string
+          tenant_id: string
+          type?: string
+        }
+        Update: {
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          profile_id?: string | null
+          rating?: number | null
+          screen_label?: string | null
+          screen_url?: string | null
+          status?: string
+          tenant_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           accepted_at: string | null
