@@ -15,7 +15,7 @@ export type EpicRow = Pick<
 export type EpicFeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name' | 'description'>
 export type EpicItemRow = Pick<
   Tables['work_items']['Row'],
-  'id' | 'key' | 'title' | 'type' | 'status' | 'priority' | 'epic_id' | 'project_id'
+  'id' | 'key' | 'title' | 'type' | 'status' | 'priority' | 'epic_id' | 'feature_id' | 'project_id'
   | 'assignee_id' | 'story_points' | 'is_blocked'
 >
 export type EpicProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
@@ -45,7 +45,7 @@ export async function listEpics(projectIds?: string[]): Promise<EpicsData> {
     .select('id, project_id, key, name, description, color, quarter, owner_id')
     .eq('tenant_id', tid).is('archived_at', null)
   let itemsQ = supabase.from('work_items')
-    .select('id, key, title, type, status, priority, epic_id, project_id, assignee_id, story_points, is_blocked')
+    .select('id, key, title, type, status, priority, epic_id, feature_id, project_id, assignee_id, story_points, is_blocked')
     .eq('tenant_id', tid).is('archived_at', null)
   if (scoped) {
     epicsQ = epicsQ.in('project_id', scoped)
@@ -139,7 +139,7 @@ export async function createEpicIssue(input: CreateEpicIssueInput): Promise<Epic
     priority: input.priority ?? 'media',
     assignee_id: input.assigneeId ?? null,
     story_points: input.storyPoints ?? null,
-  }).select('id, key, title, type, status, priority, epic_id, project_id, assignee_id, story_points, is_blocked')
+  }).select('id, key, title, type, status, priority, epic_id, feature_id, project_id, assignee_id, story_points, is_blocked')
     .single()
 
   if (error || !data) throw new Error(missingTableMessage('work_items', error?.message ?? 'Falha ao criar a issue.'))
