@@ -526,7 +526,7 @@ export default function ProjectsListPage({ onNav }: Props) {
                     canManage={canManageProjects}
                     onOpenProj={handleOpenProject}
                     onOpenTask={handleOpenTask}
-                    onConfirm={handleConfirm}
+                    onEdit={setEditing}
                   />
                 ))}
               </tbody>
