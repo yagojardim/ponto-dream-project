@@ -389,13 +389,13 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
           {/* 1b. Funcionalidades */}
           <FeaturesCard f={agg.features} />
 
-          {/* 1c. Projetos encerrados */}
+          {/* 1c. Projetos finalizados */}
           {completedProjects.length > 0 && (
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color:'var(--text-muted,#546278)' }}>
-                Projetos encerrados
+                Projetos finalizados ({completedProjects.length})
               </p>
-              <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(completedProjects.length,3)},1fr)`, gap:12 }}>
+              <div className="flex flex-col gap-2">
                 {completedProjects.map(p => <ClosedProjectCard key={p.id} p={p} onOpen={() => onNav?.('project', p.id)} />)}
               </div>
             </div>
