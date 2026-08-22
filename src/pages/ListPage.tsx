@@ -216,6 +216,7 @@ export default function ListPage() {
 
   const sorted = useMemo(() => {
     const epicName = (id: string | null) => epics.find(e => e.id === id)?.name ?? ''
+    const featureName = (id: string | null) => features.find(f => f.id === id)?.name ?? ''
     const sprintName = (id: string | null) => sprints.find(s => s.id === id)?.name ?? ''
     const val = (r: Row): string => {
       switch (sortKey) {
@@ -226,6 +227,7 @@ export default function ListPage() {
         case 'assignee': return r.assignee
         case 'points': return String(r.points).padStart(6, '0')
         case 'epic': return epicName(r.epicId)
+        case 'feature': return featureName(r.featureId)
         case 'sprint': return sprintName(r.sprintId)
         case 'dueDate': return r.dueDate
       }
@@ -233,7 +235,7 @@ export default function ListPage() {
     return [...rows].sort((a, b) => sortDir === 'asc'
       ? val(a).localeCompare(val(b))
       : val(b).localeCompare(val(a)))
-  }, [rows, sortKey, sortDir, epics, sprints])
+  }, [rows, sortKey, sortDir, epics, features, sprints])
 
   function toggleSort(k: SortKey) {
     if (sortKey === k) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
