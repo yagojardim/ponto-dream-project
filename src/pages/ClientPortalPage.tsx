@@ -841,9 +841,10 @@ function EmptyState() {
 
 // ─── CLIENT NOTIFICATION BELL ────────────────────────────────────────────────
 function ClientNotifBell({
-  tick, onRead,
+  tick, onRead, onOpenChat,
 }: {
   tick: number; onRead: (msg: string) => void
+  onOpenChat?: (projectId: string) => void
 }) {
   const [open, setOpen] = useState(false)
   const [localTick, setLocalTick] = useState(0)
@@ -874,7 +875,9 @@ function ClientNotifBell({
     setLocalTick(t => t + 1)
     setOpen(false)
     onRead(`${sig.poReplyBy ?? 'Equipe Altech'} respondeu: "${sig.poReply.slice(0, 80)}${sig.poReply.length > 80 ? '…' : ''}"`)
+    onOpenChat?.(sig.projectId)
   }
+
 
   function handleMarkAll() {
     void markClientRepliesRead(CLIENT)
