@@ -9,6 +9,7 @@ interface AvatarProps {
   size?: AvatarSize
   presence?: Presence
   color?: string
+  initials?: string
 }
 
 const sizes: Record<AvatarSize, { px: number; text: string; dot: number; dotOffset: number }> = {
@@ -44,7 +45,7 @@ function hashColor(name: string) {
   return palette[Math.abs(h) % palette.length]
 }
 
-export function Avatar({ name, src, size = 'md', presence = 'none', color }: AvatarProps) {
+export function Avatar({ name, src, size = 'md', presence = 'none', color, initials: initialsProp }: AvatarProps) {
   const s = sizes[size]
   const bg = color ?? hashColor(name)
   return (
@@ -59,7 +60,7 @@ export function Avatar({ name, src, size = 'md', presence = 'none', color }: Ava
           className="rounded-full flex items-center justify-center font-semibold text-white select-none w-full h-full"
           style={{ background: bg, fontSize: s.text }}
         >
-          {initials(name)}
+          {initialsProp ?? initials(name)}
         </span>
       )}
       {presence !== 'none' && (
