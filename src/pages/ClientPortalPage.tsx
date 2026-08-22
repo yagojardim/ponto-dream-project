@@ -1453,6 +1453,9 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
   const [draft, setDraft] = useState('')
   const [tick, setTick] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [mentionables, setMentionables] = useState<MentionProfile[]>([])
+  const [picked, setPicked] = useState<MentionProfile[]>([])
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
 
   void tick
 
