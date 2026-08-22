@@ -253,7 +253,7 @@ function ProjectDropdown({ projects, selected, onChange }: ProjectDropdownProps)
 type LoadState = 'loading' | 'ready' | 'error'
 
 const EMPTY_DATA: TimelineData = {
-  projects: [], epics: [], sprints: [], workItems: [], dependencies: [], profiles: [],
+  projects: [], epics: [], sprints: [], workItems: [], features: [], dependencies: [], profiles: [],
 }
 
 export default function GanttPage() {
