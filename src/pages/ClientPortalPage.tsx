@@ -1733,13 +1733,39 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
             </p>
           )}
           {chatCanComment && <div
-            className="flex items-end gap-3 rounded-2xl px-4 py-3"
+            className="relative flex items-end gap-3 rounded-2xl px-4 py-3"
             style={{ background: C.surface2, border: `1px solid ${C.border2}` }}
           >
+            {menu && menu.items.length > 0 && (
+              <div style={{
+                position: 'absolute', bottom: 'calc(100% + 6px)', left: 8, zIndex: 40,
+                minWidth: 220, background: C.surface, border: `1px solid ${C.border}`,
+                borderRadius: 10, boxShadow: '0 10px 28px rgba(0,0,0,0.4)', overflow: 'hidden',
+              }}>
+                {menu.items.map(p => (
+                  <button
+                    key={p.id}
+                    onMouseDown={e => { e.preventDefault(); pickMention(p) }}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'left', padding: '7px 10px',
+                      border: 'none', background: 'transparent', cursor: 'pointer',
+                      fontSize: 12, color: C.txt,
+                    }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = C.surface2)}
+                    onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
             <textarea
               value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+              onChange={e => handleDraftChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') { setMenu(null); return }
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (menu && menu.items.length) { pickMention(menu.items[0]) } else { handleSend() } }
+              }}
               placeholder="Digite uma mensagem para a equipe… (Enter para enviar)"
               rows={1}
               className="flex-1 resize-none bg-transparent text-[13px] outline-none"
