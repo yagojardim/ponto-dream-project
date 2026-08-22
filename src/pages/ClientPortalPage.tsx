@@ -494,9 +494,12 @@ function SprintDeliveriesCard({ projectFilter, onComment }: { projectFilter: Set
   const items = SPRINT_DELIVERIES.filter(d => projectNames.size === 0 || projectNames.has(d.project))
 
   return (
-    <CardShell>
+    <CardShell style={{ maxHeight: 420 }}>
       <CardTitle>Entregas desta sprint</CardTitle>
-      <div className="px-4 py-3 space-y-3">
+      <div
+        className="px-4 py-3 space-y-3 overflow-y-auto"
+        style={{ maxHeight: 340, paddingRight: 8 }}
+      >
         {items.map(d => {
           const s = DELIVERY_STATUS[d.status]
           return (
