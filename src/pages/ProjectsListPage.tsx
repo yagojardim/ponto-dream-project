@@ -500,22 +500,56 @@ export default function ProjectsListPage({ onNav }: Props) {
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000)
   }
 
-  function handleConfirm(p: Project, action: 'complete' | 'reopen') {
+  function handleConfirm(p: Project, action: ProjectAction) {
+    setNote('')
+    setEditDesc(p.raw.description ?? '')
+    setEditStart(p.raw.period_start ?? '')
+    setEditEnd(p.raw.period_end ?? '')
     setConfirm({ open: true, project: p, action })
   }
 
-  async function executeStatusUpdate() {
-    if (!confirm.project) return
+  function closeDialog() {
+    setConfirm({ open: false, project: null, action: 'complete' })
+    setNote('')
+  }
+
+  async function executeAction() {
+    if (!confirm.project || saving) return
     const p = confirm.project
-    const nextStatus = confirm.action === 'complete' ? 'completed' : 'active'
+    const action = confirm.action
+    const base = (p.raw.metadata ?? {}) as Record<string, unknown>
+    const now = new Date().toISOString()
+    setSaving(true)
     try {
-      await updateProject(p.raw, { status: nextStatus }, activeUser.name)
+      if (action === 'edit') {
+        await updateProject(p.raw, {
+          description: editDesc.trim() || null,
+          periodStart: editStart || null,
+          periodEnd: editEnd || null,
+        }, activeUser.name)
+        showToast('Projeto atualizado')
+      } else if (action === 'archive') {
+        await updateProject(p.raw, {
+          archivedAt: now,
+          metadata: { ...base, archive_note: note.trim(), archived_by: activeUser.name, archived_at: now },
+        }, activeUser.name)
+        showToast('Projeto arquivado')
+      } else if (action === 'complete') {
+        await updateProject(p.raw, {
+          status: 'completed',
+          metadata: { ...base, finalize_note: note.trim(), finalized_by: activeUser.name, finalized_at: now },
+        }, activeUser.name)
+        showToast('Projeto finalizado')
+      } else {
+        await updateProject(p.raw, { status: 'active' }, activeUser.name)
+        showToast('Projeto reaberto')
+      }
       await load()
-      showToast(confirm.action === 'complete' ? 'Projeto finalizado' : 'Projeto reaberto')
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.')
     } finally {
-      setConfirm({ open: false, project: null, action: 'complete' })
+      setSaving(false)
+      closeDialog()
     }
   }
 
