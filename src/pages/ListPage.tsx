@@ -540,6 +540,10 @@ export default function ListPage() {
           <option value="">Épico</option>
           {epics.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
+        <select value={fFeature} onChange={e => setFFeature(e.target.value)} style={selectStyle} aria-label="Funcionalidade">
+          <option value="">Funcionalidade</option>
+          {features.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+        </select>
         <span style={{color:T.text3,fontSize:13,marginLeft:4}}>Agrupar:</span>
         {(['none','sprint','epic'] as GroupBy[]).map(g => (
           <button key={g} onClick={() => setGroupBy(g)} style={{
