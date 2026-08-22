@@ -592,6 +592,7 @@ function UserBlock({ collapsed, onNav }: { collapsed: boolean; onNav: (id: strin
       {[
         { icon: '👤', label: 'Meu perfil',    action: () => { setMenuOpen(false); onNav('profile') } },
         { icon: '⚙️', label: 'Preferências',  action: () => { setMenuOpen(false); onNav('preferences') } },
+        { icon: '💬', label: 'Feedback & Suporte', action: () => { setMenuOpen(false); onNav('feedback') } },
       ].map(item => (
         <button key={item.label} onClick={item.action}
           className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] text-left transition-colors"

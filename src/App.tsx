@@ -46,6 +46,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage"
 import ProfilePage from "./pages/ProfilePage"
 import PreferencesPage from "./pages/PreferencesPage"
 import StoragePage from "./pages/StoragePage"
+import FeedbackPage from "./pages/FeedbackPage"
 import OAuthGoogleReturn from "./pages/OAuthGoogleReturn"
 import { initAppPrefs } from "./lib/appPrefs"
 import { RESET_PATH } from "./lib/passwordReset"
@@ -89,6 +90,7 @@ const ALL_VIEWS: View[] = [
   "profile",
   "preferences",
   "storage",
+  "feedback",
 ]
 
 export const VIEW_LABELS: Record<View, string> = {
@@ -126,6 +128,7 @@ export const VIEW_LABELS: Record<View, string> = {
   profile: "Meu perfil",
   preferences: "Preferências",
   storage: "Armazenamento",
+  feedback: "Feedback & Suporte",
 }
 
 initAppPrefs()
@@ -659,6 +662,11 @@ function ShellWithRole({
             {view === "storage" && (
               <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
                 <StoragePage onNav={navTo} />
+              </div>
+            )}
+            {view === "feedback" && (
+              <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
+                <FeedbackPage onNav={navTo} />
               </div>
             )}
             {view === "modules" && (

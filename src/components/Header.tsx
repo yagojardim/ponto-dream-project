@@ -11,7 +11,7 @@ import type { NotificationRow } from '../data/db/notifications'
 type View =
   | 'boards-list' | 'modules' | 'timesheet' | 'hours-approval' | 'client-messages' | 'tenant-settings'
   | 'home' | 'foundations' | 'dashboard' | 'project' | 'issue' | 'client' | 'task-drawer' | 'projects-list' | 'gantt' | 'calendar' | 'list' | 'timeline' | 'epics' | 'releases' | 'filters' | 'navigator' | 'reports' | 'automations' | 'config' | 'team' | 'my-tasks' | 'login' | 'role-dashboard' | 'client-access' | 'client-login'
-  | 'profile' | 'preferences' | 'storage'
+  | 'profile' | 'preferences' | 'storage' | 'feedback'
 
 interface HeaderProps {
   onCreateIssue?: () => void
