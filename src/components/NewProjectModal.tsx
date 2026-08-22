@@ -10,6 +10,8 @@ export interface NewProjectInput {
   boardType: 'scrum' | 'kanban'
   leadId: string | null
   usesFeatures: boolean
+  periodStart: string | null
+  periodEnd: string | null
 }
 
 
