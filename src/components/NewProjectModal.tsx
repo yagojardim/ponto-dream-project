@@ -77,6 +77,8 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
   const [key, setKey] = useState('')
   const [keyManual, setKeyManual] = useState(false)
   const [type, setType] = useState<'scrum' | 'kanban'>('scrum')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [lead, setLead] = useState<string>(leads?.[0]?.id ?? '')
   const [desc, setDesc] = useState('')
   const [usesFeatures, setUsesFeatures] = useState(false)
