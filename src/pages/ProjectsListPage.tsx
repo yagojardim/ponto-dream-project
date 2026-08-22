@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Avatar } from '../components/ds/Avatar'
 import { NewProjectModal, type NewProjectInput } from '../components/NewProjectModal'
 import { WorkItemDetail } from '../components/WorkItemDetail'
