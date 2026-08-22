@@ -2520,7 +2520,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
   const applyBoardData = useCallback((data: BoardData) => {
     const profileById = new Map(data.profiles.map(p => [p.id, p]))
     const epicById    = new Map(data.epics.map(e => [e.id, e]))
-    setDbIssues(data.items.map<Issue>(it => mapDbItem(it, profileById, epicById)))
+    const featById    = new Map(data.features.map(f => [f.id, f]))
+    setDbIssues(data.items.map<Issue>(it => mapDbItem(it, profileById, epicById, featById)))
   }, [])
 
   const loadBoard = useCallback(async () => {
@@ -2575,6 +2576,14 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }))
   }, [boardData])
 
+  const boardUsesFeatures = projectUsesFeatures(boardData?.project as never)
+  const availableFeatures = useMemo(() => {
+    const projectEpicIds = new Set((boardData?.epics ?? []).map(e => e.id))
+    return (boardData?.features ?? [])
+      .filter(f => !f.epic_id || projectEpicIds.has(f.epic_id))
+      .map(f => ({ id: f.id, name: f.name }))
+  }, [boardData])
+
   const [filterAssignees, setFilterA] = useState<string[]>([])
   const availableMembers = useMemo<{ id: string; initials: string; name: string; color: string | null }[]>(() => {
     return (boardData?.profiles ?? []).map(p => ({
@@ -2611,7 +2620,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }, activeUser.name)
     const profileById = new Map(boardData.profiles.map(p => [p.id, p]))
     const epicById    = new Map(boardData.epics.map(e => [e.id, e]))
-    setDbIssues(prev => [mapDbItem(created, profileById, epicById), ...prev])
+    const featById    = new Map(boardData.features.map(f => [f.id, f]))
+    setDbIssues(prev => [mapDbItem(created, profileById, epicById, featById), ...prev])
     setBoardData(prev => prev ? { ...prev, items: [created, ...prev.items] } : prev)
   }
 
@@ -2908,6 +2918,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           availableMembers={availableMembers}
           filterAssignees={filterAssignees}
           setFilterA={setFilterA}
+          usesFeatures={boardUsesFeatures}
+          availableFeatures={availableFeatures}
           projectName={boardData?.project?.name ?? '—'}
           onReloadBoard={loadBoard}
         />
