@@ -84,7 +84,7 @@ export async function listWorkItems(filters: ListFilters = {}): Promise<ListData
 
   let query = supabase
     .from('work_items')
-    .select(sel('id, key, title, type, status, priority, assignee_id, story_points, epic_id, sprint_id, project_id, due_date, is_blocked'))
+    .select(sel('id, key, title, type, status, priority, assignee_id, story_points, epic_id, feature_id, sprint_id, project_id, due_date, is_blocked'))
     .eq('tenant_id', tid)
     .is('archived_at', null)
 
@@ -97,14 +97,16 @@ export async function listWorkItems(filters: ListFilters = {}): Promise<ListData
   if (filters.assigneeId) query = query.eq('assignee_id', filters.assigneeId)
   if (filters.sprintId) query = query.eq('sprint_id', filters.sprintId)
   if (filters.epicId) query = query.eq('epic_id', filters.epicId)
+  if (filters.featureId) query = query.eq('feature_id', filters.featureId)
   if (filters.search) query = query.ilike('title', `%${filters.search}%`)
 
   const itemsPromise = query.order('key').returns<ListItemRow[]>()
 
-  const [items, labels, epics, sprints, profiles, projects] = await Promise.all([
+  const [items, labels, epics, features, sprints, profiles, projects] = await Promise.all([
     itemsPromise,
     supabase.from('work_item_labels').select('work_item_id, labels(name)').eq('tenant_id', tid),
     supabase.from('epics').select('id, project_id, name, color').eq('tenant_id', tid).is('archived_at', null),
+    supabase.from('features').select('id, epic_id, name').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('sprints').select('id, project_id, name, state, start_date').eq('tenant_id', tid).is('archived_at', null)
       .order('start_date', { ascending: true, nullsFirst: false }),
     supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
@@ -113,7 +115,7 @@ export async function listWorkItems(filters: ListFilters = {}): Promise<ListData
 
   const failed = [
     ['work_items', items.error], ['work_item_labels', labels.error], ['epics', epics.error],
-    ['sprints', sprints.error], ['profiles', profiles.error], ['projects', projects.error],
+    ['features', features.error], ['sprints', sprints.error], ['profiles', profiles.error], ['projects', projects.error],
   ].find(([, err]) => err) as [string, { message: string }] | undefined
   if (failed) throw new Error(missingTableMessage(failed[0], failed[1].message))
 
@@ -128,6 +130,7 @@ export async function listWorkItems(filters: ListFilters = {}): Promise<ListData
     items: items.data ?? [],
     labels: labelRows,
     epics: epics.data ?? [],
+    features: features.data ?? [],
     sprints: ((sprints.data ?? []) as ListSprintRow[]).slice().sort(sortSprintsByStartDate),
     profiles: profiles.data ?? [],
     projects: projects.data ?? [],
