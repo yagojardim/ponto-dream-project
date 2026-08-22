@@ -1711,7 +1711,9 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
                             re: {b.itemTitle}
                           </p>
                         )}
-                        <p className="text-[12px] leading-relaxed" style={{ color: C.txt }}>{b.body}</p>
+                        <p className="text-[12px] leading-relaxed" style={{ color: C.txt }}>
+                          {renderMentionBody(b.body, mentionables.filter(p => (b.mentions ?? []).includes(p.id)).map(p => p.name))}
+                        </p>
                         <p className="text-[9px] mt-1 text-right" style={{ color: C.txt3 }}>{fmtTime(b.timestamp)}</p>
                       </div>
                     </div>
