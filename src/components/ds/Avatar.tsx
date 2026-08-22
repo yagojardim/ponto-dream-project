@@ -60,7 +60,7 @@ export function Avatar({ name, src, size = 'md', presence = 'none', color, initi
           className="rounded-full flex items-center justify-center font-semibold text-white select-none w-full h-full"
           style={{ background: bg, fontSize: s.text }}
         >
-          {initials(name)}
+          {initialsProp ?? initials(name)}
         </span>
       )}
       {presence !== 'none' && (
