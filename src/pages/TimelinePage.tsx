@@ -762,14 +762,15 @@ export default function TimelinePage() {
       {!loading && !error && (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* Sidebar */}
-          <div style={{ width: 470, flexShrink: 0, borderRight: `1px solid ${T.border}`, background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ width: sidebarWidth, flexShrink: 0, background: T.bgSurface, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ height: HEADER_H, borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', padding: '0 12px', flexShrink: 0, gap: 0 }}>
               <span style={{ flex: 1, color: T.text3, fontSize: 10, fontWeight: 700 }}>{sidebarTitle}</span>
               <span style={{ width: 90, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Status</span>
               <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Início</span>
               <span style={{ width: 66, flexShrink: 0, color: T.text3, fontSize: 10, fontWeight: 700 }}>Venc.</span>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            <div ref={leftBodyRef} onScroll={() => syncScroll('left')} style={{ flex: 1, overflowY: 'auto' }}>
+
               {rows.map(row => {
                 if (row.kind === 'group') {
                   const isCollapsed = collapsed.has(row.id)
