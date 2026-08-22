@@ -330,6 +330,31 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                 </div>
               </div>
 
+              {/* Period */}
+              <div>
+                <label style={labelStyle}>Período <HelpHint text="Datas previstas de início e fim do projeto. Opcionais." /></label>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <label style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 11, color: T.text3 }}>Data de início</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={e => setStartDate(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 11, color: T.text3 }}>Data de fim</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={e => setEndDate(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+              </div>
+
               {/* Work structure / Features toggle */}
               <div>
                 <label style={labelStyle}>Estrutura de trabalho <HelpHint title="Usar Funcionalidades" text="Ative para incluir um nível de 'Funcionalidade' entre o Épico e a História (Épico → Funcionalidade → História → Subtarefa). Desligado, a hierarquia é Épico → História → Subtarefa. Pode ser mudado depois nas configurações do projeto." /></label>
