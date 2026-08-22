@@ -825,8 +825,18 @@ export default function TimelinePage() {
             </div>
           </div>
 
+          {/* Resize handle */}
+          <div
+            onMouseDown={startResize}
+            style={{ width: 6, cursor: 'col-resize', flexShrink: 0, background: 'transparent',
+              borderRight: `1px solid ${T.border}` }}
+            onMouseEnter={e => (e.currentTarget.style.background = T.accent + '40')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          />
+
           {/* Timeline grid */}
-          <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', position: 'relative' }}>
+          <div ref={rightBodyRef} onScroll={() => syncScroll('right')} style={{ flex: 1, overflowX: 'auto', overflowY: 'auto', position: 'relative' }}>
+
             {rows.length === 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: T.text3, fontSize: 13 }}>
                 Nenhum item no período
