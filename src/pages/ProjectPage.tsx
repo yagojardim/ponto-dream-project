@@ -2576,7 +2576,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     }))
   }, [boardData])
 
-  const boardUsesFeatures = projectUsesFeatures(boardData?.project as never)
+  const boardUsesFeatures = projectUsesFeatures(boardData?.project)
   const availableFeatures = useMemo(() => {
     const projectEpicIds = new Set((boardData?.epics ?? []).map(e => e.id))
     return (boardData?.features ?? [])

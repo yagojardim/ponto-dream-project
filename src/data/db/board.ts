@@ -29,7 +29,7 @@ export type BoardItemRow = Pick<
 export type BoardFeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name'>
 export type BoardEpicRow = Pick<Tables['epics']['Row'], 'id' | 'project_id' | 'key' | 'name' | 'color'>
 export type BoardProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
-export type BoardProjectRow = Pick<Tables['projects']['Row'], 'id' | 'name'>
+export type BoardProjectRow = Pick<Tables['projects']['Row'], 'id' | 'name' | 'metadata'>
 
 /** A board column enriched with the statuses it maps (board_column_statuses). */
 export interface BoardColumnDef extends BoardColumnRow {
@@ -127,7 +127,7 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
     supabase.from('features').select('id, epic_id, name')
       .eq('tenant_id', tid).is('archived_at', null),
     supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
-    supabase.from('projects').select('id, name').eq('id', board.project_id).eq('tenant_id', tid).maybeSingle(),
+    supabase.from('projects').select('id, name, metadata').eq('id', board.project_id).eq('tenant_id', tid).maybeSingle(),
   ])
 
   const failed = [
