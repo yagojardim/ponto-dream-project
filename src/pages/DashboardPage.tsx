@@ -301,10 +301,31 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
             <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color:'var(--text-muted,#546278)' }}>
               Saúde dos projetos
             </p>
-            <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(visProjects.length,3)},1fr)`, gap:12 }}>
-              {visProjects.map(p => <HealthCard key={p.id} p={p} onOpen={() => onNav?.('project', p.id)} />)}
+            <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(Math.max(activeProjects.length,1),3)},1fr)`, gap:12 }}>
+              {activeProjects.map(p => <HealthCard key={p.id} p={p} onOpen={() => onNav?.('project', p.id)} />)}
+              {activeProjects.length === 0 && (
+                <div style={{ padding:'18px', borderRadius:12, border:'1px dashed var(--border-subtle,#1c2c45)', fontSize:12, color:'var(--text-muted,#546278)' }}>
+                  Nenhum projeto em andamento no escopo selecionado.
+                </div>
+              )}
             </div>
           </div>
+
+          {/* 1b. Funcionalidades */}
+          <FeaturesCard f={agg.features} />
+
+          {/* 1c. Projetos encerrados */}
+          {completedProjects.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color:'var(--text-muted,#546278)' }}>
+                Projetos encerrados
+              </p>
+              <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(completedProjects.length,3)},1fr)`, gap:12 }}>
+                {completedProjects.map(p => <ClosedProjectCard key={p.id} p={p} onOpen={() => onNav?.('project', p.id)} />)}
+              </div>
+            </div>
+          )}
+
 
           {/* 2. Main grid */}
           <div className="grid grid-cols-3 gap-4">
