@@ -217,7 +217,7 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
           >
             {busy ? 'Enviando…' : 'Enviar'}
           </button>
-          {toast && <span className="text-[12px]" style={{ color: T.ok ?? T.accent }}>{toast}</span>}
+          {toast && <span className="text-[12px]" style={{ color: T.success }}>{toast}</span>}
         </div>
       </section>
     </div>
