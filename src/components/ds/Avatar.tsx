@@ -9,6 +9,7 @@ interface AvatarProps {
   size?: AvatarSize
   presence?: Presence
   color?: string
+  initials?: string
 }
 
 const sizes: Record<AvatarSize, { px: number; text: string; dot: number; dotOffset: number }> = {
