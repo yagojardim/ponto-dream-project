@@ -712,6 +712,8 @@ export default function ProjectsListPage({ onNav }: Props) {
       boardType: input.boardType,
       leadId: input.leadId,
       usesFeatures: input.usesFeatures,
+      periodStart: input.periodStart,
+      periodEnd: input.periodEnd,
       actorName: activeUser.name,
     })
     await load()

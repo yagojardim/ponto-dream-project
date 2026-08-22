@@ -10,6 +10,8 @@ export interface NewProjectInput {
   boardType: 'scrum' | 'kanban'
   leadId: string | null
   usesFeatures: boolean
+  periodStart: string | null
+  periodEnd: string | null
 }
 
 
@@ -75,6 +77,8 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
   const [key, setKey] = useState('')
   const [keyManual, setKeyManual] = useState(false)
   const [type, setType] = useState<'scrum' | 'kanban'>('scrum')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [lead, setLead] = useState<string>(leads?.[0]?.id ?? '')
   const [desc, setDesc] = useState('')
   const [usesFeatures, setUsesFeatures] = useState(false)
@@ -113,7 +117,17 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
     if (!onCreate) { setSuccess(true); return }
     setSaving(true)
     try {
-      await onCreate({ name: name.trim(), key, description: desc.trim(), clientName: client.trim() || null, boardType: type, leadId: lead || null, usesFeatures })
+      await onCreate({
+        name: name.trim(),
+        key,
+        description: desc.trim(),
+        clientName: client.trim() || null,
+        boardType: type,
+        leadId: lead || null,
+        usesFeatures,
+        periodStart: startDate || null,
+        periodEnd: endDate || null,
+      })
       setSuccess(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível criar o projeto.')
@@ -129,6 +143,8 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
     setKey('')
     setKeyManual(false)
     setType('scrum')
+    setStartDate('')
+    setEndDate('')
     setLead(leads?.[0]?.id ?? '')
     setDesc('')
     setUsesFeatures(false)
@@ -311,6 +327,31 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                       {t === 'scrum' ? 'Scrum' : 'Kanban'}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Period */}
+              <div>
+                <label style={labelStyle}>Período <HelpHint text="Datas previstas de início e fim do projeto. Opcionais." /></label>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <label style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 11, color: T.text3 }}>Data de início</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={e => setStartDate(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </label>
+                  <label style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <span style={{ fontSize: 11, color: T.text3 }}>Data de fim</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={e => setEndDate(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </label>
                 </div>
               </div>
 
