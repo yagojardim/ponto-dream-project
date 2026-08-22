@@ -35,6 +35,12 @@ function fmtDate(d?: string): string {
   return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
+function fmtDateFull(d?: string | null): string {
+  if (!d) return '—'
+  const dt = new Date(d)
+  return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 // ─── Project multi-select dropdown ───────────────────────────────────────────
 interface ProjectOption { id: string; name: string; color: string }
 
@@ -245,39 +251,36 @@ function FeaturesCard({ f }: { f: FeatureAggregate }) {
   )
 }
 
-// ─── Projeto encerrado ────────────────────────────────────────────────────────
+// ─── Projeto finalizado (linha compacta) ──────────────────────────────────────
 function ClosedProjectCard({ p, onOpen }: { p: RagProject; onOpen: () => void }) {
   const c = '#06C18A'
   return (
     <div role="button" tabIndex={0} onClick={onOpen}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}
-      className="flex flex-col gap-3 p-4 rounded-xl min-w-0 cursor-pointer"
-      style={{ background:'var(--bg-surface,#111d33)', border:'1px solid var(--border-subtle,#1c2c45)', opacity:0.92 }}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-mono mb-1" style={{ color:'var(--text-muted,#546278)' }}>{p.key}</p>
-          <p className="text-sm font-semibold leading-tight truncate" style={{ color:'var(--text-primary,#e8ecf4)' }}>{p.name}</p>
-        </div>
-        <Pill color={c} tint="rgba(6,193,138,0.12)" border="rgba(6,193,138,0.3)">Concluído</Pill>
-      </div>
-      <div>
-        <div className="flex justify-between mb-1.5">
-          <span className="text-[10px]" style={{ color:'var(--text-muted,#546278)' }}>Progresso final · {p.done}/{p.total} itens</span>
-          <span className="text-[10px] font-semibold" style={{ color:'var(--text-secondary,#8a9ab8)' }}>{p.pct}%</span>
-        </div>
-        <div className="h-1.5 rounded-full overflow-hidden" style={{ background:'var(--border-subtle,#1c2c45)' }}>
-          <div className="h-full rounded-full" style={{ width:`${p.pct}%`, background:c }}/>
-        </div>
-      </div>
-      {p.finalizeNote && (
-        <p className="text-xs" style={{ color:'var(--text-secondary,#8a9ab8)' }}>{p.finalizeNote}</p>
-      )}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px]" style={{ color:'var(--text-muted,#546278)' }}>
-          {p.finalizedAt ? `Finalizado em ${fmtDate(p.finalizedAt)}` : 'Encerrado'}
+      className="flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer border border-[var(--border-subtle,#1c2c45)] hover:bg-[var(--bg-surface-2,#162236)] transition-colors"
+      style={{ background:'var(--bg-surface,#111d33)' }}>
+      <span className="text-[10px] font-mono flex-shrink-0" style={{ color:'var(--text-muted,#546278)' }}>{p.key}</span>
+      <span className="text-xs font-medium truncate min-w-0" style={{ color:'var(--text-primary,#e8ecf4)', flex:'1 1 0%' }}>{p.name}</span>
+
+      <Pill color={c} tint="rgba(6,193,138,0.12)" border="rgba(6,193,138,0.3)">Concluído</Pill>
+
+      <span className="text-[11px] font-medium flex-shrink-0" style={{ color:'var(--text-secondary,#8a9ab8)' }}>
+        {p.done}/{p.total} · {p.pct}%
+      </span>
+
+      <span className="text-[11px] flex-shrink-0" style={{ color:'var(--text-muted,#546278)' }}>
+        {fmtDateFull(p.finalizedAt)}
+      </span>
+
+      {p.finalizeNote ? (
+        <span className="text-[11px] truncate flex-shrink-0" style={{ color:'var(--text-secondary,#8a9ab8)', maxWidth:220 }} title={p.finalizeNote}>
+          {p.finalizeNote}
         </span>
-        <span className="text-xs" style={{ color:'var(--primary,#4d82ff)' }}>Ver projeto →</span>
-      </div>
+      ) : (
+        <span className="text-[11px] flex-shrink-0" style={{ color:'var(--text-muted,#546278)' }}>—</span>
+      )}
+
+      <span className="text-xs ml-auto flex-shrink-0" style={{ color:'var(--primary,#4d82ff)' }}>Ver projeto →</span>
     </div>
   )
 }
@@ -386,13 +389,13 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
           {/* 1b. Funcionalidades */}
           <FeaturesCard f={agg.features} />
 
-          {/* 1c. Projetos encerrados */}
+          {/* 1c. Projetos finalizados */}
           {completedProjects.length > 0 && (
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color:'var(--text-muted,#546278)' }}>
-                Projetos encerrados
+                Projetos finalizados ({completedProjects.length})
               </p>
-              <div style={{ display:'grid', gridTemplateColumns:`repeat(${Math.min(completedProjects.length,3)},1fr)`, gap:12 }}>
+              <div className="flex flex-col gap-2">
                 {completedProjects.map(p => <ClosedProjectCard key={p.id} p={p} onOpen={() => onNav?.('project', p.id)} />)}
               </div>
             </div>
