@@ -1949,7 +1949,7 @@ export default function ClientPortalPage({
         notifTick={notifTick}
         onNotifRead={handleNotifRead}
         unreadCount={unreadCount}
-
+        onOpenChat={openChatFor}
         isChatMode={portalView === 'chat'}
         onChatToggle={() => setPortalView(v => v === 'chat' ? 'dashboard' : 'chat')}
         onLogout={onLogout ?? (() => {})}
@@ -1958,8 +1958,9 @@ export default function ClientPortalPage({
 
       {portalView === 'chat' ? (
         <div className="flex-1 overflow-hidden">
-          <ClientChatPanel onToast={msg => showToast(msg, 'info')} />
+          <ClientChatPanel onToast={msg => showToast(msg, 'info')} initialProjectId={chatProjectId} />
         </div>
+
       ) : (
         <>
           {/* State label strip */}
