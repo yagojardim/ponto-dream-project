@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
 import {
   addClientMessage, addClientApproval, listThreadMessages, listProjectChat,
   markSignalReadByPo, markReplyReadByClient, setPortalPasswordChanged,
   getClientPortalContext, listClientUnreadReplies, countClientUnreadReplies,
   markClientRepliesRead, getPortalScope, EMPTY_PORTAL_SCOPE,
+  listProjectResponsibleProfiles,
   type ClientChatMessage, type ClientPortalContext, type ClientReplyNotice,
+  type MentionProfile,
   type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
 } from '../data/db/clientPortal'
 import { readPortalSession } from '../lib/portalSession'
@@ -1376,7 +1378,59 @@ interface ChatBubble {
   timestamp: string
   badge?: string
   itemTitle?: string
+  mentions?: string[]
 }
+
+// ─── @menções (espelha ClientMessagesPage) ───────────────────────────────────
+const TODOS_MENTION: { id: '@todos'; name: 'Todos os responsáveis' } = {
+  id: '@todos', name: 'Todos os responsáveis',
+}
+type MentionMenuItem = MentionProfile | typeof TODOS_MENTION
+
+function mentionQuery(text: string, caret: number): { query: string; start: number } | null {
+  const upto = text.slice(0, caret)
+  const at = upto.lastIndexOf('@')
+  if (at < 0) return null
+  const before = at === 0 ? ' ' : upto[at - 1]
+  if (!/\s/.test(before)) return null
+  const query = upto.slice(at + 1)
+  if (/\s/.test(query)) return null
+  return { query, start: at }
+}
+
+function matchPeople(people: MentionProfile[], query: string): MentionMenuItem[] {
+  const q = query.trim().toLowerCase()
+  const matches = people.filter(p => !q || p.name.toLowerCase().includes(q)).slice(0, 6)
+  const todosVisible = !q || 'todos os responsáveis'.includes(q) || '@todos'.includes(q)
+  return todosVisible ? [TODOS_MENTION, ...matches] : matches
+}
+
+function resolveMentions(text: string, picked: MentionProfile[], allPeople: MentionProfile[]): string[] {
+  const individual = picked.filter(p => text.includes(`@${p.name}`)).map(p => p.id)
+  if (!text.includes('@todos')) return [...new Set(individual)]
+  return [...new Set([...allPeople.map(p => p.id), ...individual])]
+}
+
+function renderMentionBody(body: string, names: string[]): ReactNode[] {
+  const all = [...names, 'todos'].filter(Boolean)
+  if (!all.length) return [body]
+  const escaped = all
+    .sort((a, b) => b.length - a.length)
+    .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const re = new RegExp(`@(${escaped.join('|')})`, 'g')
+  const out: ReactNode[] = []
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = re.exec(body))) {
+    if (m.index > last) out.push(body.slice(last, m.index))
+    out.push(<span key={`${m.index}-${m[0]}`} style={{ color: C.accent, fontWeight: 700 }}>{m[0]}</span>)
+    last = m.index + m[0].length
+  }
+  if (last < body.length) out.push(body.slice(last))
+  return out
+}
+
+
 
 
 
@@ -1399,6 +1453,9 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
   const [draft, setDraft] = useState('')
   const [tick, setTick] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [mentionables, setMentionables] = useState<MentionProfile[]>([])
+  const [picked, setPicked] = useState<MentionProfile[]>([])
+  const [menu, setMenu] = useState<{ items: MentionMenuItem[]; start: number } | null>(null)
 
   void tick
 
@@ -1432,6 +1489,13 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
     return () => { alive = false }
   }, [project?.id, tick]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    let alive = true
+    if (!project) { setMentionables([]); return }
+    void listProjectResponsibleProfiles(project.id).then(rows => { if (alive) setMentionables(rows) })
+    return () => { alive = false }
+  }, [project?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const thread: ChatBubble[] = chat.map(m => ({
     id: m.id,
     side: m.side,
@@ -1441,22 +1505,43 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
     timestamp: m.createdAt,
     badge: m.type === 'approval' ? '✓ Aprovação' : undefined,
     itemTitle: m.itemTitle ?? undefined,
+    mentions: m.mentions,
   }))
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [selId, tick, chat.length])
 
+  function handleDraftChange(text: string, caret: number) {
+    setDraft(text)
+    const q = mentionQuery(text, caret)
+    setMenu(q ? { items: matchPeople(mentionables, q.query), start: q.start } : null)
+  }
+
+  function pickMention(item: MentionMenuItem) {
+    if (!menu) return
+    const label = item.id === '@todos' ? 'todos' : item.name
+    const next = `${draft.slice(0, menu.start)}@${label} `
+    setDraft(next)
+    if (item.id !== '@todos') {
+      setPicked(prev => (prev.some(p => p.id === item.id) ? prev : [...prev, item as MentionProfile]))
+    }
+    setMenu(null)
+  }
 
   async function handleSend() {
     const body = draft.trim()
     if (!body || !project || !chatCanComment) return
+    const mentions = resolveMentions(body, picked, mentionables)
     setDraft('')
+    setMenu(null)
+    setPicked([])
     await addClientMessage({
       projectId: project.id,
       body,
       author: CLIENT?.name ?? 'Cliente',
       source: 'client',
+      mentions,
     })
     setTick(t => t + 1)
     onToast('Mensagem enviada.')
@@ -1626,7 +1711,9 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
                             re: {b.itemTitle}
                           </p>
                         )}
-                        <p className="text-[12px] leading-relaxed" style={{ color: C.txt }}>{b.body}</p>
+                        <p className="text-[12px] leading-relaxed" style={{ color: C.txt }}>
+                          {renderMentionBody(b.body, mentionables.filter(p => (b.mentions ?? []).includes(p.id)).map(p => p.name))}
+                        </p>
                         <p className="text-[9px] mt-1 text-right" style={{ color: C.txt3 }}>{fmtTime(b.timestamp)}</p>
                       </div>
                     </div>
@@ -1648,13 +1735,39 @@ function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string)
             </p>
           )}
           {chatCanComment && <div
-            className="flex items-end gap-3 rounded-2xl px-4 py-3"
+            className="relative flex items-end gap-3 rounded-2xl px-4 py-3"
             style={{ background: C.surface2, border: `1px solid ${C.border2}` }}
           >
+            {menu && menu.items.length > 0 && (
+              <div style={{
+                position: 'absolute', bottom: 'calc(100% + 6px)', left: 8, zIndex: 40,
+                minWidth: 220, background: C.surface, border: `1px solid ${C.border}`,
+                borderRadius: 10, boxShadow: '0 10px 28px rgba(0,0,0,0.4)', overflow: 'hidden',
+              }}>
+                {menu.items.map(p => (
+                  <button
+                    key={p.id}
+                    onMouseDown={e => { e.preventDefault(); pickMention(p) }}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'left', padding: '7px 10px',
+                      border: 'none', background: 'transparent', cursor: 'pointer',
+                      fontSize: 12, color: C.txt,
+                    }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.background = C.surface2)}
+                    onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
             <textarea
               value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+              onChange={e => handleDraftChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') { setMenu(null); return }
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (menu && menu.items.length) { pickMention(menu.items[0]) } else { handleSend() } }
+              }}
               placeholder="Digite uma mensagem para a equipe… (Enter para enviar)"
               rows={1}
               className="flex-1 resize-none bg-transparent text-[13px] outline-none"
