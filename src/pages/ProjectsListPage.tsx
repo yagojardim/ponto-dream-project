@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Avatar } from '../components/ds/Avatar'
 import { NewProjectModal, type NewProjectInput } from '../components/NewProjectModal'
 import { WorkItemDetail } from '../components/WorkItemDetail'
 import { useSession } from '../data/SessionContext'
 import { can } from '../data/permissions'
 import {
-  listProjects, createProject, projectColor, projectProgress,
+  listProjects, createProject, updateProject, projectColor, projectProgress,
   type ProjectRow, type ProjectTaskRow, type ProjectProfileRow, type ProjectBoardRow,
 } from '../data/db/projects'
 
@@ -35,6 +35,7 @@ interface Project {
   responsible: string
   boardId:     string | null
   tasks:       SubTask[]
+  raw:         ProjectRow
 }
 
 const ITEM_STATUS_MAP: Record<string, TaskStatus> = {
@@ -116,16 +117,40 @@ function countDone(project: Project): number {
   )
 }
 
+interface ConfirmState {
+  open: boolean
+  project: Project | null
+  action: 'complete' | 'reopen'
+}
+
 // ─── Project row ──────────────────────────────────────────────────────────────
 interface ProjectRowProps {
   project:     Project
+  canManage:   boolean
   onOpenProj:  (p: Project) => void
   onOpenTask:  (task: SubTask, project: Project) => void
+  onConfirm:   (p: Project, action: 'complete' | 'reopen') => void
 }
 
-function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
+function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onConfirm }: ProjectRowProps) {
   const [expanded, setExpanded] = useState(true)
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function close(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    if (menuOpen) {
+      document.addEventListener('mousedown', close)
+      return () => document.removeEventListener('mousedown', close)
+    }
+  }, [menuOpen])
+
+  const rawStatus = project.raw.status
+  const isCompleted = rawStatus === 'completed'
+  const menuLabel = isCompleted ? 'Reabrir projeto' : 'Finalizar projeto'
 
   return (
     <>
@@ -178,6 +203,47 @@ function ProjectListRow({ project, onOpenProj, onOpenTask }: ProjectRowProps) {
             <Avatar name={project.responsible} size="xs" />
             <span className="text-xs" style={{ color: '#8a9ab8' }}>{project.responsible}</span>
           </div>
+        </td>
+        <td className="py-3 pr-4" style={{ width: 40 }}>
+          {canManage && (
+            <div ref={menuRef} className="relative" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
+                className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+                style={{ color: '#546278' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLButtonElement).style.color = '#e8ecf4' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#546278' }}
+                aria-label="Ações do projeto"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <circle cx="7" cy="3.5" r="1.2" fill="currentColor" />
+                  <circle cx="7" cy="7" r="1.2" fill="currentColor" />
+                  <circle cx="7" cy="10.5" r="1.2" fill="currentColor" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg fade-rise"
+                  style={{
+                    background: '#171a22',
+                    border: '1px solid #2f3547',
+                    boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+                    minWidth: 160,
+                  }}
+                >
+                  <button
+                    onClick={() => { setMenuOpen(false); onConfirm(project, isCompleted ? 'reopen' : 'complete') }}
+                    className="w-full text-left px-3 py-2 text-[11px] transition-colors"
+                    style={{ color: '#e8ecf4' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                  >
+                    {menuLabel}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </td>
       </tr>
 
@@ -340,6 +406,7 @@ function buildProjects(
       responsible: (p.lead_id && profileById.get(p.lead_id)?.name) || 'Sem responsável',
       boardId: board?.id ?? null,
       tasks: top.map(t => ({ ...toSubTask(t), children: sub.filter(s => s.parent_id === t.id).map(toSubTask) })),
+      raw: p,
     }
   })
 }
@@ -350,7 +417,8 @@ interface Props {
 }
 
 export default function ProjectsListPage({ onNav }: Props) {
-  const { activeUser, tenantName } = useSession()
+  const { activeUser, tenantName, isTenantOwner } = useSession()
+  const canManageProjects = can(activeUser.permissions, 'project:create') || isTenantOwner
   const canEdit = can(activeUser.permissions, 'edit:workitem')
 
   const [newProjOpen, setNewProjOpen] = useState(false)
@@ -361,6 +429,8 @@ export default function ProjectsListPage({ onNav }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
+  const [confirm, setConfirm] = useState<ConfirmState>({ open: false, project: null, action: 'complete' })
+  const [toast, setToast] = useState<{ msg: string; show: boolean }>({ msg: '', show: false })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -409,6 +479,30 @@ export default function ProjectsListPage({ onNav }: Props) {
       actorName: activeUser.name,
     })
     await load()
+  }
+
+  function showToast(msg: string) {
+    setToast({ msg, show: true })
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000)
+  }
+
+  function handleConfirm(p: Project, action: 'complete' | 'reopen') {
+    setConfirm({ open: true, project: p, action })
+  }
+
+  async function executeStatusUpdate() {
+    if (!confirm.project) return
+    const p = confirm.project
+    const nextStatus = confirm.action === 'complete' ? 'completed' : 'active'
+    try {
+      await updateProject(p.raw, { status: nextStatus }, activeUser.name)
+      await load()
+      showToast(confirm.action === 'complete' ? 'Projeto finalizado' : 'Projeto reaberto')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Falha ao atualizar o projeto.')
+    } finally {
+      setConfirm({ open: false, project: null, action: 'complete' })
+    }
   }
 
 
@@ -462,7 +556,7 @@ export default function ProjectsListPage({ onNav }: Props) {
               <thead>
                 <tr style={{ borderBottom: '1px solid #1c2c45', background: 'rgba(255,255,255,0.02)' }}>
                   <th style={{ width: 24 }} />
-                  {['Nome', 'Período', 'Progresso', 'Status', 'Responsável'].map(h => (
+                  {['Nome', 'Período', 'Progresso', 'Status', 'Responsável', 'Ações'].map(h => (
                     <th
                       key={h}
                       className="py-2.5 pr-6 text-left text-[10px] font-semibold uppercase tracking-wider"
@@ -478,8 +572,10 @@ export default function ProjectsListPage({ onNav }: Props) {
                   <ProjectListRow
                     key={p.id}
                     project={p}
+                    canManage={canManageProjects}
                     onOpenProj={handleOpenProject}
                     onOpenTask={handleOpenTask}
+                    onConfirm={handleConfirm}
                   />
                 ))}
               </tbody>
@@ -511,6 +607,60 @@ export default function ProjectsListPage({ onNav }: Props) {
           existingKeys={rows.map(r => r.key)}
           tenantName={tenantName}
         />
+      )}
+
+      {/* Confirm status change */}
+      {confirm.open && confirm.project && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
+          onClick={() => setConfirm({ open: false, project: null, action: 'complete' })}
+        >
+          <div
+            className="w-full max-w-md p-5 rounded-xl fade-rise"
+            style={{ background: '#1c2130', border: '1px solid #2f3547' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold mb-2" style={{ color: '#e8ecf4' }}>
+              {confirm.action === 'complete' ? 'Finalizar projeto' : 'Reabrir projeto'}
+            </h3>
+            <p className="text-xs mb-5 leading-relaxed" style={{ color: '#8a9ab8' }}>
+              {confirm.action === 'complete'
+                ? <>Finalizar <strong>{confirm.project.name}</strong>? As demandas em aberto continuarão registradas.</>
+                : <>Reabrir <strong>{confirm.project.name}</strong>? O projeto voltará ao status ativo.</>}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirm({ open: false, project: null, action: 'complete' })}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ color: '#8a9ab8', border: '1px solid #2f3547' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executeStatusUpdate}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: '#3B82F6', color: '#fff' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#2563EB' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#3B82F6' }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline toast */}
+      {toast.show && (
+        <div
+          className="fixed bottom-5 right-5 z-[100] px-4 py-2.5 rounded-lg text-xs font-medium shadow-lg fade-rise"
+          style={{ background: '#1c2130', color: '#e8ecf4', border: '1px solid #2f3547' }}
+        >
+          {toast.msg}
+        </div>
       )}
     </>
   )
