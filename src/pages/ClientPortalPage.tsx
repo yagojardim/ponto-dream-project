@@ -1393,14 +1393,18 @@ function fmtDay(iso: string) {
   } catch { return '' }
 }
 
-function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
-  const [selId, setSelId] = useState<string>(PROJECTS[0]?.id ?? '')
+function ClientChatPanel({ onToast, initialProjectId }: { onToast: (msg: string) => void; initialProjectId?: string | null }) {
+  const [selId, setSelId] = useState<string>(initialProjectId ?? PROJECTS[0]?.id ?? '')
   const chatCanComment = CLIENT?.canComment ?? false
   const [draft, setDraft] = useState('')
   const [tick, setTick] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   void tick
+
+  useEffect(() => {
+    if (initialProjectId) setSelId(initialProjectId)
+  }, [initialProjectId])
 
   // Unread per project (management replies the client hasn't read)
   const [allUnread, setAllUnread] = useState<ClientReplyNotice[]>([])
@@ -1442,6 +1446,7 @@ function ClientChatPanel({ onToast }: { onToast: (msg: string) => void }) {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [selId, tick, chat.length])
+
 
   async function handleSend() {
     const body = draft.trim()
