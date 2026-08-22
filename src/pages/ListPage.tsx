@@ -153,6 +153,7 @@ export default function ListPage() {
   const [fAssignee, setFAssignee] = useState('')
   const [fSprint, setFSprint] = useState('')
   const [fEpic, setFEpic] = useState('')
+  const [fFeature, setFFeature] = useState('')
   // Deep link from a report/KPI card: open the list already filtered.
   useEffect(() => {
     const intent = takeReportNav('list')
