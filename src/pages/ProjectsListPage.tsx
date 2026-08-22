@@ -493,11 +493,11 @@ function EditProjectModal({ project, tasks, members, profiles, actorName, onClos
             {team.length === 0 ? (
               <p className="text-xs" style={{ color: '#546278' }}>Nenhum membro atribuído</p>
             ) : (
-              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
+              <div className="flex flex-wrap gap-2" style={{ maxHeight: 160, overflowY: 'auto' }}>
                 {team.map(m => (
                   <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: '#141926' }}>
-                    <Avatar name={m.name} size="xs" color={m.avatar_color ?? undefined} />
-                    <span className="text-xs truncate" style={{ color: '#8a9ab8' }}>{m.name}</span>
+                    <Avatar name={m.name} size="xs" color={m.avatar_color ?? undefined} initials={m.avatar_initials ?? undefined} />
+                    <span className="text-xs truncate" style={{ color: '#8a9ab8', maxWidth: 140 }}>{m.name}</span>
                   </div>
                 ))}
               </div>
