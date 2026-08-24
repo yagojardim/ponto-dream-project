@@ -207,7 +207,7 @@ function ProjectSubList({ onNav }: { onNav: (view: string, targetId?: string) =>
         setProjects(agg.projects.map(p => {
           const r = ragById.get(p.id)
           const status: ProjectEntry['status'] =
-            r?.rag === 'critical' ? 'blocked' : r?.rag === 'at-risk' ? 'at-risk' : 'on-track'
+            r?.rag === 'blocked' ? 'blocked' : r?.rag === 'risk' ? 'at-risk' : 'on-track'
           return { id: p.id, name: p.name, color: p.color, pct: r?.pct ?? 0, status }
         }))
       } catch (err) {
