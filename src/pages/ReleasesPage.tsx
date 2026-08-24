@@ -329,7 +329,7 @@ export default function ReleasesPage() {
                               cursor: 'pointer', fontWeight: 600,
                             }}
                           >
-                            {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${total + returnedIssues.length})`}
+                            {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${releaseIssues.length + returnedIssues.length})`}
                           </button>
                         )}
 
