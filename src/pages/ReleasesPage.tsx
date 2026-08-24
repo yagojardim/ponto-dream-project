@@ -285,7 +285,26 @@ export default function ReleasesPage() {
                               }} />
                             </div>
                             <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
-                              {(['done', 'in_progress', 'in_review', 'todo', 'backlog'] as const).map(s => {
+                              {outcome ? (
+                                <>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.success }} />
+                                    <span style={{ fontSize: 11, color: T.text3 }}>Entregues: {outcome.shipped}</span>
+                                  </div>
+                                  {outcome.deferred > 0 && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.accent }} />
+                                      <span style={{ fontSize: 11, color: T.text3 }}>Próxima release: {outcome.deferred}</span>
+                                    </div>
+                                  )}
+                                  {outcome.returned > 0 && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.warn }} />
+                                      <span style={{ fontSize: 11, color: T.text3 }}>Backlog: {outcome.returned}</span>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (['done', 'in_progress', 'in_review', 'todo', 'backlog'] as const).map(s => {
                                 const cnt = releaseIssues.filter(i => i.status === s).length
                                 if (cnt === 0) return null
                                 const cfg = statusCfg(s)
