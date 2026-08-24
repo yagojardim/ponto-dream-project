@@ -312,11 +312,22 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
     }
   }
 
+  // Notify assignees of shipped items.
+  const shippedItems = await loadItems(input.shippedItemIds)
+  for (const item of shippedItems) {
+    if (!item.assignee_id) continue
+    await notify(
+      item.assignee_id,
+      `✅ Sua demanda ${item.key} foi finalizada na release ${release.version}. Converse com o Product Owner do seu projeto.`,
+      note,
+    )
+  }
+
   for (const item of returnedItems) {
     if (!item.assignee_id) continue
     await notify(
       item.assignee_id,
-      `Item ${item.key} voltou ao backlog para ajuste (release ${release.version})`,
+      `🔁 Sua demanda ${item.key} voltou para o backlog para ajuste (release ${release.version}). Converse com o Product Owner do seu projeto.`,
       note,
     )
   }
@@ -326,7 +337,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
       if (!item.assignee_id) continue
       await notify(
         item.assignee_id,
-        `Item ${item.key} movido para a release ${nextReleaseLabel ?? nextReleaseId}`,
+        `➡️ Sua demanda ${item.key} foi movida para a release ${nextReleaseLabel ?? nextReleaseId} (fechamento da ${release.version}). Converse com o Product Owner do seu projeto.`,
         note,
       )
     }
