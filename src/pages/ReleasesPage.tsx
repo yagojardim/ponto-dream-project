@@ -6,7 +6,7 @@ import { DB_STATUS_CFG } from '../data/db/timeline'
 import { WorkItemDetail } from '../components/WorkItemDetail'
 import { CloseReleaseModal } from '../components/CloseReleaseModal'
 
-interface ReleaseOutcome { outcome: 'success' | 'partial'; shipped: number; returned: number }
+interface ReleaseOutcome { outcome: 'success' | 'partial'; shipped: number; returned: number; deferred: number }
 function releaseOutcome(metadata: unknown): ReleaseOutcome | null {
   if (!metadata || typeof metadata !== 'object') return null
   const m = metadata as Record<string, unknown>
@@ -15,6 +15,7 @@ function releaseOutcome(metadata: unknown): ReleaseOutcome | null {
     outcome: m.outcome,
     shipped: Number(m.shipped_count ?? 0),
     returned: Number(m.returned_count ?? 0),
+    deferred: Number(m.deferred_count ?? 0),
   }
 }
 function returnedFrom(metadata: unknown): { version: string; note: string | null } | null {
@@ -176,14 +177,16 @@ export default function ReleasesPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
                   {group.releases.map(release => {
                     const releaseIssues = items.filter(i => i.release_id === release.id)
-                    const done = releaseIssues.filter(i => i.status === 'done').length
-                    const total = releaseIssues.length
+                    const outcome = releaseOutcome(release.metadata)
+                    const done = outcome ? outcome.shipped : releaseIssues.filter(i => i.status === 'done').length
+                    const total = outcome
+                      ? outcome.shipped + outcome.returned + outcome.deferred
+                      : releaseIssues.length
                     const pct = total > 0 ? Math.round((done / total) * 100) : 0
                     const color = stateColor(release.state)
                     const isReleased = release.state === 'released'
                     const isExpanded = expanded[release.id]
                     const days = isInProgress(release.state) ? daysUntil(release.release_date) : null
-                    const outcome = releaseOutcome(release.metadata)
                     const returnedIssues = items.filter(i => returnedFrom(i.metadata)?.version === release.version)
 
                     return (
@@ -216,7 +219,9 @@ export default function ReleasesPage() {
                             }}>
                               {outcome.outcome === 'success'
                                 ? 'Lançada ✓'
-                                : `Lançada · parcial — ${outcome.shipped} entregues · ${outcome.returned} retornados`}
+                                : outcome.deferred > 0
+                                  ? `Lançada · parcial — ${outcome.shipped} entregues · ${outcome.deferred} próxima release · ${outcome.returned} backlog`
+                                  : `Lançada · parcial — ${outcome.shipped} entregues · ${outcome.returned} retornados`}
                             </span>
                           ) : (
                             <span style={{
@@ -280,7 +285,26 @@ export default function ReleasesPage() {
                               }} />
                             </div>
                             <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
-                              {(['done', 'in_progress', 'in_review', 'todo', 'backlog'] as const).map(s => {
+                              {outcome ? (
+                                <>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.success }} />
+                                    <span style={{ fontSize: 11, color: T.text3 }}>Entregues: {outcome.shipped}</span>
+                                  </div>
+                                  {outcome.deferred > 0 && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.accent }} />
+                                      <span style={{ fontSize: 11, color: T.text3 }}>Próxima release: {outcome.deferred}</span>
+                                    </div>
+                                  )}
+                                  {outcome.returned > 0 && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: T.warn }} />
+                                      <span style={{ fontSize: 11, color: T.text3 }}>Backlog: {outcome.returned}</span>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (['done', 'in_progress', 'in_review', 'todo', 'backlog'] as const).map(s => {
                                 const cnt = releaseIssues.filter(i => i.status === s).length
                                 if (cnt === 0) return null
                                 const cfg = statusCfg(s)
@@ -305,7 +329,7 @@ export default function ReleasesPage() {
                               cursor: 'pointer', fontWeight: 600,
                             }}
                           >
-                            {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${total + returnedIssues.length})`}
+                            {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${releaseIssues.length + returnedIssues.length})`}
                           </button>
                         )}
 

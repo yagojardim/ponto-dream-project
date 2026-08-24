@@ -43,6 +43,10 @@ export function CloseReleaseModal({ release, items, releases = [], onClose, onCl
     { v: 'backlog', label: '↩ Backlog', color: T.warn },
   ]
 
+  const noteRequired = returnedItemIds.length + deferredItemIds.length > 0
+  const noteMissing = noteRequired && note.trim().length === 0
+
+
   async function confirm() {
     setSaving(true); setError(null)
     try {
@@ -142,18 +146,24 @@ export function CloseReleaseModal({ release, items, releases = [], onClose, onCl
           )}
 
           <section>
-            <label style={{ fontSize: 12, color: T.text2, display: 'block', marginBottom: 6 }}>Observação</label>
+            <label style={{ fontSize: 12, color: T.text2, display: 'block', marginBottom: 6 }}>
+              Observação{noteRequired ? ' *' : ''}
+            </label>
             <textarea
               value={note}
               onChange={e => setNote(e.target.value)}
               rows={3}
               placeholder="O que motivou o fechamento / os retornos?"
               style={{
-                width: '100%', background: T.bgSurface2, border: `1px solid ${T.border}`,
+                width: '100%', background: T.bgSurface2,
+                border: `1px solid ${noteMissing ? T.warn : T.border}`,
                 borderRadius: 8, padding: '8px 12px', color: T.text1, fontSize: 13,
                 outline: 'none', resize: 'vertical', boxSizing: 'border-box',
               }}
             />
+            {noteMissing && (
+              <div style={{ fontSize: 11, color: T.warn, marginTop: 6 }}>Descreva o motivo dos retornos</div>
+            )}
           </section>
 
           {error && <div style={{ fontSize: 12, color: T.crit }}>{error}</div>}
@@ -175,11 +185,13 @@ export function CloseReleaseModal({ release, items, releases = [], onClose, onCl
               }}
             >Cancelar</button>
             <button
-              onClick={() => void confirm()} disabled={saving}
+              onClick={() => void confirm()} disabled={saving || noteMissing}
+              title={noteMissing ? 'Descreva o motivo dos retornos' : undefined}
               style={{
                 fontSize: 12, fontWeight: 600, color: T.text1, background: T.accentDim,
                 border: `1px solid ${T.accent}`, borderRadius: 8, padding: '7px 16px',
-                cursor: saving ? 'progress' : 'pointer',
+                opacity: noteMissing ? 0.5 : 1,
+                cursor: saving ? 'progress' : noteMissing ? 'not-allowed' : 'pointer',
               }}
             >{saving ? 'Fechando…' : 'Fechar release'}</button>
           </div>
