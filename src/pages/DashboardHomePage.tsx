@@ -905,7 +905,15 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
   const readyItems = applyFilters(byProjects(getReadyItems(), selProj), filters)
   const { openChart, chartModal } = useChartModal()
 
-  const unreadCount = getUnreadCountForTenant(MOCK_TENANT.tenant_id)
+  const selKey = [...selProj].sort().join(',')
+  const [poMetrics, setPoMetrics] = useState<PoCardMetrics | null>(null)
+  useEffect(() => {
+    let alive = true
+    fetchPoCardMetrics(selKey ? selKey.split(',') : [])
+      .then(m => { if (alive) setPoMetrics(m) })
+      .catch(err => { logger.error('po.metrics', err); if (alive) setPoMetrics(null) })
+    return () => { alive = false }
+  }, [selKey])
 
   // Compute KPI values from real mock data (respecting selProj filter)
   const sprint14Items   = byProjects(getSprintItems(liveCurrentSprintName() ?? undefined), selProj)
@@ -915,9 +923,6 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
   const backlogAll      = getBacklogWithAlerts()
   const healthyItems    = backlogAll.filter(w => !w.tags?.some(t => t.startsWith('Sem '))).length
   const backlogHealth   = backlogAll.length > 0 ? Math.round((healthyItems / backlogAll.length) * 100) : 100
-  const doneSprint      = sprint14Items.filter(w => w.status === 'done').length
-  const funcProgress    = sprint14Items.length > 0 ? Math.round((doneSprint / sprint14Items.length) * 100) : 0
-  const poPtDone        = sprint14Items.filter(w => w.status === 'done').reduce((s, w) => s + (w.points ?? 0), 0)
 
   const workload = liveAggregates()?.workload ?? []
   const team = workload.map(w => ({
