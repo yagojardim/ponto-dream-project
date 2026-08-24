@@ -1202,6 +1202,8 @@ function TechLeadPanel({ onNav }: { onNav: (v: string, targetId?: string) => voi
 }
 
 // ─── 8. DEV ───────────────────────────────────────────────────────────────────
+const DEV_ROW_H = 400
+
 function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
   const { drawerItem, openDrawer, closeDrawer } = useDrawer()
   const [filters, setFilters] = useFilters()
@@ -1231,6 +1233,8 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
     { id: 'dev:prs', value: '2', label: 'PRs Abertos', sub: '1 precisa de ação', disclaimer: 'pull requests abertos nos quais estou envolvido', color: T.accent, miniViz: <MiniBarChart data={[{label:'S-4',value:1},{label:'S-3',value:3},{label:'S-2',value:2},{label:'Atual',value:2,current:true}]} showAvg={false} />, onClick: () => onNav('project') },
   ]
 
+  const devCardBody = { justifyContent: 'center' as const, overflowY: 'auto' as const }
+
   return (
     <>
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
@@ -1241,13 +1245,13 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
       </div>
 
-      <SprintDonutCard sprintName="Minha Fila Ativa — Sprint 14" done={8} total={16} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
+      <SprintDonutCard sprintName="Minha Fila Ativa — Sprint 14" done={8} total={16} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} style={{ minHeight: DEV_ROW_H }} />
 
       <Grid cols="1fr 1fr">
         <WorkQueue title="Meus Bloqueados" items={blocked} onOpen={openDrawer} showDaysBlocked
-          emptyMsg="Nenhum item bloqueado." />
+          emptyMsg="Nenhum item bloqueado." style={{ minHeight: DEV_ROW_H, display: 'flex', flexDirection: 'column' }} bodyStyle={devCardBody} />
 
-        <SCard title="Atividade Recente">
+        <SCard title="Atividade Recente" style={{ minHeight: DEV_ROW_H, display: 'flex', flexDirection: 'column' }} bodyStyle={devCardBody}>
           <ActivityTimeline events={recent} />
         </SCard>
       </Grid>

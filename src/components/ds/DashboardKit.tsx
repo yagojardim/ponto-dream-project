@@ -129,8 +129,8 @@ export function UserAvatarStack({ users, max = 3 }: {
 }
 
 // ─── SectionCard wrapper ──────────────────────────────────────────────────────
-export function SCard({ title, action, children, style, help, helpTitle }: {
-  title: string; action?: ReactNode; children: ReactNode; style?: CSSProperties
+export function SCard({ title, action, children, style, bodyStyle, help, helpTitle }: {
+  title: string; action?: ReactNode; children: ReactNode; style?: CSSProperties; bodyStyle?: CSSProperties
   help?: string; helpTitle?: string
 }) {
   return (
@@ -145,7 +145,9 @@ export function SCard({ title, action, children, style, help, helpTitle }: {
         </span>
         {action}
       </div>
-      {children}
+      {bodyStyle
+        ? <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', ...bodyStyle }}>{children}</div>
+        : children}
     </div>
   )
 }
@@ -617,9 +619,10 @@ export function WorkItemRow({ item, onOpen, showDaysBlocked }: {
 }
 
 // ─── WorkQueue — titled list of work items with header counter ────────────────
-export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysBlocked, maxItems = 5 }: {
+export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysBlocked, maxItems = 5, style, bodyStyle }: {
   title: string; items: WorkItem[]; onOpen: (item: WorkItem) => void
   onViewAll?: () => void; emptyMsg?: string; showDaysBlocked?: boolean; maxItems?: number
+  style?: CSSProperties; bodyStyle?: CSSProperties
 }) {
   const shown = items.slice(0, maxItems)
   const viewAllAction = onViewAll ? (
@@ -630,7 +633,7 @@ export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysB
   ) : undefined
 
   return (
-    <SCard title={`${title} ${items.length > 0 ? `(${items.length})` : ''}`} action={viewAllAction}>
+    <SCard title={`${title} ${items.length > 0 ? `(${items.length})` : ''}`} action={viewAllAction} style={style} bodyStyle={bodyStyle}>
       {shown.length === 0
         ? <EmptyState message={emptyMsg ?? 'Nenhum item no momento.'} />
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -644,9 +647,9 @@ export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysB
 }
 
 // ─── SprintDonut + delivery list ──────────────────────────────────────────────
-export function SprintDonutCard({ sprintName, done, total, items, onOpen, onViewSprint }: {
+export function SprintDonutCard({ sprintName, done, total, items, onOpen, onViewSprint, style }: {
   sprintName: string; done: number; total: number
-  items: WorkItem[]; onOpen: (item: WorkItem) => void; onViewSprint?: () => void
+  items: WorkItem[]; onOpen: (item: WorkItem) => void; onViewSprint?: () => void; style?: CSSProperties
 }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   const r = 30; const circ = 2 * Math.PI * r
@@ -656,7 +659,7 @@ export function SprintDonutCard({ sprintName, done, total, items, onOpen, onView
       onViewSprint
         ? <button onClick={onViewSprint} style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Ver sprint →</button>
         : undefined
-    }>
+    } style={style}>
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
         {/* Donut */}
         <div
