@@ -647,9 +647,9 @@ export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysB
 }
 
 // ─── SprintDonut + delivery list ──────────────────────────────────────────────
-export function SprintDonutCard({ sprintName, done, total, items, onOpen, onViewSprint }: {
+export function SprintDonutCard({ sprintName, done, total, items, onOpen, onViewSprint, style }: {
   sprintName: string; done: number; total: number
-  items: WorkItem[]; onOpen: (item: WorkItem) => void; onViewSprint?: () => void
+  items: WorkItem[]; onOpen: (item: WorkItem) => void; onViewSprint?: () => void; style?: CSSProperties
 }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   const r = 30; const circ = 2 * Math.PI * r
@@ -659,7 +659,7 @@ export function SprintDonutCard({ sprintName, done, total, items, onOpen, onView
       onViewSprint
         ? <button onClick={onViewSprint} style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Ver sprint →</button>
         : undefined
-    }>
+    } style={style}>
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
         {/* Donut */}
         <div
