@@ -370,9 +370,11 @@ export default function ReleasesPage() {
                                       fontSize: 11, color: sc.color, background: `${sc.color}18`,
                                       borderRadius: 20, padding: '2px 8px', flexShrink: 0,
                                     }}>{sc.label}</span>
-                                    <span style={{ fontSize: 11, color: T.text3, flexShrink: 0 }}>
-                                      {assignee?.avatar_initials ?? assignee?.name ?? '—'}
-                                    </span>
+                                    {assignee && (
+                                      <span title={assignee.name} style={{ flexShrink: 0 }}>
+                                        <Av initials={assignee.avatar_initials ?? assignee.name.slice(0, 2).toUpperCase()} color={assignee.avatar_color ?? T.accent} size={22} />
+                                      </span>
+                                    )}
                                   </div>
                                 )
                               })}
