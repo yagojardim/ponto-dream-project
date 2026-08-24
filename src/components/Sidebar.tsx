@@ -78,10 +78,11 @@ const ALL_GROUPS: NavGroup[] = [
     items: [
       { id: 'epics',     label: 'Épicos',         icon: EpicIcon, cap: 'create:epic'    },
       { id: 'releases',  label: 'Releases',        icon: ReleaseIcon                       },
-      { id: 'filters',   label: 'Filtros & Busca', icon: DiscoveryIcon                        },
-      { id: 'navigator', label: 'Issue Navigator', icon: DiscoveryIcon                           },
+      { id: 'filters',   label: 'Filtros & Busca', icon: DiscoveryIcon, cap: 'access:discovery' },
+      { id: 'navigator', label: 'Issue Navigator', icon: DiscoveryIcon, cap: 'access:discovery' },
     ],
   },
+
   {
     label: 'Configuração',
     items: [
@@ -114,10 +115,11 @@ const ROLE_NAV_MAP: Record<RoleContext, string[]> = {
   ProductOwner:   ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','dashboard','epics','releases','filters','navigator','reports','client','client-access'],
   ScrumMaster:    ['home','my-tasks','calendar','projects-list','boards-list','list','gantt','timeline','filters','navigator','reports'],
   TechLead:       ['home','my-tasks','calendar','projects-list','boards-list','storage','list','gantt','timeline','filters','navigator','reports'],
-  Dev:            ['home','my-tasks','calendar','boards-list','list','filters','navigator'],
-  UX:             ['home','my-tasks','calendar','projects-list','boards-list','list','filters','navigator'],
-  QA:             ['home','my-tasks','calendar','projects-list','boards-list','list','filters','navigator'],
+  Dev:            ['home','my-tasks','calendar','boards-list','list'],
+  UX:             ['home','my-tasks','calendar','projects-list','boards-list','list'],
+  QA:             ['home','my-tasks','calendar','projects-list','boards-list','list'],
 }
+
 
 function ClockIcon()    { return <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.2"/><path d="M6.5 4v2.5l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg> }
 function MyTasksIcon()   { return <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M2 7h10M2 10.5h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/><circle cx="11" cy="10.5" r="2" stroke="currentColor" strokeWidth="1.2"/><path d="M10 10.5l.75.75L12 9.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/></svg> }
