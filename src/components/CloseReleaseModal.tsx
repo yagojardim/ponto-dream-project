@@ -185,11 +185,13 @@ export function CloseReleaseModal({ release, items, releases = [], onClose, onCl
               }}
             >Cancelar</button>
             <button
-              onClick={() => void confirm()} disabled={saving}
+              onClick={() => void confirm()} disabled={saving || noteMissing}
+              title={noteMissing ? 'Descreva o motivo dos retornos' : undefined}
               style={{
                 fontSize: 12, fontWeight: 600, color: T.text1, background: T.accentDim,
                 border: `1px solid ${T.accent}`, borderRadius: 8, padding: '7px 16px',
-                cursor: saving ? 'progress' : 'pointer',
+                opacity: noteMissing ? 0.5 : 1,
+                cursor: saving ? 'progress' : noteMissing ? 'not-allowed' : 'pointer',
               }}
             >{saving ? 'Fechando…' : 'Fechar release'}</button>
           </div>
