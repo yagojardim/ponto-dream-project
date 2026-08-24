@@ -163,6 +163,9 @@ interface ProjectEntry {
   status: 'on-track' | 'at-risk' | 'blocked'
 }
 
+// Module-level pin state — persists across re-renders
+let _pinnedIds = new Set<string>()
+
 // Module-level disclosure state — persists for session (default: closed)
 let _projectsOpen = false
 
