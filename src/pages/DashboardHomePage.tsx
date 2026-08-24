@@ -1665,10 +1665,11 @@ function ReportScopeChip() {
   )
 }
 
-function CompositionGrid({ dashId, tenantId, selProj }: {
+function CompositionGrid({ dashId, tenantId, selProj, sprintFilter }: {
   dashId: DashboardType
   tenantId: string
   selProj?: Set<string>
+  sprintFilter?: string
 }) {
   const { activeUser } = useSession()
   const [tick, setTick]          = useState(0)
@@ -1685,7 +1686,8 @@ function CompositionGrid({ dashId, tenantId, selProj }: {
   if (slots.length === 0 && !canAdd) return null
 
   // Real sprint data for charts that support extra props
-  const sprintItems   = byProjects(getSprintItems(liveCurrentSprintName() ?? undefined), selProj ?? ALL_PROJ_IDS())
+  const sprintName    = sprintFilter || (liveCurrentSprintName() ?? undefined)
+  const sprintItems   = byProjects(getSprintItems(sprintName), selProj ?? ALL_PROJ_IDS())
   const sprintPtTotal = sprintItems.reduce((s, w) => s + (w.points ?? 0), 0) || 38
   const sprintPtDone  = sprintItems.filter(w => w.status === 'done').reduce((s, w) => s + (w.points ?? 0), 0)
 
