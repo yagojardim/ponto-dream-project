@@ -37,10 +37,10 @@ export async function listReleases(): Promise<ReleasesData> {
 
   const [releases, items, profiles, projects] = await Promise.all([
     supabase.from('releases')
-      .select('id, project_id, version, name, release_date, state, notes')
+      .select('id, project_id, version, name, release_date, state, notes, metadata')
       .eq('tenant_id', tid).is('archived_at', null).order('release_date', { ascending: true }),
     supabase.from('work_items')
-      .select('id, key, title, type, status, project_id, release_id, assignee_id')
+      .select('id, key, title, type, status, project_id, release_id, assignee_id, metadata')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
     supabase.from('profiles').select('id, name, avatar_initials').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, key, name').eq('tenant_id', tid).is('archived_at', null).order('name'),
@@ -102,7 +102,7 @@ export async function createRelease(input: CreateReleaseInput): Promise<ReleaseR
     release_date: input.releaseDate || null,
     state: input.state ?? 'planned',
     notes: input.notes ?? null,
-  }).select('id, project_id, version, name, release_date, state, notes').single()
+  }).select('id, project_id, version, name, release_date, state, notes, metadata').single()
 
   if (error || !data) throw new Error(missingTableMessage('releases', error?.message ?? 'Falha ao criar a release.'))
 
