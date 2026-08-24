@@ -386,6 +386,7 @@ function ShellWithRole({
   const [selectedProjectId, setSelectedProjectId] =
     useState<string | undefined>()
   const [selectedIssueId, setSelectedIssueId] = useState<string | undefined>()
+  const [dashboardProjectId, setDashboardProjectId] = useState<string | undefined>()
   const [teamInitialTab, setTeamInitialTab] =
     useState<"membros" | "convites" | "permissoes" | "dashboards">("membros")
 
