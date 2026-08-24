@@ -168,8 +168,8 @@ const SPRINTS = () => {
 
 
 // ─── Panel grid wrapper ───────────────────────────────────────────────────────
-function Grid({ cols = '1fr 1fr', children }: { cols?: string; children: ReactNode }) {
-  return <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: cols, gap: 12, alignItems: 'stretch' }}>{children}</div>
+function Grid({ cols = '1fr 1fr', gap = 12, children }: { cols?: string; gap?: number; children: ReactNode }) {
+  return <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: cols, gap, alignItems: 'stretch' }}>{children}</div>
 }
 function ColSpan({ children }: { children: ReactNode }) {
   return <div style={{ gridColumn: '1 / -1' }}>{children}</div>
