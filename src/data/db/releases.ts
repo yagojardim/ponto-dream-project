@@ -2,7 +2,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
-import { updateWorkItemField } from './workItem'
+import { updateWorkItemField, addComment } from './workItem'
 import * as notifications from './notifications'
 import { logger } from '../../utils/logger'
 
