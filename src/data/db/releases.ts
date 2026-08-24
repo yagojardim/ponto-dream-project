@@ -2,6 +2,9 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { updateWorkItemField } from './workItem'
+import * as notifications from './notifications'
+import { logger } from '../../utils/logger'
 
 export { DEFAULT_TENANT_ID }
 
@@ -9,11 +12,11 @@ type Tables = Database['public']['Tables']
 
 export type ReleaseRow = Pick<
   Tables['releases']['Row'],
-  'id' | 'project_id' | 'version' | 'name' | 'release_date' | 'state' | 'notes'
+  'id' | 'project_id' | 'version' | 'name' | 'release_date' | 'state' | 'notes' | 'metadata'
 >
 export type ReleaseItemRow = Pick<
   Tables['work_items']['Row'],
-  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'release_id' | 'assignee_id'
+  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'release_id' | 'assignee_id' | 'metadata'
 >
 export type ReleaseProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials'>
 export type ReleaseProjectRow = Pick<Tables['projects']['Row'], 'id' | 'key' | 'name'>
@@ -37,10 +40,10 @@ export async function listReleases(): Promise<ReleasesData> {
 
   const [releases, items, profiles, projects] = await Promise.all([
     supabase.from('releases')
-      .select('id, project_id, version, name, release_date, state, notes')
+      .select('id, project_id, version, name, release_date, state, notes, metadata')
       .eq('tenant_id', tid).is('archived_at', null).order('release_date', { ascending: true }),
     supabase.from('work_items')
-      .select('id, key, title, type, status, project_id, release_id, assignee_id')
+      .select('id, key, title, type, status, project_id, release_id, assignee_id, metadata')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
     supabase.from('profiles').select('id, name, avatar_initials').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, key, name').eq('tenant_id', tid).is('archived_at', null).order('name'),
@@ -102,7 +105,7 @@ export async function createRelease(input: CreateReleaseInput): Promise<ReleaseR
     release_date: input.releaseDate || null,
     state: input.state ?? 'planned',
     notes: input.notes ?? null,
-  }).select('id, project_id, version, name, release_date, state, notes').single()
+  }).select('id, project_id, version, name, release_date, state, notes, metadata').single()
 
   if (error || !data) throw new Error(missingTableMessage('releases', error?.message ?? 'Falha ao criar a release.'))
 
@@ -171,4 +174,109 @@ export async function unlinkItemFromRelease(
     .update({ release_id: null }).eq('id', itemId).eq('tenant_id', DEFAULT_TENANT_ID)
   if (error) throw new Error(missingTableMessage('work_items', error.message))
   await writeAudit(releaseId, 'release.item_unlinked', actorName, { item_id: itemId }, null)
+}
+
+// ─── Release closure ─────────────────────────────────────────────────────────
+export interface CloseReleaseInput {
+  release: ReleaseRow
+  /** Items that stay on the release — shipped. */
+  shippedItemIds: string[]
+  /** Items that go back to the backlog for adjustment. */
+  returnedItemIds: string[]
+  note?: string
+  actorName?: string
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {}
+}
+
+/**
+ * Closes a release: marks it as released, sends the pending items back to the
+ * backlog, records the outcome in metadata and notifies the people involved.
+ */
+export async function closeRelease(input: CloseReleaseInput): Promise<void> {
+  const { release } = input
+  const actorName = input.actorName ?? 'Sistema'
+  const nowIso = new Date().toISOString()
+  const shippedCount = input.shippedItemIds.length
+  const returnedCount = input.returnedItemIds.length
+  const outcome = returnedCount === 0 ? 'success' : 'partial'
+  const note = input.note?.trim() ? input.note.trim() : null
+
+  const metadata = {
+    ...asRecord(release.metadata),
+    outcome,
+    released_at: nowIso,
+    shipped_count: shippedCount,
+    returned_count: returnedCount,
+    close_note: note,
+  }
+
+  const { error } = await supabase.from('releases').update({
+    state: 'released',
+    release_date: release.release_date ?? nowIso.slice(0, 10),
+    metadata: metadata as Tables['releases']['Update']['metadata'],
+  }).eq('id', release.id).eq('tenant_id', DEFAULT_TENANT_ID)
+  if (error) throw new Error(missingTableMessage('releases', error.message))
+
+  // Returned items: back to backlog, unlinked, stamped with the release info.
+  const returnedItems = returnedCount > 0
+    ? (await supabase.from('work_items')
+        .select('id, key, status, assignee_id, metadata')
+        .in('id', input.returnedItemIds).eq('tenant_id', DEFAULT_TENANT_ID)).data ?? []
+    : []
+
+  for (const item of returnedItems) {
+    try {
+      await updateWorkItemField(item.id, 'status', 'backlog', item.status, { actorName })
+      await unlinkItemFromRelease(release.id, item.id, actorName)
+      await supabase.from('work_items').update({
+        metadata: {
+          ...asRecord(item.metadata),
+          returned_from_release: { version: release.version, at: nowIso, note },
+        } as Tables['work_items']['Update']['metadata'],
+      }).eq('id', item.id).eq('tenant_id', DEFAULT_TENANT_ID)
+    } catch (err) {
+      logger.error('releases.closeRelease.returnItem', err, { itemId: item.id })
+    }
+  }
+
+  // Notifications — resilient per recipient.
+  const notify = async (profileId: string, title: string, body: string | null) => {
+    try {
+      await notifications.create({
+        profileId, type: 'release', title, body,
+        entityType: 'release', entityId: release.id,
+      })
+    } catch (err) {
+      logger.error('releases.closeRelease.notify', err, { profileId })
+    }
+  }
+
+  for (const item of returnedItems) {
+    if (!item.assignee_id) continue
+    await notify(
+      item.assignee_id,
+      `Item ${item.key} voltou ao backlog para ajuste (release ${release.version})`,
+      note,
+    )
+  }
+
+  const leads = (await supabase.from('profiles')
+    .select('id, primary_role').eq('tenant_id', DEFAULT_TENANT_ID)
+    .in('primary_role', ['ProductOwner', 'ScrumMaster'])).data ?? []
+  for (const lead of leads) {
+    await notify(
+      lead.id,
+      `Release ${release.version} fechada: ${shippedCount} entregues, ${returnedCount} retornados`,
+      note,
+    )
+  }
+
+  await writeAudit(release.id, 'release.closed', actorName, null, {
+    outcome, shipped: shippedCount, returned: returnedCount,
+  })
 }
