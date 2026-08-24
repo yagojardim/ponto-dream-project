@@ -9,11 +9,11 @@ type Tables = Database['public']['Tables']
 
 export type ReleaseRow = Pick<
   Tables['releases']['Row'],
-  'id' | 'project_id' | 'version' | 'name' | 'release_date' | 'state' | 'notes'
+  'id' | 'project_id' | 'version' | 'name' | 'release_date' | 'state' | 'notes' | 'metadata'
 >
 export type ReleaseItemRow = Pick<
   Tables['work_items']['Row'],
-  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'release_id' | 'assignee_id'
+  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'release_id' | 'assignee_id' | 'metadata'
 >
 export type ReleaseProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials'>
 export type ReleaseProjectRow = Pick<Tables['projects']['Row'], 'id' | 'key' | 'name'>
