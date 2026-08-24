@@ -291,6 +291,7 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string> | null>(null)
+  const [allProjects, setAllProjects] = useState<ProjectOption[]>([])
   const [openItemId, setOpenItemId] = useState<string | null>(null)
 
   const selKey = selected ? [...selected].sort().join(',') : ''
@@ -303,6 +304,7 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
       .then(d => {
         if (!alive) return
         setAgg(d)
+        if (!selKey) setAllProjects(d.projects)
         setSelected(prev => prev ?? new Set(d.projects.map(p => p.id)))
         setLoading(false)
       })
@@ -310,7 +312,7 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
     return () => { alive = false }
   }, [selKey])
 
-  const projectOptions: ProjectOption[] = agg?.projects ?? []
+  const projectOptions: ProjectOption[] = allProjects
   const visProjects = agg?.rag ?? []
   const blockers    = agg?.blockers ?? []
   const deliveries  = agg?.upcoming ?? []
