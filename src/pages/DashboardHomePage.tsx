@@ -1682,6 +1682,8 @@ function CompositionGrid({ dashId, tenantId, selProj }: {
   const available = REPORT_CARDS_LIST.filter(r => !gridIds.has(r.id) && isCardReleased(gov, r.id))
   const canAdd    = available.length > 0
 
+  if (slots.length === 0 && !canAdd) return null
+
   // Real sprint data for charts that support extra props
   const sprintItems   = byProjects(getSprintItems(liveCurrentSprintName() ?? undefined), selProj ?? ALL_PROJ_IDS())
   const sprintPtTotal = sprintItems.reduce((s, w) => s + (w.points ?? 0), 0) || 38
