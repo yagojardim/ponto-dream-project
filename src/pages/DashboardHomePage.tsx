@@ -28,7 +28,7 @@ import {
 
 import {
   getAllForPo, getUnreadForPo, markReadByPo, markAllReadByPo,
-  addPoReply, getSignalsForTenant, getUnreadCountForTenant, type ClientSignal,
+  addPoReply, getSignalsForTenant, type ClientSignal,
 } from '../data/clientSignals'
 import {
   dismissHomeCard, pinHomeCard, getVisibleHomeCards, getGridCards,
