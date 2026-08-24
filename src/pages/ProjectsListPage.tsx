@@ -128,7 +128,7 @@ interface ProjectRowProps {
 }
 
 function ProjectListRow({ project, canManage, onOpenProj, onOpenTask, onEdit }: ProjectRowProps) {
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({})
 
 
