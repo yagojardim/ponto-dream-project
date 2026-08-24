@@ -426,6 +426,7 @@ export default function ReleasesPage() {
         <CloseReleaseModal
           release={closingRelease}
           items={items}
+          releases={releases}
           onClose={() => setClosingRelease(null)}
           onClosed={() => { void load() }}
         />
