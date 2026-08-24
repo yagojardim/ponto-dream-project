@@ -176,14 +176,16 @@ export default function ReleasesPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
                   {group.releases.map(release => {
                     const releaseIssues = items.filter(i => i.release_id === release.id)
-                    const done = releaseIssues.filter(i => i.status === 'done').length
-                    const total = releaseIssues.length
+                    const outcome = releaseOutcome(release.metadata)
+                    const done = outcome ? outcome.shipped : releaseIssues.filter(i => i.status === 'done').length
+                    const total = outcome
+                      ? outcome.shipped + outcome.returned + outcome.deferred
+                      : releaseIssues.length
                     const pct = total > 0 ? Math.round((done / total) * 100) : 0
                     const color = stateColor(release.state)
                     const isReleased = release.state === 'released'
                     const isExpanded = expanded[release.id]
                     const days = isInProgress(release.state) ? daysUntil(release.release_date) : null
-                    const outcome = releaseOutcome(release.metadata)
                     const returnedIssues = items.filter(i => returnedFrom(i.metadata)?.version === release.version)
 
                     return (
