@@ -4,6 +4,27 @@ import { NewReleaseModal } from '../components/NewReleaseModal'
 import { listReleases, type ReleasesData, type ReleaseRow } from '../data/db/releases'
 import { DB_STATUS_CFG } from '../data/db/timeline'
 import { WorkItemDetail } from '../components/WorkItemDetail'
+import { CloseReleaseModal } from '../components/CloseReleaseModal'
+
+interface ReleaseOutcome { outcome: 'success' | 'partial'; shipped: number; returned: number }
+function releaseOutcome(metadata: unknown): ReleaseOutcome | null {
+  if (!metadata || typeof metadata !== 'object') return null
+  const m = metadata as Record<string, unknown>
+  if (m.outcome !== 'success' && m.outcome !== 'partial') return null
+  return {
+    outcome: m.outcome,
+    shipped: Number(m.shipped_count ?? 0),
+    returned: Number(m.returned_count ?? 0),
+  }
+}
+function returnedFrom(metadata: unknown): { version: string; note: string | null } | null {
+  if (!metadata || typeof metadata !== 'object') return null
+  const r = (metadata as Record<string, unknown>).returned_from_release
+  if (!r || typeof r !== 'object') return null
+  const o = r as Record<string, unknown>
+  if (typeof o.version !== 'string') return null
+  return { version: o.version, note: typeof o.note === 'string' ? o.note : null }
+}
 
 function stateColor(state: string) {
   if (state === 'released') return T.success
@@ -54,6 +75,7 @@ export default function ReleasesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
+  const [closingRelease, setClosingRelease] = useState<ReleaseRow | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -114,6 +136,8 @@ export default function ReleasesPage() {
           const isExpanded = expanded[release.id]
           const days = isInProgress(release.state) ? daysUntil(release.release_date) : null
           const project = projectById.get(release.project_id)
+          const outcome = releaseOutcome(release.metadata)
+          const returnedIssues = items.filter(i => returnedFrom(i.metadata)?.version === release.version)
 
           return (
             <div key={release.id} style={{
@@ -136,10 +160,24 @@ export default function ReleasesPage() {
                 </span>
                 {project && <span style={{ fontSize: 11, color: T.text3, background: T.neutralDim, borderRadius: 20, padding: '2px 10px' }}>{project.name}</span>}
                 <span style={{ fontSize: 12, color: T.text3 }}>{fmtDate(release.release_date)}</span>
-                <span style={{
-                  fontSize: 11, color, background: stateBg(release.state),
-                  borderRadius: 20, padding: '2px 10px', border: `1px solid ${color}30`,
-                }}>{stateLabel(release.state)}</span>
+                {outcome ? (
+                  <span style={{
+                    fontSize: 11,
+                    color: outcome.outcome === 'success' ? T.success : T.warn,
+                    background: outcome.outcome === 'success' ? T.successDim : T.warnDim,
+                    borderRadius: 20, padding: '2px 10px',
+                    border: `1px solid ${(outcome.outcome === 'success' ? T.success : T.warn)}30`,
+                  }}>
+                    {outcome.outcome === 'success'
+                      ? 'Lançada ✓'
+                      : `Lançada · parcial — ${outcome.shipped} entregues · ${outcome.returned} retornados`}
+                  </span>
+                ) : (
+                  <span style={{
+                    fontSize: 11, color, background: stateBg(release.state),
+                    borderRadius: 20, padding: '2px 10px', border: `1px solid ${color}30`,
+                  }}>{stateLabel(release.state)}</span>
+                )}
                 {days !== null && (
                   <span style={{
                     fontSize: 11, color: days <= 7 ? T.crit : T.warn,
@@ -161,6 +199,16 @@ export default function ReleasesPage() {
                       border: `1px solid ${T.border}`, borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
                     }}
                   >Editar</button>
+                  {!isReleased && (
+                    <button
+                      onClick={() => setClosingRelease(release)}
+                      style={{
+                        fontSize: 11, color: T.success, background: T.successDim,
+                        border: `1px solid ${T.success}40`, borderRadius: 6,
+                        padding: '3px 10px', cursor: 'pointer', fontWeight: 600,
+                      }}
+                    >Fechar release</button>
+                  )}
                 </div>
               </div>
 
@@ -202,7 +250,7 @@ export default function ReleasesPage() {
               )}
 
               {/* Expand */}
-              {total > 0 && (
+              {(total > 0 || returnedIssues.length > 0) && (
                 <button
                   onClick={() => setExpanded(p => ({ ...p, [release.id]: !p[release.id] }))}
                   style={{
@@ -211,7 +259,7 @@ export default function ReleasesPage() {
                     cursor: 'pointer', fontWeight: 600,
                   }}
                 >
-                  {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${total})`}
+                  {isExpanded ? '▲ Ocultar issues' : `▼ Ver issues (${total + returnedIssues.length})`}
                 </button>
               )}
 
