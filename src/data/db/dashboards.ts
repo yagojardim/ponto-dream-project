@@ -616,3 +616,107 @@ export async function fetchAdminKpis(projectIds?: string[]): Promise<AdminKpis> 
   }
 }
 
+
+// ─── Product Owner mural cards ───────────────────────────────────────────────
+export interface PoCardMetrics {
+  createdVsFinalized: {
+    created: number
+    finalized: number
+    weekly: { label: string; value: number; current?: boolean }[]
+  }
+  releasesHealth: {
+    healthPct: number
+    activeCount: number
+    overdue: boolean
+    perRelease: { label: string; value: number; current?: boolean }[]
+  }
+}
+
+const DONE_STATUSES = ['done', 'concluido', 'concluído']
+
+function startOfWeek(d: Date): number {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  const dow = (x.getDay() + 6) % 7 // Monday = 0
+  x.setDate(x.getDate() - dow)
+  return x.getTime()
+}
+
+/** Live metrics for the two Product Owner mural cards, scoped by project(s). */
+export async function fetchPoCardMetrics(projectIds: string[]): Promise<PoCardMetrics> {
+  try {
+    let itemsQ = supabase.from('work_items')
+      .select('id, status, created_at, completed_at, project_id, release_id')
+      .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    let relQ = supabase.from('releases')
+      .select('id, project_id, version, state, release_date')
+      .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    if (projectIds.length > 0) {
+      itemsQ = itemsQ.in('project_id', projectIds)
+      relQ = relQ.in('project_id', projectIds)
+    }
+
+    const [items, releases] = await Promise.all([itemsQ, relQ])
+    if (items.error) throw new Error(items.error.message)
+    if (releases.error) throw new Error(releases.error.message)
+
+    const rows = items.data ?? []
+    const isDone = (s: string | null) => DONE_STATUSES.includes((s ?? '').toLowerCase())
+
+    const created = rows.length
+    const finalized = rows.filter(r => isDone(r.status)).length
+
+    // Finalized per ISO week — last 4 weeks.
+    const thisWeek = startOfWeek(new Date())
+    const WEEK = 7 * 86400000
+    const buckets = [3, 2, 1, 0].map(back => thisWeek - back * WEEK)
+    const labels = ['S-3', 'S-2', 'S-1', 'Atual']
+    const weekly = buckets.map((start, i) => ({
+      label: labels[i],
+      value: rows.filter(r => {
+        if (!isDone(r.status) || !r.completed_at) return false
+        const t = new Date(r.completed_at).getTime()
+        return !Number.isNaN(t) && t >= start && t < start + WEEK
+      }).length,
+      ...(i === buckets.length - 1 ? { current: true } : {}),
+    }))
+
+    // Releases health.
+    const active = (releases.data ?? []).filter(r => (r.state ?? '') !== 'released')
+    const activeIds = new Set(active.map(r => r.id))
+    const linked = rows.filter(r => r.release_id && activeIds.has(r.release_id))
+    const linkedDone = linked.filter(r => isDone(r.status)).length
+    const healthPct = linked.length > 0 ? Math.round((linkedDone / linked.length) * 100) : 100
+
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const overdue = active.some(r => r.release_date && new Date(r.release_date).getTime() < today.getTime())
+
+    const sorted = [...active].sort((a, b) => {
+      const ta = a.release_date ? new Date(a.release_date).getTime() : Number.MAX_SAFE_INTEGER
+      const tb = b.release_date ? new Date(b.release_date).getTime() : Number.MAX_SAFE_INTEGER
+      return tb - ta
+    }).slice(0, 4)
+    const nearest = [...sorted].sort((a, b) => {
+      const da = a.release_date ? Math.abs(new Date(a.release_date).getTime() - today.getTime()) : Number.MAX_SAFE_INTEGER
+      const db = b.release_date ? Math.abs(new Date(b.release_date).getTime() - today.getTime()) : Number.MAX_SAFE_INTEGER
+      return da - db
+    })[0]
+    const perRelease = sorted.reverse().map(r => {
+      const own = rows.filter(w => w.release_id === r.id)
+      const ownDone = own.filter(w => isDone(w.status)).length
+      return {
+        label: r.version ?? '—',
+        value: own.length > 0 ? Math.round((ownDone / own.length) * 100) : 0,
+        ...(nearest && nearest.id === r.id ? { current: true } : {}),
+      }
+    })
+
+    return {
+      createdVsFinalized: { created, finalized, weekly },
+      releasesHealth: { healthPct, activeCount: active.length, overdue, perRelease },
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new Error(`Falha ao carregar métricas do painel P.O.: ${msg}`)
+  }
+}
