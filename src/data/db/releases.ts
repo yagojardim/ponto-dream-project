@@ -18,7 +18,7 @@ export type ReleaseItemRow = Pick<
   Tables['work_items']['Row'],
   'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'release_id' | 'assignee_id' | 'metadata'
 >
-export type ReleaseProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials'>
+export type ReleaseProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
 export type ReleaseProjectRow = Pick<Tables['projects']['Row'], 'id' | 'key' | 'name'>
 
 export interface ReleasesData {
@@ -45,7 +45,7 @@ export async function listReleases(): Promise<ReleasesData> {
     supabase.from('work_items')
       .select('id, key, title, type, status, project_id, release_id, assignee_id, metadata')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
-    supabase.from('profiles').select('id, name, avatar_initials').eq('tenant_id', tid).is('archived_at', null),
+    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, key, name').eq('tenant_id', tid).is('archived_at', null).order('name'),
   ])
 
