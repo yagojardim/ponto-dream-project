@@ -699,6 +699,7 @@ function ProductManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
 function ClientFeedCard({ poId, tenantId }: { poId?: string; tenantId: string }) {
   useClientPortal()
   const { activeUser } = useSession()
+  if (!can(activeUser.permissions, 'access:client-messages')) return null
   const [tick,       setTick]       = useState(0)
   const [openReply,  setOpenReply]  = useState<string | null>(null)
   const [replyText,  setReplyText]  = useState('')
@@ -1240,23 +1241,19 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
       </div>
 
-      <Grid cols="2fr 1fr">
-        <SprintDonutCard sprintName="Minha Fila Ativa — Sprint 14" done={8} total={16} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
+      <SprintDonutCard sprintName="Minha Fila Ativa — Sprint 14" done={8} total={16} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <WorkQueue title="Meus Bloqueados" items={blocked} onOpen={openDrawer} showDaysBlocked
-            emptyMsg="Nenhum item bloqueado." />
+      <Grid cols="1fr 1fr">
+        <WorkQueue title="Meus Bloqueados" items={blocked} onOpen={openDrawer} showDaysBlocked
+          emptyMsg="Nenhum item bloqueado." />
 
-          <SCard title="Atividade Recente">
-            <ActivityTimeline events={recent} />
-          </SCard>
-        </div>
-
-        <ColSpan>
-          <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
-        </ColSpan>
-        <CompositionGrid dashId="dev" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <SCard title="Atividade Recente">
+          <ActivityTimeline events={recent} />
+        </SCard>
       </Grid>
+
+      <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
+      <CompositionGrid dashId="dev" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
     </>
   )
 }

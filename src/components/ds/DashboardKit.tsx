@@ -674,7 +674,7 @@ export function SprintDonutCard({ sprintName, done, total, items, onOpen, onView
           <div style={{ fontSize: 10, color: T.text3, textAlign: 'center', marginTop: 2 }}>{done}/{total} pts</div>
         </div>
         {/* List */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 320, overflowY: 'auto', paddingRight: 4 }}>
           {items.slice(0, 5).map(item => (
             <WorkItemRow key={item.id} item={item} onOpen={onOpen} />
           ))}
