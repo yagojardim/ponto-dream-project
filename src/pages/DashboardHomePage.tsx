@@ -447,7 +447,7 @@ function AdminPanel({ onNav, onInvite }: { onNav: (v: string, targetId?: string)
           <AdminAuditCard />
         </ColSpan>
 
-        <CompositionGrid dashId="admin" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="admin" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -508,7 +508,7 @@ function PmoPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
         <ColSpan>
           <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
         </ColSpan>
-        <CompositionGrid dashId="pmo" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="pmo" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -598,7 +598,7 @@ function ProjectManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
         <ColSpan>
           <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
         </ColSpan>
-        <CompositionGrid dashId="project-manager" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="project-manager" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -689,7 +689,7 @@ function ProductManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
             </div>
           </SCard>
         </ColSpan>
-        <CompositionGrid dashId="product-manager" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="product-manager" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -983,7 +983,7 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
             )}
           </SCard>
         </div>
-        <CompositionGrid dashId="product-owner" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="product-owner" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1081,7 +1081,7 @@ function ScrumMasterPanel({ onNav }: { onNav: (v: string, targetId?: string) => 
         <ColSpan>
           <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
         </ColSpan>
-        <CompositionGrid dashId="scrum-master" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="scrum-master" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1195,7 +1195,7 @@ function TechLeadPanel({ onNav }: { onNav: (v: string, targetId?: string) => voi
         <ColSpan>
           <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
         </ColSpan>
-        <CompositionGrid dashId="tech-lead" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="tech-lead" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1253,7 +1253,7 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
       </Grid>
 
       <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
-      <CompositionGrid dashId="dev" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+      <CompositionGrid dashId="dev" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
     </>
   )
 }
@@ -1326,7 +1326,7 @@ function UxPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
             }
           </SCard>
         </div>
-        <CompositionGrid dashId="ux" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="ux" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1405,7 +1405,7 @@ function QaPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
             ))}
           </SCard>
         </div>
-        <CompositionGrid dashId="qa" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} />
+        <CompositionGrid dashId="qa" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1665,10 +1665,11 @@ function ReportScopeChip() {
   )
 }
 
-function CompositionGrid({ dashId, tenantId, selProj }: {
+function CompositionGrid({ dashId, tenantId, selProj, sprintFilter }: {
   dashId: DashboardType
   tenantId: string
   selProj?: Set<string>
+  sprintFilter?: string
 }) {
   const { activeUser } = useSession()
   const [tick, setTick]          = useState(0)
@@ -1685,7 +1686,8 @@ function CompositionGrid({ dashId, tenantId, selProj }: {
   if (slots.length === 0 && !canAdd) return null
 
   // Real sprint data for charts that support extra props
-  const sprintItems   = byProjects(getSprintItems(liveCurrentSprintName() ?? undefined), selProj ?? ALL_PROJ_IDS())
+  const sprintName    = sprintFilter || (liveCurrentSprintName() ?? undefined)
+  const sprintItems   = byProjects(getSprintItems(sprintName), selProj ?? ALL_PROJ_IDS())
   const sprintPtTotal = sprintItems.reduce((s, w) => s + (w.points ?? 0), 0) || 38
   const sprintPtDone  = sprintItems.filter(w => w.status === 'done').reduce((s, w) => s + (w.points ?? 0), 0)
 
