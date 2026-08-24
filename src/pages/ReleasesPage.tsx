@@ -371,6 +371,15 @@ export default function ReleasesPage() {
         </div>
       )}
 
+      {closingRelease && (
+        <CloseReleaseModal
+          release={closingRelease}
+          items={items}
+          onClose={() => setClosingRelease(null)}
+          onClosed={() => { void load() }}
+        />
+      )}
+
       {detailId && (
         <WorkItemDetail
           itemId={detailId}
