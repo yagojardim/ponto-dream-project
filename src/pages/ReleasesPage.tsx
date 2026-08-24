@@ -266,6 +266,11 @@ export default function ReleasesPage() {
               {/* Expanded issue list */}
               {isExpanded && (
                 <div style={{ marginTop: 14, borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
+                  {releaseIssues.length > 0 && (
+                    <div style={{ fontSize: 11, fontWeight: 600, color: T.text2, marginBottom: 6 }}>
+                      Entregues ({releaseIssues.length})
+                    </div>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {releaseIssues.map(issue => {
                       const sc = statusCfg(issue.status)
