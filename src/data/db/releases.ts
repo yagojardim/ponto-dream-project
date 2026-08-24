@@ -183,6 +183,10 @@ export interface CloseReleaseInput {
   shippedItemIds: string[]
   /** Items that go back to the backlog for adjustment. */
   returnedItemIds: string[]
+  /** Items that overflow to the next release. */
+  deferredItemIds?: string[]
+  /** Target release for deferred items. */
+  nextReleaseId?: string | null
   note?: string
   actorName?: string
 }
@@ -195,15 +199,19 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 /**
  * Closes a release: marks it as released, sends the pending items back to the
- * backlog, records the outcome in metadata and notifies the people involved.
+ * backlog or to the next release, records the outcome in metadata and notifies
+ * the people involved.
  */
 export async function closeRelease(input: CloseReleaseInput): Promise<void> {
   const { release } = input
   const actorName = input.actorName ?? 'Sistema'
   const nowIso = new Date().toISOString()
+  const deferredIds = input.deferredItemIds ?? []
+  const nextReleaseId = input.nextReleaseId ?? null
   const shippedCount = input.shippedItemIds.length
   const returnedCount = input.returnedItemIds.length
-  const outcome = returnedCount === 0 ? 'success' : 'partial'
+  const deferredCount = deferredIds.length
+  const outcome = returnedCount + deferredCount === 0 ? 'success' : 'partial'
   const note = input.note?.trim() ? input.note.trim() : null
 
   const metadata = {
@@ -212,6 +220,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
     released_at: nowIso,
     shipped_count: shippedCount,
     returned_count: returnedCount,
+    deferred_count: deferredCount,
     close_note: note,
   }
 
@@ -222,21 +231,50 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
   }).eq('id', release.id).eq('tenant_id', DEFAULT_TENANT_ID)
   if (error) throw new Error(missingTableMessage('releases', error.message))
 
-  // Returned items: back to backlog, unlinked, stamped with the release info.
-  const returnedItems = returnedCount > 0
+  const loadItems = async (ids: string[]) => ids.length > 0
     ? (await supabase.from('work_items')
         .select('id, key, status, assignee_id, metadata')
-        .in('id', input.returnedItemIds).eq('tenant_id', DEFAULT_TENANT_ID)).data ?? []
+        .in('id', ids).eq('tenant_id', DEFAULT_TENANT_ID)).data ?? []
     : []
 
+  // Deferred items go to the next release (or fall back to backlog).
+  const deferredItems = await loadItems(deferredIds)
+  let nextReleaseLabel: string | null = null
+  if (nextReleaseId) {
+    const { data } = await supabase.from('releases')
+      .select('version, name').eq('id', nextReleaseId).eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle()
+    nextReleaseLabel = data ? `${data.version}${data.name ? ` · ${data.name}` : ''}` : null
+  }
+
+  const fallbackToBacklog: typeof deferredItems = []
+  for (const item of deferredItems) {
+    if (!nextReleaseId) { fallbackToBacklog.push(item); continue }
+    try {
+      await linkItemsToRelease(nextReleaseId, [item.id], actorName)
+      await supabase.from('work_items').update({
+        metadata: {
+          ...asRecord(item.metadata),
+          moved_from_release: { version: release.version, at: nowIso },
+        } as Tables['work_items']['Update']['metadata'],
+      }).eq('id', item.id).eq('tenant_id', DEFAULT_TENANT_ID)
+    } catch (err) {
+      logger.error('releases.closeRelease.deferItem', err, { itemId: item.id })
+    }
+  }
+
+  // Returned items: back to backlog, unlinked, stamped with the release info.
+  const returnedItems = [...await loadItems(input.returnedItemIds), ...fallbackToBacklog]
+
   for (const item of returnedItems) {
+    const isFallback = fallbackToBacklog.some(f => f.id === item.id)
+    const itemNote = isFallback ? [note, 'sem próxima release'].filter(Boolean).join(' · ') : note
     try {
       await updateWorkItemField(item.id, 'status', 'backlog', item.status, { actorName })
       await unlinkItemFromRelease(release.id, item.id, actorName)
       await supabase.from('work_items').update({
         metadata: {
           ...asRecord(item.metadata),
-          returned_from_release: { version: release.version, at: nowIso, note },
+          returned_from_release: { version: release.version, at: nowIso, note: itemNote },
         } as Tables['work_items']['Update']['metadata'],
       }).eq('id', item.id).eq('tenant_id', DEFAULT_TENANT_ID)
     } catch (err) {
@@ -265,18 +303,30 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
     )
   }
 
+  if (nextReleaseId) {
+    for (const item of deferredItems) {
+      if (!item.assignee_id) continue
+      await notify(
+        item.assignee_id,
+        `Item ${item.key} movido para a release ${nextReleaseLabel ?? nextReleaseId}`,
+        note,
+      )
+    }
+  }
+
   const leads = (await supabase.from('profiles')
     .select('id, primary_role').eq('tenant_id', DEFAULT_TENANT_ID)
     .in('primary_role', ['ProductOwner', 'ScrumMaster'])).data ?? []
   for (const lead of leads) {
     await notify(
       lead.id,
-      `Release ${release.version} fechada: ${shippedCount} entregues, ${returnedCount} retornados`,
+      `Release ${release.version} fechada: ${shippedCount} entregues · ${deferredCount} próxima release · ${returnedItems.length} backlog`,
       note,
     )
   }
 
   await writeAudit(release.id, 'release.closed', actorName, null, {
-    outcome, shipped: shippedCount, returned: returnedCount,
+    outcome, shipped: shippedCount, deferred: nextReleaseId ? deferredCount : 0, returned: returnedItems.length,
   })
 }
+
