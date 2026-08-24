@@ -219,7 +219,9 @@ export default function ReleasesPage() {
                             }}>
                               {outcome.outcome === 'success'
                                 ? 'Lançada ✓'
-                                : `Lançada · parcial — ${outcome.shipped} entregues · ${outcome.returned} retornados`}
+                                : outcome.deferred > 0
+                                  ? `Lançada · parcial — ${outcome.shipped} entregues · ${outcome.deferred} próxima release · ${outcome.returned} backlog`
+                                  : `Lançada · parcial — ${outcome.shipped} entregues · ${outcome.returned} retornados`}
                             </span>
                           ) : (
                             <span style={{
