@@ -619,9 +619,10 @@ export function WorkItemRow({ item, onOpen, showDaysBlocked }: {
 }
 
 // ─── WorkQueue — titled list of work items with header counter ────────────────
-export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysBlocked, maxItems = 5 }: {
+export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysBlocked, maxItems = 5, style, bodyStyle }: {
   title: string; items: WorkItem[]; onOpen: (item: WorkItem) => void
   onViewAll?: () => void; emptyMsg?: string; showDaysBlocked?: boolean; maxItems?: number
+  style?: CSSProperties; bodyStyle?: CSSProperties
 }) {
   const shown = items.slice(0, maxItems)
   const viewAllAction = onViewAll ? (
@@ -632,7 +633,7 @@ export function WorkQueue({ title, items, onOpen, onViewAll, emptyMsg, showDaysB
   ) : undefined
 
   return (
-    <SCard title={`${title} ${items.length > 0 ? `(${items.length})` : ''}`} action={viewAllAction}>
+    <SCard title={`${title} ${items.length > 0 ? `(${items.length})` : ''}`} action={viewAllAction} style={style} bodyStyle={bodyStyle}>
       {shown.length === 0
         ? <EmptyState message={emptyMsg ?? 'Nenhum item no momento.'} />
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
