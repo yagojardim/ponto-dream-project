@@ -129,8 +129,8 @@ export function UserAvatarStack({ users, max = 3 }: {
 }
 
 // ─── SectionCard wrapper ──────────────────────────────────────────────────────
-export function SCard({ title, action, children, style, help, helpTitle }: {
-  title: string; action?: ReactNode; children: ReactNode; style?: CSSProperties
+export function SCard({ title, action, children, style, bodyStyle, help, helpTitle }: {
+  title: string; action?: ReactNode; children: ReactNode; style?: CSSProperties; bodyStyle?: CSSProperties
   help?: string; helpTitle?: string
 }) {
   return (
@@ -145,7 +145,9 @@ export function SCard({ title, action, children, style, help, helpTitle }: {
         </span>
         {action}
       </div>
-      {children}
+      {bodyStyle
+        ? <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', ...bodyStyle }}>{children}</div>
+        : children}
     </div>
   )
 }
