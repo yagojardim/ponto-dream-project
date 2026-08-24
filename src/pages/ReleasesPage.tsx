@@ -306,6 +306,52 @@ export default function ReleasesPage() {
                       )
                     })}
                   </div>
+
+                  {returnedIssues.length > 0 && (
+                    <>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: T.warn, margin: '14px 0 6px' }}>
+                        Retornados para ajuste ({returnedIssues.length})
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {returnedIssues.map(issue => {
+                          const info = returnedFrom(issue.metadata)
+                          const sc = statusCfg(issue.status)
+                          return (
+                            <div
+                              key={issue.id}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => setDetailId(issue.id)}
+                              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetailId(issue.id) } }}
+                              style={{
+                                padding: '7px 10px', background: T.bgSurface2, borderRadius: 8,
+                                border: `1px solid ${T.warn}30`, cursor: 'pointer',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontSize: 11, color: T.text3, fontFamily: 'monospace', width: 62, flexShrink: 0 }}>
+                                  {issue.key}
+                                </span>
+                                <span style={{
+                                  fontSize: 13, color: T.text1, flex: 1, overflow: 'hidden',
+                                  textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                }}>{issue.title}</span>
+                                <span style={{
+                                  fontSize: 11, color: sc.color, background: `${sc.color}18`,
+                                  borderRadius: 20, padding: '2px 8px', flexShrink: 0,
+                                }}>{sc.label}</span>
+                              </div>
+                              {info?.note && (
+                                <p style={{ fontSize: 11, color: T.text3, margin: '5px 0 0 72px', fontStyle: 'italic' }}>
+                                  {info.note}
+                                </p>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
