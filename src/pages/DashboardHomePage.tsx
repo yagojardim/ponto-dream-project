@@ -28,7 +28,7 @@ import {
 
 import {
   getAllForPo, getUnreadForPo, markReadByPo, markAllReadByPo,
-  addPoReply, getSignalsForTenant, getUnreadCountForTenant, type ClientSignal,
+  addPoReply, getSignalsForTenant, type ClientSignal,
 } from '../data/clientSignals'
 import {
   dismissHomeCard, pinHomeCard, getVisibleHomeCards, getGridCards,
@@ -37,8 +37,8 @@ import {
   type AssignmentTarget, type HomeCardSlot,
 } from '../data/dashboardAssignments'
 import { listSquads, type SquadOption } from '../data/db/timesheets'
-import { safeCall } from '../utils/logger'
-import { fetchAdminKpis, computeDeliveryMetrics, type AdminKpis } from '../data/db/dashboards'
+import { safeCall, logger } from '../utils/logger'
+import { fetchAdminKpis, computeDeliveryMetrics, fetchPoCardMetrics, type AdminKpis, type PoCardMetrics } from '../data/db/dashboards'
 import {
   REPORT_REGISTRY, REPORT_CARDS_LIST, ReportChartModal, useChartModal,
   ReportsDataProvider, ReportKpiPreview, ReportMiniViz, navigateToReport,
@@ -905,7 +905,15 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
   const readyItems = applyFilters(byProjects(getReadyItems(), selProj), filters)
   const { openChart, chartModal } = useChartModal()
 
-  const unreadCount = getUnreadCountForTenant(MOCK_TENANT.tenant_id)
+  const selKey = [...selProj].sort().join(',')
+  const [poMetrics, setPoMetrics] = useState<PoCardMetrics | null>(null)
+  useEffect(() => {
+    let alive = true
+    fetchPoCardMetrics(selKey ? selKey.split(',') : [])
+      .then(m => { if (alive) setPoMetrics(m) })
+      .catch(err => { logger.error('po.metrics', err); if (alive) setPoMetrics(null) })
+    return () => { alive = false }
+  }, [selKey])
 
   // Compute KPI values from real mock data (respecting selProj filter)
   const sprint14Items   = byProjects(getSprintItems(liveCurrentSprintName() ?? undefined), selProj)
@@ -915,9 +923,6 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
   const backlogAll      = getBacklogWithAlerts()
   const healthyItems    = backlogAll.filter(w => !w.tags?.some(t => t.startsWith('Sem '))).length
   const backlogHealth   = backlogAll.length > 0 ? Math.round((healthyItems / backlogAll.length) * 100) : 100
-  const doneSprint      = sprint14Items.filter(w => w.status === 'done').length
-  const funcProgress    = sprint14Items.length > 0 ? Math.round((doneSprint / sprint14Items.length) * 100) : 0
-  const poPtDone        = sprint14Items.filter(w => w.status === 'done').reduce((s, w) => s + (w.points ?? 0), 0)
 
   const workload = liveAggregates()?.workload ?? []
   const team = workload.map(w => ({
@@ -936,8 +941,8 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
   const nativeCards: MuralNativeCard[] = [
     { id: 'po:ready', value: `${coverageReady}%`, label: 'Cobertura Ready', sub: 'pts prontos ÷ velocity', disclaimer: 'pontos prontos ÷ velocidade média da sprint', miniViz: <MiniBarChart data={[{label:'S10',value:55},{label:'S11',value:62},{label:'S12',value:70},{label:'S13',value:coverageReady,current:true}]} />, onClick: () => onNav('list') },
     { id: 'po:backlog', value: `${backlogHealth}%`, label: 'Saúde do Backlog', sub: 'itens saudáveis ÷ avaliáveis', disclaimer: 'itens saudáveis ÷ total de itens avaliáveis', color: backlogHealth < 60 ? T.warn : T.success, alert: backlogHealth < 60, miniViz: <MiniSparkline data={[{label:'S10',value:80},{value:77},{value:75},{label:'S13',value:backlogHealth}]} color={backlogHealth < 60 ? '#ef4444' : '#34d399'} />, onClick: () => onNav('list') },
-    { id: 'po:progress', value: `${funcProgress || 68}%`, label: 'Progresso Funcional', sub: `${doneSprint}/${sprint14Items.length || 1} aceitos`, disclaimer: 'considera critério de aceite, não só status Done', miniViz: <BurndownChart variant="thumbnail" sprintTotal={totalSprintPts} sprintRemaining={totalSprintPts - poPtDone} />, onClick: () => onNav('project') },
-    { id: 'po:msgs', value: unreadCount > 0 ? String(unreadCount) : '0', label: 'Msgs do Cliente', sub: unreadCount > 0 ? 'não lidas — ação necessária' : 'sem pendências', disclaimer: 'mensagens de clientes recebidas não lidas', color: unreadCount > 0 ? T.accent : T.text3, alert: unreadCount > 0, miniViz: <MiniSparkline data={[{label:'D-5',value:2},{value:1},{value:3},{value:2},{value:1},{label:'Hoje',value:unreadCount}]} color={unreadCount > 0 ? '#3b82f6' : '#6b7280'} />, onClick: () => onNav('client-messages') },
+    { id: 'po:created-vs-done', value: poMetrics ? `${poMetrics.createdVsFinalized.finalized}/${poMetrics.createdVsFinalized.created}` : '—', label: 'Criado vs Finalizado', sub: 'finalizados ÷ criados', disclaimer: 'itens finalizados vs criados no(s) projeto(s) selecionado(s)', color: T.success, miniViz: <MiniBarChart data={poMetrics?.createdVsFinalized.weekly ?? []} showAvg={false} />, onClick: () => onNav('list') },
+    { id: 'po:releases-health', value: poMetrics ? `${poMetrics.releasesHealth.healthPct}%` : '—', label: 'Saúde das Releases', sub: poMetrics ? `${poMetrics.releasesHealth.activeCount} ativas${poMetrics.releasesHealth.overdue ? ' · atrasada' : ''}` : 'sem releases ativas', disclaimer: 'conclusão média das releases ativas (itens concluídos ÷ vinculados)', color: poMetrics?.releasesHealth.overdue ? T.warn : (poMetrics && poMetrics.releasesHealth.healthPct >= 70 ? T.success : T.warn), alert: poMetrics?.releasesHealth.overdue ?? false, miniViz: <MiniBarChart data={poMetrics?.releasesHealth.perRelease ?? []} showAvg={false} />, onClick: () => onNav('releases') },
   ]
 
   return (
