@@ -257,6 +257,15 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
           moved_from_release: { version: release.version, at: nowIso },
         } as Tables['work_items']['Update']['metadata'],
       }).eq('id', item.id).eq('tenant_id', DEFAULT_TENANT_ID)
+      try {
+        await addComment(
+          item.id,
+          `➡️ Movido para a release ${nextReleaseLabel ?? nextReleaseId} no fechamento da ${release.version}${note ? ` — ${note}` : ''}`,
+          { actorName },
+        )
+      } catch (err) {
+        logger.error('releases.closeRelease.deferComment', err, { itemId: item.id })
+      }
     } catch (err) {
       logger.error('releases.closeRelease.deferItem', err, { itemId: item.id })
     }
@@ -279,6 +288,15 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
       }).eq('id', item.id).eq('tenant_id', DEFAULT_TENANT_ID)
     } catch (err) {
       logger.error('releases.closeRelease.returnItem', err, { itemId: item.id })
+    }
+    try {
+      await addComment(
+        item.id,
+        `🚩 Retornado ao backlog no fechamento da release ${release.version}${itemNote ? ` — ${itemNote}` : ''}`,
+        { actorName },
+      )
+    } catch (err) {
+      logger.error('releases.closeRelease.returnComment', err, { itemId: item.id })
     }
   }
 
