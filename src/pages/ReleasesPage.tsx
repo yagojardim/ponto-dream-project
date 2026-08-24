@@ -6,7 +6,7 @@ import { DB_STATUS_CFG } from '../data/db/timeline'
 import { WorkItemDetail } from '../components/WorkItemDetail'
 import { CloseReleaseModal } from '../components/CloseReleaseModal'
 
-interface ReleaseOutcome { outcome: 'success' | 'partial'; shipped: number; returned: number }
+interface ReleaseOutcome { outcome: 'success' | 'partial'; shipped: number; returned: number; deferred: number }
 function releaseOutcome(metadata: unknown): ReleaseOutcome | null {
   if (!metadata || typeof metadata !== 'object') return null
   const m = metadata as Record<string, unknown>
@@ -15,6 +15,7 @@ function releaseOutcome(metadata: unknown): ReleaseOutcome | null {
     outcome: m.outcome,
     shipped: Number(m.shipped_count ?? 0),
     returned: Number(m.returned_count ?? 0),
+    deferred: Number(m.deferred_count ?? 0),
   }
 }
 function returnedFrom(metadata: unknown): { version: string; note: string | null } | null {
