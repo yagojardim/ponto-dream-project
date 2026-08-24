@@ -286,7 +286,7 @@ function ClosedProjectCard({ p, onOpen }: { p: RagProject; onOpen: () => void })
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?: string) => void }) {
+export default function DashboardPage({ onNav, initialProjectId }: { onNav?: (v: string, targetId?: string) => void; initialProjectId?: string }) {
   const [agg, setAgg]         = useState<DashboardAggregates | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
@@ -295,6 +295,10 @@ export default function DashboardPage({ onNav }: { onNav?: (v: string, targetId?
   const [openItemId, setOpenItemId] = useState<string | null>(null)
 
   const selKey = selected ? [...selected].sort().join(',') : ''
+
+  useEffect(() => {
+    if (initialProjectId) setSelected(new Set([initialProjectId]))
+  }, [initialProjectId])
 
   useEffect(() => {
     let alive = true

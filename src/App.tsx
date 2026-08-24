@@ -386,6 +386,7 @@ function ShellWithRole({
   const [selectedProjectId, setSelectedProjectId] =
     useState<string | undefined>()
   const [selectedIssueId, setSelectedIssueId] = useState<string | undefined>()
+  const [dashboardProjectId, setDashboardProjectId] = useState<string | undefined>()
   const [teamInitialTab, setTeamInitialTab] =
     useState<"membros" | "convites" | "permissoes" | "dashboards">("membros")
 
@@ -465,6 +466,11 @@ function ShellWithRole({
       setView("team")
       return
     }
+    if (v === "dashboard") {
+      setDashboardProjectId(targetId)
+      setView("dashboard")
+      return
+    }
     if (v === "project" && targetId) {
       setSelectedProjectId(targetId)
       setSelectedBoardId(undefined)
@@ -495,9 +501,9 @@ function ShellWithRole({
         )}
         <Shell
           currentView={view}
-          onViewChange={(v) => {
+          onViewChange={(v, targetId) => {
             if (v === "team") setTeamInitialTab("membros")
-            setView(v)
+            navTo(v, targetId)
           }}
           onCreateIssue={() => setCreate(true)}
           onOpenClientMessages={(pid) => { setClientMsgProjectId(pid); setView("client-messages") }}
@@ -594,7 +600,7 @@ function ShellWithRole({
                 className="h-full min-w-0 w-full overflow-y-auto dark-shell"
                 style={{ background: "var(--bg-page,#0d1321)" }}
               >
-                <DashboardPage onNav={navTo} />
+                <DashboardPage onNav={navTo} initialProjectId={dashboardProjectId} />
               </div>
             )}
             {view === "project" && (

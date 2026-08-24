@@ -14,7 +14,7 @@ export type View =
 interface ShellProps {
   children:     ReactNode
   currentView:  View
-  onViewChange: (v: View) => void
+  onViewChange: (v: View, targetId?: string) => void
   onCreateIssue?: () => void
   onOpenClientMessages?: (projectId: string) => void
 }
@@ -32,9 +32,9 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
   const [collapsed, setCollapsed] = useState(false)
   const [activeNav, setActiveNav] = useState<string>(currentView)
 
-  function handleNav(id: string) {
+  function handleNav(id: string, targetId?: string) {
     setActiveNav(id)
-    if (VALID_VIEWS.includes(id as View)) onViewChange(id as View)
+    if (VALID_VIEWS.includes(id as View)) onViewChange(id as View, targetId)
   }
 
   return (
