@@ -47,6 +47,9 @@ export type Capability =
   | 'access:client-portal'
   | 'access:client-messages'
   | 'manage:dashboard-cards'
+  // Discovery
+  | 'access:discovery'
+
 
 // ─── Matrix: for each capability, which roles have it by default vs opt-in ───
 interface CapabilityRule {
@@ -56,12 +59,18 @@ interface CapabilityRule {
 }
 
 export const PERMISSION_MATRIX: Record<Capability, CapabilityRule> = {
+  'access:discovery': {
+    default: ['Admin','PMO','ProjectManager','ProductManager','ProductOwner','ScrumMaster','TechLead'],
+    optIn:   ['Dev','QA','UX'],
+    hidden:  [],
+  },
   'create:epic': {
     default: ['Admin','PMO','ProjectManager','ProductManager','ProductOwner'],
     optIn:   ['TechLead','Dev'],
     hidden:  ['ScrumMaster','QA','UX'],
   },
   'create:feature': {
+
     default: ['Admin','PMO','ProjectManager','ProductManager','ProductOwner'],
     optIn:   ['TechLead','Dev'],
     hidden:  ['ScrumMaster','QA','UX'],
@@ -232,10 +241,16 @@ export const DEFAULT_DASHBOARD: Record<RoleContext, DashboardType> = {
 // Capabilities shown as opt-in checkboxes in Passo 4
 export const STEP4_CAPABILITIES: { cap: Capability; label: string; desc: string }[] = [
   {
+    cap:   'access:discovery',
+    label: 'Busca Avançada & Issue Navigator',
+    desc:  'Permite usar Filtros & Busca e o Issue Navigator (busca avançada e edição em massa de issues)',
+  },
+  {
     cap:   'project:create',
     label: 'Criar Projetos',
     desc:  'Permite criar novos projetos e ser responsável por projetos',
   },
+
   {
     cap:   'create:epic',
     label: 'Criar Épicos e Funcionalidades',

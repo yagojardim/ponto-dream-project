@@ -71,15 +71,19 @@ const CAP_LABELS: Record<Capability, string> = {
   'module:request':'Solicitar Módulos', 'access:client-portal':'Portal do Cliente',
   'access:client-messages':'Mensagens do Cliente',
   'manage:dashboard-cards':'Gerenciar Cards de Dashboard', 'edit:workitem':'Editar Work Items',
+  'access:discovery':'Busca Avançada & Issue Navigator',
 }
+
 
 const CAP_GROUPS: { label: string; caps: Capability[] }[] = [
   { label:'Estratégico', caps:['create:epic','create:feature','access:dashview','project:create','users:manage','module:request','access:client-portal'] },
+  { label:'Discovery', caps:['access:discovery'] },
   { label:'Planejamento', caps:['backlog:prioritize','sprint:manage','board:manage','accept:functional','signoff:qa'] },
   { label:'Criação de itens', caps:['create:story','create:task','create:bug','create:subtask','edit:workitem'] },
   { label:'Horas', caps:['approve:hours','log:hours'] },
   { label:'Admin', caps:['manage:dashboard-cards'] },
 ]
+
 
 const STATUS_COLOR: Record<'active'|'inactive'|'blocked', string> = {
   active:T.success, inactive:T.neutral, blocked:T.warn,
