@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { T } from '../components/ds/tokens'
+import { Av } from '../components/ds/DashboardKit'
 import { NewReleaseModal } from '../components/NewReleaseModal'
 import { listReleases, type ReleasesData, type ReleaseRow } from '../data/db/releases'
 import { DB_STATUS_CFG } from '../data/db/timeline'
@@ -369,9 +370,11 @@ export default function ReleasesPage() {
                                       fontSize: 11, color: sc.color, background: `${sc.color}18`,
                                       borderRadius: 20, padding: '2px 8px', flexShrink: 0,
                                     }}>{sc.label}</span>
-                                    <span style={{ fontSize: 11, color: T.text3, flexShrink: 0 }}>
-                                      {assignee?.avatar_initials ?? assignee?.name ?? '—'}
-                                    </span>
+                                    {assignee && (
+                                      <span title={assignee.name} style={{ flexShrink: 0 }}>
+                                        <Av initials={assignee.avatar_initials ?? assignee.name.slice(0, 2).toUpperCase()} color={assignee.avatar_color ?? T.accent} size={22} />
+                                      </span>
+                                    )}
                                   </div>
                                 )
                               })}
@@ -386,6 +389,7 @@ export default function ReleasesPage() {
                                   {returnedIssues.map(issue => {
                                     const info = returnedFrom(issue.metadata)
                                     const sc = statusCfg(issue.status)
+                                    const assignee = issue.assignee_id ? profileById.get(issue.assignee_id) : undefined
                                     return (
                                       <div
                                         key={issue.id}
@@ -410,6 +414,11 @@ export default function ReleasesPage() {
                                             fontSize: 11, color: sc.color, background: `${sc.color}18`,
                                             borderRadius: 20, padding: '2px 8px', flexShrink: 0,
                                           }}>{sc.label}</span>
+                                          {assignee && (
+                                            <span title={assignee.name} style={{ flexShrink: 0 }}>
+                                              <Av initials={assignee.avatar_initials ?? assignee.name.slice(0, 2).toUpperCase()} color={assignee.avatar_color ?? T.warn} size={22} />
+                                            </span>
+                                          )}
                                         </div>
                                         {info?.note && (
                                           <p style={{ fontSize: 11, color: T.text3, margin: '5px 0 0 72px', fontStyle: 'italic' }}>
