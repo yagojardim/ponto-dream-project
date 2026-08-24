@@ -9,6 +9,8 @@ import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import { can, type Capability, PERMISSION_MATRIX } from '../data/permissions'
 import { MOCK_USERS, type RoleContext } from '../data/session'
 import { useProfileReportsAccess, canAccessReports } from '../data/db/reportsGovernance'
+import { fetchDashboardAggregates } from '../data/db/dashboards'
+import { logger } from '../utils/logger'
 import {
   DashboardIcon as AltechDashboard, ProjectsIcon as AltechProjects, DiscoveryIcon as AltechDiscovery,
   BacklogIcon as AltechBacklog, RoadmapIcon as AltechRoadmap, ReportsAltIcon as AltechReports,
@@ -30,7 +32,7 @@ interface SidebarProps {
   collapsed: boolean
   onToggle:  () => void
   activeNav: string
-  onNav:     (id: string) => void
+  onNav:     (id: string, targetId?: string) => void
 }
 
 // ─── Nav definition ───────────────────────────────────────────────────────────
@@ -154,27 +156,12 @@ function getGroups(role: RoleContext, permissions: string[], isTenantOwner = fal
 const MAX_VISIBLE = 5
 
 interface ProjectEntry {
-  id:           string
-  name:         string
-  color:        string
-  pct:          number
-  status:       'on-track' | 'at-risk' | 'blocked'
-  lastAccessed: string  // YYYY-MM-DD for recency sort
+  id:     string
+  name:   string
+  color:  string
+  pct:    number
+  status: 'on-track' | 'at-risk' | 'blocked'
 }
-
-const ALL_PROJECTS: ProjectEntry[] = [
-  { id: 'proj_001', name: 'Website Relaunch',         color: T.accent,   pct: 68, status: 'on-track', lastAccessed: '2025-07-25' },
-  { id: 'proj_002', name: 'ERP Integration v2',       color: T.warn,     pct: 41, status: 'at-risk',  lastAccessed: '2025-07-24' },
-  { id: 'proj_003', name: 'Mobile App (iOS+Android)', color: T.success,  pct: 24, status: 'on-track', lastAccessed: '2025-07-23' },
-  { id: 'proj_004', name: 'Galpão Industrial',        color: T.purple,   pct: 18, status: 'on-track', lastAccessed: '2025-07-20' },
-  { id: 'proj_005', name: 'Infra Migration',          color: '#f97316',  pct: 72, status: 'on-track', lastAccessed: '2025-07-19' },
-  { id: 'proj_006', name: 'Reforma da Sede',          color: '#35c9ae',  pct: 5,  status: 'blocked',  lastAccessed: '2025-07-18' },
-  { id: 'proj_007', name: 'CRM Customizado',          color: '#e879f9',  pct: 33, status: 'at-risk',  lastAccessed: '2025-07-15' },
-  { id: 'proj_008', name: 'Data Pipeline v3',         color: '#60a5fa',  pct: 90, status: 'on-track', lastAccessed: '2025-07-10' },
-]
-
-// Module-level pin state — persists across re-renders (mock of user preference store)
-let _pinnedIds = new Set<string>(['proj_001', 'proj_003'])
 
 // Module-level disclosure state — persists for session (default: closed)
 let _projectsOpen = false
@@ -198,20 +185,46 @@ function PinIcon({ filled }: { filled: boolean }) {
     )
 }
 
-function ProjectSubList({ onNav }: { onNav: (view: string) => void }) {
+function ProjectSubList({ onNav }: { onNav: (view: string, targetId?: string) => void }) {
   const [pinned, setPinned] = useState<Set<string>>(new Set(_pinnedIds))
   const [query, setQuery]   = useState('')
   const [hovered, setHovered] = useState<string | null>(null)
+  const [projects, setProjects] = useState<ProjectEntry[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [failed, setFailed]     = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
-  const showSearch = ALL_PROJECTS.length > MAX_VISIBLE
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      try {
+        const agg = await fetchDashboardAggregates()
+        if (!alive) return
+        const ragById = new Map(agg.rag.map(r => [r.id, r]))
+        setProjects(agg.projects.map(p => {
+          const r = ragById.get(p.id)
+          const status: ProjectEntry['status'] =
+            r?.rag === 'critical' ? 'blocked' : r?.rag === 'at-risk' ? 'at-risk' : 'on-track'
+          return { id: p.id, name: p.name, color: p.color, pct: r?.pct ?? 0, status }
+        }))
+      } catch (err) {
+        logger.error('Sidebar.ProjectSubList', err)
+        if (alive) setFailed(true)
+      } finally {
+        if (alive) setLoading(false)
+      }
+    })()
+    return () => { alive = false }
+  }, [])
 
-  // Sort: pinned first, then by lastAccessed desc
-  const sorted = [...ALL_PROJECTS].sort((a, b) => {
+  const showSearch = projects.length > MAX_VISIBLE
+
+  // Sort: pinned first, then alphabetically
+  const sorted = [...projects].sort((a, b) => {
     const aP = pinned.has(a.id), bP = pinned.has(b.id)
     if (aP && !bP) return -1
     if (!aP && bP) return  1
-    return b.lastAccessed.localeCompare(a.lastAccessed)
+    return a.name.localeCompare(b.name)
   })
 
   const q = query.trim().toLowerCase()
@@ -265,7 +278,11 @@ function ProjectSubList({ onNav }: { onNav: (view: string) => void }) {
 
       {/* Project rows — max-height safety net prevents sidebar overflow */}
       <div style={{ maxHeight: 180, overflowY: 'auto' }}>
-        {visible.length === 0 ? (
+        {loading ? (
+          <p className="px-2 py-1.5 text-[11px]" style={{ color: T.text3 }}>Carregando projetos…</p>
+        ) : failed ? (
+          <p className="px-2 py-1.5 text-[11px]" style={{ color: T.text3 }}>Não foi possível carregar os projetos.</p>
+        ) : visible.length === 0 ? (
           <p className="px-2 py-1.5 text-[11px]" style={{ color: T.text3 }}>
             {q ? 'Nenhum projeto encontrado.' : 'Sem projetos no escopo.'}
           </p>
@@ -281,7 +298,7 @@ function ProjectSubList({ onNav }: { onNav: (view: string) => void }) {
                 onMouseLeave={() => setHovered(null)}
               >
                 <button
-                  onClick={() => onNav('project')}
+                  onClick={() => onNav('dashboard', p.id)}
                   className="w-full flex items-center gap-2 h-7 px-2 rounded-lg text-[12px] transition-colors"
                   style={{
                     color:      T.text2,
@@ -348,7 +365,7 @@ function ProjectSubList({ onNav }: { onNav: (view: string) => void }) {
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
           <path d="M2 5h6M6.5 3l2 2-2 2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Ver todos os projetos ({ALL_PROJECTS.length})
+        Ver todos os projetos ({projects.length})
       </button>
     </div>
   )
@@ -522,7 +539,7 @@ const ROLE_CONTEXT_LABEL: Record<string, string> = {
   Dev: 'Dev', UX: 'UX / UI', QA: 'QA',
 }
 
-function UserBlock({ collapsed, onNav }: { collapsed: boolean; onNav: (id: string) => void }) {
+function UserBlock({ collapsed, onNav }: { collapsed: boolean; onNav: (id: string, targetId?: string) => void }) {
   const { activeUser, setActiveUser, signOut } = useSession()
   const name    = activeUser.name
   const email   = activeUser.email
