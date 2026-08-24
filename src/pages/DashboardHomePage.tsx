@@ -37,8 +37,8 @@ import {
   type AssignmentTarget, type HomeCardSlot,
 } from '../data/dashboardAssignments'
 import { listSquads, type SquadOption } from '../data/db/timesheets'
-import { safeCall } from '../utils/logger'
-import { fetchAdminKpis, computeDeliveryMetrics, type AdminKpis } from '../data/db/dashboards'
+import { safeCall, logger } from '../utils/logger'
+import { fetchAdminKpis, computeDeliveryMetrics, fetchPoCardMetrics, type AdminKpis, type PoCardMetrics } from '../data/db/dashboards'
 import {
   REPORT_REGISTRY, REPORT_CARDS_LIST, ReportChartModal, useChartModal,
   ReportsDataProvider, ReportKpiPreview, ReportMiniViz, navigateToReport,
