@@ -92,6 +92,30 @@ export default function ReleasesPage() {
   const profileById = new Map((data?.profiles ?? []).map(p => [p.id, p]))
   const projectById = new Map(projects.map(p => [p.id, p]))
 
+  const groups = useMemo(() => {
+    const map = new Map<string, ReleaseRow[]>()
+    for (const r of releases) {
+      const list = map.get(r.project_id) ?? []
+      list.push(r)
+      map.set(r.project_id, list)
+    }
+    const entries: { projectId: string; name: string; releases: ReleaseRow[] }[] = []
+    for (const [projectId, list] of map) {
+      const project = projectById.get(projectId)
+      entries.push({ projectId, name: project?.name ?? 'Sem projeto', releases: list })
+    }
+    entries.sort((a, b) => {
+      if (a.name === 'Sem projeto') return 1
+      if (b.name === 'Sem projeto') return -1
+      return a.name.localeCompare(b.name)
+    })
+    return entries
+  }, [releases, projectById])
+
+  const [sectionsExpanded, setSectionsExpanded] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(groups.map(g => [g.projectId, true]))
+  )
+
   return (
     <div style={{ padding: 32, maxWidth: 860, margin: '0 auto' }}>
       {modalOpen && (
