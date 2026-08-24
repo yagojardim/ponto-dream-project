@@ -1234,14 +1234,12 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
   const bottomCardBody = { justifyContent: 'center' as const, overflowY: 'auto' as const, minHeight: 180 }
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
       <UnifiedMural dashId="dev" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
 
-      <div style={{ marginTop: 4 }}>
-        <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
-      </div>
+      <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
 
       <SprintDonutCard sprintName="Minha Fila Ativa — Sprint 14" done={8} total={16} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
 
@@ -1256,7 +1254,7 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
 
       <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
       <CompositionGrid dashId="dev" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
-    </>
+    </div>
   )
 }
 
