@@ -43,6 +43,10 @@ export function CloseReleaseModal({ release, items, releases = [], onClose, onCl
     { v: 'backlog', label: '↩ Backlog', color: T.warn },
   ]
 
+  const noteRequired = returnedItemIds.length + deferredItemIds.length > 0
+  const noteMissing = noteRequired && note.trim().length === 0
+
+
   async function confirm() {
     setSaving(true); setError(null)
     try {
