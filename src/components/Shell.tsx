@@ -1,6 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
+import { WelcomeModal } from './onboarding/WelcomeModal'
+import { OnboardingTip } from './onboarding/OnboardingTip'
+
 
 export type View =
   | 'home' | 'foundations' | 'dashboard' | 'project' | 'issue' | 'client' | 'task-drawer'
@@ -47,7 +50,12 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
           onCreateIssue={onCreateIssue}
           onOpenClientMessages={onOpenClientMessages}
         />
-        <main className="flex-1 min-w-0 overflow-x-hidden" style={{ overflowY: 'auto' }}>{children}</main>
+        <main className="flex-1 min-w-0 overflow-x-hidden" style={{ overflowY: 'auto' }}>
+          <WelcomeModal onNav={handleNav} />
+          <OnboardingTip view={currentView} />
+          {children}
+        </main>
+
       </div>
     </div>
   )
