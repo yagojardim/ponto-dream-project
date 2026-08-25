@@ -1015,16 +1015,20 @@ function ScrumMasterPanel({ onNav }: { onNav: (v: string, targetId?: string) => 
     { name: 'Sprint Planning',  data: '28 jul 10h',  status: 'planejado' },
   ]
 
-  const sprintHealth  = sprint14.length > 0 ? Math.round(((sprint14.length - parados.length) / sprint14.length) * 100) : 0
-  const smPtTotal     = sprint14.reduce((s, w) => s + (w.points ?? 0), 0) || 38
+  const sprintActive  = sprint14.length > 0
+  const sprintHealth  = sprintActive ? Math.round(((sprint14.length - parados.length) / sprint14.length) * 100) : null
+  const smPtTotal     = sprint14.reduce((s, w) => s + (w.points ?? 0), 0)
   const smPtDone      = sprint14.filter(w => w.status === 'done').reduce((s, w) => s + (w.points ?? 0), 0)
+  const wip = applyFilters(byProjects(liveItems().filter(w => ['in-progress', 'in-review', 'testing'].includes(w.status)), selProj), filters)
+  const sprintCritical = sprint14.filter(w => w.status === 'blocked' || w.priority === 'critical' || w.priority === 'high')
 
   const nativeCards: MuralNativeCard[] = [
-    { id: 'sm:health', value: `${sprintHealth || 62}%`, label: 'Saúde da Sprint', help: 'Velocity = pontos concluídos por sprint. Burndown = pontos restantes ao longo da sprint.', sub: `${parados.length} parados`, disclaimer: '% de conclusão em relação à meta da sprint', color: T.warn, alert: true, miniViz: <BurndownChart variant="thumbnail" sprintTotal={smPtTotal} sprintRemaining={smPtTotal - smPtDone} />, onClick: () => onNav('project') },
-    { id: 'sm:blocked', value: String(blocked.length), label: 'Impedimentos', sub: 'ativos', disclaimer: 'impedimentos formais sem resolução registrada', color: T.crit, alert: true, miniViz: <MiniSparkline data={[{label:'S8',value:3},{value:5},{value:4},{value:6},{value:3},{label:'S13',value:blocked.length}]} color="#ef4444" />, onClick: () => onNav('list') },
-    { id: 'sm:goal', value: '⚠', label: 'Sprint Goal', help: 'Objetivo único que norteia a prioridade da sprint.', sub: '2 itens críticos parados', disclaimer: 'itens que ameaçam atingir o objetivo da sprint', color: T.warn, miniViz: <MiniBarChart data={[{label:'S10',value:3},{label:'S11',value:2},{label:'S12',value:1},{label:'S13',value:2,current:true}]} showAvg={false} />, onClick: () => onNav('project') },
-    { id: 'sm:wip', value: '6', label: 'WIP Atual', help: 'Demandas em andamento ao mesmo tempo. Acima do limite acordado indica gargalo.', sub: 'limite: 5 — excedido', disclaimer: 'itens em andamento vs. limite acordado pelo time', color: T.crit, alert: true, miniViz: <MiniSparkline data={[{label:'S10',value:4},{value:5},{value:6},{label:'S13',value:6}]} color="#ef4444" />, onClick: () => onNav('project') },
+    { id: 'sm:health', value: sprintHealth != null ? `${sprintHealth}%` : '—', label: 'Saúde da Sprint', help: 'Velocity = pontos concluídos por sprint. Burndown = pontos restantes ao longo da sprint.', sub: sprintActive ? `${parados.length} parados` : 'Sem sprint ativa', disclaimer: '% de conclusão em relação à meta da sprint', color: sprintHealth != null && sprintHealth < 60 ? T.warn : T.success, alert: sprintHealth != null && sprintHealth < 60, miniViz: sprintActive ? <BurndownChart variant="thumbnail" sprintTotal={smPtTotal} sprintRemaining={smPtTotal - smPtDone} /> : undefined, onClick: () => onNav('project') },
+    { id: 'sm:blocked', value: String(blocked.length), label: 'Impedimentos', sub: 'ativos', disclaimer: 'impedimentos formais sem resolução registrada', color: T.crit, alert: blocked.length > 0, onClick: () => onNav('list') },
+    { id: 'sm:goal', value: sprintActive ? String(sprintCritical.length) : '—', label: 'Sprint Goal', help: 'Objetivo único que norteia a prioridade da sprint.', sub: sprintActive ? 'itens críticos/parados na sprint' : 'Sem sprint ativa', disclaimer: 'itens que ameaçam atingir o objetivo da sprint', color: sprintCritical.length > 0 ? T.warn : T.success, alert: sprintCritical.length > 0, onClick: () => onNav('project') },
+    { id: 'sm:wip', value: String(wip.length), label: 'WIP Atual', help: 'Demandas em andamento ao mesmo tempo. Acima do limite acordado indica gargalo.', sub: 'em andamento', disclaimer: 'itens em andamento no escopo selecionado', color: T.accent, onClick: () => onNav('project') },
   ]
+
 
   return (
     <>
