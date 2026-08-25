@@ -41,7 +41,6 @@ export function useOnboarding() {
   }, [userId])
 
   const persist = useCallback((next: OnboardingState) => {
-    setState(next)
     if (!userId) return
     try {
       void saveUserPref(userId, PREF_KEY, next).catch(err => logger.error('onboarding.save', err))
