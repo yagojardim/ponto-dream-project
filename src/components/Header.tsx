@@ -18,6 +18,7 @@ interface HeaderProps {
   currentView:    View
   onViewChange:   (v: string) => void
   onOpenClientMessages?: (projectId: string) => void
+  onOpenHelp?: () => void
 }
 
 const viewLabels: Partial<Record<View, string>> = {
