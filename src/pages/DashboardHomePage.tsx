@@ -917,9 +917,9 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
 
   // Compute KPI values from real mock data (respecting selProj filter)
   const sprint14Items   = byProjects(getSprintItems(liveCurrentSprintName() ?? undefined), selProj)
-  const totalSprintPts  = sprint14Items.reduce((s, w) => s + (w.points ?? 0), 0) || 38
+  const totalSprintPts  = sprint14Items.reduce((s, w) => s + (w.points ?? 0), 0)
   const readyPts        = readyItems.reduce((s, w) => s + (w.points ?? 0), 0)
-  const coverageReady   = totalSprintPts > 0 ? Math.round((readyPts / totalSprintPts) * 100) : 0
+  const coverageReady   = totalSprintPts > 0 ? Math.round((readyPts / totalSprintPts) * 100) : null
   const backlogAll      = getBacklogWithAlerts()
   const healthyItems    = backlogAll.filter(w => !w.tags?.some(t => t.startsWith('Sem '))).length
   const backlogHealth   = backlogAll.length > 0 ? Math.round((healthyItems / backlogAll.length) * 100) : 100
@@ -939,8 +939,8 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
     return { label: 'sobrecarga', severity: 'crit' }
   }
   const nativeCards: MuralNativeCard[] = [
-    { id: 'po:ready', value: `${coverageReady}%`, label: 'Cobertura Ready', sub: 'pts prontos ÷ velocity', disclaimer: 'pontos prontos ÷ velocidade média da sprint', miniViz: <MiniBarChart data={[{label:'S10',value:55},{label:'S11',value:62},{label:'S12',value:70},{label:'S13',value:coverageReady,current:true}]} />, onClick: () => onNav('list') },
-    { id: 'po:backlog', value: `${backlogHealth}%`, label: 'Saúde do Backlog', sub: 'itens saudáveis ÷ avaliáveis', disclaimer: 'itens saudáveis ÷ total de itens avaliáveis', color: backlogHealth < 60 ? T.warn : T.success, alert: backlogHealth < 60, miniViz: <MiniSparkline data={[{label:'S10',value:80},{value:77},{value:75},{label:'S13',value:backlogHealth}]} color={backlogHealth < 60 ? '#ef4444' : '#34d399'} />, onClick: () => onNav('list') },
+    { id: 'po:ready', value: coverageReady != null ? `${coverageReady}%` : '—', label: 'Cobertura Ready', sub: totalSprintPts > 0 ? 'pts prontos ÷ velocity' : 'sem sprint ativa', disclaimer: 'pontos prontos ÷ velocidade média da sprint', onClick: () => onNav('list') },
+    { id: 'po:backlog', value: `${backlogHealth}%`, label: 'Saúde do Backlog', sub: 'itens saudáveis ÷ avaliáveis', disclaimer: 'itens saudáveis ÷ total de itens avaliáveis', color: backlogHealth < 60 ? T.warn : T.success, alert: backlogHealth < 60, onClick: () => onNav('list') },
     { id: 'po:created-vs-done', value: poMetrics ? `${poMetrics.createdVsFinalized.finalized}/${poMetrics.createdVsFinalized.created}` : '—', label: 'Criado vs Finalizado', sub: 'finalizados ÷ criados', disclaimer: 'itens finalizados vs criados no(s) projeto(s) selecionado(s)', color: T.success, miniViz: <MiniBarChart data={poMetrics?.createdVsFinalized.weekly ?? []} showAvg={false} />, onClick: () => onNav('list') },
     { id: 'po:releases-health', value: poMetrics ? `${poMetrics.releasesHealth.healthPct}%` : '—', label: 'Saúde das Releases', sub: poMetrics ? `${poMetrics.releasesHealth.activeCount} ativas${poMetrics.releasesHealth.overdue ? ' · atrasada' : ''}` : 'sem releases ativas', disclaimer: 'conclusão média das releases ativas (itens concluídos ÷ vinculados)', color: poMetrics?.releasesHealth.overdue ? T.warn : (poMetrics && poMetrics.releasesHealth.healthPct >= 70 ? T.success : T.warn), alert: poMetrics?.releasesHealth.overdue ?? false, miniViz: <MiniBarChart data={poMetrics?.releasesHealth.perRelease ?? []} showAvg={false} />, onClick: () => onNav('releases') },
   ]
