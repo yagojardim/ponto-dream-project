@@ -34,6 +34,7 @@ const VALID_VIEWS: View[] = [
 export function Shell({ children, currentView, onViewChange, onCreateIssue, onOpenClientMessages }: ShellProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [activeNav, setActiveNav] = useState<string>(currentView)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   function handleNav(id: string, targetId?: string) {
     setActiveNav(id)
@@ -49,10 +50,11 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
           onViewChange={v => { onViewChange(v as View); setActiveNav(v) }}
           onCreateIssue={onCreateIssue}
           onOpenClientMessages={onOpenClientMessages}
+          onOpenHelp={() => setHelpOpen(true)}
         />
+        <OnboardingTip view={currentView} forceOpen={helpOpen || undefined} onClose={() => setHelpOpen(false)} />
         <main className="flex-1 min-w-0 overflow-x-hidden" style={{ overflowY: 'auto' }}>
           <WelcomeModal onNav={handleNav} />
-          <OnboardingTip view={currentView} />
           {children}
         </main>
 

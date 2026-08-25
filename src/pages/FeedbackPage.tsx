@@ -4,6 +4,7 @@ import { useSession } from '@/data/SessionContext'
 import { createFeedback, type FeedbackType } from '@/data/db/feedback'
 import { screenLabelFromUrl } from '@/lib/screenLabel'
 import { ONBOARDING_TIPS } from '@/data/onboardingContent'
+import type { OnboardingGuideBlock } from '@/data/onboardingContent'
 import { VIEW_LABELS } from '@/App'
 
 const RATINGS: { value: number; emoji: string; label: string }[] = [
@@ -24,6 +25,70 @@ const TABS: { id: FeedbackTab; label: string }[] = [
 
 function norm(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+function GuideText({ text }: { text: string }) {
+  const parts = text.split(/\*\*(.+?)\*\*/g)
+  return (
+    <p className="m-0 text-[12px]" style={{ color: T.text2 }}>
+      {parts.map((p, i) => (i % 2 === 1
+        ? <strong key={i} style={{ color: T.text1 }}>{p}</strong>
+        : <span key={i}>{p}</span>))}
+    </p>
+  )
+}
+
+function GuideBlocks({ blocks }: { blocks: OnboardingGuideBlock[] }) {
+  const images = blocks.filter(b => b.image)
+  const [idx, setIdx] = useState(0)
+  const [broken, setBroken] = useState<Record<string, boolean>>({})
+  const carousel = images.length > 1
+
+  const visible = images.filter(b => !broken[b.image as string])
+  const current = carousel ? visible[Math.min(idx, Math.max(visible.length - 1, 0))] : undefined
+
+  return (
+    <div className="px-4 pb-4 flex flex-col gap-3">
+      {blocks.map((b, i) => (
+        <div key={i} className="flex flex-col gap-2">
+          <GuideText text={b.text} />
+          {!carousel && b.image && !broken[b.image] && (
+            <img
+              src={b.image}
+              alt={b.imageAlt ?? b.text}
+              className="rounded-lg max-w-full"
+              style={{ border: `1px solid ${T.border}` }}
+              onError={() => setBroken(prev => ({ ...prev, [b.image as string]: true }))}
+            />
+          )}
+        </div>
+      ))}
+
+      {carousel && current && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIdx(i => (i - 1 + visible.length) % visible.length)}
+            aria-label="Imagem anterior"
+            className="h-7 w-7 rounded-full text-[12px]"
+            style={{ background: T.bgSurface2, color: T.text2, border: `1px solid ${T.border}` }}
+          >‹</button>
+          <img
+            src={current.image}
+            alt={current.imageAlt ?? current.text}
+            className="rounded-lg flex-1 min-w-0"
+            style={{ border: `1px solid ${T.border}` }}
+            onError={() => setBroken(prev => ({ ...prev, [current.image as string]: true }))}
+          />
+          <button
+            onClick={() => setIdx(i => (i + 1) % visible.length)}
+            aria-label="Próxima imagem"
+            className="h-7 w-7 rounded-full text-[12px]"
+            style={{ background: T.bgSurface2, color: T.text2, border: `1px solid ${T.border}` }}
+          >›</button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function HelpCenter() {
@@ -79,11 +144,15 @@ function HelpCenter() {
                   <span className="text-[12px]" style={{ color: T.text3, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}>›</span>
                 </button>
                 {open && (
-                  <ul className="m-0 px-4 pb-3 pl-8 flex flex-col gap-1">
-                    {e.tip.steps.map((s, i) => (
-                      <li key={i} className="text-[12px]" style={{ color: T.text2 }}>{s}</li>
-                    ))}
-                  </ul>
+                  e.tip.guide?.length
+                    ? <GuideBlocks blocks={e.tip.guide} />
+                    : (
+                      <ul className="m-0 px-4 pb-3 pl-8 flex flex-col gap-1">
+                        {e.tip.steps.map((s, i) => (
+                          <li key={i} className="text-[12px]" style={{ color: T.text2 }}>{s}</li>
+                        ))}
+                      </ul>
+                    )
                 )}
               </div>
             )
