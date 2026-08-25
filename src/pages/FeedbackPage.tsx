@@ -94,6 +94,9 @@ function HelpCenter() {
   )
 }
 
+export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void }) {
+  const { activeUser } = useSession()
+  const [tab, setTab] = useState<FeedbackTab>('feedback')
 
   const [screenUrl, setScreenUrl] = useState('')
   const [screen, setScreen] = useState<{ label: string; view: string | null } | null>(null)
