@@ -1135,38 +1135,6 @@ function TechLeadPanel({ onNav }: { onNav: (v: string, targetId?: string) => voi
         <WorkQueue title="Gargalos de PRs / Issues em Revisão" items={inReview} onOpen={openDrawer}
           onViewAll={() => onNav('list')} emptyMsg="Nenhum gargalo no momento." />
 
-        <SCard
-          title="Métricas de Entrega"
-          helpTitle="Métricas de Entrega"
-          help="Indicadores calculados a partir das próprias demandas do projeto (lead time, vazão, cycle time e retrabalho). Não dependem de integração com CI/deploy."
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {entrega.map(d => (
-              <div key={d.name} style={{ background: T.bgPage, borderRadius: 8, padding: '12px 14px' }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: d.value === '—' ? T.text3 : d.alert ? T.warn : T.success }}>{d.value}</div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: T.text2, marginTop: 3 }}>{d.name}</div>
-                <div style={{ fontSize: 10, color: T.text3, marginTop: 4, lineHeight: 1.4 }}>{d.sub}</div>
-              </div>
-            ))}
-          </div>
-        </SCard>
-
-
-        <ColSpan>
-          <SCard title="Dívida Técnica / Saúde do Código">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
-              {divida.map(d => (
-                <div key={d.area}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 11, color: T.text2 }}>{d.area}</span>
-                    <span style={{ fontSize: 10, color: d.pct > d.meta ? T.crit : T.success }}>{d.pct}% (meta {d.meta}%)</span>
-                  </div>
-                  <ProgressBar pct={d.pct} color={d.pct > d.meta ? T.crit : T.success} />
-                </div>
-              ))}
-            </div>
-          </SCard>
-        </ColSpan>
 
         <ColSpan>
           <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
