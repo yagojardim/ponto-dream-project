@@ -1256,14 +1256,16 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
 
       <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
 
-      <SprintDonutCard sprintName="Minha Fila Ativa — Sprint 14" done={8} total={16} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
+      <SprintDonutCard sprintName="Minha Fila Ativa" done={myDone} total={myItems.length} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
 
       <Grid cols="1fr 1fr" gap={16}>
         <WorkQueue title="Meus Bloqueados" items={blocked} onOpen={openDrawer} showDaysBlocked
           emptyMsg="Nenhum item bloqueado." style={{ display: 'flex', flexDirection: 'column' }} bodyStyle={bottomCardBody} />
 
         <SCard title="Atividade Recente" style={{ display: 'flex', flexDirection: 'column' }} bodyStyle={bottomCardBody}>
-          <ActivityTimeline events={recent} />
+          {activity.length === 0
+            ? <EmptyState message="Sem atividade recente." />
+            : <ActivityTimeline events={activity.map(a => ({ label: `${a.action} · ${a.entityType}`, date: relativeTime(a.createdAt), color: T.accent }))} />}
         </SCard>
       </Grid>
 
