@@ -1110,47 +1110,14 @@ function TechLeadPanel({ onNav }: { onNav: (v: string, targetId?: string) => voi
   const deliveryRows = liveAggregates()?.deliveryRows ?? []
   const scopedRows = selProj.size > 0 ? deliveryRows.filter(r => selProj.has(r.projectId)) : deliveryRows
   const dm = computeDeliveryMetrics(scopedRows)
-  const entrega = [
-    {
-      name: 'Lead Time médio',
-      value: dm.leadTimeDias != null ? `${nf(dm.leadTimeDias)} dias` : '—',
-      sub: dm.leadTimeDias != null ? 'Do início da demanda até a conclusão — quanto menor, melhor.' : 'sem dados suficientes ainda',
-      alert: dm.leadTimeDias != null && dm.leadTimeDias > 14,
-    },
-    {
-      name: 'Vazão',
-      value: dm.vazaoSemana != null ? `${nf(dm.vazaoSemana)}/semana` : '—',
-      sub: dm.vazaoSemana != null ? 'Demandas concluídas por semana — quanto maior, melhor.' : 'sem dados suficientes ainda',
-      alert: dm.vazaoSemana != null && dm.vazaoSemana < 1,
-    },
-    {
-      name: 'Cycle Time médio',
-      value: dm.cycleTimeDias != null ? `${nf(dm.cycleTimeDias)} dias` : '—',
-      sub: dm.cycleTimeDias != null ? 'Tempo em execução ativa (Em andamento → Concluído).' : 'sem dados suficientes ainda',
-      alert: dm.cycleTimeDias != null && dm.cycleTimeDias > 7,
-    },
-    {
-      name: '% de Retrabalho (Bugs)',
-      value: dm.taxaBugsPct != null ? `${nf(dm.taxaBugsPct)}%` : '—',
-      sub: dm.taxaBugsPct != null ? 'Proporção de demandas que são correção — quanto menor, melhor.' : 'sem dados suficientes ainda',
-      alert: dm.taxaBugsPct != null && dm.taxaBugsPct > 20,
-    },
-  ]
-
-  const divida = [
-    { area: 'Cobertura de testes',  pct: 74, meta: 80 },
-    { area: 'TODOs no código',      pct: 18, meta: 5  },
-    { area: 'Deps desatualizadas',  pct: 35, meta: 10 },
-  ]
-
   const { openChart: openTLChart, chartModal: tlChartModal } = useChartModal()
   const critBugs = liveItems().filter(w => w.type === 'bug' && (w.priority === 'critical' || w.priority === 'high')).length
 
   const nativeCards: MuralNativeCard[] = [
-    { id: 'tl:health', value: '74%', label: 'Saúde Técnica', sub: 'cobertura de testes', disclaimer: 'score composto de cobertura, débito e estabilidade', color: T.warn, miniViz: <MiniBarChart data={[{label:'S8',value:70},{label:'S9',value:72},{label:'S10',value:69},{label:'S11',value:73},{label:'S12',value:71},{label:'S13',value:74,current:true}]} />, onClick: () => openTLChart('health') },
-    { id: 'tl:bugs', value: String(critBugs), label: 'Bugs Críticos', sub: 'em prod', disclaimer: 'bugs P0/P1 bloqueando entrega ou em produção', color: T.crit, alert: true, miniViz: <MiniSparkline data={[{label:'S8',value:8},{value:6},{value:7},{value:5},{value:4},{label:'S13',value:critBugs}]} color="#ef4444" />, onClick: () => openTLChart('bugs') },
-    { id: 'tl:deploys', value: '4', label: 'Deploys/semana', sub: '+2 vs semana ant.', disclaimer: 'frequência de deploy — métrica DORA', color: T.success, miniViz: <MiniBarChart data={[{label:'S-5',value:3},{label:'S-4',value:4},{label:'S-3',value:3},{label:'S-2',value:5},{label:'S-1',value:4},{label:'Atual',value:4,current:true}]} />, onClick: () => onNav('reports') },
-    { id: 'tl:errors', value: '0.8%', label: 'Error Rate', sub: 'meta: <0.5%', disclaimer: 'taxa de erro em produção nas últimas 24h', color: T.warn, alert: true, miniViz: <MiniSparkline data={[{label:'D-5',value:0.4},{value:0.5},{value:0.6},{value:0.7},{value:0.8},{label:'Hoje',value:0.8}]} color="#f5a524" />, onClick: () => onNav('reports') },
+    { id: 'tl:bugs', value: String(critBugs), label: 'Bugs Críticos', sub: 'em prod', disclaimer: 'bugs P0/P1 bloqueando entrega ou em produção', color: T.crit, alert: critBugs > 0, onClick: () => openTLChart('bugs') },
+    { id: 'tl:leadtime', value: dm.leadTimeDias != null ? `${nf(dm.leadTimeDias)}d` : '—', label: 'Lead Time', sub: 'início → conclusão', disclaimer: 'tempo médio do início da demanda até a conclusão', color: dm.leadTimeDias != null && dm.leadTimeDias > 14 ? T.warn : undefined, alert: dm.leadTimeDias != null && dm.leadTimeDias > 14, onClick: () => onNav('reports') },
+    { id: 'tl:throughput', value: dm.vazaoSemana != null ? `${nf(dm.vazaoSemana)}/sem` : '—', label: 'Vazão', sub: 'concluídas por semana', disclaimer: 'demandas concluídas por semana no escopo', alert: dm.vazaoSemana != null && dm.vazaoSemana < 1, onClick: () => onNav('reports') },
+    { id: 'tl:rework', value: dm.taxaBugsPct != null ? `${nf(dm.taxaBugsPct)}%` : '—', label: '% Retrabalho', sub: 'demandas que são correção', disclaimer: 'proporção de demandas que são correção', color: dm.taxaBugsPct != null && dm.taxaBugsPct > 20 ? T.warn : undefined, alert: dm.taxaBugsPct != null && dm.taxaBugsPct > 20, onClick: () => onNav('reports') },
   ]
 
   return (
