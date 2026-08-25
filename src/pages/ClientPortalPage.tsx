@@ -10,6 +10,8 @@ import {
   type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
 } from '../data/db/clientPortal'
 import { readPortalSession } from '../lib/portalSession'
+import { OnboardingTip } from '../components/onboarding/OnboardingTip'
+
 
 /** Identidade real do cliente logado no portal (resolvida do banco). */
 let CLIENT: ClientPortalContext | null = null
@@ -2161,7 +2163,11 @@ export default function ClientPortalPage({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="-mx-8">
+              <OnboardingTip view="client" />
+            </div>
             {isEmpty ? (
+
               <EmptyState />
             ) : (
               <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'start' }}>

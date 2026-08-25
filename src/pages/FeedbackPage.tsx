@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import { useSession } from '@/data/SessionContext'
 import { createFeedback, type FeedbackType } from '@/data/db/feedback'
 import { screenLabelFromUrl } from '@/lib/screenLabel'
+import { ONBOARDING_TIPS } from '@/data/onboardingContent'
+import { VIEW_LABELS } from '@/App'
 
 const RATINGS: { value: number; emoji: string; label: string }[] = [
   { value: 1, emoji: '😞', label: 'Muito ruim' },
@@ -12,9 +14,89 @@ const RATINGS: { value: number; emoji: string; label: string }[] = [
   { value: 5, emoji: '🤩', label: 'Excelente' },
 ]
 
+type FeedbackTab = 'feedback' | 'suporte' | 'ajuda'
+
+const TABS: { id: FeedbackTab; label: string }[] = [
+  { id: 'feedback', label: 'Enviar feedback' },
+  { id: 'suporte', label: 'Reportar problema / suporte' },
+  { id: 'ajuda', label: 'Central de Ajuda' },
+]
+
+function norm(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+function HelpCenter() {
+  const [query, setQuery] = useState('')
+  const [openKey, setOpenKey] = useState<string | null>(null)
+
+  const entries = useMemo(() => {
+    const all = Object.entries(ONBOARDING_TIPS).map(([view, tip]) => ({
+      view,
+      label: (VIEW_LABELS as Record<string, string>)[view] ?? tip.title,
+      tip,
+    }))
+    const q = norm(query.trim())
+    if (!q) return all
+    return all.filter(e =>
+      norm(e.label).includes(q) ||
+      norm(e.tip.title).includes(q) ||
+      e.tip.steps.some(s => norm(s).includes(q)),
+    )
+  }, [query])
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="m-0 text-[15px] font-semibold" style={{ color: T.text1 }}>Central de Ajuda</h2>
+        <p className="mt-1 mb-0 text-[12px]" style={{ color: T.text2 }}>
+          Dúvidas frequentes sobre cada tela da plataforma.
+        </p>
+      </div>
+
+      <input
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        placeholder="Buscar por tela ou assunto…"
+        className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
+        style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
+      />
+
+      {entries.length === 0 ? (
+        <p className="m-0 text-[12px]" style={{ color: T.text3 }}>Nenhuma tela encontrada para “{query}”.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {entries.map(e => {
+            const open = openKey === e.view
+            return (
+              <div key={e.view} className="rounded-xl overflow-hidden" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+                <button
+                  onClick={() => setOpenKey(open ? null : e.view)}
+                  aria-expanded={open}
+                  className="w-full flex items-center justify-between gap-3 px-4 h-11 text-left"
+                >
+                  <span className="text-[13px] font-medium" style={{ color: T.text1 }}>{e.label}</span>
+                  <span className="text-[12px]" style={{ color: T.text3, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}>›</span>
+                </button>
+                {open && (
+                  <ul className="m-0 px-4 pb-3 pl-8 flex flex-col gap-1">
+                    {e.tip.steps.map((s, i) => (
+                      <li key={i} className="text-[12px]" style={{ color: T.text2 }}>{s}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void }) {
   const { activeUser } = useSession()
-  const [tab, setTab] = useState<'feedback' | 'suporte'>('feedback')
+  const [tab, setTab] = useState<FeedbackTab>('feedback')
 
   const [screenUrl, setScreenUrl] = useState('')
   const [screen, setScreen] = useState<{ label: string; view: string | null } | null>(null)
@@ -77,7 +159,36 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-8">
+    <div className="flex w-full items-start gap-6 px-6 py-8">
+      {/* Menu lateral */}
+      <nav className="flex flex-col gap-1 flex-shrink-0" style={{ width: 200 }}>
+        <p className="m-0 mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>
+          Feedback &amp; Suporte
+        </p>
+        {TABS.map(({ id, label }) => {
+          const active = tab === id
+          return (
+            <button
+              key={id}
+              onClick={() => { setTab(id); setError(null) }}
+              aria-pressed={active}
+              className="text-left px-3 py-2 rounded-lg text-[12px] font-medium transition-colors"
+              style={{
+                background: active ? T.accentDim : 'transparent',
+                color: active ? T.accent : T.text2,
+                border: `1px solid ${active ? T.accentBorder : 'transparent'}`,
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* Conteúdo */}
+      <div className="flex-1 min-w-0 max-w-3xl">
+      {tab === 'ajuda' ? <HelpCenter /> : (
+      <>
       <header className="mb-6">
         <h1 className="m-0 text-[20px] font-semibold" style={{ color: T.text1 }}>Feedback &amp; Suporte</h1>
         <p className="mt-1 mb-0 text-[12px]" style={{ color: T.text2 }}>
@@ -85,29 +196,8 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
         </p>
       </header>
 
-      {/* Abas */}
-      <div className="flex gap-1 mb-4 p-1 rounded-xl w-fit" style={{ background: T.bgSurface2, border: `1px solid ${T.border}` }}>
-        {([['feedback', 'Enviar feedback'], ['suporte', 'Reportar problema / suporte']] as const).map(([id, label]) => {
-          const active = tab === id
-          return (
-            <button
-              key={id}
-              onClick={() => { setTab(id); setError(null) }}
-              className="h-8 px-3 rounded-lg text-[12px] font-medium transition-colors"
-              style={{
-                background: active ? T.accentDim : 'transparent',
-                color: active ? T.accent : T.text2,
-                border: `1px solid ${active ? T.accentBorder : 'transparent'}`,
-              }}
-              aria-pressed={active}
-            >
-              {label}
-            </button>
-          )
-        })}
-      </div>
-
       <section className="rounded-2xl p-6 flex flex-col gap-5" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+
         {/* Tela referenciada */}
         <div>
           <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>Tela referenciada</label>
@@ -220,6 +310,13 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
           {toast && <span className="text-[12px]" style={{ color: T.success }}>{toast}</span>}
         </div>
       </section>
+      </>
+      )}
+      <p className="mt-4 mb-0 text-[11px]" style={{ color: T.text3 }}>
+        Precisa de ajuda com uma tela? Veja a Central de Ajuda ao lado.
+      </p>
+      </div>
     </div>
+
   )
 }
