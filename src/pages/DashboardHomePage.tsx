@@ -1227,17 +1227,23 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
   })
   const blocked = applyFilters(byProjects(getBlockedItems(), selProj), filters).filter(mine)
 
-  const recent = [
-    { label: 'Merge PR #280 (fix: ordenação)', date: 'há 4h',   color: T.success },
-    { label: 'ALT-143 movida para Bloqueado',  date: 'há 1h',   color: T.crit },
-    { label: 'Comentário em ALT-141',          date: 'há 2h',   color: T.accent },
-  ]
+  const today = new Date().toISOString().slice(0, 10)
+  const late = myItems.filter(w => w.due_date && w.due_date <= today && w.status !== 'done')
+  const myDone = myItems.filter(w => w.status === 'done').length
+
+  const [activity, setActivity] = useState<AdminActivityRow[]>([])
+  useEffect(() => {
+    let alive = true
+    fetchRecentAdminActivity(6, { actorName: activeUser?.name })
+      .then(a => { if (alive) setActivity(a) })
+      .catch(err => { logger.error('dev.activity', err); if (alive) setActivity([]) })
+    return () => { alive = false }
+  }, [activeUser?.name])
 
   const nativeCards: MuralNativeCard[] = [
-    { id: 'dev:items', value: String(myItems.length), label: 'Meus Itens Ativos', sub: '1 bloqueado', disclaimer: 'tarefas atribuídas a mim nesta sprint', miniViz: <MiniBarChart data={[{label:'S10',value:12},{label:'S11',value:14},{label:'S12',value:11},{label:'S13',value:myItems.length,current:true}]} showAvg={false} />, onClick: () => onNav('list') },
-    { id: 'dev:late', value: '1', label: 'Atrasados', sub: 'BUG-38 vence hoje', disclaimer: 'itens com prazo hoje ou já vencido', color: T.crit, alert: true, miniViz: <MiniSparkline data={[{label:'S10',value:0},{value:1},{value:2},{value:1},{value:1},{label:'S13',value:1}]} color="#ef4444" />, onClick: () => onNav('list') },
-    { id: 'dev:blocked', value: String(blocked.length), label: 'Meus Bloqueados', sub: '', disclaimer: 'minhas tarefas aguardando desbloqueio externo', color: T.warn, alert: true, miniViz: <MiniSparkline data={[{label:'S10',value:1},{value:0},{value:2},{label:'S13',value:blocked.length}]} color="#f5a524" />, onClick: () => onNav('list') },
-    { id: 'dev:prs', value: '2', label: 'PRs Abertos', sub: '1 precisa de ação', disclaimer: 'pull requests abertos nos quais estou envolvido', color: T.accent, miniViz: <MiniBarChart data={[{label:'S-4',value:1},{label:'S-3',value:3},{label:'S-2',value:2},{label:'Atual',value:2,current:true}]} showAvg={false} />, onClick: () => onNav('project') },
+    { id: 'dev:items', value: String(myItems.length), label: 'Meus Itens Ativos', sub: `${blocked.length} bloqueado${blocked.length !== 1 ? 's' : ''}`, disclaimer: 'tarefas atribuídas a mim nesta sprint', onClick: () => onNav('list') },
+    { id: 'dev:late', value: String(late.length), label: 'Atrasados', sub: late.length ? 'prazo vencido ou hoje' : 'nenhum atrasado', disclaimer: 'itens com prazo hoje ou já vencido', color: late.length ? T.crit : undefined, alert: late.length > 0, onClick: () => onNav('list') },
+    { id: 'dev:blocked', value: String(blocked.length), label: 'Meus Bloqueados', sub: '', disclaimer: 'minhas tarefas aguardando desbloqueio externo', color: T.warn, alert: blocked.length > 0, onClick: () => onNav('list') },
   ]
 
   const bottomCardBody = { justifyContent: 'center' as const, overflowY: 'auto' as const, minHeight: 180 }
@@ -1250,14 +1256,16 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
 
       <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
 
-      <SprintDonutCard sprintName="Minha Fila Ativa — Sprint 14" done={8} total={16} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
+      <SprintDonutCard sprintName="Minha Fila Ativa" done={myDone} total={myItems.length} items={myItems} onOpen={openDrawer} onViewSprint={() => onNav('project')} />
 
       <Grid cols="1fr 1fr" gap={16}>
         <WorkQueue title="Meus Bloqueados" items={blocked} onOpen={openDrawer} showDaysBlocked
           emptyMsg="Nenhum item bloqueado." style={{ display: 'flex', flexDirection: 'column' }} bodyStyle={bottomCardBody} />
 
         <SCard title="Atividade Recente" style={{ display: 'flex', flexDirection: 'column' }} bodyStyle={bottomCardBody}>
-          <ActivityTimeline events={recent} />
+          {activity.length === 0
+            ? <EmptyState message="Sem atividade recente." />
+            : <ActivityTimeline events={activity.map(a => ({ label: `${a.action} · ${a.entityType}`, date: relativeTime(a.createdAt), color: T.accent }))} />}
         </SCard>
       </Grid>
 
