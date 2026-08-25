@@ -1,7 +1,14 @@
 // Fonte única das dicas de onboarding (callouts inline + Central de Ajuda).
+export interface OnboardingGuideBlock {
+  text: string
+  image?: string
+  imageAlt?: string
+}
+
 export interface OnboardingTip {
   title: string
   steps: string[]
+  guide?: OnboardingGuideBlock[]
 }
 
 export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
@@ -19,6 +26,10 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Clique em + Novo Projeto para criar.',
       'No ⋯ de cada projeto você edita descrição, período e equipe.',
       'Ainda no ⋯ é possível finalizar ou arquivar o projeto.',
+    ],
+    guide: [
+      { text: 'Botão **+ Novo Projeto** (topo direito): abre o formulário para criar um projeto, definindo nome, cliente, período e responsável.' },
+      { text: 'Menu **⋯** de cada projeto: editar descrição/período/equipe, **Finalizar** (conclui) ou **Arquivar** (remove da lista).' },
     ],
   },
   'boards-list': {
@@ -151,6 +162,20 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Agrupe entregas por versão.',
       'Crie a release e vincule as demandas do projeto.',
       'Use Fechar release para separar entregues × retornados.',
+    ],
+  },
+  filters: {
+    title: 'Filtros & Busca',
+    steps: [
+      'Monte buscas avançadas combinando condições (tipo, status, prioridade, responsável, sprint, épico).',
+      'Use os operadores para refinar e encontrar demandas rapidamente.',
+    ],
+  },
+  navigator: {
+    title: 'Issue Navigator',
+    steps: [
+      'Tabela de todas as demandas com colunas configuráveis, ordenação e busca rápida.',
+      'Selecione vários itens para edição em massa (status, prioridade, responsável, sprint, épico).',
     ],
   },
 }
