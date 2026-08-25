@@ -159,7 +159,36 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-8">
+    <div className="flex w-full items-start gap-6 px-6 py-8">
+      {/* Menu lateral */}
+      <nav className="flex flex-col gap-1 flex-shrink-0" style={{ width: 200 }}>
+        <p className="m-0 mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>
+          Feedback &amp; Suporte
+        </p>
+        {TABS.map(({ id, label }) => {
+          const active = tab === id
+          return (
+            <button
+              key={id}
+              onClick={() => { setTab(id); setError(null) }}
+              aria-pressed={active}
+              className="text-left px-3 py-2 rounded-lg text-[12px] font-medium transition-colors"
+              style={{
+                background: active ? T.accentDim : 'transparent',
+                color: active ? T.accent : T.text2,
+                border: `1px solid ${active ? T.accentBorder : 'transparent'}`,
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* Conteúdo */}
+      <div className="flex-1 min-w-0 max-w-3xl">
+      {tab === 'ajuda' ? <HelpCenter /> : (
+      <>
       <header className="mb-6">
         <h1 className="m-0 text-[20px] font-semibold" style={{ color: T.text1 }}>Feedback &amp; Suporte</h1>
         <p className="mt-1 mb-0 text-[12px]" style={{ color: T.text2 }}>
@@ -167,29 +196,8 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
         </p>
       </header>
 
-      {/* Abas */}
-      <div className="flex gap-1 mb-4 p-1 rounded-xl w-fit" style={{ background: T.bgSurface2, border: `1px solid ${T.border}` }}>
-        {([['feedback', 'Enviar feedback'], ['suporte', 'Reportar problema / suporte']] as const).map(([id, label]) => {
-          const active = tab === id
-          return (
-            <button
-              key={id}
-              onClick={() => { setTab(id); setError(null) }}
-              className="h-8 px-3 rounded-lg text-[12px] font-medium transition-colors"
-              style={{
-                background: active ? T.accentDim : 'transparent',
-                color: active ? T.accent : T.text2,
-                border: `1px solid ${active ? T.accentBorder : 'transparent'}`,
-              }}
-              aria-pressed={active}
-            >
-              {label}
-            </button>
-          )
-        })}
-      </div>
-
       <section className="rounded-2xl p-6 flex flex-col gap-5" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+
         {/* Tela referenciada */}
         <div>
           <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>Tela referenciada</label>
