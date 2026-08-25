@@ -22,12 +22,17 @@ interface RawAuditRow {
   created_at: string
 }
 
-export function fetchRecentAdminActivity(limit = 8): Promise<AdminActivityRow[]> {
+export function fetchRecentAdminActivity(
+  limit = 8,
+  opts: { actorName?: string } = {},
+): Promise<AdminActivityRow[]> {
   return safeCall<AdminActivityRow[]>('adminActivity.fetchRecent', async () => {
-    const { data, error } = await supabase
+    let q = supabase
       .from('audit_logs')
       .select('id, action, entity_type, entity_id, actor_name, created_at')
       .eq('tenant_id', DEFAULT_TENANT_ID)
+    if (opts.actorName) q = q.eq('actor_name', opts.actorName)
+    const { data, error } = await q
       .order('created_at', { ascending: false })
       .limit(limit)
     if (error) throw error
