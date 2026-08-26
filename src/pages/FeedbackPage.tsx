@@ -6,6 +6,7 @@ import { screenLabelFromUrl } from '@/lib/screenLabel'
 import { ONBOARDING_TIPS } from '@/data/onboardingContent'
 import type { OnboardingGuideBlock } from '@/data/onboardingContent'
 import { VIEW_LABELS } from '@/App'
+import { startProjectTour } from '@/hooks/useProjectTour'
 
 const RATINGS: { value: number; emoji: string; label: string }[] = [
   { value: 1, emoji: '😞', label: 'Muito ruim' },
@@ -91,7 +92,7 @@ function GuideBlocks({ blocks }: { blocks: OnboardingGuideBlock[] }) {
   )
 }
 
-function HelpCenter() {
+function HelpCenter({ onNav }: { onNav?: (view: string) => void }) {
   const [query, setQuery] = useState('')
   const [openKey, setOpenKey] = useState<string | null>(null)
 
@@ -118,6 +119,12 @@ function HelpCenter() {
           Dúvidas frequentes sobre cada tela da plataforma.
         </p>
       </div>
+
+      <button
+        onClick={() => { onNav?.('projects-list'); startProjectTour() }}
+        className="self-start h-9 px-4 rounded-lg text-[13px] font-semibold"
+        style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}
+      >▶ Iniciar tour: criar um projeto</button>
 
       <input
         value={query}
@@ -256,7 +263,7 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
 
       {/* Conteúdo */}
       <div className="flex-1 min-w-0 max-w-3xl">
-      {tab === 'ajuda' ? <HelpCenter /> : (
+      {tab === 'ajuda' ? <HelpCenter onNav={onNav} /> : (
       <>
       <header className="mb-6">
         <h1 className="m-0 text-[20px] font-semibold" style={{ color: T.text1 }}>Feedback &amp; Suporte</h1>
