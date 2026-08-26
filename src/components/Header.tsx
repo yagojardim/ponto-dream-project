@@ -202,6 +202,38 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
     setSwitchOpen(false)
   }
 
+  const groupedResults = useMemo(() => {
+    const groups = new Map<string, SearchResult[]>()
+    for (const r of cmdResults) {
+      const list = groups.get(r.sub) ?? []
+      list.push(r)
+      groups.set(r.sub, list)
+    }
+    return Array.from(groups.entries())
+  }, [cmdResults])
+
+  function handleSelectResult(r: SearchResult) {
+    onViewChange(r.view, r.targetId)
+    setCmdOpen(false)
+    setCmdQuery('')
+    setCmdResults([])
+    setCmdIndex(-1)
+  }
+
+  function handleCmdKeyDown(e: React.KeyboardEvent) {
+    if (cmdResults.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setCmdIndex(i => (i + 1) % cmdResults.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setCmdIndex(i => (i - 1 + cmdResults.length) % cmdResults.length)
+    } else if (e.key === 'Enter' && cmdIndex >= 0) {
+      e.preventDefault()
+      handleSelectResult(cmdResults[cmdIndex])
+    }
+  }
+
   return (
     <>
       {/* Main header bar */}
