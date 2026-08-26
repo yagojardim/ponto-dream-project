@@ -400,9 +400,6 @@ export default function ClientLoginPage({ onSuccess }: Props) {
                 Solicite ao responsável do seu projeto.
               </a>
             </div>
-            <div style={{ fontSize: 10, color: T.text3 }}>
-              Ambiente: Dash View · Tenant: Altech Agency
-            </div>
           </div>
         </div>
 
