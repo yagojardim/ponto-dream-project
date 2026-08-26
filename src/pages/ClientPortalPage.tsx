@@ -107,10 +107,14 @@ function CardShell({ children, className = '', style = {} }: { children: React.R
         borderLeft: `1px solid ${C.border}`,
         borderRadius: C.radius,
         boxShadow: '0 4px 24px rgba(0,0,0,0.28)',
+        maxHeight: 460,
+        overflow: 'hidden',
         ...style,
       }}
     >
-      {children}
+      <div className="flex-1 min-h-0 overflow-y-auto" style={{ paddingRight: 8 }}>
+        {children}
+      </div>
     </div>
   )
 }
@@ -2170,7 +2174,7 @@ export default function ClientPortalPage({
 
               <EmptyState />
             ) : (
-              <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', alignItems: 'start' }}>
+              <div className="grid gap-5 items-stretch" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
                 {isSingle && singleProject && (
                   <>
                     <ProgressCard project={singleProject} />
