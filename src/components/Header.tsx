@@ -107,6 +107,10 @@ function rowToNotif(r: NotificationRow): NotifItem {
 
 export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientMessages, onOpenHelp }: HeaderProps) {
   const [cmdOpen,    setCmdOpen]    = useState(false)
+  const [cmdQuery,   setCmdQuery]   = useState('')
+  const [cmdResults, setCmdResults] = useState<SearchResult[]>([])
+  const [cmdLoading, setCmdLoading] = useState(false)
+  const [cmdIndex,   setCmdIndex]   = useState(-1)
   const [notifOpen,  setNotifOpen]  = useState(false)
   const [switchOpen, setSwitchOpen] = useState(false)
   const [readStatic, setReadStatic] = useState<Set<string>>(new Set())
