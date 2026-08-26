@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Avatar } from './ds/Avatar'
 import { T } from './ds/tokens'
 import { MOCK_USERS } from '../data/session'
@@ -6,6 +6,7 @@ import { useSession } from '../data/SessionContext'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import * as notificationsApi from '../data/db/notifications'
 import type { NotificationRow } from '../data/db/notifications'
+import { searchGlobal, type SearchResult } from '../data/db/globalSearch'
 
 
 type View =
@@ -16,7 +17,7 @@ type View =
 interface HeaderProps {
   onCreateIssue?: () => void
   currentView:    View
-  onViewChange:   (v: string) => void
+  onViewChange:   (v: string, targetId?: string) => void
   onOpenClientMessages?: (projectId: string) => void
   onOpenHelp?: () => void
 }
@@ -106,6 +107,10 @@ function rowToNotif(r: NotificationRow): NotifItem {
 
 export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientMessages, onOpenHelp }: HeaderProps) {
   const [cmdOpen,    setCmdOpen]    = useState(false)
+  const [cmdQuery,   setCmdQuery]   = useState('')
+  const [cmdResults, setCmdResults] = useState<SearchResult[]>([])
+  const [cmdLoading, setCmdLoading] = useState(false)
+  const [cmdIndex,   setCmdIndex]   = useState(-1)
   const [notifOpen,  setNotifOpen]  = useState(false)
   const [switchOpen, setSwitchOpen] = useState(false)
   const [readStatic, setReadStatic] = useState<Set<string>>(new Set())
@@ -133,6 +138,26 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
     })()
     return () => { cancelled = true }
   }, [activeUser.name])
+
+  // Debounced global search
+  useEffect(() => {
+    if (!cmdOpen) return
+    const term = cmdQuery.trim()
+    if (term.length < 2) {
+      setCmdResults([])
+      setCmdIndex(-1)
+      setCmdLoading(false)
+      return
+    }
+    setCmdLoading(true)
+    const t = setTimeout(async () => {
+      const res = await searchGlobal(term)
+      setCmdResults(res)
+      setCmdIndex(res.length > 0 ? 0 : -1)
+      setCmdLoading(false)
+    }, 200)
+    return () => { clearTimeout(t) }
+  }, [cmdQuery, cmdOpen])
 
   // Build merged notification list: unread first, then read
   const dbNotifs   = rows.map(rowToNotif)
@@ -175,6 +200,38 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
   function handleSwitchUser(userId: string) {
     setActiveUser(userId)
     setSwitchOpen(false)
+  }
+
+  const groupedResults = useMemo(() => {
+    const groups = new Map<string, SearchResult[]>()
+    for (const r of cmdResults) {
+      const list = groups.get(r.sub) ?? []
+      list.push(r)
+      groups.set(r.sub, list)
+    }
+    return Array.from(groups.entries())
+  }, [cmdResults])
+
+  function handleSelectResult(r: SearchResult) {
+    onViewChange(r.view, r.targetId)
+    setCmdOpen(false)
+    setCmdQuery('')
+    setCmdResults([])
+    setCmdIndex(-1)
+  }
+
+  function handleCmdKeyDown(e: React.KeyboardEvent) {
+    if (cmdResults.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setCmdIndex(i => (i + 1) % cmdResults.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setCmdIndex(i => (i - 1 + cmdResults.length) % cmdResults.length)
+    } else if (e.key === 'Enter' && cmdIndex >= 0) {
+      e.preventDefault()
+      handleSelectResult(cmdResults[cmdIndex])
+    }
   }
 
   return (
@@ -443,6 +500,9 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
               </svg>
               <input
                 autoFocus
+                value={cmdQuery}
+                onChange={e => { setCmdQuery(e.target.value); setCmdIndex(-1) }}
+                onKeyDown={handleCmdKeyDown}
                 className="flex-1 text-[13px] outline-none bg-transparent"
                 style={{ color: T.text1 }}
                 placeholder="Buscar projetos, tarefas, membros..."
@@ -456,23 +516,44 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
               </button>
             </div>
             <div className="p-2 space-y-0.5">
-              {[
-                { label: 'Galpão Industrial — 18% concluído',     sub: 'Projeto' },
-                { label: 'ERP Corporativo — Sprint em andamento',  sub: 'Projeto' },
-                { label: 'PM-142 · Autenticação OAuth2',           sub: 'Tarefa · Bloqueado' },
-                { label: 'Ana Lima — Tech Lead',                   sub: 'Membro' },
-                { label: 'Dashboard executivo',                    sub: 'Visão' },
-              ].map(r => (
-                <button
-                  key={r.label}
-                  className="w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-[13px] transition-colors"
-                  style={{ color: T.text2 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = T.bgSurface2; (e.currentTarget as HTMLButtonElement).style.color = T.text1 }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = T.text2 }}
-                >
-                  {r.label}
-                  <span className="text-[10px] ml-2 flex-shrink-0" style={{ color: T.text3 }}>{r.sub}</span>
-                </button>
+              {cmdLoading && (
+                <div className="px-3 py-4 text-center text-[12px]" style={{ color: T.text3 }}>
+                  Buscando…
+                </div>
+              )}
+              {!cmdLoading && cmdQuery.trim().length < 2 && (
+                <div className="px-3 py-4 text-center text-[12px]" style={{ color: T.text3 }}>
+                  Digite pelo menos 2 caracteres para buscar.
+                </div>
+              )}
+              {!cmdLoading && cmdQuery.trim().length >= 2 && cmdResults.length === 0 && (
+                <div className="px-3 py-4 text-center text-[12px]" style={{ color: T.text3 }}>
+                  Nenhum resultado.
+                </div>
+              )}
+              {!cmdLoading && groupedResults.map(([sub, items]) => (
+                <div key={sub}>
+                  <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>
+                    {sub}
+                  </div>
+                  {items.map((r, idx) => {
+                    const flatIndex = cmdResults.findIndex(x => x === r)
+                    const selected = flatIndex === cmdIndex
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => handleSelectResult(r)}
+                        className="w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-[13px] transition-colors"
+                        style={{ color: T.text2, background: selected ? T.bgSurface2 : 'transparent' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = T.bgSurface2; (e.currentTarget as HTMLButtonElement).style.color = T.text1 }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = selected ? T.bgSurface2 : 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = T.text2 }}
+                      >
+                        <span className="truncate">{r.label}</span>
+                        <span className="text-[10px] ml-2 flex-shrink-0" style={{ color: T.text3 }}>{r.kind === 'item' ? r.sub : r.sub}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               ))}
             </div>
             <div
