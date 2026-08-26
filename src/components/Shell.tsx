@@ -3,6 +3,10 @@ import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { WelcomeModal } from './onboarding/WelcomeModal'
 import { OnboardingTip } from './onboarding/OnboardingTip'
+import { GuidedTour } from './onboarding/GuidedTour'
+import { PROJECT_TOUR_STEPS } from '../data/projectTourSteps'
+import { useProjectTourState } from '../hooks/useProjectTour'
+import { useOnboarding } from '../hooks/useOnboarding'
 
 
 export type View =
@@ -35,6 +39,13 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
   const [collapsed, setCollapsed] = useState(false)
   const [activeNav, setActiveNav] = useState<string>(currentView)
   const [helpOpen, setHelpOpen] = useState(false)
+  const { tourActive, stopProjectTour } = useProjectTourState()
+  const { markProjectTourDone } = useOnboarding()
+
+  function endTour() {
+    stopProjectTour()
+    markProjectTourDone()
+  }
 
   function handleNav(id: string, targetId?: string) {
     setActiveNav(id)
@@ -57,6 +68,15 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
           <WelcomeModal onNav={handleNav} />
           {children}
         </main>
+
+        {tourActive && (
+          <GuidedTour
+            steps={PROJECT_TOUR_STEPS}
+            onNav={v => handleNav(v)}
+            onFinish={endTour}
+            onSkip={endTour}
+          />
+        )}
 
       </div>
     </div>

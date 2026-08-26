@@ -825,6 +825,7 @@ export function Sidebar({ collapsed, onToggle, activeNav, onNav }: SidebarProps)
                       onToggle={toggleProjects}
                     />
                   ) : (
+                    <span className="block" data-tour={item.id === 'projects-list' ? 'nav-projects' : undefined}>
                     <NavBtn
                       item={item}
                       active={activeNav === item.id}
@@ -833,6 +834,7 @@ export function Sidebar({ collapsed, onToggle, activeNav, onNav }: SidebarProps)
                       disabled={item.id === 'boards-list' && boardsDisabled}
                       disabledLabel={item.id === 'boards-list' ? NO_BOARDS_LABEL : undefined}
                     />
+                    </span>
                   )}
                   {/* Animated disclosure panel — only after the dashboard item */}
                   {item.id === 'dashboard' && (

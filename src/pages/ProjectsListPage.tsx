@@ -742,6 +742,7 @@ export default function ProjectsListPage({ onNav }: Props) {
           {can(activeUser.permissions, 'project:create') && (
             <button
               onClick={() => setNewProjOpen(true)}
+              data-tour="new-project-btn"
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:brightness-110"
               style={{ background: '#4d82ff' }}
             >

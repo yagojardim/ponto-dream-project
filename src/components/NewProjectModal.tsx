@@ -244,6 +244,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                 <label style={labelStyle}>Nome do projeto <span style={{ color: T.crit }}>*</span> <HelpHint text="Nome completo do projeto, como ele aparece nas listas e no topo do board." /></label>
                 <input
                   type="text"
+                  data-tour="project-name"
                   placeholder="Ex: Website Relaunch"
                   value={name}
                   onChange={e => handleNameChange(e.target.value)}
@@ -256,6 +257,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                 <label style={labelStyle}>Cliente <HelpHint text="Empresa ou cliente atendido por este projeto. Permite separar os projetos por cliente dentro da mesma organização (tenant)." /></label>
                 <input
                   type="text"
+                  data-tour="project-client"
                   placeholder="Ex: Cobasi"
                   value={client}
                   onChange={e => setClient(e.target.value)}
@@ -333,7 +335,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
               {/* Period */}
               <div>
                 <label style={labelStyle}>Período <HelpHint text="Datas previstas de início e fim do projeto. Opcionais." /></label>
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div data-tour="project-dates" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <label style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <span style={{ fontSize: 11, color: T.text3 }}>Data de início</span>
                     <input
@@ -423,6 +425,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
               >Cancelar</button>
               <button
                 onClick={handleCreate}
+                data-tour="project-save"
                 disabled={!canCreate}
                 style={{
                   padding: '9px 20px',
