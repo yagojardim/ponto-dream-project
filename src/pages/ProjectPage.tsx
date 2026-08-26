@@ -3003,9 +3003,9 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
       const doneCount     = sprintIssues.filter(i => i.status === 'done').length
       const totalCount    = sprintIssues.length
       const remainCount   = sprintIssues.filter(i => i.status !== 'done').length
-      const remainingItems = (boardData?.items ?? [])
-        .filter(it => it.sprint_id === completingSprint.id && it.status !== 'done')
-        .map(it => ({ id: it.id, key: it.key, title: it.title }))
+      const remainingItems = sprintIssues
+        .filter(i => i.status !== 'done')
+        .map(i => ({ id: i.id, key: i.key, title: i.title }))
       return (
         <CompleteSprintModal
           sprint={completingSprint}
