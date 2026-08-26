@@ -17,7 +17,7 @@ type View =
 interface HeaderProps {
   onCreateIssue?: () => void
   currentView:    View
-  onViewChange:   (v: string) => void
+  onViewChange:   (v: string, targetId?: string) => void
   onOpenClientMessages?: (projectId: string) => void
   onOpenHelp?: () => void
 }
