@@ -40,23 +40,17 @@ function GuideText({ text }: { text: string }) {
 }
 
 function GuideBlocks({ blocks }: { blocks: OnboardingGuideBlock[] }) {
-  const images = blocks.filter(b => b.image)
-  const [idx, setIdx] = useState(0)
   const [broken, setBroken] = useState<Record<string, boolean>>({})
-  const carousel = images.length > 1
-
-  const visible = images.filter(b => !broken[b.image as string])
-  const current = carousel ? visible[Math.min(idx, Math.max(visible.length - 1, 0))] : undefined
-
   return (
-    <div className="px-4 pb-4 flex flex-col gap-3">
+    <div className="px-4 pb-4 flex flex-col gap-5">
       {blocks.map((b, i) => (
         <div key={i} className="flex flex-col gap-2">
           <GuideText text={b.text} />
-          {!carousel && b.image && !broken[b.image] && (
+          {b.image && !broken[b.image] && (
             <img
               src={b.image}
               alt={b.imageAlt ?? b.text}
+              loading="lazy"
               className="rounded-lg max-w-full"
               style={{ border: `1px solid ${T.border}` }}
               onError={() => setBroken(prev => ({ ...prev, [b.image as string]: true }))}
@@ -64,30 +58,6 @@ function GuideBlocks({ blocks }: { blocks: OnboardingGuideBlock[] }) {
           )}
         </div>
       ))}
-
-      {carousel && current && (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIdx(i => (i - 1 + visible.length) % visible.length)}
-            aria-label="Imagem anterior"
-            className="h-7 w-7 rounded-full text-[12px]"
-            style={{ background: T.bgSurface2, color: T.text2, border: `1px solid ${T.border}` }}
-          >‹</button>
-          <img
-            src={current.image}
-            alt={current.imageAlt ?? current.text}
-            className="rounded-lg flex-1 min-w-0"
-            style={{ border: `1px solid ${T.border}` }}
-            onError={() => setBroken(prev => ({ ...prev, [current.image as string]: true }))}
-          />
-          <button
-            onClick={() => setIdx(i => (i + 1) % visible.length)}
-            aria-label="Próxima imagem"
-            className="h-7 w-7 rounded-full text-[12px]"
-            style={{ background: T.bgSurface2, color: T.text2, border: `1px solid ${T.border}` }}
-          >›</button>
-        </div>
-      )}
     </div>
   )
 }
