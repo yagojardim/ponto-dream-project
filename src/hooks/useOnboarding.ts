@@ -8,10 +8,11 @@ const PREF_KEY = 'onboarding'
 export interface OnboardingState {
   welcomeDone: boolean
   guideDisabled: boolean
+  projectTourDone: boolean
   tips: Record<string, boolean>
 }
 
-const EMPTY: OnboardingState = { welcomeDone: false, guideDisabled: false, tips: {} }
+const EMPTY: OnboardingState = { welcomeDone: false, guideDisabled: false, projectTourDone: false, tips: {} }
 
 export function useOnboarding() {
   const { activeUser } = useSession()
@@ -29,6 +30,7 @@ export function useOnboarding() {
         setState({
           welcomeDone: Boolean(v?.welcomeDone),
           guideDisabled: Boolean(v?.guideDisabled),
+          projectTourDone: Boolean(v?.projectTourDone),
           tips: v?.tips ?? {},
         })
         setLoaded(true)
@@ -57,6 +59,10 @@ export function useOnboarding() {
     setState(prev => { const next = { ...prev, guideDisabled: true }; persist(next); return next })
   }, [persist])
 
+  const markProjectTourDone = useCallback(() => {
+    setState(prev => { const next = { ...prev, projectTourDone: true }; persist(next); return next })
+  }, [persist])
+
   const markTipSeen = useCallback((view: string) => {
     setState(prev => {
       const next = { ...prev, tips: { ...prev.tips, [view]: true } }
@@ -71,6 +77,8 @@ export function useOnboarding() {
     loaded,
     welcomeDone: state.welcomeDone,
     guideDisabled: state.guideDisabled,
+    projectTourDone: state.projectTourDone,
+    markProjectTourDone,
     markWelcomeDone,
     disableGuide,
     isTipSeen,
