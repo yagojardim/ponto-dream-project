@@ -139,6 +139,26 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
     return () => { cancelled = true }
   }, [activeUser.name])
 
+  // Debounced global search
+  useEffect(() => {
+    if (!cmdOpen) return
+    const term = cmdQuery.trim()
+    if (term.length < 2) {
+      setCmdResults([])
+      setCmdIndex(-1)
+      setCmdLoading(false)
+      return
+    }
+    setCmdLoading(true)
+    const t = setTimeout(async () => {
+      const res = await searchGlobal(term)
+      setCmdResults(res)
+      setCmdIndex(res.length > 0 ? 0 : -1)
+      setCmdLoading(false)
+    }, 200)
+    return () => { clearTimeout(t) }
+  }, [cmdQuery, cmdOpen])
+
   // Build merged notification list: unread first, then read
   const dbNotifs   = rows.map(rowToNotif)
   const unreadDb   = dbNotifs.filter(n => !n.read)
