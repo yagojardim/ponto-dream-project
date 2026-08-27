@@ -21,32 +21,42 @@ export interface WidgetDef {
   id: string
   title: string
   group: WidgetGroup
+  /** 'fit' = conteúdo escala com o card (KPIs/gráficos); 'scroll' = listas roláveis. */
+  overflow: 'fit' | 'scroll'
+  /** Tamanho mínimo apresentável na grade (colunas / linhas). */
+  minW: number
+  minH: number
   render: (ctx: WidgetCtx) => ReactNode
 }
 
 const NATIVE: WidgetDef[] = [
-  { id: 'native.kpi-blocked',   title: 'KPI · Itens bloqueados',    group: 'Início', render: c => <KpiBlockedWidget {...c} /> },
-  { id: 'native.kpi-wip',       title: 'KPI · Trabalho em andamento', group: 'Início', render: c => <KpiWipWidget {...c} /> },
-  { id: 'native.kpi-sprint',    title: 'KPI · Progresso da sprint', group: 'Início', render: c => <KpiSprintProgressWidget {...c} /> },
-  { id: 'native.kpi-projects',  title: 'KPI · Projetos no escopo',  group: 'Início', render: c => <KpiProjectsWidget {...c} /> },
-  { id: 'native.kpi-delivered', title: 'KPI · Entregues',           group: 'Início', render: c => <KpiDeliveredWidget {...c} /> },
-  { id: 'native.blocked',       title: 'Bloqueados',                group: 'Início', render: c => <BlockedWidget {...c} /> },
-  { id: 'native.my-queue',      title: 'Minha fila',                group: 'Início', render: c => <MyQueueWidget {...c} /> },
-  { id: 'native.sprint',        title: 'Sprint atual',              group: 'Início', render: c => <SprintWidget {...c} /> },
-  { id: 'native.ready',         title: 'Prontos para desenvolvimento', group: 'Início', render: c => <ReadyWidget {...c} /> },
-  { id: 'native.testing',       title: 'Aguardando teste',          group: 'Início', render: c => <TestingWidget {...c} /> },
-  { id: 'native.backlog-alert', title: 'Backlog com alerta',        group: 'Início', render: c => <BacklogAlertWidget {...c} /> },
-  { id: 'native.projects-rag',  title: 'Saúde dos projetos (RAG)',  group: 'Início', render: c => <ProjectsRagWidget {...c} /> },
+  { id: 'native.kpi-blocked',   title: 'KPI · Itens bloqueados',    group: 'Início', overflow: 'fit', minW: 2, minH: 2, render: c => <KpiBlockedWidget {...c} /> },
+  { id: 'native.kpi-wip',       title: 'KPI · Trabalho em andamento', group: 'Início', overflow: 'fit', minW: 2, minH: 2, render: c => <KpiWipWidget {...c} /> },
+  { id: 'native.kpi-sprint',    title: 'KPI · Progresso da sprint', group: 'Início', overflow: 'fit', minW: 2, minH: 2, render: c => <KpiSprintProgressWidget {...c} /> },
+  { id: 'native.kpi-projects',  title: 'KPI · Projetos no escopo',  group: 'Início', overflow: 'fit', minW: 2, minH: 2, render: c => <KpiProjectsWidget {...c} /> },
+  { id: 'native.kpi-delivered', title: 'KPI · Entregues',           group: 'Início', overflow: 'fit', minW: 2, minH: 2, render: c => <KpiDeliveredWidget {...c} /> },
+  { id: 'native.blocked',       title: 'Bloqueados',                group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render: c => <BlockedWidget {...c} /> },
+  { id: 'native.my-queue',      title: 'Minha fila',                group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render: c => <MyQueueWidget {...c} /> },
+  { id: 'native.sprint',        title: 'Sprint atual',              group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render: c => <SprintWidget {...c} /> },
+  { id: 'native.ready',         title: 'Prontos para desenvolvimento', group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render: c => <ReadyWidget {...c} /> },
+  { id: 'native.testing',       title: 'Aguardando teste',          group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render: c => <TestingWidget {...c} /> },
+  { id: 'native.backlog-alert', title: 'Backlog com alerta',        group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render: c => <BacklogAlertWidget {...c} /> },
+  { id: 'native.projects-rag',  title: 'Saúde dos projetos (RAG)',  group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render: c => <ProjectsRagWidget {...c} /> },
 ]
 
 const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
   id: `report.${entry.id}`,
   title: entry.title,
   group: 'Relatórios' as const,
+  overflow: 'fit' as const,
+  minW: 3,
+  minH: 3,
   render: (ctx: WidgetCtx) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', minHeight: 0 }}>
       <div style={{ fontSize: 11, color: T.text3 }}>{entry.subtitle}</div>
-      <entry.Component />
+      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <entry.Component />
+      </div>
       <button
         className="no-drag"
         onClick={() => navigateToReport(entry, ctx.onNav)}

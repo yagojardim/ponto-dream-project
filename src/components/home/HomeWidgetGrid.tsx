@@ -51,6 +51,12 @@ function heightFor(widgetId: string): number {
   return widgetId.startsWith('native.kpi-') ? KPI_HEIGHT : CARD_HEIGHT
 }
 
+/** Tamanho mínimo apresentável, vindo do catálogo. */
+function minSizeFor(widgetId: string): { minW: number; minH: number } {
+  const def = getWidget(widgetId)
+  return { minW: def?.minW ?? 3, minH: def?.minH ?? 2 }
+}
+
 function buildDefault(role: string): StoredState {
   const ids = defaultWidgetIds(role).filter(id => getWidget(id))
   const instances: WidgetInstance[] = ids.map(widgetId => ({
@@ -64,7 +70,7 @@ function buildDefault(role: string): StoredState {
     const h = heightFor(inst.widgetId)
     const w = inst.format === 'horizontal' ? 12 : 6
     if (x + w > 12) { x = 0; y += h }
-    const item: Layout = { i: inst.i, x, y, w, h, minW: 3, minH: 1 }
+    const item: Layout = { i: inst.i, x, y, w, h, ...minSizeFor(inst.widgetId) }
     x += w
     if (x >= 12) { x = 0; y += h }
     return item
@@ -161,7 +167,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     const maxY = state.layout.reduce((m, l) => Math.max(m, l.y + l.h), 0)
     const item: Layout = {
       i: inst.i, x: 0, y: maxY, w: format === 'horizontal' ? 12 : 6,
-      h: heightFor(widgetId), minW: 3, minH: 1,
+      h: heightFor(widgetId), ...minSizeFor(widgetId),
     }
     persist({ instances: [...state.instances, inst], layout: [...state.layout, item] })
   }
@@ -181,10 +187,21 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const layouts: Layouts = { lg: state.layout, md: state.layout, sm: state.layout, xs: state.layout }
 
   return (
-    <div style={{ width: '100%', overflowX: 'hidden' }}>
+    <div className={`altech-home-panel${editing ? ' is-editing' : ''}`} style={{ width: '100%', overflowX: 'hidden' }}>
       <style>{`
         .altech-home-grid .react-grid-placeholder { background: ${T.accentDim}; border: 1px dashed ${T.accentBorder}; border-radius: 12px; opacity: 1; }
         .altech-home-grid .react-grid-item > .react-resizable-handle::after { border-color: ${T.text3}; }
+        .altech-home-panel:not(.is-editing) .react-resizable-handle { display: none !important; }
+        .altech-home-panel:not(.is-editing) .altech-widget-header { cursor: default; }
+        /* Cadeia de altura: o conteúdo acompanha o tamanho do card. */
+        .altech-home-grid .react-grid-item { display: flex; }
+        .altech-widget-card { height: 100%; width: 100%; min-height: 0; }
+        .altech-widget-body-fit { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+        .altech-widget-body-fit > * { flex: 1 1 auto; min-height: 0; max-width: 100%; }
+        .altech-widget-body-fit svg { max-width: 100%; max-height: 100%; height: auto; }
+        .altech-widget-body-fit .recharts-responsive-container { flex: 1 1 auto; min-height: 0; }
+        .altech-widget-kpi > * { height: 100%; }
+        .altech-widget-kpi > * > * > *:first-child { font-size: clamp(16px, 5cqw, 26px) !important; }
       `}</style>
 
       {/* Toolbar */}
@@ -244,8 +261,8 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           rowHeight={ROW_HEIGHT}
           margin={[16, 16]}
           containerPadding={[0, 0]}
-          isDraggable
-          isResizable
+          isDraggable={editing}
+          isResizable={editing}
           resizeHandles={['s', 'e', 'se', 'w', 'n']}
           draggableCancel=".no-drag"
           compactType="vertical"
@@ -254,14 +271,16 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           {state.instances.map(inst => {
             const def = getWidget(inst.widgetId)
             if (!def) return <div key={inst.i} />
+            const fit = def.overflow === 'fit'
             return (
-              <div key={inst.i} style={{
+              <div key={inst.i} className="altech-widget-card" style={{
                 background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12,
-                display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
               }}>
-                <div style={{
+                <div className="altech-widget-header" style={{
                   display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 12px', borderBottom: `1px solid ${T.border}`, cursor: 'move', flexShrink: 0,
+                  padding: '8px 12px', borderBottom: `1px solid ${T.border}`,
+                  cursor: editing ? 'move' : 'default', flex: '0 0 auto',
                 }}>
                   {editing ? (
                     <EditableTitle
@@ -275,7 +294,14 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
                   )}
                   <RemoveButton onClick={() => removeWidget(inst.i)} />
                 </div>
-                <div className="no-drag" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 12 }}>
+                <div
+                  className={`no-drag${fit ? ' altech-widget-body-fit' : ''}${inst.widgetId.startsWith('native.kpi-') ? ' altech-widget-kpi' : ''}`}
+                  style={{
+                    flex: '1 1 auto', minHeight: 0, width: '100%',
+                    overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
+                    padding: 12, containerType: 'inline-size',
+                  }}
+                >
                   {def.render(ctx)}
                 </div>
               </div>
