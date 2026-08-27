@@ -342,7 +342,6 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
 
       {/* Conteúdo */}
       <div className="flex-1 min-w-0 max-w-3xl">
-      <>
 
       <header className="mb-6">
         <h1 className="m-0 text-[20px] font-semibold" style={{ color: T.text1 }}>Feedback &amp; Suporte</h1>
