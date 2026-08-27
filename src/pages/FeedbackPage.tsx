@@ -18,10 +18,10 @@ const RATINGS: { value: number; emoji: string; label: string }[] = [
 
 type FeedbackTab = 'feedback' | 'suporte' | 'ajuda'
 
-const TABS: { id: FeedbackTab; label: string }[] = [
-  { id: 'feedback', label: 'Enviar feedback' },
-  { id: 'suporte', label: 'Reportar problema / suporte' },
-  { id: 'ajuda', label: 'Central de Ajuda' },
+const TABS: { id: FeedbackTab; label: string; icon: string; subtitle: string }[] = [
+  { id: 'ajuda', label: 'Central de Ajuda', icon: '📘', subtitle: 'Guias passo a passo de cada tela da plataforma.' },
+  { id: 'feedback', label: 'Enviar feedback', icon: '💬', subtitle: 'Conte o que está funcionando bem e o que pode melhorar.' },
+  { id: 'suporte', label: 'Reportar problema / suporte', icon: '🛟', subtitle: 'Descreva um problema ou envie uma sugestão para o time.' },
 ]
 
 function norm(s: string): string {
@@ -31,7 +31,7 @@ function norm(s: string): string {
 function GuideText({ text }: { text: string }) {
   const parts = text.split(/\*\*(.+?)\*\*/g)
   return (
-    <p className="m-0 text-[12px]" style={{ color: T.text2 }}>
+    <p className="m-0 text-[14px]" style={{ color: T.text2, lineHeight: 1.7 }}>
       {parts.map((p, i) => (i % 2 === 1
         ? <strong key={i} style={{ color: T.text1 }}>{p}</strong>
         : <span key={i}>{p}</span>))}
@@ -64,24 +64,38 @@ function viewLabel(view: string, fallback: string): string {
   return (VIEW_LABELS as Record<string, string>)[view] ?? fallback
 }
 
+function blocksOf(view: string): OnboardingGuideBlock[] {
+  const tip = ONBOARDING_TIPS[view]
+  if (!tip) return []
+  return tip.guide?.length ? tip.guide : tip.steps.map(s => ({ text: s }))
+}
+
+function ArticleHeader({ section, title, subtitle, children }: {
+  section: string; title: string; subtitle: string; children?: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="m-0 text-[11px] uppercase tracking-wider" style={{ color: T.text3 }}>
+        Ajuda &amp; Suporte › {section}
+      </p>
+      <h1 className="m-0 font-bold" style={{ color: T.text1, fontSize: 28, letterSpacing: '-0.02em' }}>{title}</h1>
+      <p className="m-0 text-[14px]" style={{ color: T.text2, lineHeight: 1.7 }}>{subtitle}</p>
+      {children}
+    </div>
+  )
+}
+
 function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => void }) {
   const tip = ONBOARDING_TIPS[view]
   const [broken, setBroken] = useState<Record<string, boolean>>({})
   if (!tip) return null
-  const blocks: OnboardingGuideBlock[] = tip.guide?.length
-    ? tip.guide
-    : tip.steps.map(s => ({ text: s }))
-  const intro = tip.guide?.length ? tip.guide[0].text : tip.steps.join(' ')
+  const blocks = blocksOf(view)
+  const intro = (tip.guide?.length ? tip.guide[0].text : tip.steps.join(' ')).replace(/\*\*/g, '')
   const label = viewLabel(view, tip.title)
 
   return (
-    <article className="flex flex-col" style={{ gap: 32 }}>
-      <div className="flex flex-col gap-2">
-        <p className="m-0 text-[11px] uppercase tracking-wider" style={{ color: T.text3 }}>
-          Central de Ajuda › {label}
-        </p>
-        <h1 className="m-0 font-bold" style={{ color: T.text1, fontSize: 28, letterSpacing: '-0.02em' }}>{label}</h1>
-        <p className="m-0 text-[14px]" style={{ color: T.text2, lineHeight: 1.7 }}>{intro.replace(/\*\*/g, '')}</p>
+    <article className="flex flex-col" style={{ gap: 40 }}>
+      <ArticleHeader section={`Central de Ajuda › ${label}`} title={label} subtitle={intro}>
         {view === 'home' && (
           <button
             onClick={() => { onNav?.('projects-list'); startProjectTour() }}
@@ -89,7 +103,7 @@ function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => voi
             style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}
           >▶ Iniciar tour: criar um projeto</button>
         )}
-      </div>
+      </ArticleHeader>
 
       {blocks.length > 1 && (
         <div className="rounded-xl p-4" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
@@ -132,9 +146,52 @@ function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => voi
   )
 }
 
-function HelpCenter({ onNav, onTab }: { onNav?: (view: string) => void; onTab?: (t: 'feedback' | 'suporte') => void }) {
+function HelpOverview({ groups, onPick }: {
+  groups: { section: string; items: { view: string; label: string }[] }[]
+  onPick: (v: string) => void
+}) {
+  return (
+    <article className="flex flex-col" style={{ gap: 40 }}>
+      <ArticleHeader
+        section="Central de Ajuda"
+        title="Central de Ajuda"
+        subtitle="Escolha uma tela na navegação ao lado para ver o guia completo, com passos e capturas de tela."
+      />
+      <div className="flex flex-col" style={{ gap: 28 }}>
+        {groups.map(g => (
+          <section key={g.section} className="flex flex-col gap-3">
+            <h3 className="m-0 font-semibold" style={{ color: T.text1, fontSize: 18 }}>{g.section}</h3>
+            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+              {g.items.map(it => (
+                <button
+                  key={it.view}
+                  onClick={() => onPick(it.view)}
+                  className="text-left px-3 py-2.5 rounded-xl text-[13px]"
+                  style={{ background: T.bgSurface, color: T.text2, border: `1px solid ${T.border}` }}
+                >{it.label}</button>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </article>
+  )
+}
+
+export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void }) {
+  const { activeUser } = useSession()
+  const [tab, setTab] = useState<FeedbackTab>('feedback')
+  const [helpView, setHelpView] = useState<string | null>(null)
   const [query, setQuery] = useState('')
-  const [active, setActive] = useState('home')
+
+  const [screenUrl, setScreenUrl] = useState('')
+  const [screen, setScreen] = useState<{ label: string; view: string | null } | null>(null)
+  const [rating, setRating] = useState<number | null>(null)
+  const [message, setMessage] = useState('')
+  const [supportType, setSupportType] = useState<Exclude<FeedbackType, 'feedback'>>('problema')
+  const [busy, setBusy] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const groups = useMemo(() => {
     const q = norm(query.trim())
@@ -150,109 +207,9 @@ function HelpCenter({ onNav, onTab }: { onNav?: (view: string) => void; onTab?: 
   }, [query])
 
   const allItems = groups.flatMap(g => g.items)
-  const tip = ONBOARDING_TIPS[active]
-  const headings = (tip?.guide?.length ? tip.guide : (tip?.steps ?? []).map(s => ({ text: s })))
-    .map((b, i) => ({ id: `${slugify(blockHeading(b as OnboardingGuideBlock))}-${i}`, label: blockHeading(b as OnboardingGuideBlock) }))
-
-  return (
-    <div className="flex w-full items-start gap-8">
-      {/* Navegação esquerda */}
-      <aside className="hidden md:flex flex-col gap-4 flex-shrink-0 sticky top-6" style={{ width: 250, maxHeight: 'calc(100vh - 48px)' }}>
-        <input
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Buscar na ajuda…"
-          className="w-full h-9 px-3 rounded-lg text-[13px] outline-none flex-shrink-0"
-          style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
-        />
-        <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pr-1">
-          {groups.length === 0 && (
-            <p className="m-0 text-[12px]" style={{ color: T.text3 }}>Nenhuma tela encontrada.</p>
-          )}
-          {groups.map(g => (
-            <div key={g.section} className="flex flex-col gap-0.5">
-              <p className="m-0 mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{g.section}</p>
-              {g.items.map(it => {
-                const on = it.view === active
-                return (
-                  <button
-                    key={it.view}
-                    onClick={() => setActive(it.view)}
-                    className="text-left px-3 py-1.5 rounded-md text-[13px] transition-colors"
-                    style={{
-                      background: on ? T.accentDim : 'transparent',
-                      color: on ? T.accent : T.text2,
-                      borderLeft: `2px solid ${on ? T.accent : 'transparent'}`,
-                      fontWeight: on ? 600 : 400,
-                    }}
-                  >{it.label}</button>
-                )
-              })}
-            </div>
-          ))}
-        </nav>
-        <div className="flex-shrink-0 pt-3 flex flex-col gap-2" style={{ borderTop: `1px solid ${T.border}` }}>
-          <p className="m-0 text-[11px]" style={{ color: T.text3 }}>Não encontrou o que procurava?</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onTab?.('feedback')}
-              className="h-8 px-3 rounded-lg text-[12px] font-medium"
-              style={{ background: T.bgSurface2, color: T.text2, border: `1px solid ${T.border}` }}
-            >Enviar feedback</button>
-            <button
-              onClick={() => onTab?.('suporte')}
-              className="h-8 px-3 rounded-lg text-[12px] font-medium"
-              style={{ background: T.bgSurface2, color: T.text2, border: `1px solid ${T.border}` }}
-            >Reportar problema</button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Artigo */}
-      <main className="flex-1 min-w-0 flex flex-col gap-5" style={{ maxWidth: 820 }}>
-        <div className="md:hidden flex flex-col gap-2">
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Buscar na ajuda…"
-            className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
-            style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
-          />
-          <select
-            value={active}
-            onChange={e => setActive(e.target.value)}
-            className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
-            style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
-          >
-            {allItems.map(it => <option key={it.view} value={it.view}>{it.label}</option>)}
-          </select>
-        </div>
-        <HelpArticle view={active} onNav={onNav} />
-      </main>
-
-      {/* Índice direita */}
-      <aside className="hidden xl:flex flex-col gap-2 flex-shrink-0 sticky top-6" style={{ width: 210, maxHeight: 'calc(100vh - 48px)', overflowY: 'auto' }}>
-        <p className="m-0 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>Nesta página</p>
-        {headings.map(h => (
-          <a key={h.id} href={`#${h.id}`} className="text-[12px]" style={{ color: T.text2, textDecoration: 'none', lineHeight: 1.5 }}>{h.label}</a>
-        ))}
-      </aside>
-    </div>
-  )
-}
-
-export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void }) {
-  const { activeUser } = useSession()
-  const [tab, setTab] = useState<FeedbackTab>('feedback')
-
-  const [screenUrl, setScreenUrl] = useState('')
-  const [screen, setScreen] = useState<{ label: string; view: string | null } | null>(null)
-  const [rating, setRating] = useState<number | null>(null)
-  const [message, setMessage] = useState('')
-  const [supportType, setSupportType] = useState<Exclude<FeedbackType, 'feedback'>>('problema')
-  const [busy, setBusy] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const headings = helpView
+    ? blocksOf(helpView).map((b, i) => ({ id: `${slugify(blockHeading(b))}-${i}`, label: blockHeading(b) }))
+    : []
 
   function applyUrl(value: string) {
     setScreenUrl(value)
@@ -305,170 +262,255 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
     }
   }
 
-  if (tab === 'ajuda') {
+  function selectTab(id: FeedbackTab) {
+    setTab(id)
+    setError(null)
+  }
+
+  const meta = TABS.find(t => t.id === tab)!
+
+  function navItem(id: FeedbackTab) {
+    const t = TABS.find(x => x.id === id)!
+    const on = tab === id && !(id === 'ajuda' && helpView)
+    const parentOn = tab === id
     return (
-      <div className="w-full px-6 py-8">
-        <HelpCenter onNav={onNav} onTab={t => { setTab(t); setError(null) }} />
-      </div>
+      <button
+        key={id}
+        onClick={() => selectTab(id)}
+        aria-pressed={parentOn}
+        className="text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2"
+        style={{
+          background: on ? T.accentDim : parentOn ? T.bgSurface : 'transparent',
+          color: parentOn ? T.accent : T.text2,
+          borderLeft: `2px solid ${on ? T.accent : 'transparent'}`,
+        }}
+      >
+        <span aria-hidden style={{ fontSize: 13 }}>{t.icon}</span>
+        <span className="truncate">{t.label}</span>
+      </button>
     )
   }
 
-  return (
-    <div className="flex w-full items-start gap-6 px-6 py-8">
-      {/* Menu lateral */}
-      <nav className="flex flex-col gap-1 flex-shrink-0" style={{ width: 200 }}>
-        <p className="m-0 mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>
-          Feedback &amp; Suporte
-        </p>
-        {TABS.map(({ id, label }) => {
-          const active = tab === id
-          return (
+  const formCard = (
+    <section className="rounded-2xl p-6 flex flex-col gap-5" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+      {/* Tela referenciada */}
+      <div>
+        <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>Tela referenciada</label>
+        {screen ? (
+          <div className="flex items-center gap-2">
             <button
-              key={id}
-              onClick={() => { setTab(id); setError(null) }}
-              aria-pressed={active}
-              className="text-left px-3 py-2 rounded-lg text-[12px] font-medium transition-colors"
-              style={{
-                background: active ? T.accentDim : 'transparent',
-                color: active ? T.accent : T.text2,
-                border: `1px solid ${active ? T.accentBorder : 'transparent'}`,
-              }}
+              onClick={() => { if (screen.view && onNav) onNav(screen.view) }}
+              className="text-[13px] font-semibold underline"
+              style={{ color: T.accent, cursor: screen.view ? 'pointer' : 'default' }}
+              title={screenUrl}
             >
-              {label}
+              {screen.label.toUpperCase()}
             </button>
-          )
-        })}
-      </nav>
-
-      {/* Conteúdo */}
-      <div className="flex-1 min-w-0 max-w-3xl">
-
-      <header className="mb-6">
-        <h1 className="m-0 text-[20px] font-semibold" style={{ color: T.text1 }}>Feedback &amp; Suporte</h1>
-        <p className="mt-1 mb-0 text-[12px]" style={{ color: T.text2 }}>
-          Conte o que está funcionando bem e o que precisa melhorar. Apenas texto — não anexe arquivos.
-        </p>
-      </header>
-
-      <section className="rounded-2xl p-6 flex flex-col gap-5" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
-
-        {/* Tela referenciada */}
-        <div>
-          <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>Tela referenciada</label>
-          {screen ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => { if (screen.view && onNav) onNav(screen.view) }}
-                className="text-[13px] font-semibold underline"
-                style={{ color: T.accent, cursor: screen.view ? 'pointer' : 'default' }}
-                title={screenUrl}
-              >
-                {screen.label.toUpperCase()}
-              </button>
-              <button
-                onClick={clearScreen}
-                aria-label="Limpar tela referenciada"
-                className="h-5 w-5 rounded-full text-[11px] leading-none"
-                style={{ background: T.bgSurface2, color: T.text3, border: `1px solid ${T.border}` }}
-              >×</button>
-            </div>
-          ) : (
-            <input
-              value={screenUrl}
-              onChange={e => setScreenUrl(e.target.value)}
-              onBlur={e => applyUrl(e.target.value)}
-              onPaste={e => setTimeout(() => applyUrl((e.target as HTMLInputElement).value), 0)}
-              placeholder="Cole aqui o link da tela (opcional)"
-              className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
-              style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
-            />
-          )}
-        </div>
-
-        {tab === 'feedback' ? (
-          <div>
-            <label className="block text-[12px] font-medium mb-2" style={{ color: T.text1 }}>Como foi sua experiência? *</label>
-            <div className="flex gap-2">
-              {RATINGS.map(r => {
-                const active = rating === r.value
-                return (
-                  <button
-                    key={r.value}
-                    onClick={() => setRating(r.value)}
-                    title={r.label}
-                    aria-pressed={active}
-                    className="h-12 w-12 rounded-xl text-[22px] transition-transform"
-                    style={{
-                      background: active ? T.accentDim : T.bgSurface2,
-                      border: `1px solid ${active ? T.accentBorder : T.border}`,
-                      transform: active ? 'scale(1.06)' : 'none',
-                    }}
-                  >{r.emoji}</button>
-                )
-              })}
-            </div>
+            <button
+              onClick={clearScreen}
+              aria-label="Limpar tela referenciada"
+              className="h-5 w-5 rounded-full text-[11px] leading-none"
+              style={{ background: T.bgSurface2, color: T.text3, border: `1px solid ${T.border}` }}
+            >×</button>
           </div>
         ) : (
-          <div>
-            <label className="block text-[12px] font-medium mb-2" style={{ color: T.text1 }}>Tipo</label>
-            <div className="flex gap-2">
-              {([['problema', 'Problema'], ['sugestao', 'Sugestão']] as const).map(([id, label]) => {
-                const active = supportType === id
-                return (
-                  <button
-                    key={id}
-                    onClick={() => setSupportType(id)}
-                    aria-pressed={active}
-                    className="h-9 px-4 rounded-lg text-[13px] font-medium"
-                    style={{
-                      background: active ? T.accentDim : T.bgSurface2,
-                      color: active ? T.accent : T.text2,
-                      border: `1px solid ${active ? T.accentBorder : T.border}`,
-                    }}
-                  >{label}</button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>
-            {tab === 'feedback' ? 'Comentário *' : 'Descrição *'}
-          </label>
-          <textarea
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            rows={6}
-            placeholder={tab === 'feedback'
-              ? 'O que você achou? O que podemos melhorar?'
-              : 'Descreva o que aconteceu, o que você esperava e como reproduzir.'}
-            className="w-full px-3 py-2 rounded-lg text-[13px] outline-none resize-y"
+          <input
+            value={screenUrl}
+            onChange={e => setScreenUrl(e.target.value)}
+            onBlur={e => applyUrl(e.target.value)}
+            onPaste={e => setTimeout(() => applyUrl((e.target as HTMLInputElement).value), 0)}
+            placeholder="Cole aqui o link da tela (opcional)"
+            className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
             style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
           />
-        </div>
-
-        {error && (
-          <p className="m-0 text-[12px]" style={{ color: T.crit }}>{error}</p>
         )}
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => { void submit() }}
-            disabled={busy}
-            className="h-9 px-5 rounded-lg text-[13px] font-semibold"
-            style={{ background: T.accent, color: '#fff', opacity: busy ? 0.6 : 1 }}
-          >
-            {busy ? 'Enviando…' : 'Enviar'}
-          </button>
-          {toast && <span className="text-[12px]" style={{ color: T.success }}>{toast}</span>}
-        </div>
-      </section>
-      <p className="mt-4 mb-0 text-[11px]" style={{ color: T.text3 }}>
-        Precisa de ajuda com uma tela? Veja a Central de Ajuda ao lado.
-      </p>
       </div>
-    </div>
 
+      {tab === 'feedback' ? (
+        <div>
+          <label className="block text-[12px] font-medium mb-2" style={{ color: T.text1 }}>Como foi sua experiência? *</label>
+          <div className="flex gap-2">
+            {RATINGS.map(r => {
+              const active = rating === r.value
+              return (
+                <button
+                  key={r.value}
+                  onClick={() => setRating(r.value)}
+                  title={r.label}
+                  aria-pressed={active}
+                  className="h-12 w-12 rounded-xl text-[22px] transition-transform"
+                  style={{
+                    background: active ? T.accentDim : T.bgSurface2,
+                    border: `1px solid ${active ? T.accentBorder : T.border}`,
+                    transform: active ? 'scale(1.06)' : 'none',
+                  }}
+                >{r.emoji}</button>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <label className="block text-[12px] font-medium mb-2" style={{ color: T.text1 }}>Tipo</label>
+          <div className="flex gap-2">
+            {([['problema', 'Problema'], ['sugestao', 'Sugestão']] as const).map(([id, label]) => {
+              const active = supportType === id
+              return (
+                <button
+                  key={id}
+                  onClick={() => setSupportType(id)}
+                  aria-pressed={active}
+                  className="h-9 px-4 rounded-lg text-[13px] font-medium"
+                  style={{
+                    background: active ? T.accentDim : T.bgSurface2,
+                    color: active ? T.accent : T.text2,
+                    border: `1px solid ${active ? T.accentBorder : T.border}`,
+                  }}
+                >{label}</button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>
+          {tab === 'feedback' ? 'Comentário *' : 'Descrição *'}
+        </label>
+        <textarea
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+          rows={6}
+          placeholder={tab === 'feedback'
+            ? 'O que você achou? O que podemos melhorar?'
+            : 'Descreva o que aconteceu, o que você esperava e como reproduzir.'}
+          className="w-full px-3 py-2 rounded-lg text-[13px] outline-none resize-y"
+          style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
+        />
+      </div>
+
+      {error && (
+        <p className="m-0 text-[12px]" style={{ color: T.crit }}>{error}</p>
+      )}
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => { void submit() }}
+          disabled={busy}
+          className="h-9 px-5 rounded-lg text-[13px] font-semibold"
+          style={{ background: T.accent, color: '#fff', opacity: busy ? 0.6 : 1 }}
+        >
+          {busy ? 'Enviando…' : 'Enviar'}
+        </button>
+        {toast && <span className="text-[12px]" style={{ color: T.success }}>{toast}</span>}
+      </div>
+    </section>
+  )
+
+  return (
+    <div className="flex w-full items-start gap-8 px-6 py-8">
+      {/* Coluna esquerda — navegação única */}
+      <aside className="hidden md:flex flex-col gap-3 flex-shrink-0 sticky top-6" style={{ width: 250, maxHeight: 'calc(100vh - 48px)' }}>
+        <p className="m-0 px-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>
+          Ajuda &amp; Suporte
+        </p>
+        <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 pr-1">
+          {navItem('ajuda')}
+          {tab === 'ajuda' && (
+            <div className="flex flex-col gap-2 pl-3 pb-2">
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Buscar na ajuda…"
+                className="w-full h-8 px-2.5 rounded-lg text-[12px] outline-none"
+                style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
+              />
+              {groups.length === 0 && (
+                <p className="m-0 text-[12px]" style={{ color: T.text3 }}>Nenhuma tela encontrada.</p>
+              )}
+              {groups.map(g => (
+                <div key={g.section} className="flex flex-col gap-0.5">
+                  <p className="m-0 mb-0.5 px-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>{g.section}</p>
+                  {g.items.map(it => {
+                    const on = helpView === it.view
+                    return (
+                      <button
+                        key={it.view}
+                        onClick={() => setHelpView(it.view)}
+                        className="text-left px-2.5 py-1 rounded-md text-[12px] transition-colors"
+                        style={{
+                          background: on ? T.accentDim : 'transparent',
+                          color: on ? T.accent : T.text2,
+                          borderLeft: `2px solid ${on ? T.accent : 'transparent'}`,
+                          fontWeight: on ? 600 : 400,
+                        }}
+                      >{it.label}</button>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+          {navItem('feedback')}
+          {navItem('suporte')}
+        </nav>
+      </aside>
+
+      {/* Coluna central — artigo */}
+      <main className="flex-1 min-w-0 flex flex-col gap-6 mx-auto" style={{ maxWidth: 820 }}>
+        {/* Navegação mobile */}
+        <div className="md:hidden flex flex-col gap-2">
+          <select
+            value={tab === 'ajuda' && helpView ? `help:${helpView}` : tab}
+            onChange={e => {
+              const v = e.target.value
+              if (v.startsWith('help:')) { selectTab('ajuda'); setHelpView(v.slice(5)) }
+              else { selectTab(v as FeedbackTab); if (v === 'ajuda') setHelpView(null) }
+            }}
+            className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
+            style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
+          >
+            <option value="ajuda">Central de Ajuda</option>
+            {allItems.map(it => <option key={it.view} value={`help:${it.view}`}>{`   ${it.label}`}</option>)}
+            <option value="feedback">Enviar feedback</option>
+            <option value="suporte">Reportar problema / suporte</option>
+          </select>
+        </div>
+
+        {tab === 'ajuda' ? (
+          helpView
+            ? <HelpArticle view={helpView} onNav={onNav} />
+            : <HelpOverview groups={groups} onPick={setHelpView} />
+        ) : (
+          <article className="flex flex-col" style={{ gap: 24 }}>
+            <ArticleHeader section={meta.label} title={meta.label} subtitle={meta.subtitle} />
+            {tab === 'suporte' && (
+              <div className="rounded-xl px-4 py-3" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+                <p className="m-0 text-[13px]" style={{ color: T.text2, lineHeight: 1.7 }}>
+                  Antes de abrir um chamado, veja a{' '}
+                  <button
+                    onClick={() => { selectTab('ajuda'); setHelpView(null) }}
+                    className="underline"
+                    style={{ color: T.accent }}
+                  >Central de Ajuda</button>
+                  {' '}— a resposta pode já estar lá. Use o suporte por último.
+                </p>
+              </div>
+            )}
+            {formCard}
+          </article>
+        )}
+      </main>
+
+      {/* Coluna direita — índice */}
+      {tab === 'ajuda' && helpView && headings.length > 0 && (
+        <aside className="hidden xl:flex flex-col gap-2 flex-shrink-0 sticky top-6" style={{ width: 210, maxHeight: 'calc(100vh - 48px)', overflowY: 'auto' }}>
+          <p className="m-0 text-[10px] font-semibold uppercase tracking-wider" style={{ color: T.text3 }}>Nesta página</p>
+          {headings.map(h => (
+            <a key={h.id} href={`#${h.id}`} className="text-[12px]" style={{ color: T.text2, textDecoration: 'none', lineHeight: 1.5 }}>{h.label}</a>
+          ))}
+        </aside>
+      )}
+    </div>
   )
 }
