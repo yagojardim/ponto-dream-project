@@ -300,38 +300,36 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
             const fit = def.overflow === 'fit'
             return (
               <div key={inst.i} className="altech-widget-card" style={{
-                background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12,
+                background: 'transparent', border: 'none', borderRadius: 12,
                 display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
               }}>
-                <div className="altech-widget-header" style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 12px', borderBottom: `1px solid ${T.border}`,
-                  cursor: editing ? 'move' : 'default', flex: '0 0 auto',
-                }}>
-                  {editing ? (
-                    <EditableTitle
-                      value={inst.title ?? def.title}
-                      onConfirm={v => renameWidget(inst.i, v)}
-                    />
-                  ) : (
-                    <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {inst.title ?? def.title}
-                    </span>
-                  )}
-                  <RemoveButton onClick={() => removeWidget(inst.i)} />
-                </div>
                 <div
-                  className={`no-drag${fit ? ' altech-widget-body-fit' : ''}${inst.widgetId.startsWith('native.kpi-') ? ' altech-widget-kpi' : ''}`}
+                  className={`altech-widget-body${editing ? '' : ' no-drag'}${fit ? ' altech-widget-body-fit' : ''}${def.kind === 'kpi' ? ' altech-widget-kpi' : ''}`}
                   style={{
                     flex: '1 1 auto', minHeight: 0, width: '100%',
                     overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
-                    padding: 12, containerType: 'inline-size',
+                    containerType: 'inline-size',
                   }}
                 >
                   {def.render(ctx)}
                 </div>
+                {editing && (
+                  <div className="altech-widget-tools no-drag" style={{
+                    position: 'absolute', top: 6, right: 6, zIndex: 3,
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    background: T.bgSurface2, border: `1px solid ${T.border}`,
+                    borderRadius: 8, padding: '2px 4px', maxWidth: '85%',
+                  }}>
+                    <EditableTitle
+                      value={inst.title ?? def.title}
+                      onConfirm={v => renameWidget(inst.i, v)}
+                    />
+                    <RemoveButton onClick={() => removeWidget(inst.i)} />
+                  </div>
+                )}
               </div>
             )
+
           })}
         </ResponsiveGridLayout>
       )}
