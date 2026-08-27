@@ -8,7 +8,7 @@
 import { T } from '@/components/ds/tokens'
 import {
   KpiCard, RagCard, WorkQueue, SprintDonutCard, EmptyState,
-  type WorkItem, type RagStatus,
+  type WorkItem,
 } from '@/components/ds/DashboardKit'
 import {
   liveItems, liveProjects, liveAggregates, liveCurrentSprintName,
@@ -167,7 +167,7 @@ export function KpiSprintProgressWidget({ onNav }: WidgetCtx) {
 
 export function KpiProjectsWidget({ onNav }: WidgetCtx) {
   const projects = liveProjects()
-  const atRisk = projects.filter(p => p.rag !== 'healthy').length
+  const atRisk = (liveAggregates()?.rag ?? []).filter(p => p.rag !== 'healthy').length
   return (
     <KpiCard
       value={String(projects.length)} label="Projetos no escopo"
@@ -194,7 +194,7 @@ export function KpiDeliveredWidget({ onNav }: WidgetCtx) {
 // ─── Projects (RAG) ───────────────────────────────────────────────────────────
 
 export function ProjectsRagWidget({ onNav }: WidgetCtx) {
-  const projects = liveProjects()
+  const projects = liveAggregates()?.rag ?? []
   if (projects.length === 0) {
     return <EmptyState message="Nenhum projeto no seu escopo." action={{ label: 'Ver projetos', onClick: () => onNav('projects') }} />
   }
@@ -204,9 +204,10 @@ export function ProjectsRagWidget({ onNav }: WidgetCtx) {
         <RagCard
           key={p.id}
           name={p.name}
-          rag={(p.rag ?? 'healthy') as RagStatus}
-          pct={p.pct ?? 0}
-          daysLabel={p.daysLabel ?? ''}
+          squad={p.squad}
+          rag={p.rag}
+          pct={p.pct}
+          daysLabel={`${p.done}/${p.total} itens`}
           reason={p.reason}
           onClick={() => onNav('project', p.id)}
         />
