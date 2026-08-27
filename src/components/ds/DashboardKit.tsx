@@ -136,7 +136,8 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
   return (
     <div style={{
       background: T.bgSurface, border: `1px solid ${T.border}`,
-      borderRadius: 10, padding: 16, minWidth: 0, overflowX: 'auto', ...style,
+      borderRadius: 10, padding: 16, minWidth: 0,
+      overflowX: 'auto', overflowY: 'auto', maxHeight: '100%', ...style,
     }}>
       {/* Cabeçalho fixo: permanece visível quando o corpo do card rola. */}
       <div style={{
