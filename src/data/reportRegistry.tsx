@@ -344,16 +344,16 @@ export function CreatedVsResolved({ variant = 'full', data: explicit }: ChartPro
   const { data, loading, error } = useChartState(explicit)
   const th = variant === 'thumbnail'
   const cvr = data?.createdVsResolved
-  const multi = !th && cvr ? cvr.byProject.length >= 2 && cvr.byProject.length <= 6 : false
+  const multi = false
   return (
-    <ChartFrame data={data} loading={loading} error={error} height={th ? 60 : 150}
+    <ChartFrame data={data} loading={loading} error={error} height={th ? 60 : 160}
       isEmpty={!cvr || (cvr.created.every(v => v === 0) && cvr.resolved.every(v => v === 0))}
       emptyText="Nenhuma demanda criada ou resolvida desde o início do projeto.">
       {() => {
         if (multi) return <SmallMultiples series={cvr!.byProject} />
         const c = cvr!
-        const W = 520; const H = 150
-        const PAD = { top: th ? 4 : 20, right: 8, bottom: th ? 4 : 28, left: th ? 4 : 28 }
+        const W = 520; const H = th ? 60 : 160
+        const PAD = { top: th ? 4 : 24, right: 8, bottom: th ? 4 : 28, left: th ? 4 : 36 }
         const cw = W - PAD.left - PAD.right
         const ch = H - PAD.top - PAD.bottom
         const weeks = Math.max(1, c.weeks.length)
@@ -363,7 +363,7 @@ export function CreatedVsResolved({ variant = 'full', data: explicit }: ChartPro
         const toY = (v: number) => PAD.top + ch - (v / maxV) * ch
         const linePath = (d: number[]) => d.map((v, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(v)}`).join(' ')
         const areaPath = (d: number[]) => linePath(d) + ` L ${toX(weeks - 1)} ${PAD.top + ch} L ${toX(0)} ${PAD.top + ch} Z`
-        const ticks = [...new Set([0, Math.round(maxV / 2), Math.round(maxV)])]
+        const ticks = [0, Math.round(maxV / 3), Math.round((2 * maxV) / 3), Math.round(maxV)].filter((v, i, a) => a.indexOf(v) === i)
         const sumC = c.created.length ? c.created[c.created.length - 1] : 0
         const sumR = c.resolved.length ? c.resolved[c.resolved.length - 1] : 0
         return (
@@ -371,14 +371,14 @@ export function CreatedVsResolved({ variant = 'full', data: explicit }: ChartPro
             {ticks.map(t => (
               <g key={t}>
                 <line x1={PAD.left} y1={toY(t)} x2={W - PAD.right} y2={toY(t)} stroke={T.border} strokeWidth={0.5} />
-                {!th && <text x={PAD.left - 5} y={toY(t) + 3} textAnchor="end" fontSize={8} fill={T.text3}>{t}</text>}
+                {!th && <text x={PAD.left - 4} y={toY(t) + 4} textAnchor="end" fontSize={9} fill={T.text3}>{t}</text>}
               </g>
             ))}
             <line x1={PAD.left} y1={PAD.top + ch} x2={W - PAD.right} y2={PAD.top + ch} stroke={T.border} strokeWidth={1} />
             <path d={areaPath(c.created)} fill={T.warn} opacity={0.15} />
             <path d={areaPath(c.resolved)} fill={T.success} opacity={0.15} />
             <path d={linePath(c.created)} stroke={T.warn} strokeWidth={2} fill="none" />
-            <path d={linePath(c.resolved)} stroke={T.success} strokeWidth={2} fill="none" />
+            <path d={linePath(c.resolved)} stroke={T.success} strokeWidth={2} strokeDasharray="5,3" fill="none" />
             {c.created.map((v, i) => (
               <circle key={`c${i}`} cx={toX(i)} cy={toY(v)} r={3} fill={T.warn}>
                 <title>{`${c.bucketTitles[i] ?? c.weeks[i]}\nCriados ${v} · Resolvidos ${c.resolved[i] ?? 0}`}</title>
@@ -395,9 +395,11 @@ export function CreatedVsResolved({ variant = 'full', data: explicit }: ChartPro
               ) : null
             ))}
             {!th && (
-              <g transform={`translate(${PAD.left}, ${PAD.top - 10})`}>
-                <line x1={0} y1={0} x2={14} y2={0} stroke={T.warn} strokeWidth={2} /><text x={18} y={4} fontSize={9} fill={T.text2}>Criados {sumC}</text>
-                <line x1={92} y1={0} x2={106} y2={0} stroke={T.success} strokeWidth={2} /><text x={110} y={4} fontSize={9} fill={T.text2}>Resolvidos {sumR}</text>
+              <g transform={`translate(${PAD.left}, ${PAD.top - 16})`}>
+                <line x1={0} y1={4} x2={14} y2={4} stroke={T.warn} strokeWidth={2} />
+                <text x={18} y={8} fontSize={9} fill={T.text2}>Criados {sumC}</text>
+                <line x1={92} y1={4} x2={106} y2={4} stroke={T.success} strokeWidth={2} />
+                <text x={110} y={8} fontSize={9} fill={T.text2}>Resolvidos {sumR}</text>
               </g>
 
             )}
