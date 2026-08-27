@@ -241,7 +241,7 @@ function colorOf(seed: string): string {
 const STATUS_COLOR: Record<string, string> = { active: T.success, blocked: T.crit, inactive: T.neutral }
 const STATUS_LABEL: Record<string, string> = { active: 'Ativo', blocked: 'Bloqueado', inactive: 'Inativo' }
 
-function AdminUsersCard({ onNav, onInvite, actorName }: {
+export function AdminUsersCard({ onNav, onInvite, actorName }: {
   onNav: (v: string, targetId?: string) => void
   onInvite?: () => void
   actorName?: string
@@ -312,7 +312,7 @@ function AdminUsersCard({ onNav, onInvite, actorName }: {
 
 const ACTIVE_MODULE_STATUS = new Set<string>(['operational', 'implemented', 'contracted', 'deploying', 'preview'])
 
-function AdminModulesCard({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
+export function AdminModulesCard({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
   const [mods, setMods] = useState<ModuleView[] | null>(null)
   useEffect(() => {
     let alive = true
@@ -347,7 +347,7 @@ function AdminModulesCard({ onNav }: { onNav: (v: string, targetId?: string) => 
   )
 }
 
-function AdminAuditCard() {
+export function AdminAuditCard() {
   const [rows, setRows] = useState<AdminActivityRow[] | null>(null)
   useEffect(() => {
     let alive = true
@@ -697,7 +697,7 @@ function ProductManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
 }
 
 // ─── Client Feed Card (PO and all management roles) ──────────────────────────
-function ClientFeedCard({ poId, tenantId }: { poId?: string; tenantId: string }) {
+export function ClientFeedCard({ poId, tenantId }: { poId?: string; tenantId: string }) {
   useClientPortal()
   const { activeUser } = useSession()
   if (!can(activeUser.permissions, 'access:client-messages')) return null
