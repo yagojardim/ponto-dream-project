@@ -198,7 +198,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-widget-card { height: 100%; width: 100%; min-height: 0; }
         .altech-widget-body-fit { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
         .altech-widget-body-fit > * { flex: 1 1 auto; min-height: 0; max-width: 100%; }
-        .altech-widget-body-fit svg { max-width: 100%; }
+        .altech-widget-body-fit svg { max-width: 100%; max-height: 100%; height: auto; }
         .altech-widget-body-fit .recharts-responsive-container { flex: 1 1 auto; min-height: 0; }
         .altech-widget-kpi > * { height: 100%; }
         .altech-widget-kpi > * > * > *:first-child { font-size: clamp(16px, 5cqw, 26px) !important; }
