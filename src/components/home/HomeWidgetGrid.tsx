@@ -23,6 +23,8 @@ export interface WidgetInstance {
   i: string
   widgetId: string
   format: WidgetFormat
+  /** Título customizado pelo usuário (cai no título do catálogo quando ausente). */
+  title?: string
 }
 
 interface StoredState {
