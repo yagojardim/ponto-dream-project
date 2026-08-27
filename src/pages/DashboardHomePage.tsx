@@ -2124,8 +2124,13 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
       {/* ── Tenant storage card (só para o Admin Master / dono do tenant) ───── */}
       <TenantStorageCard show={scope.permissions?.includes('*') ?? false} onNav={navigate} />
 
-      {/* ── Dashboard content (includes unified mural at top of each panel) ── */}
-      <DashboardContent type={activeDashId} onNav={navigate} onInvite={onInvite} />
+      {/* ── Painel interativo de widgets (Início + Relatórios) ─────────────── */}
+      <HomeWidgetGrid
+        userId={user.user_id}
+        userName={user.name}
+        role={activeDashId}
+        onNav={(v, targetId) => onNav?.(v, targetId)}
+      />
     </div>
   )
 }
