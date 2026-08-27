@@ -292,6 +292,52 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   )
 }
 
+/** Título do card editável inline (apenas em modo edição). Enter/blur confirma, Esc cancela. */
+function EditableTitle({ value, onConfirm }: { value: string; onConfirm: (v: string) => void }) {
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [draft, setDraft] = useState(value)
+
+  if (editingTitle) {
+    return (
+      <input
+        autoFocus
+        className="no-drag"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') { onConfirm(draft); setEditingTitle(false) }
+          else if (e.key === 'Escape') { setDraft(value); setEditingTitle(false) }
+        }}
+        onBlur={() => { onConfirm(draft); setEditingTitle(false) }}
+        style={{
+          flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: T.text1,
+          fontFamily: 'inherit', background: T.bgSurface2, border: `1px solid ${T.border}`,
+          borderRadius: 6, padding: '2px 6px', outline: 'none',
+        }}
+      />
+    )
+  }
+
+  return (
+    <button
+      className="no-drag"
+      title="Renomear card"
+      onClick={() => { setDraft(value); setEditingTitle(true) }}
+      style={{
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6,
+        background: 'none', border: 'none', padding: 0, cursor: 'text', textAlign: 'left',
+      }}
+    >
+      <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {value}
+      </span>
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: T.text3, flexShrink: 0 }}>
+        <path d="M11.2 2.4l2.4 2.4L5.8 12.6l-3.2.8.8-3.2 7.8-7.8z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
 function RemoveButton({ onClick }: { onClick: () => void }) {
   const [hover, setHover] = useState(false)
   return (
