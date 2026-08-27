@@ -148,10 +148,13 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     setState(prev => {
       const next = { instances: prev.instances, layout }
-      try { localStorage.setItem(storageKey(userId), JSON.stringify(next)) } catch { /* noop */ }
+      // Em modo edição, a persistência acontece só no Salvar.
+      if (!editing) {
+        try { localStorage.setItem(storageKey(userId), JSON.stringify(next)) } catch { /* noop */ }
+      }
       return next
     })
-  }, [userId])
+  }, [userId, editing])
 
   const addWidget = (widgetId: string, format: WidgetFormat) => {
     const inst: WidgetInstance = { i: newId(), widgetId, format }
