@@ -1,5 +1,6 @@
 // Fonte única das dicas de onboarding (callouts inline + Central de Ajuda).
 export interface OnboardingGuideBlock {
+  heading?: string
   text: string
   image?: string
   imageAlt?: string
