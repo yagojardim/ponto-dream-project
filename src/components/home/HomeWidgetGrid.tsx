@@ -205,6 +205,10 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-widget-body-fit > * { flex: 1 1 auto; min-height: 0; max-width: 100%; }
         .altech-widget-body-fit svg { max-width: 100%; max-height: 100%; height: auto; }
         .altech-widget-body-fit .recharts-responsive-container { flex: 1 1 auto; min-height: 0; }
+        /* Gráficos de relatório em modo fill: ocupam toda a altura do card. */
+        .altech-widget-body-fit .altech-chart-fill { flex: 1 1 auto; min-height: 0; }
+        .altech-widget-body-fit .altech-chart-fill > svg,
+        .altech-widget-body-fit .altech-chart-fill > div > svg { height: 100%; width: 100%; flex: 1 1 auto; min-height: 0; }
         .altech-widget-kpi > * { height: 100%; }
         .altech-widget-kpi > * > * > *:first-child { font-size: clamp(16px, 5cqw, 26px) !important; }
       `}</style>
