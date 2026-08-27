@@ -53,6 +53,7 @@ import { countActiveModules, listModules, type ModuleView } from '../data/db/mod
 import { getMembers, setMemberStatus, type MemberRow, type MemberStatus } from '@/data/db/members'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
 import { countPendingInvites, nearestExpiry } from '../data/invites'
+import { HomeWidgetGrid } from '@/components/home/HomeWidgetGrid'
 
 // ─── Shared hook: drawer + nav + filter state ─────────────────────────────────
 function useDrawer() {
