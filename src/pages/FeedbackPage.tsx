@@ -430,8 +430,17 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
         </p>
         <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 pr-1">
           {navItem('ajuda')}
-          {tab === 'ajuda' && (
+          {tab === 'ajuda' && helpExpanded && (
             <div className="flex flex-col gap-2 pl-3 pb-2">
+              <button
+                onClick={() => { setHelpExpanded(false); setHelpView(null) }}
+                className="text-left px-2 h-8 rounded-lg text-[12px] font-medium transition-colors"
+                style={{ background: 'transparent', color: T.text2 }}
+                onMouseEnter={e => { e.currentTarget.style.color = T.text1 }}
+                onMouseLeave={e => { e.currentTarget.style.color = T.text2 }}
+              >
+                ‹ Voltar ao menu
+              </button>
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
