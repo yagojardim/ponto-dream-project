@@ -394,3 +394,91 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
     </button>
   )
 }
+
+/**
+ * Casca única de cada widget do board: moldura + cabeçalho fixo opaco (não-KPI).
+ * Os componentes internos rodam em modo "bare" (sem moldura/título próprios) e
+ * apenas informam o título nativo — que pode trazer contagem (ex.: "Bloqueados (1)").
+ */
+function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
+  def: WidgetDef
+  ctx: WidgetCtx
+  customTitle?: string
+  editing: boolean
+  onRename: (v: string) => void
+  onRemove: () => void
+}) {
+  const [nativeTitle, setNativeTitle] = useState<string | null>(null)
+  const fit = def.overflow === 'fit'
+  const isKpi = def.kind === 'kpi'
+  const title = customTitle ?? nativeTitle ?? def.title
+
+  const shell = useMemo(
+    () => ({ bare: true, registerTitle: (t: string) => setNativeTitle(prev => (prev === t ? prev : t)) }),
+    [],
+  )
+
+  const body = (
+    <div
+      className={`altech-widget-body${editing ? '' : ' no-drag'}${fit ? ' altech-widget-body-fit' : ''}${isKpi ? ' altech-widget-kpi' : ''}`}
+      style={{
+        flex: '1 1 auto', minHeight: 0, width: '100%',
+        overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
+        padding: isKpi ? 0 : 14,
+        containerType: 'inline-size',
+      }}
+    >
+      {isKpi ? def.render(ctx) : <CardShellProvider value={shell}>{def.render(ctx)}</CardShellProvider>}
+    </div>
+  )
+
+  const tools = editing ? (
+    <div className="altech-widget-tools no-drag" style={{
+      display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, maxWidth: '60%',
+    }}>
+      <EditableTitle value={title} onConfirm={onRename} />
+      <RemoveButton onClick={onRemove} />
+    </div>
+  ) : null
+
+  if (isKpi) {
+    return (
+      <>
+        {body}
+        {editing && (
+          <div className="altech-widget-tools no-drag" style={{
+            position: 'absolute', top: 6, right: 6, zIndex: 3,
+            display: 'flex', alignItems: 'center', gap: 4,
+            background: T.bgSurface2, border: `1px solid ${T.border}`,
+            borderRadius: 8, padding: '2px 4px', maxWidth: '85%',
+          }}>
+            <EditableTitle value={title} onConfirm={onRename} />
+            <RemoveButton onClick={onRemove} />
+          </div>
+        )}
+      </>
+    )
+  }
+
+  return (
+    <div style={{
+      flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column',
+      border: `1px solid ${T.border}`, borderRadius: 12, overflow: 'hidden',
+      backgroundColor: T.bgPage, backgroundImage: `linear-gradient(${T.bgSurface}, ${T.bgSurface})`,
+    }}>
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 2, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+        padding: '10px 14px', borderBottom: `1px solid ${T.border}`,
+        backgroundColor: T.bgPage, backgroundImage: `linear-gradient(${T.bgSurface}, ${T.bgSurface})`,
+      }}>
+        <span style={{
+          fontSize: 12, fontWeight: 600, color: T.text1,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{title}</span>
+        {tools}
+      </div>
+      {body}
+    </div>
+  )
+}
