@@ -305,6 +305,14 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
     }
   }
 
+  if (tab === 'ajuda') {
+    return (
+      <div className="w-full px-6 py-8">
+        <HelpCenter onNav={onNav} onTab={t => { setTab(t); setError(null) }} />
+      </div>
+    )
+  }
+
   return (
     <div className="flex w-full items-start gap-6 px-6 py-8">
       {/* Menu lateral */}
