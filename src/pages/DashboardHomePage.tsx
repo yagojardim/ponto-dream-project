@@ -238,8 +238,8 @@ function colorOf(seed: string): string {
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
   return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
-const STATUS_COLOR: Record<string, string> = { active: T.success, blocked: T.crit, inactive: T.neutral }
-const STATUS_LABEL: Record<string, string> = { active: 'Ativo', blocked: 'Bloqueado', inactive: 'Inativo' }
+const STATUS_COLOR: Record<string, string> = { active: T.success, blocked: T.warn, inactive: T.neutral }
+const STATUS_LABEL: Record<string, string> = { active: 'Ativo', blocked: 'Suspenso', inactive: 'Inativo' }
 
 export function AdminUsersCard({ onNav, onInvite, actorName }: {
   onNav: (v: string, targetId?: string) => void
@@ -267,8 +267,12 @@ export function AdminUsersCard({ onNav, onInvite, actorName }: {
     setBusy(null)
   }
 
-  const activeUsers = rows?.filter(u => u.status === 'active') ?? []
-  const displayedUsers = activeUsers.slice(0, 5)
+  // Inativos/suspensos não somem: vão para o fim da fila, com opacidade menor.
+  const ordered = [...(rows ?? [])].sort((a, b) => {
+    const rank = (s: string) => (s === 'active' ? 0 : 1)
+    return rank(a.status) - rank(b.status)
+  })
+  const displayedUsers = ordered.slice(0, 5)
 
   return (
     <SCard title="Gestão de Usuários" action={
@@ -276,14 +280,15 @@ export function AdminUsersCard({ onNav, onInvite, actorName }: {
     }>
       {rows === null
         ? <LoadingState />
-        : activeUsers.length === 0
-          ? <EmptyState message={failed ? 'Não foi possível carregar os usuários.' : 'Nenhum usuário ativo no tenant.'} />
+        : ordered.length === 0
+          ? <EmptyState message={failed ? 'Não foi possível carregar os usuários.' : 'Nenhum usuário no tenant.'} />
           : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto', paddingRight: 6 }}>
               {displayedUsers.map(u => {
                 const c = STATUS_COLOR[u.status] ?? T.neutral
+                const isActive = u.status === 'active'
                 return (
-                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: isActive ? 1 : 0.55 }}>
                     <Av initials={initialsOf(u.name || u.email)} color={colorOf(u.id)} size={28} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || u.email}</div>
@@ -292,12 +297,14 @@ export function AdminUsersCard({ onNav, onInvite, actorName }: {
                     <span style={{ fontSize: 10, color: c, background: `${c}18`, border: `1px solid ${c}33`, borderRadius: 4, padding: '2px 7px' }}>
                       {STATUS_LABEL[u.status] ?? u.status}
                     </span>
-                    {u.status === 'blocked'
-                      ? <button disabled={busy === u.id} onClick={() => void change(u, 'active')} style={{ fontSize: 10, color: T.success, background: `${T.success}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Desbloquear</button>
-                      : u.status === 'active'
-                        ? <button disabled={busy === u.id} onClick={() => void change(u, 'blocked')} style={{ fontSize: 10, color: T.warn, background: `${T.warn}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Bloquear</button>
-                        : <button disabled={busy === u.id} onClick={() => void change(u, 'active')} style={{ fontSize: 10, color: T.accent, background: `${T.accent}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Reativar</button>
-                    }
+                    {isActive ? (
+                      <>
+                        <button disabled={busy === u.id} onClick={() => void change(u, 'inactive')} style={{ fontSize: 10, color: T.text2, background: `${T.text3}18`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Inativar</button>
+                        <button disabled={busy === u.id} onClick={() => void change(u, 'blocked')} style={{ fontSize: 10, color: T.warn, background: `${T.warn}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Suspender</button>
+                      </>
+                    ) : (
+                      <button disabled={busy === u.id} onClick={() => void change(u, 'active')} style={{ fontSize: 10, color: T.success, background: `${T.success}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Reativar</button>
+                    )}
                   </div>
                 )
               })}

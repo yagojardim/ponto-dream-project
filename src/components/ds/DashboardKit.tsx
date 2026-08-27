@@ -136,9 +136,16 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
   return (
     <div style={{
       background: T.bgSurface, border: `1px solid ${T.border}`,
-      borderRadius: 10, padding: 16, minWidth: 0, overflowX: 'auto', ...style,
+      borderRadius: 10, padding: 16, minWidth: 0,
+      overflowX: 'auto', overflowY: 'auto', maxHeight: '100%', ...style,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+      {/* Cabeçalho fixo: permanece visível quando o corpo do card rola. */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'sticky', top: 0, zIndex: 2,
+        background: (style?.background as string) ?? T.bgSurface,
+        margin: '-16px -16px 12px', padding: '16px 16px 8px',
+      }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: T.text1 }}>
           {title}
           {help && <HelpHint text={help} title={helpTitle} label={`Ajuda sobre ${title}`} />}
