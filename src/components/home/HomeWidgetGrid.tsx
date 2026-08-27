@@ -48,7 +48,7 @@ function newId(): string {
 }
 
 function heightFor(widgetId: string): number {
-  return widgetId.startsWith('native.kpi-') ? KPI_HEIGHT : CARD_HEIGHT
+  return getWidget(widgetId)?.kind === 'kpi' ? KPI_HEIGHT : CARD_HEIGHT
 }
 
 /** Tamanho mínimo apresentável, vindo do catálogo. */
@@ -57,18 +57,31 @@ function minSizeFor(widgetId: string): { minW: number; minH: number } {
   return { minW: def?.minW ?? 3, minH: def?.minH ?? 2 }
 }
 
+/**
+ * Reproduz a disposição original de cada painel: os KPIs de topo numa linha
+ * (cards estreitos lado a lado) e, abaixo, os cards de corpo com a largura que
+ * tinham no painel (ColSpan → 12 colunas, meia largura → 6).
+ */
 function buildDefault(role: string): StoredState {
   const ids = defaultWidgetIds(role).filter(id => getWidget(id))
+  const kpiIds = ids.filter(id => getWidget(id)?.kind === 'kpi')
+  const kpiW = kpiIds.length > 0 ? Math.max(2, Math.floor(12 / kpiIds.length)) : 3
+
   const instances: WidgetInstance[] = ids.map(widgetId => ({
     i: newId(),
     widgetId,
-    format: widgetId.startsWith('native.kpi-') ? 'vertical' : 'horizontal',
+    format: (getWidget(widgetId)?.defaultW ?? 6) >= 12 ? 'horizontal' : 'vertical',
   }))
+
   let y = 0
   let x = 0
   const layout: Layout[] = instances.map(inst => {
+    const def = getWidget(inst.widgetId)
+    const isKpi = def?.kind === 'kpi'
     const h = heightFor(inst.widgetId)
-    const w = inst.format === 'horizontal' ? 12 : 6
+    const w = isKpi ? kpiW : Math.min(12, def?.defaultW ?? 6)
+    // A primeira linha é exclusiva dos KPIs; os cards de corpo começam abaixo.
+    if (!isKpi && x > 0 && kpiIds.length > 0 && y === 0) { x = 0; y = KPI_HEIGHT }
     if (x + w > 12) { x = 0; y += h }
     const item: Layout = { i: inst.i, x, y, w, h, ...minSizeFor(inst.widgetId) }
     x += w
@@ -77,6 +90,7 @@ function buildDefault(role: string): StoredState {
   })
   return { instances, layout }
 }
+
 
 function loadStored(userId: string, role: string): StoredState | null {
   try {
