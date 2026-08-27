@@ -23,6 +23,8 @@ export interface WidgetInstance {
   i: string
   widgetId: string
   format: WidgetFormat
+  /** Título customizado pelo usuário (cai no título do catálogo quando ausente). */
+  title?: string
 }
 
 interface StoredState {
@@ -89,11 +91,48 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const [state, setState] = useState<StoredState>(() => loadStored(userId) ?? buildDefault(role))
   const [addOpen, setAddOpen] = useState(false)
   const [drawerItem, setDrawerItem] = useState<WorkItem | null>(null)
+  // Modo edição: mudanças ficam só em estado; Salvar persiste, Cancelar volta ao snapshot.
+  const [editing, setEditing] = useState(false)
+  const [snapshot, setSnapshot] = useState<StoredState | null>(null)
 
   // Re-hydrate when the user (or role, on first access) changes.
   useEffect(() => {
     setState(loadStored(userId) ?? buildDefault(role))
+    setEditing(false)
+    setSnapshot(null)
   }, [userId, role])
+
+  const startEditing = () => {
+    setSnapshot(state)
+    setEditing(true)
+  }
+
+  const saveEditing = () => {
+    try { localStorage.setItem(storageKey(userId), JSON.stringify(state)) } catch { /* noop */ }
+    setEditing(false)
+    setSnapshot(null)
+  }
+
+  const cancelEditing = () => {
+    if (snapshot) setState(snapshot)
+    setEditing(false)
+    setSnapshot(null)
+  }
+
+  const renameWidget = (i: string, title: string) => {
+    const trimmed = title.trim()
+    setState(prev => ({
+      ...prev,
+      instances: prev.instances.map(inst => {
+        if (inst.i !== i) return inst
+        // Vazio → remove o customizado e volta ao título do catálogo.
+        const next = { ...inst }
+        if (trimmed) next.title = trimmed
+        else delete next.title
+        return next
+      }),
+    }))
+  }
 
   const persist = useCallback((next: StoredState) => {
     setState(next)
@@ -109,10 +148,13 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     setState(prev => {
       const next = { instances: prev.instances, layout }
-      try { localStorage.setItem(storageKey(userId), JSON.stringify(next)) } catch { /* noop */ }
+      // Em modo edição, a persistência acontece só no Salvar.
+      if (!editing) {
+        try { localStorage.setItem(storageKey(userId), JSON.stringify(next)) } catch { /* noop */ }
+      }
       return next
     })
-  }, [userId])
+  }, [userId, editing])
 
   const addWidget = (widgetId: string, format: WidgetFormat) => {
     const inst: WidgetInstance = { i: newId(), widgetId, format }
@@ -155,10 +197,29 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           }}
         >+ Adicionar card</button>
         <div style={{ flex: 1 }} />
-        <button
-          onClick={restoreDefault}
-          style={{ fontSize: 11, color: T.text3, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
-        >Restaurar padrão</button>
+        {editing ? (
+          <>
+            <button
+              onClick={cancelEditing}
+              style={{ fontSize: 11, color: T.text2, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
+            >Cancelar</button>
+            <button
+              onClick={saveEditing}
+              style={{ fontSize: 11, fontWeight: 600, color: '#fff', background: T.accent, border: 'none', borderRadius: 6, padding: '5px 14px', cursor: 'pointer' }}
+            >Salvar</button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={startEditing}
+              style={{ fontSize: 11, color: T.text2, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
+            >✎ Editar painel</button>
+            <button
+              onClick={restoreDefault}
+              style={{ fontSize: 11, color: T.text3, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
+            >Restaurar padrão</button>
+          </>
+        )}
       </div>
 
       {state.instances.length === 0 ? (
@@ -202,9 +263,16 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '8px 12px', borderBottom: `1px solid ${T.border}`, cursor: 'move', flexShrink: 0,
                 }}>
-                  <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {def.title}
-                  </span>
+                  {editing ? (
+                    <EditableTitle
+                      value={inst.title ?? def.title}
+                      onConfirm={v => renameWidget(inst.i, v)}
+                    />
+                  ) : (
+                    <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {inst.title ?? def.title}
+                    </span>
+                  )}
                   <RemoveButton onClick={() => removeWidget(inst.i)} />
                 </div>
                 <div className="no-drag" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 12 }}>
@@ -221,6 +289,52 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         <WorkItemDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} onNav={onNav} />
       )}
     </div>
+  )
+}
+
+/** Título do card editável inline (apenas em modo edição). Enter/blur confirma, Esc cancela. */
+function EditableTitle({ value, onConfirm }: { value: string; onConfirm: (v: string) => void }) {
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [draft, setDraft] = useState(value)
+
+  if (editingTitle) {
+    return (
+      <input
+        autoFocus
+        className="no-drag"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') { onConfirm(draft); setEditingTitle(false) }
+          else if (e.key === 'Escape') { setDraft(value); setEditingTitle(false) }
+        }}
+        onBlur={() => { onConfirm(draft); setEditingTitle(false) }}
+        style={{
+          flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: T.text1,
+          fontFamily: 'inherit', background: T.bgSurface2, border: `1px solid ${T.border}`,
+          borderRadius: 6, padding: '2px 6px', outline: 'none',
+        }}
+      />
+    )
+  }
+
+  return (
+    <button
+      className="no-drag"
+      title="Renomear card"
+      onClick={() => { setDraft(value); setEditingTitle(true) }}
+      style={{
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6,
+        background: 'none', border: 'none', padding: 0, cursor: 'text', textAlign: 'left',
+      }}
+    >
+      <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {value}
+      </span>
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ color: T.text3, flexShrink: 0 }}>
+        <path d="M11.2 2.4l2.4 2.4L5.8 12.6l-3.2.8.8-3.2 7.8-7.8z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
   )
 }
 
