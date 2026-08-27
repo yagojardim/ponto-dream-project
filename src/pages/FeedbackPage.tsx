@@ -182,6 +182,7 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
   const { activeUser } = useSession()
   const [tab, setTab] = useState<FeedbackTab>('feedback')
   const [helpView, setHelpView] = useState<string | null>(null)
+  const [helpExpanded, setHelpExpanded] = useState(true)
   const [query, setQuery] = useState('')
 
   const [screenUrl, setScreenUrl] = useState('')
@@ -263,7 +264,13 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
   }
 
   function selectTab(id: FeedbackTab) {
-    setTab(id)
+    if (id === 'ajuda') {
+      setTab('ajuda')
+      setHelpView(null)
+      setHelpExpanded(true)
+    } else {
+      setTab(id)
+    }
     setError(null)
   }
 
@@ -276,7 +283,14 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
     return (
       <button
         key={id}
-        onClick={() => selectTab(id)}
+        onClick={() => {
+          if (id === 'ajuda' && tab === 'ajuda') {
+            setHelpExpanded(prev => !prev)
+            setHelpView(null)
+          } else {
+            selectTab(id)
+          }
+        }}
         aria-pressed={parentOn}
         className="text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2"
         style={{
