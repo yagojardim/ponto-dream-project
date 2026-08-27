@@ -488,7 +488,7 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
             onChange={e => {
               const v = e.target.value
               if (v.startsWith('help:')) { selectTab('ajuda'); setHelpView(v.slice(5)) }
-              else { selectTab(v as FeedbackTab); if (v === 'ajuda') setHelpView(null) }
+              else { selectTab(v as FeedbackTab) }
             }}
             className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
             style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
