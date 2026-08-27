@@ -465,8 +465,6 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
           {toast && <span className="text-[12px]" style={{ color: T.success }}>{toast}</span>}
         </div>
       </section>
-      </>
-      )}
       <p className="mt-4 mb-0 text-[11px]" style={{ color: T.text3 }}>
         Precisa de ajuda com uma tela? Veja a Central de Ajuda ao lado.
       </p>
