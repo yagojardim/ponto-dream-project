@@ -22,6 +22,7 @@ import {
   KpiQaQueueWidget, KpiQaBugsWidget, KpiQaRejectionWidget, KpiQaEvidenceWidget,
   type WidgetCtx,
 } from '@/components/home/nativeWidgets'
+import { SCard } from '@/components/ds/DashboardKit'
 import { T } from '@/components/ds/tokens'
 import {
   PmoRagCard, DeliveryRhythmCard, PmMainRagCard, PlannedVsDoneCard, TeamWorkloadCard,
