@@ -211,10 +211,10 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-home-grid .react-grid-placeholder { background: ${T.accentDim}; border: 1px dashed ${T.accentBorder}; border-radius: 12px; opacity: 1; }
         .altech-home-grid .react-grid-item > .react-resizable-handle::after { border-color: ${T.text3}; }
         .altech-home-panel:not(.is-editing) .react-resizable-handle { display: none !important; }
-        .altech-home-panel:not(.is-editing) .altech-widget-header { cursor: default; }
         /* Cadeia de altura: o conteúdo acompanha o tamanho do card. */
         .altech-home-grid .react-grid-item { display: flex; }
-        .altech-widget-card { height: 100%; width: 100%; min-height: 0; }
+        .altech-widget-card { height: 100%; width: 100%; min-height: 0; position: relative; }
+        .altech-widget-card > .altech-widget-body { height: 100%; }
         .altech-widget-body-fit { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
         .altech-widget-body-fit > * { flex: 1 1 auto; min-height: 0; max-width: 100%; }
         .altech-widget-body-fit svg { max-width: 100%; max-height: 100%; height: auto; }
@@ -224,7 +224,10 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-widget-body-fit .altech-chart-fill > svg,
         .altech-widget-body-fit .altech-chart-fill > div > svg { height: 100%; width: 100%; flex: 1 1 auto; min-height: 0; }
         .altech-widget-kpi > * { height: 100%; }
-        .altech-widget-kpi > * > * > *:first-child { font-size: clamp(16px, 5cqw, 26px) !important; }
+        /* Controles de edição: barra flutuante só no hover, sem chrome permanente. */
+        .altech-widget-tools { opacity: 0; transition: opacity 0.12s; }
+        .altech-widget-card:hover .altech-widget-tools { opacity: 1; }
+
       `}</style>
 
       {/* Toolbar */}
