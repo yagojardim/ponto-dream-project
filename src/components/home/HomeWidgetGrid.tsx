@@ -197,10 +197,29 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           }}
         >+ Adicionar card</button>
         <div style={{ flex: 1 }} />
-        <button
-          onClick={restoreDefault}
-          style={{ fontSize: 11, color: T.text3, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
-        >Restaurar padrão</button>
+        {editing ? (
+          <>
+            <button
+              onClick={cancelEditing}
+              style={{ fontSize: 11, color: T.text2, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
+            >Cancelar</button>
+            <button
+              onClick={saveEditing}
+              style={{ fontSize: 11, fontWeight: 600, color: '#fff', background: T.accent, border: 'none', borderRadius: 6, padding: '5px 14px', cursor: 'pointer' }}
+            >Salvar</button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={startEditing}
+              style={{ fontSize: 11, color: T.text2, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
+            >✎ Editar painel</button>
+            <button
+              onClick={restoreDefault}
+              style={{ fontSize: 11, color: T.text3, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
+            >Restaurar padrão</button>
+          </>
+        )}
       </div>
 
       {state.instances.length === 0 ? (
