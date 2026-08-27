@@ -91,11 +91,48 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const [state, setState] = useState<StoredState>(() => loadStored(userId) ?? buildDefault(role))
   const [addOpen, setAddOpen] = useState(false)
   const [drawerItem, setDrawerItem] = useState<WorkItem | null>(null)
+  // Modo edição: mudanças ficam só em estado; Salvar persiste, Cancelar volta ao snapshot.
+  const [editing, setEditing] = useState(false)
+  const [snapshot, setSnapshot] = useState<StoredState | null>(null)
 
   // Re-hydrate when the user (or role, on first access) changes.
   useEffect(() => {
     setState(loadStored(userId) ?? buildDefault(role))
+    setEditing(false)
+    setSnapshot(null)
   }, [userId, role])
+
+  const startEditing = () => {
+    setSnapshot(state)
+    setEditing(true)
+  }
+
+  const saveEditing = () => {
+    try { localStorage.setItem(storageKey(userId), JSON.stringify(state)) } catch { /* noop */ }
+    setEditing(false)
+    setSnapshot(null)
+  }
+
+  const cancelEditing = () => {
+    if (snapshot) setState(snapshot)
+    setEditing(false)
+    setSnapshot(null)
+  }
+
+  const renameWidget = (i: string, title: string) => {
+    const trimmed = title.trim()
+    setState(prev => ({
+      ...prev,
+      instances: prev.instances.map(inst => {
+        if (inst.i !== i) return inst
+        // Vazio → remove o customizado e volta ao título do catálogo.
+        const next = { ...inst }
+        if (trimmed) next.title = trimmed
+        else delete next.title
+        return next
+      }),
+    }))
+  }
 
   const persist = useCallback((next: StoredState) => {
     setState(next)
