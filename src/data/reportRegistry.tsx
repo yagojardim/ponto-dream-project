@@ -534,42 +534,55 @@ export function LeadCycleChart({ variant = 'full', data: explicit }: ChartProps)
   const lc = data?.leadCycle
   return (
     <ChartFrame data={data} loading={loading} error={error} height={th ? 60 : 140}
-      isEmpty={!lc || lc.buckets.every(b => b.value === 0)}
-      emptyText="Nenhum item concluído para medir lead time.">
+      isEmpty={!lc || lc.buckets.every(b => b.value === 0) || (lc.leadAvg === 0 && lc.cycleAvg === 0)}
+      emptyText="Sem dados suficientes para medir lead/cycle time.">
       {() => {
         const l = lc!
-        const W = 200; const H = 80
-        const PAD = { top: 8, right: 8, bottom: th ? 4 : 20, left: th ? 4 : 28 }
+        const W = 200; const H = 90
+        const PAD = { top: 12, right: 8, bottom: th ? 4 : 20, left: th ? 4 : 30 }
         const cw = W - PAD.left - PAD.right
         const ch = H - PAD.top - PAD.bottom
-        const maxV = Math.max(1, ...l.buckets.map(b => b.value)) * 1.2
+        const rawMax = Math.max(1, ...l.buckets.map(b => b.value))
+        const maxV = rawMax * 1.2
         const bw = (cw / l.buckets.length) * 0.65
         const toX = (i: number) => PAD.left + (i / l.buckets.length) * cw + (cw / l.buckets.length) * 0.175
         const toY = (v: number) => PAD.top + ch - (v / maxV) * ch
+        const ticks = [0, 0.5, 1].map(f => Math.round(rawMax * f))
+          .filter((v, i, arr) => arr.indexOf(v) === i)
         const histogram = (
-          <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+          <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+            {!th && ticks.map(v => (
+              <g key={v}>
+                <line x1={PAD.left} x2={W - PAD.right} y1={toY(v)} y2={toY(v)} stroke={T.border} strokeWidth={0.4} />
+                <text x={PAD.left - 4} y={toY(v) + 2.5} textAnchor="end" fontSize={7} fill={T.text3}>{v}</text>
+              </g>
+            ))}
+            {!th && <line x1={PAD.left} x2={PAD.left} y1={PAD.top} y2={PAD.top + ch} stroke={T.border} strokeWidth={0.5} />}
             {l.buckets.map((b, i) => (
               <g key={i}>
                 <rect x={toX(i)} y={toY(b.value)} width={bw} height={ch - (toY(b.value) - PAD.top)} rx={2} fill={T.accent} opacity={0.7} />
-                {!th && <text x={toX(i) + bw / 2} y={H - PAD.bottom + 12} textAnchor="middle" fontSize={7} fill={T.text3}>{b.label}</text>}
+                {!th && b.value > 0 && (
+                  <text x={toX(i) + bw / 2} y={toY(b.value) - 3} textAnchor="middle" fontSize={7} fontWeight={600} fill={T.text2}>{b.value}</text>
+                )}
+                {!th && <text x={toX(i) + bw / 2} y={H - PAD.bottom + 11} textAnchor="middle" fontSize={8} fill={T.text3}>{b.label}</text>}
               </g>
             ))}
           </svg>
         )
         if (th) return histogram
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: px(12) }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: px(12), height: '100%', minHeight: 0 }}>
             {[
               { label: 'Lead Time médio', value: `${l.leadAvg} dias`, color: T.accent },
               { label: 'Cycle Time médio', value: `${l.cycleAvg} dias`, color: T.success },
             ].map((s, i) => (
-              <div key={i} style={{ background: T.bgSurface2, borderRadius: px(8), padding: `${px(10)} ${px(14)}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div key={i} style={{ flex: '0 0 auto', background: T.bgSurface2, borderRadius: px(8), padding: `${px(10)} ${px(14)}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ color: T.text2, fontSize: px(12) }}>{s.label}</span>
                 <span style={{ color: s.color, fontSize: px(18), fontWeight: 700 }}>{s.value}</span>
               </div>
             ))}
-            <div style={{ color: T.text3, fontSize: px(11), marginTop: px(4) }}>Distribuição Lead Time</div>
-            {histogram}
+            <div style={{ flex: '0 0 auto', color: T.text3, fontSize: px(11), marginTop: px(4) }}>Distribuição Lead Time</div>
+            <div style={{ flex: '1 1 auto', minHeight: px(70) }}>{histogram}</div>
           </div>
         )
       }}
