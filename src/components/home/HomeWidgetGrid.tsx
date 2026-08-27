@@ -263,9 +263,16 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '8px 12px', borderBottom: `1px solid ${T.border}`, cursor: 'move', flexShrink: 0,
                 }}>
-                  <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {def.title}
-                  </span>
+                  {editing ? (
+                    <EditableTitle
+                      value={inst.title ?? def.title}
+                      onConfirm={v => renameWidget(inst.i, v)}
+                    />
+                  ) : (
+                    <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {inst.title ?? def.title}
+                    </span>
+                  )}
                   <RemoveButton onClick={() => removeWidget(inst.i)} />
                 </div>
                 <div className="no-drag" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 12 }}>
