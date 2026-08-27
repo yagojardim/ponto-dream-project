@@ -4,6 +4,8 @@
  */
 import { useState, useRef, useEffect, type ReactNode, type CSSProperties } from 'react'
 import { T } from './tokens'
+import { CardShellProvider, useCardShell } from './cardShell'
+
 import { HelpHint } from './HelpHint'
 import { useSession } from '../../data/SessionContext'
 import { can } from '../../data/permissions'
