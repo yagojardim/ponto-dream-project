@@ -297,42 +297,22 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           {state.instances.map(inst => {
             const def = getWidget(inst.widgetId)
             if (!def) return <div key={inst.i} />
-            const fit = def.overflow === 'fit'
             return (
               <div key={inst.i} className="altech-widget-card" style={{
-                background: 'transparent', border: 'none', borderRadius: 12,
                 display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
               }}>
-                <div
-                  className={`altech-widget-body${editing ? '' : ' no-drag'}${fit ? ' altech-widget-body-fit' : ''}${def.kind === 'kpi' ? ' altech-widget-kpi' : ''}`}
-                  style={{
-                    flex: '1 1 auto', minHeight: 0, width: '100%',
-                    overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
-                    containerType: 'inline-size',
-                  }}
-                >
-                  {def.framed
-                    ? <SCard title={inst.title ?? def.title} style={{ height: '100%' }}>{def.render(ctx)}</SCard>
-                    : def.render(ctx)}
-                </div>
-                {editing && (
-                  <div className="altech-widget-tools no-drag" style={{
-                    position: 'absolute', top: 6, right: 6, zIndex: 3,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    background: T.bgSurface2, border: `1px solid ${T.border}`,
-                    borderRadius: 8, padding: '2px 4px', maxWidth: '85%',
-                  }}>
-                    <EditableTitle
-                      value={inst.title ?? def.title}
-                      onConfirm={v => renameWidget(inst.i, v)}
-                    />
-                    <RemoveButton onClick={() => removeWidget(inst.i)} />
-                  </div>
-                )}
+                <WidgetShell
+                  def={def}
+                  ctx={ctx}
+                  customTitle={inst.title}
+                  editing={editing}
+                  onRename={v => renameWidget(inst.i, v)}
+                  onRemove={() => removeWidget(inst.i)}
+                />
               </div>
             )
-
           })}
+
         </ResponsiveGridLayout>
       )}
 
