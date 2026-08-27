@@ -9,7 +9,7 @@ import { Responsive, WidthProvider, type Layout, type Layouts } from 'react-grid
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { T } from '@/components/ds/tokens'
-import { WorkItemDetailDrawer, type WorkItem } from '@/components/ds/DashboardKit'
+import { SCard, WorkItemDetailDrawer, type WorkItem } from '@/components/ds/DashboardKit'
 import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx } from '@/data/homeWidgets'
 import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetModal'
 
@@ -311,7 +311,9 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
                     containerType: 'inline-size',
                   }}
                 >
-                  {def.render(ctx)}
+                  {def.framed
+                    ? <SCard title={inst.title ?? def.title} style={{ height: '100%' }}>{def.render(ctx)}</SCard>
+                    : def.render(ctx)}
                 </div>
                 {editing && (
                   <div className="altech-widget-tools no-drag" style={{

@@ -51,14 +51,16 @@ export interface WidgetDef {
   /** Tamanho mínimo apresentável na grade (colunas / linhas). */
   minW: number
   minH: number
+  /** true = o widget não traz moldura própria; o grid o envolve num SCard com o título. */
+  framed?: boolean
   render: (ctx: WidgetCtx) => ReactNode
 }
 
 function kpi(id: string, title: string, render: (c: WidgetCtx) => ReactNode): WidgetDef {
   return { id, title, group: 'Início', kind: 'kpi', defaultW: 3, overflow: 'fit', minW: 2, minH: 2, render }
 }
-function list(id: string, title: string, render: (c: WidgetCtx) => ReactNode): WidgetDef {
-  return { id, title, group: 'Início', kind: 'card', defaultW: 6, overflow: 'scroll', minW: 3, minH: 2, render }
+function list(id: string, title: string, render: (c: WidgetCtx) => ReactNode, framed = false): WidgetDef {
+  return { id, title, group: 'Início', kind: 'card', defaultW: 6, overflow: 'scroll', minW: 3, minH: 2, framed, render }
 }
 /** Card de corpo dos painéis originais (traz o próprio SCard/WorkQueue). */
 function card(id: string, title: string, defaultW: number, render: (c: WidgetCtx) => ReactNode): WidgetDef {
@@ -139,7 +141,7 @@ const NATIVE: WidgetDef[] = [
   list('native.backlog-alert', 'Backlog com alerta',           c => <BacklogAlertWidget {...c} />),
   list('native.review-queue',  'Gargalos de PRs / revisão',    c => <ReviewQueueWidget {...c} />),
   list('native.design-queue',  'Fila de design ativa',         c => <DesignQueueWidget {...c} />),
-  list('native.projects-rag',  'Saúde dos projetos (RAG)',     c => <ProjectsRagWidget {...c} />),
+  list('native.projects-rag',  'Saúde dos projetos (RAG)',     c => <ProjectsRagWidget {...c} />, true),
 
   // Cards de corpo dos painéis originais
   card('native.admin-users',    'Usuários & Convites',       6,  c => <AdminUsersCard onNav={c.onNav} />),
