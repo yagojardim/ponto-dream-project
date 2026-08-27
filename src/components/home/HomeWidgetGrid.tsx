@@ -48,7 +48,7 @@ function newId(): string {
 }
 
 function heightFor(widgetId: string): number {
-  return widgetId.startsWith('native.kpi-') ? KPI_HEIGHT : CARD_HEIGHT
+  return getWidget(widgetId)?.kind === 'kpi' ? KPI_HEIGHT : CARD_HEIGHT
 }
 
 /** Tamanho mínimo apresentável, vindo do catálogo. */
@@ -57,18 +57,31 @@ function minSizeFor(widgetId: string): { minW: number; minH: number } {
   return { minW: def?.minW ?? 3, minH: def?.minH ?? 2 }
 }
 
+/**
+ * Reproduz a disposição original de cada painel: os KPIs de topo numa linha
+ * (cards estreitos lado a lado) e, abaixo, os cards de corpo com a largura que
+ * tinham no painel (ColSpan → 12 colunas, meia largura → 6).
+ */
 function buildDefault(role: string): StoredState {
   const ids = defaultWidgetIds(role).filter(id => getWidget(id))
+  const kpiIds = ids.filter(id => getWidget(id)?.kind === 'kpi')
+  const kpiW = kpiIds.length > 0 ? Math.max(2, Math.floor(12 / kpiIds.length)) : 3
+
   const instances: WidgetInstance[] = ids.map(widgetId => ({
     i: newId(),
     widgetId,
-    format: widgetId.startsWith('native.kpi-') ? 'vertical' : 'horizontal',
+    format: (getWidget(widgetId)?.defaultW ?? 6) >= 12 ? 'horizontal' : 'vertical',
   }))
+
   let y = 0
   let x = 0
   const layout: Layout[] = instances.map(inst => {
+    const def = getWidget(inst.widgetId)
+    const isKpi = def?.kind === 'kpi'
     const h = heightFor(inst.widgetId)
-    const w = inst.format === 'horizontal' ? 12 : 6
+    const w = isKpi ? kpiW : Math.min(12, def?.defaultW ?? 6)
+    // A primeira linha é exclusiva dos KPIs; os cards de corpo começam abaixo.
+    if (!isKpi && x > 0 && kpiIds.length > 0 && y === 0) { x = 0; y = KPI_HEIGHT }
     if (x + w > 12) { x = 0; y += h }
     const item: Layout = { i: inst.i, x, y, w, h, ...minSizeFor(inst.widgetId) }
     x += w
@@ -77,6 +90,7 @@ function buildDefault(role: string): StoredState {
   })
   return { instances, layout }
 }
+
 
 function loadStored(userId: string, role: string): StoredState | null {
   try {
@@ -197,10 +211,10 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-home-grid .react-grid-placeholder { background: ${T.accentDim}; border: 1px dashed ${T.accentBorder}; border-radius: 12px; opacity: 1; }
         .altech-home-grid .react-grid-item > .react-resizable-handle::after { border-color: ${T.text3}; }
         .altech-home-panel:not(.is-editing) .react-resizable-handle { display: none !important; }
-        .altech-home-panel:not(.is-editing) .altech-widget-header { cursor: default; }
         /* Cadeia de altura: o conteúdo acompanha o tamanho do card. */
         .altech-home-grid .react-grid-item { display: flex; }
-        .altech-widget-card { height: 100%; width: 100%; min-height: 0; }
+        .altech-widget-card { height: 100%; width: 100%; min-height: 0; position: relative; }
+        .altech-widget-card > .altech-widget-body { height: 100%; }
         .altech-widget-body-fit { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
         .altech-widget-body-fit > * { flex: 1 1 auto; min-height: 0; max-width: 100%; }
         .altech-widget-body-fit svg { max-width: 100%; max-height: 100%; height: auto; }
@@ -210,7 +224,10 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-widget-body-fit .altech-chart-fill > svg,
         .altech-widget-body-fit .altech-chart-fill > div > svg { height: 100%; width: 100%; flex: 1 1 auto; min-height: 0; }
         .altech-widget-kpi > * { height: 100%; }
-        .altech-widget-kpi > * > * > *:first-child { font-size: clamp(16px, 5cqw, 26px) !important; }
+        /* Controles de edição: barra flutuante só no hover, sem chrome permanente. */
+        .altech-widget-tools { opacity: 0; transition: opacity 0.12s; }
+        .altech-widget-card:hover .altech-widget-tools { opacity: 1; }
+
       `}</style>
 
       {/* Toolbar */}
@@ -283,38 +300,36 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
             const fit = def.overflow === 'fit'
             return (
               <div key={inst.i} className="altech-widget-card" style={{
-                background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12,
+                background: 'transparent', border: 'none', borderRadius: 12,
                 display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
               }}>
-                <div className="altech-widget-header" style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 12px', borderBottom: `1px solid ${T.border}`,
-                  cursor: editing ? 'move' : 'default', flex: '0 0 auto',
-                }}>
-                  {editing ? (
-                    <EditableTitle
-                      value={inst.title ?? def.title}
-                      onConfirm={v => renameWidget(inst.i, v)}
-                    />
-                  ) : (
-                    <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {inst.title ?? def.title}
-                    </span>
-                  )}
-                  <RemoveButton onClick={() => removeWidget(inst.i)} />
-                </div>
                 <div
-                  className={`no-drag${fit ? ' altech-widget-body-fit' : ''}${inst.widgetId.startsWith('native.kpi-') ? ' altech-widget-kpi' : ''}`}
+                  className={`altech-widget-body${editing ? '' : ' no-drag'}${fit ? ' altech-widget-body-fit' : ''}${def.kind === 'kpi' ? ' altech-widget-kpi' : ''}`}
                   style={{
                     flex: '1 1 auto', minHeight: 0, width: '100%',
                     overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
-                    padding: 12, containerType: 'inline-size',
+                    containerType: 'inline-size',
                   }}
                 >
                   {def.render(ctx)}
                 </div>
+                {editing && (
+                  <div className="altech-widget-tools no-drag" style={{
+                    position: 'absolute', top: 6, right: 6, zIndex: 3,
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    background: T.bgSurface2, border: `1px solid ${T.border}`,
+                    borderRadius: 8, padding: '2px 4px', maxWidth: '85%',
+                  }}>
+                    <EditableTitle
+                      value={inst.title ?? def.title}
+                      onConfirm={v => renameWidget(inst.i, v)}
+                    />
+                    <RemoveButton onClick={() => removeWidget(inst.i)} />
+                  </div>
+                )}
               </div>
             )
+
           })}
         </ResponsiveGridLayout>
       )}

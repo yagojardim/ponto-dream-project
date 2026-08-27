@@ -22,7 +22,17 @@ import {
   KpiQaQueueWidget, KpiQaBugsWidget, KpiQaRejectionWidget, KpiQaEvidenceWidget,
   type WidgetCtx,
 } from '@/components/home/nativeWidgets'
+import { SCard } from '@/components/ds/DashboardKit'
 import { T } from '@/components/ds/tokens'
+import {
+  PmoRagCard, DeliveryRhythmCard, PmMainRagCard, PlannedVsDoneCard, TeamWorkloadCard,
+  ConversionFunnelCard, FeatureAdoptionCard, RoadmapCard, PoTeamCard,
+  StuckAgingCard, CeremoniesCard, MyActiveQueueCard, MyBlockedCard, RecentActivityCard,
+  DesignValidationCard, DesignSystemAlertsCard, TestExecutionCard, QaCoverageCard,
+  CriticalBlockersCard,
+} from '@/components/home/panelBodyCards'
+import { AdminUsersCard, AdminModulesCard, AdminAuditCard, ClientFeedCard } from '@/pages/DashboardHomePage'
+import { MOCK_TENANT } from '@/data/session'
 
 export type { WidgetCtx }
 
@@ -32,6 +42,10 @@ export interface WidgetDef {
   id: string
   title: string
   group: WidgetGroup
+  /** 'kpi' = card estreito da linha de topo; 'card' = card de corpo. */
+  kind: 'kpi' | 'card'
+  /** Largura padrão em colunas na composição original (12 = largura total). */
+  defaultW: number
   /** 'fit' = conteúdo escala com o card (KPIs/gráficos); 'scroll' = listas roláveis. */
   overflow: 'fit' | 'scroll'
   /** Tamanho mínimo apresentável na grade (colunas / linhas). */
@@ -41,10 +55,14 @@ export interface WidgetDef {
 }
 
 function kpi(id: string, title: string, render: (c: WidgetCtx) => ReactNode): WidgetDef {
-  return { id, title, group: 'Início', overflow: 'fit', minW: 2, minH: 2, render }
+  return { id, title, group: 'Início', kind: 'kpi', defaultW: 3, overflow: 'fit', minW: 2, minH: 2, render }
 }
 function list(id: string, title: string, render: (c: WidgetCtx) => ReactNode): WidgetDef {
-  return { id, title, group: 'Início', overflow: 'scroll', minW: 3, minH: 2, render }
+  return { id, title, group: 'Início', kind: 'card', defaultW: 6, overflow: 'scroll', minW: 3, minH: 2, render }
+}
+/** Card de corpo dos painéis originais (traz o próprio SCard/WorkQueue). */
+function card(id: string, title: string, defaultW: number, render: (c: WidgetCtx) => ReactNode): WidgetDef {
+  return { id, title, group: 'Início', kind: 'card', defaultW, overflow: 'scroll', minW: 3, minH: 3, render }
 }
 
 const NATIVE: WidgetDef[] = [
@@ -122,17 +140,45 @@ const NATIVE: WidgetDef[] = [
   list('native.review-queue',  'Gargalos de PRs / revisão',    c => <ReviewQueueWidget {...c} />),
   list('native.design-queue',  'Fila de design ativa',         c => <DesignQueueWidget {...c} />),
   list('native.projects-rag',  'Saúde dos projetos (RAG)',     c => <ProjectsRagWidget {...c} />),
+
+  // Cards de corpo dos painéis originais
+  card('native.admin-users',    'Usuários & Convites',       6,  c => <AdminUsersCard onNav={c.onNav} />),
+  card('native.admin-modules',  'Módulos',                   6,  c => <AdminModulesCard onNav={c.onNav} />),
+  card('native.admin-audit',    'Auditoria',                 12, () => <AdminAuditCard />),
+  card('native.client-feed',    'Client Feed',               12, () => <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />),
+  card('native.pmo-rag',        'Saúde por Projeto (RAG)',   6,  c => <PmoRagCard {...c} />),
+  card('native.critical-blockers', 'Bloqueadores Críticos',  6,  c => <CriticalBlockersCard {...c} />),
+  card('native.delivery-rhythm', 'Ritmo de Entrega',         12, c => <DeliveryRhythmCard {...c} />),
+  card('native.pm-rag',         'Projeto principal (RAG)',   6,  c => <PmMainRagCard {...c} />),
+  card('native.planned-done',   'Planejado × Concluído',     6,  c => <PlannedVsDoneCard {...c} />),
+  card('native.team-workload',  'Carga do Time',             12, () => <TeamWorkloadCard />),
+  card('native.funnel',         'Funil de Conversão',        6,  () => <ConversionFunnelCard />),
+  card('native.feature-adoption', 'Adoção de Features',      6,  () => <FeatureAdoptionCard />),
+  card('native.roadmap',        'Roadmap Estratégico',       12, c => <RoadmapCard {...c} />),
+  card('native.po-team',        'Time Atuando no Projeto',   6,  () => <PoTeamCard />),
+  card('native.stuck-aging',    'Itens Parados + Aging WIP', 6,  c => <StuckAgingCard {...c} />),
+  card('native.ceremonies',     'Cerimônias',                12, () => <CeremoniesCard />),
+  card('native.my-active-queue', 'Minha Fila Ativa',         12, c => <MyActiveQueueCard {...c} />),
+  card('native.my-blocked',     'Meus Bloqueados',           6,  c => <MyBlockedCard {...c} />),
+  card('native.recent-activity', 'Atividade Recente',        6,  c => <RecentActivityCard {...c} />),
+  card('native.design-validation', 'Validações em Andamento', 6, () => <DesignValidationCard />),
+  card('native.design-system',  'Alertas do Design System',  6,  () => <DesignSystemAlertsCard />),
+  card('native.test-execution', 'Fila de Execução de Testes', 6, c => <TestExecutionCard {...c} />),
+  card('native.qa-coverage',    'Aging / Rejeição (QA)',     6,  c => <QaCoverageCard {...c} />),
 ]
 
 const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
   id: `report.${entry.id}`,
   title: entry.title,
   group: 'Relatórios' as const,
+  kind: 'card' as const,
+  defaultW: 6,
   overflow: 'fit' as const,
   minW: 3,
   minH: 3,
   render: (ctx: WidgetCtx) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', minHeight: 0 }}>
+    <SCard title={entry.title} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+      bodyStyle={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ flex: '0 0 auto', fontSize: 11, color: T.text3 }}>{entry.subtitle}</div>
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <ChartFillProvider>
@@ -149,8 +195,9 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
       >
         Abrir relatório →
       </button>
-    </div>
+    </SCard>
   ),
+
 }))
 
 export const HOME_WIDGETS: WidgetDef[] = [...NATIVE, ...REPORTS]
@@ -167,52 +214,53 @@ const ROLE_DEFAULTS: Record<string, string[]> = {
   admin: [
     'native.kpi-admin-projects', 'native.kpi-admin-boards', 'native.kpi-admin-modules',
     'native.kpi-admin-users', 'native.kpi-admin-invites',
-    'native.projects-rag', 'native.blocked',
+    'native.admin-users', 'native.admin-modules', 'native.admin-audit', 'native.projects-rag',
     'report.health',
   ],
   pmo: [
     'native.kpi-pmo-active', 'native.kpi-pmo-risk', 'native.kpi-predictability', 'native.kpi-planned-done',
-    'native.projects-rag', 'native.blocked', 'native.sprint',
+    'native.pmo-rag', 'native.critical-blockers', 'native.delivery-rhythm', 'native.client-feed',
     'report.velocity', 'report.criados',
   ],
   'project-manager': [
     'native.kpi-pm-progress', 'native.kpi-pm-deadline', 'native.kpi-blocked', 'native.kpi-predictability',
-    'native.projects-rag', 'native.sprint', 'native.blocked',
+    'native.pm-rag', 'native.planned-done', 'native.sprint', 'native.critical-blockers',
+    'native.team-workload', 'native.client-feed',
     'report.burndown', 'report.workload',
   ],
   'product-manager': [
     'native.kpi-mau', 'native.kpi-stickiness', 'native.kpi-churn', 'native.kpi-adoption',
-    'native.projects-rag',
+    'native.funnel', 'native.feature-adoption', 'native.roadmap',
     'report.criados', 'report.health',
   ],
   'product-owner': [
     'native.kpi-po-ready', 'native.kpi-backlog-health', 'native.kpi-created-vs-done', 'native.kpi-releases-health',
-    'native.backlog-alert', 'native.ready', 'native.sprint',
+    'native.backlog-alert', 'native.ready', 'native.client-feed', 'native.po-team',
     'report.criados', 'report.aging',
   ],
   'scrum-master': [
     'native.kpi-sprint-health', 'native.kpi-impediments', 'native.kpi-sprint-goal', 'native.kpi-wip',
-    'native.blocked', 'native.sprint',
+    'native.blocked', 'native.stuck-aging', 'native.ceremonies',
     'report.burndown', 'report.cfd',
   ],
   'tech-lead': [
     'native.kpi-critical-bugs', 'native.kpi-leadtime', 'native.kpi-throughput', 'native.kpi-rework',
-    'native.review-queue', 'native.blocked',
+    'native.review-queue', 'native.client-feed',
     'report.leadtime', 'report.bugs',
   ],
   dev: [
     'native.kpi-my-items', 'native.kpi-my-late', 'native.kpi-my-blocked',
-    'native.my-queue', 'native.blocked', 'native.sprint',
+    'native.my-active-queue', 'native.my-blocked', 'native.recent-activity', 'native.client-feed',
     'report.burndown',
   ],
   ux: [
     'native.kpi-ux-flows', 'native.kpi-ux-prototypes', 'native.kpi-ux-pending', 'native.kpi-ux-handoff',
-    'native.design-queue', 'native.ready',
+    'native.design-queue', 'native.design-validation', 'native.design-system',
     'report.workload',
   ],
   qa: [
     'native.kpi-qa-queue', 'native.kpi-qa-bugs', 'native.kpi-qa-rejection', 'native.kpi-qa-evidence',
-    'native.testing', 'native.blocked', 'native.sprint',
+    'native.test-execution', 'native.qa-coverage',
     'report.bugs', 'report.criados',
   ],
 }
