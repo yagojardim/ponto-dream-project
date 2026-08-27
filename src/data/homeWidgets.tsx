@@ -179,9 +179,7 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
   minW: 3,
   minH: 3,
   render: (ctx: WidgetCtx) => (
-    <SCard title={entry.title} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-      bodyStyle={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ flex: '0 0 auto', fontSize: 11, color: T.text3 }}>{entry.subtitle}</div>
+    <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <ChartFillProvider>
           <entry.Component />
@@ -197,8 +195,9 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
       >
         Abrir relatório →
       </button>
-    </SCard>
+    </div>
   ),
+
 
 }))
 
