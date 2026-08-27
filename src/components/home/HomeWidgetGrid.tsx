@@ -9,9 +9,11 @@ import { Responsive, WidthProvider, type Layout, type Layouts } from 'react-grid
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { T } from '@/components/ds/tokens'
-import { SCard, WorkItemDetailDrawer, type WorkItem } from '@/components/ds/DashboardKit'
-import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx } from '@/data/homeWidgets'
+import { WorkItemDetailDrawer, type WorkItem } from '@/components/ds/DashboardKit'
+import { CardShellProvider } from '@/components/ds/cardShell'
+import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx, type WidgetDef } from '@/data/homeWidgets'
 import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetModal'
+
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
