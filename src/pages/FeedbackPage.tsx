@@ -182,6 +182,7 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
   const { activeUser } = useSession()
   const [tab, setTab] = useState<FeedbackTab>('feedback')
   const [helpView, setHelpView] = useState<string | null>(null)
+  const [helpExpanded, setHelpExpanded] = useState(true)
   const [query, setQuery] = useState('')
 
   const [screenUrl, setScreenUrl] = useState('')
@@ -263,7 +264,13 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
   }
 
   function selectTab(id: FeedbackTab) {
-    setTab(id)
+    if (id === 'ajuda') {
+      setTab('ajuda')
+      setHelpView(null)
+      setHelpExpanded(true)
+    } else {
+      setTab(id)
+    }
     setError(null)
   }
 
@@ -276,7 +283,14 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
     return (
       <button
         key={id}
-        onClick={() => selectTab(id)}
+        onClick={() => {
+          if (id === 'ajuda' && tab === 'ajuda') {
+            setHelpExpanded(prev => !prev)
+            setHelpView(null)
+          } else {
+            selectTab(id)
+          }
+        }}
         aria-pressed={parentOn}
         className="text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2"
         style={{
@@ -416,8 +430,17 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
         </p>
         <nav className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1 pr-1">
           {navItem('ajuda')}
-          {tab === 'ajuda' && (
+          {tab === 'ajuda' && helpExpanded && (
             <div className="flex flex-col gap-2 pl-3 pb-2">
+              <button
+                onClick={() => { setHelpExpanded(false); setHelpView(null) }}
+                className="text-left px-2 h-8 rounded-lg text-[12px] font-medium transition-colors"
+                style={{ background: 'transparent', color: T.text2 }}
+                onMouseEnter={e => { e.currentTarget.style.color = T.text1 }}
+                onMouseLeave={e => { e.currentTarget.style.color = T.text2 }}
+              >
+                ‹ Voltar ao menu
+              </button>
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
@@ -465,7 +488,7 @@ export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void
             onChange={e => {
               const v = e.target.value
               if (v.startsWith('help:')) { selectTab('ajuda'); setHelpView(v.slice(5)) }
-              else { selectTab(v as FeedbackTab); if (v === 'ajuda') setHelpView(null) }
+              else { selectTab(v as FeedbackTab) }
             }}
             className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
             style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
