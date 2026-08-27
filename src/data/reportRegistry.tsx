@@ -67,10 +67,20 @@ function useChartState(explicit?: ReportsData) {
   return { data: ctx.data, loading: ctx.loading, error: ctx.error }
 }
 
-function ChartMessage({ kind, text, height }: { kind: 'loading' | 'error' | 'empty'; text: string; height: number }) {
+/**
+ * Modo "fill": quando o gráfico é renderizado dentro de um card redimensionável
+ * (painel do Início), a altura fixa em px dá lugar a 100% do container.
+ */
+const ChartFillCtx = createContext(false)
+
+export function ChartFillProvider({ children }: { children: ReactNode }) {
+  return <ChartFillCtx.Provider value={true}>{children}</ChartFillCtx.Provider>
+}
+
+function ChartMessage({ kind, text, height }: { kind: 'loading' | 'error' | 'empty'; text: string; height: number | string }) {
   if (kind === 'loading') {
     return (
-      <div style={{ height, display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+      <div style={{ height, minHeight: 40, display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{ height: 10, borderRadius: 5, background: T.bgSurface2, opacity: 1 - i * 0.25 }} />
         ))}
@@ -79,7 +89,7 @@ function ChartMessage({ kind, text, height }: { kind: 'loading' | 'error' | 'emp
   }
   return (
     <div style={{
-      height, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height, minHeight: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
       textAlign: 'center', fontSize: 11, padding: '0 12px',
       color: kind === 'error' ? T.crit : T.text3,
       border: `1px dashed ${kind === 'error' ? `${T.crit}55` : T.border}`, borderRadius: 8,
@@ -99,10 +109,19 @@ function ChartFrame({ data, loading, error, height, isEmpty, emptyText, children
   emptyText: string
   children: () => ReactElement
 }): ReactElement {
-  if (loading && !data) return <ChartMessage kind="loading" text="" height={height} />
-  if (error) return <ChartMessage kind="error" text={error} height={height} />
-  if (!data || isEmpty) return <ChartMessage kind="empty" text={emptyText} height={height} />
-  return children()
+  const fill = useContext(ChartFillCtx)
+  const h: number | string = fill ? '100%' : height
+  let inner: ReactElement
+  if (loading && !data) inner = <ChartMessage kind="loading" text="" height={h} />
+  else if (error) inner = <ChartMessage kind="error" text={error} height={h} />
+  else if (!data || isEmpty) inner = <ChartMessage kind="empty" text={emptyText} height={h} />
+  else inner = children()
+  if (!fill) return inner
+  return (
+    <div className="altech-chart-fill" style={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      {inner}
+    </div>
+  )
 }
 
 // ─── Chart Components ─────────────────────────────────────────────────────────
