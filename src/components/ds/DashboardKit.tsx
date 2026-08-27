@@ -4,6 +4,8 @@
  */
 import { useState, useRef, useEffect, type ReactNode, type CSSProperties } from 'react'
 import { T } from './tokens'
+import { CardShellProvider, useCardShell } from './cardShell'
+
 import { HelpHint } from './HelpHint'
 import { useSession } from '../../data/SessionContext'
 import { can } from '../../data/permissions'
@@ -133,6 +135,29 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
   title: string; action?: ReactNode; children: ReactNode; style?: CSSProperties; bodyStyle?: CSSProperties
   help?: string; helpTitle?: string
 }) {
+  const shell = useCardShell()
+
+  // Dentro da casca do board interativo: sem moldura e sem cabeçalho próprios.
+  // O título nativo (com contagem, quando houver) sobe para o cabeçalho fixo.
+  useEffect(() => {
+    if (shell.bare) shell.registerTitle?.(title)
+  }, [shell, title])
+
+  if (shell.bare) {
+    return (
+      <CardShellProvider value={{ bare: false }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, flex: '1 1 auto' }}>
+          {action && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, flexShrink: 0 }}>{action}</div>
+          )}
+          {bodyStyle
+            ? <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', ...bodyStyle }}>{children}</div>
+            : children}
+        </div>
+      </CardShellProvider>
+    )
+  }
+
   return (
     <div style={{
       background: T.bgSurface, border: `1px solid ${T.border}`,
@@ -158,6 +183,7 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
     </div>
   )
 }
+
 
 // ─── ProgressBar ─────────────────────────────────────────────────────────────
 export function ProgressBar({ pct, color, height = 4 }: {

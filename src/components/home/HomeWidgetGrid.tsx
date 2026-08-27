@@ -9,9 +9,11 @@ import { Responsive, WidthProvider, type Layout, type Layouts } from 'react-grid
 import 'react-grid-layout/css/styles.css'
 import 'react-resizable/css/styles.css'
 import { T } from '@/components/ds/tokens'
-import { SCard, WorkItemDetailDrawer, type WorkItem } from '@/components/ds/DashboardKit'
-import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx } from '@/data/homeWidgets'
+import { WorkItemDetailDrawer, type WorkItem } from '@/components/ds/DashboardKit'
+import { CardShellProvider } from '@/components/ds/cardShell'
+import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx, type WidgetDef } from '@/data/homeWidgets'
 import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetModal'
+
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
@@ -214,7 +216,11 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         /* Cadeia de altura: o conteúdo acompanha o tamanho do card. */
         .altech-home-grid .react-grid-item { display: flex; }
         .altech-widget-card { height: 100%; width: 100%; min-height: 0; position: relative; }
-        .altech-widget-card > .altech-widget-body { height: 100%; }
+        .altech-widget-card > .altech-widget-body,
+        .altech-widget-card > .altech-widget-kpi { height: 100%; }
+        /* Nada de moldura dupla: cards internos perdem borda/fundo dentro da casca. */
+        .altech-widget-body > * { max-width: 100%; }
+
         .altech-widget-body-fit { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
         .altech-widget-body-fit > * { flex: 1 1 auto; min-height: 0; max-width: 100%; }
         .altech-widget-body-fit svg { max-width: 100%; max-height: 100%; height: auto; }
@@ -297,42 +303,22 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           {state.instances.map(inst => {
             const def = getWidget(inst.widgetId)
             if (!def) return <div key={inst.i} />
-            const fit = def.overflow === 'fit'
             return (
               <div key={inst.i} className="altech-widget-card" style={{
-                background: 'transparent', border: 'none', borderRadius: 12,
                 display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden',
               }}>
-                <div
-                  className={`altech-widget-body${editing ? '' : ' no-drag'}${fit ? ' altech-widget-body-fit' : ''}${def.kind === 'kpi' ? ' altech-widget-kpi' : ''}`}
-                  style={{
-                    flex: '1 1 auto', minHeight: 0, width: '100%',
-                    overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
-                    containerType: 'inline-size',
-                  }}
-                >
-                  {def.framed
-                    ? <SCard title={inst.title ?? def.title} style={{ height: '100%' }}>{def.render(ctx)}</SCard>
-                    : def.render(ctx)}
-                </div>
-                {editing && (
-                  <div className="altech-widget-tools no-drag" style={{
-                    position: 'absolute', top: 6, right: 6, zIndex: 3,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    background: T.bgSurface2, border: `1px solid ${T.border}`,
-                    borderRadius: 8, padding: '2px 4px', maxWidth: '85%',
-                  }}>
-                    <EditableTitle
-                      value={inst.title ?? def.title}
-                      onConfirm={v => renameWidget(inst.i, v)}
-                    />
-                    <RemoveButton onClick={() => removeWidget(inst.i)} />
-                  </div>
-                )}
+                <WidgetShell
+                  def={def}
+                  ctx={ctx}
+                  customTitle={inst.title}
+                  editing={editing}
+                  onRename={v => renameWidget(inst.i, v)}
+                  onRemove={() => removeWidget(inst.i)}
+                />
               </div>
             )
-
           })}
+
         </ResponsiveGridLayout>
       )}
 
@@ -410,5 +396,93 @@ function RemoveButton({ onClick }: { onClick: () => void }) {
           stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
+  )
+}
+
+/**
+ * Casca única de cada widget do board: moldura + cabeçalho fixo opaco (não-KPI).
+ * Os componentes internos rodam em modo "bare" (sem moldura/título próprios) e
+ * apenas informam o título nativo — que pode trazer contagem (ex.: "Bloqueados (1)").
+ */
+function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
+  def: WidgetDef
+  ctx: WidgetCtx
+  customTitle?: string
+  editing: boolean
+  onRename: (v: string) => void
+  onRemove: () => void
+}) {
+  const [nativeTitle, setNativeTitle] = useState<string | null>(null)
+  const fit = def.overflow === 'fit'
+  const isKpi = def.kind === 'kpi'
+  const title = customTitle ?? nativeTitle ?? def.title
+
+  const shell = useMemo(
+    () => ({ bare: true, registerTitle: (t: string) => setNativeTitle(prev => (prev === t ? prev : t)) }),
+    [],
+  )
+
+  const body = (
+    <div
+      className={`altech-widget-body${editing ? '' : ' no-drag'}${fit ? ' altech-widget-body-fit' : ''}${isKpi ? ' altech-widget-kpi' : ''}`}
+      style={{
+        flex: '1 1 auto', minHeight: 0, width: '100%',
+        overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
+        padding: isKpi ? 0 : 14,
+        containerType: 'inline-size',
+      }}
+    >
+      {isKpi ? def.render(ctx) : <CardShellProvider value={shell}>{def.render(ctx)}</CardShellProvider>}
+    </div>
+  )
+
+  const tools = editing ? (
+    <div className="altech-widget-tools no-drag" style={{
+      display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, maxWidth: '60%',
+    }}>
+      <EditableTitle value={title} onConfirm={onRename} />
+      <RemoveButton onClick={onRemove} />
+    </div>
+  ) : null
+
+  if (isKpi) {
+    return (
+      <>
+        {body}
+        {editing && (
+          <div className="altech-widget-tools no-drag" style={{
+            position: 'absolute', top: 6, right: 6, zIndex: 3,
+            display: 'flex', alignItems: 'center', gap: 4,
+            background: T.bgSurface2, border: `1px solid ${T.border}`,
+            borderRadius: 8, padding: '2px 4px', maxWidth: '85%',
+          }}>
+            <EditableTitle value={title} onConfirm={onRename} />
+            <RemoveButton onClick={onRemove} />
+          </div>
+        )}
+      </>
+    )
+  }
+
+  return (
+    <div style={{
+      flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column',
+      border: `1px solid ${T.border}`, borderRadius: 12, overflow: 'hidden',
+      backgroundColor: T.bgPage, backgroundImage: `linear-gradient(${T.bgSurface}, ${T.bgSurface})`,
+    }}>
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 2, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+        padding: '10px 14px', borderBottom: `1px solid ${T.border}`,
+        backgroundColor: T.bgPage, backgroundImage: `linear-gradient(${T.bgSurface}, ${T.bgSurface})`,
+      }}>
+        <span style={{
+          fontSize: 12, fontWeight: 600, color: T.text1,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{title}</span>
+        {tools}
+      </div>
+      {body}
+    </div>
   )
 }
