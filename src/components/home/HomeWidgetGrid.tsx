@@ -39,7 +39,7 @@ interface Props {
   onNav: (view: string, targetId?: string) => void
 }
 
-function storageKey(userId: string) { return `altech.home.layout.${userId}` }
+function storageKey(userId: string, role: string) { return `altech.home.layout.${userId}.${role}` }
 
 function newId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -78,9 +78,9 @@ function buildDefault(role: string): StoredState {
   return { instances, layout }
 }
 
-function loadStored(userId: string): StoredState | null {
+function loadStored(userId: string, role: string): StoredState | null {
   try {
-    const raw = localStorage.getItem(storageKey(userId))
+    const raw = localStorage.getItem(storageKey(userId, role))
     if (!raw) return null
     const parsed = JSON.parse(raw) as StoredState
     if (!Array.isArray(parsed.instances) || !Array.isArray(parsed.layout)) return null
@@ -94,7 +94,7 @@ function loadStored(userId: string): StoredState | null {
 }
 
 export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
-  const [state, setState] = useState<StoredState>(() => loadStored(userId) ?? buildDefault(role))
+  const [state, setState] = useState<StoredState>(() => loadStored(userId, role) ?? buildDefault(role))
   const [addOpen, setAddOpen] = useState(false)
   const [drawerItem, setDrawerItem] = useState<WorkItem | null>(null)
   // Modo edição: mudanças ficam só em estado; Salvar persiste, Cancelar volta ao snapshot.
@@ -108,7 +108,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     const key = `${userId}|${role}`
     if (hydratedFor.current === key) return
     hydratedFor.current = key
-    setState(loadStored(userId) ?? buildDefault(role))
+    setState(loadStored(userId, role) ?? buildDefault(role))
     setEditing(false)
     setSnapshot(null)
   }, [userId, role])
@@ -119,7 +119,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   }
 
   const saveEditing = () => {
-    try { localStorage.setItem(storageKey(userId), JSON.stringify(state)) } catch { /* noop */ }
+    try { localStorage.setItem(storageKey(userId, role), JSON.stringify(state)) } catch { /* noop */ }
     setEditing(false)
     setSnapshot(null)
   }
@@ -147,8 +147,8 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
 
   const persist = useCallback((next: StoredState) => {
     setState(next)
-    try { localStorage.setItem(storageKey(userId), JSON.stringify(next)) } catch { /* storage indisponível */ }
-  }, [userId])
+    try { localStorage.setItem(storageKey(userId, role), JSON.stringify(next)) } catch { /* storage indisponível */ }
+  }, [userId, role])
 
   const ctx: WidgetCtx = useMemo(() => ({
     onNav,
@@ -161,11 +161,11 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
       const next = { instances: prev.instances, layout }
       // Em modo edição, a persistência acontece só no Salvar.
       if (!editing) {
-        try { localStorage.setItem(storageKey(userId), JSON.stringify(next)) } catch { /* noop */ }
+        try { localStorage.setItem(storageKey(userId, role), JSON.stringify(next)) } catch { /* noop */ }
       }
       return next
     })
-  }, [userId, editing])
+  }, [userId, role, editing])
 
   const addWidget = (widgetId: string, format: WidgetFormat) => {
     const inst: WidgetInstance = { i: newId(), widgetId, format }
@@ -185,7 +185,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   }
 
   const restoreDefault = () => {
-    try { localStorage.removeItem(storageKey(userId)) } catch { /* noop */ }
+    try { localStorage.removeItem(storageKey(userId, role)) } catch { /* noop */ }
     setState(buildDefault(role))
   }
 
