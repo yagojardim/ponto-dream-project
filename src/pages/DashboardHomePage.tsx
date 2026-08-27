@@ -238,8 +238,8 @@ function colorOf(seed: string): string {
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
   return AVATAR_COLORS[h % AVATAR_COLORS.length]
 }
-const STATUS_COLOR: Record<string, string> = { active: T.success, blocked: T.crit, inactive: T.neutral }
-const STATUS_LABEL: Record<string, string> = { active: 'Ativo', blocked: 'Bloqueado', inactive: 'Inativo' }
+const STATUS_COLOR: Record<string, string> = { active: T.success, blocked: T.warn, inactive: T.neutral }
+const STATUS_LABEL: Record<string, string> = { active: 'Ativo', blocked: 'Suspenso', inactive: 'Inativo' }
 
 export function AdminUsersCard({ onNav, onInvite, actorName }: {
   onNav: (v: string, targetId?: string) => void
