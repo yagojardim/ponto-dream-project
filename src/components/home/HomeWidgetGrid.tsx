@@ -101,8 +101,13 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const [editing, setEditing] = useState(false)
   const [snapshot, setSnapshot] = useState<StoredState | null>(null)
 
-  // Re-hydrate when the user (or role, on first access) changes.
+  // Re-hidrata só quando o usuário/papel MUDA de fato — nunca na montagem,
+  // para não sobrescrever o estado já hidratado no lazy init do useState.
+  const hydratedFor = useRef(`${userId}|${role}`)
   useEffect(() => {
+    const key = `${userId}|${role}`
+    if (hydratedFor.current === key) return
+    hydratedFor.current = key
     setState(loadStored(userId) ?? buildDefault(role))
     setEditing(false)
     setSnapshot(null)
