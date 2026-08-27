@@ -16,7 +16,7 @@ import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetMo
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
 const ROW_HEIGHT = 88
-const KPI_HEIGHT = 1
+const KPI_HEIGHT = 2
 const CARD_HEIGHT = 3
 
 export interface WidgetInstance {
