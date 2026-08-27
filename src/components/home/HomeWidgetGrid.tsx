@@ -216,7 +216,11 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         /* Cadeia de altura: o conteúdo acompanha o tamanho do card. */
         .altech-home-grid .react-grid-item { display: flex; }
         .altech-widget-card { height: 100%; width: 100%; min-height: 0; position: relative; }
-        .altech-widget-card > .altech-widget-body { height: 100%; }
+        .altech-widget-card > .altech-widget-body,
+        .altech-widget-card > .altech-widget-kpi { height: 100%; }
+        /* Nada de moldura dupla: cards internos perdem borda/fundo dentro da casca. */
+        .altech-widget-body > * { max-width: 100%; }
+
         .altech-widget-body-fit { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
         .altech-widget-body-fit > * { flex: 1 1 auto; min-height: 0; max-width: 100%; }
         .altech-widget-body-fit svg { max-width: 100%; max-height: 100%; height: auto; }
