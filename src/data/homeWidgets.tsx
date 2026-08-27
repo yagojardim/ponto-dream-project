@@ -4,7 +4,7 @@
  * can be dropped into the interactive Home grid.
  */
 import type { ReactNode } from 'react'
-import { REPORT_CARDS_LIST, navigateToReport } from '@/data/reportRegistry'
+import { REPORT_CARDS_LIST, navigateToReport, ChartFillProvider } from '@/data/reportRegistry'
 import {
   BlockedWidget, ReadyWidget, TestingWidget, BacklogAlertWidget, MyQueueWidget,
   SprintWidget, ProjectsRagWidget,
