@@ -2037,7 +2037,8 @@ function HomeFilterProvider({ children }: { children: ReactNode }) {
   const allowedIds = allowed.map(p => p.id)
   const selIds = [...sel].filter(id => allowedIds.includes(id))
   const scopeIds = selIds.length > 0 ? selIds : allowedIds
-  const projectIds = scopeIds.length > 0 ? scopeIds : (tenantWide && loading ? undefined : [])
+  // Tenant-wide ⇒ `undefined` (todos os projetos), independente do loading.
+  const projectIds = scopeIds.length > 0 ? scopeIds : (tenantWide ? undefined : [])
   SCOPE_IDS = projectIds
 
   return (
