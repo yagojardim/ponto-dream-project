@@ -57,6 +57,8 @@ export async function fetchTenantStorage(tenantId: string): Promise<TenantStorag
         name: 'Armazenamento do tenant', used_bytes: usedBytes, effective_bytes: effective,
       })
     }
+    await recordQuotaGrowth(tenantId, effective, settingsRes.data?.storage_plan ?? null)
+
 
     return {
       usedBytes,
