@@ -456,7 +456,6 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
       <>
         {body}
         {(
-
           <div className="altech-widget-tools no-drag" style={{
             position: 'absolute', top: 6, right: 6, zIndex: 3,
             display: 'flex', alignItems: 'center', gap: 4,

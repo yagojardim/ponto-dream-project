@@ -9,7 +9,7 @@ import { useClientPortal } from '../data/clientPortalStore'
 import {
   KpiCard, RagCard, ProgressCard, WorkQueue, SprintDonutCard,
   WorkItemDetailDrawer, FilterBar, ProjectMultiSelect,
-  SCard, ProgressBar, StatusBadge, ConditionalTag, Av,
+  SCard, CardStickyFooter, ProgressBar, StatusBadge, ConditionalTag, Av,
   AuditFeed, ActivityTimeline, EmptyState, LoadingState,
   MiniBarChart, MiniSparkline,
   type WorkItem, type FilterState, type RagStatus, type AuditEntry,
