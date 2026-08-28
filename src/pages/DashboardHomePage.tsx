@@ -9,7 +9,7 @@ import { useClientPortal } from '../data/clientPortalStore'
 import {
   KpiCard, RagCard, ProgressCard, WorkQueue, SprintDonutCard,
   WorkItemDetailDrawer, FilterBar, ProjectMultiSelect,
-  SCard, ProgressBar, StatusBadge, ConditionalTag, Av,
+  SCard, CardStickyFooter, ProgressBar, StatusBadge, ConditionalTag, Av,
   AuditFeed, ActivityTimeline, EmptyState, LoadingState,
   MiniBarChart, MiniSparkline,
   type WorkItem, type FilterState, type RagStatus, type AuditEntry,
@@ -283,7 +283,7 @@ export function AdminUsersCard({ onNav, onInvite, actorName }: {
         : ordered.length === 0
           ? <EmptyState message={failed ? 'Não foi possível carregar os usuários.' : 'Nenhum usuário no tenant.'} />
           : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto', paddingRight: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 0, paddingRight: 6 }}>
               {displayedUsers.map(u => {
                 const c = STATUS_COLOR[u.status] ?? T.neutral
                 const isActive = u.status === 'active'
@@ -310,9 +310,11 @@ export function AdminUsersCard({ onNav, onInvite, actorName }: {
               })}
             </div>
           )}
-      <button onClick={() => onInvite ? onInvite() : onNav('config')} style={{ marginTop: 12, width: '100%', fontSize: 11, color: T.accent, background: `${T.accent}12`, border: `1px solid ${T.accent}33`, borderRadius: 6, padding: '6px', cursor: 'pointer' }}>
-        + Convidar usuário
-      </button>
+      <CardStickyFooter>
+        <button onClick={() => onInvite ? onInvite() : onNav('config')} style={{ width: '100%', fontSize: 11, color: T.accent, background: `${T.accent}12`, border: `1px solid ${T.accent}33`, borderRadius: 6, padding: '6px', cursor: 'pointer' }}>
+          + Convidar usuário
+        </button>
+      </CardStickyFooter>
     </SCard>
   )
 }

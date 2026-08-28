@@ -11,6 +11,8 @@ export interface CardShellValue {
   bare: boolean
   /** Informa o título nativo do card ao cabeçalho da casca. */
   registerTitle?: (title: string) => void
+  /** Slot do cabeçalho fixo onde a ação de topo do card deve ser renderizada. */
+  actionSlot?: HTMLElement | null
 }
 
 const CardShellContext = createContext<CardShellValue>({ bare: false })

@@ -3,6 +3,7 @@
  * Single source of truth. Import from here, never duplicate in panel files.
  */
 import { useState, useRef, useEffect, type ReactNode, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { T } from './tokens'
 import { CardShellProvider, useCardShell } from './cardShell'
 
@@ -148,7 +149,9 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
       <CardShellProvider value={{ bare: false }}>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, flex: '1 1 auto' }}>
           {action && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, flexShrink: 0 }}>{action}</div>
+            shell.actionSlot
+              ? createPortal(action, shell.actionSlot)
+              : <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, flexShrink: 0 }}>{action}</div>
           )}
           {bodyStyle
             ? <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', ...bodyStyle }}>{children}</div>
@@ -181,6 +184,24 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
         ? <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', ...bodyStyle }}>{children}</div>
         : children}
     </div>
+  )
+}
+
+
+/**
+ * Rodapé fixo e opaco de um card: fica colado na base da área rolável,
+ * com fundo sólido para o conteúdo não aparecer por trás.
+ */
+export function CardStickyFooter({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  return (
+    <div style={{
+      position: 'sticky', bottom: 0, zIndex: 2, flexShrink: 0,
+      marginTop: 12, paddingTop: 10,
+      borderTop: `1px solid ${T.border}`,
+      backgroundColor: T.bgPage,
+      backgroundImage: `linear-gradient(${T.bgSurface}, ${T.bgSurface})`,
+      ...style,
+    }}>{children}</div>
   )
 }
 
