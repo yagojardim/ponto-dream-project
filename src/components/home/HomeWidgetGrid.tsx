@@ -15,6 +15,7 @@ import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx, type WidgetD
 import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetModal'
 import { ProjFilterRow, useProjSel, useAllowedProjects } from '@/pages/DashboardHomePage'
 import { setWidgetScope } from '@/components/home/nativeWidgets'
+import { ReportChartModal, ReportsDataProvider } from '@/data/reportRegistry'
 
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
@@ -118,6 +119,8 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const [selProj, setSelProj] = useProjSel()
   const allowedProjects = useAllowedProjects()
   const [drawerItem, setDrawerItem] = useState<WorkItem | null>(null)
+  // Detalhe ampliado de um relatório (modal) — cards de velocidade/desempenho.
+  const [chartId, setChartId] = useState<string | null>(null)
   // Modo edição: mudanças ficam só em estado; Salvar persiste, Cancelar volta ao snapshot.
   const [editing, setEditing] = useState(false)
   const [snapshot, setSnapshot] = useState<StoredState | null>(null)
@@ -204,12 +207,24 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   // Espelho global para os helpers não-hook dos widgets nativos.
   setWidgetScope(scope)
 
+  // Cards de demanda abrem o board; com exatamente 1 projeto no filtro, direto nele.
+  const openBoard = useCallback(() => {
+    const ids = [...selProj]
+    if (ids.length === 1) onNav('project', ids[0])
+    else onNav('boards-list')
+  }, [onNav, selProj])
+
+  // Cards de velocidade/desempenho abrem o detalhe ampliado, sem trocar de tela.
+  const openDetail = useCallback((reportId: string) => setChartId(reportId), [])
+
   const ctx: WidgetCtx = useMemo(() => ({
     onNav,
     onOpenItem: setDrawerItem,
     userName,
     projectIds: scope,
-  }), [onNav, userName, scope])
+    openBoard,
+    openDetail,
+  }), [onNav, userName, scope, openBoard, openDetail])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     setState(prev => {
@@ -366,6 +381,11 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
       )}
 
       {addOpen && <AddWidgetModal onClose={() => setAddOpen(false)} onAdd={addWidget} />}
+      {chartId && (
+        <ReportsDataProvider projectIds={scope.size > 0 ? [...scope] : undefined}>
+          <ReportChartModal reportId={chartId} onClose={() => setChartId(null)} />
+        </ReportsDataProvider>
+      )}
       {drawerItem && (
         <WorkItemDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} onNav={onNav} />
       )}

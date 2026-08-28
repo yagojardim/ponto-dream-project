@@ -34,11 +34,11 @@ export function PmoRagCard({ onNav }: WidgetCtx) {
   )
 }
 
-export function DeliveryRhythmCard({ onNav }: WidgetCtx) {
+export function DeliveryRhythmCard({ openDetail }: WidgetCtx) {
   const agg = liveAggregates()
   return (
     <ProgressCard pct={agg?.consolidatedPct ?? 0} label="Ritmo de Entrega — Portfólio"
-      velocity={`Velocity média: ${agg?.velocityAvg ?? 0}pt/sprint`} onClick={() => onNav('reports')} />
+      velocity={`Velocity média: ${agg?.velocityAvg ?? 0}pt/sprint`} onClick={() => openDetail('velocity')} />
   )
 }
 
@@ -56,12 +56,12 @@ export function PmMainRagCard({ onNav }: WidgetCtx) {
   )
 }
 
-export function PlannedVsDoneCard({ onNav }: WidgetCtx) {
+export function PlannedVsDoneCard({ openDetail }: WidgetCtx) {
   const agg = liveAggregates()
   return (
     <ProgressCard pct={agg?.consolidatedPct ?? 0} label="Planejado × Concluído"
       velocity={`${agg?.donePoints ?? 0}pt concluídos de ${agg?.plannedPoints ?? 0}pt`}
-      onClick={() => onNav('reports')} />
+      onClick={() => openDetail('velocity')} />
   )
 }
 
@@ -353,12 +353,12 @@ const COBERTURA = [
   { criterio: 'Regressão coberta',             pct: 82 },
 ]
 
-export function TestExecutionCard({ onNav, onOpenItem }: WidgetCtx) {
+export function TestExecutionCard({ openBoard, onOpenItem }: WidgetCtx) {
   const testing = scopedItems(getTestingItems())
   return (
     <SCard title="Fila de Execução de Testes">
       {testing.length === 0
-        ? <EmptyState message="Nenhum item aguardando teste." action={{ label: 'Ver board', onClick: () => onNav('project') }} />
+        ? <EmptyState message="Nenhum item aguardando teste." action={{ label: 'Ver board', onClick: () => openBoard() }} />
         : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {testing.map(item => (
