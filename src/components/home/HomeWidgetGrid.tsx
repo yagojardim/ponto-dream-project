@@ -501,6 +501,8 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
         overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
         padding: isKpi ? 0 : 14,
         containerType: 'inline-size',
+        pointerEvents: editing ? 'none' : 'auto',
+        cursor: editing ? 'default' : undefined,
       }}
     >
       {isKpi ? def.render(ctx) : <CardShellProvider value={shell}>{def.render(ctx)}</CardShellProvider>}
