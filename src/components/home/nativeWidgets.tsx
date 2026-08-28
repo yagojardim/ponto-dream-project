@@ -30,6 +30,40 @@ export interface WidgetCtx {
   onOpenItem: (item: WorkItem) => void
   /** Name of the logged user — used by the personal queues. */
   userName: string
+  /** Projetos selecionados no filtro do board (vazio = todos). */
+  projectIds: ReadonlySet<string>
+}
+
+/**
+ * Escopo de projetos ativo no board do Início (vazio = todos os projetos).
+ * Espelhado num módulo para que todos os widgets nativos leiam o mesmo recorte
+ * sem precisar propagar props em cada helper do homeLive.
+ */
+let WIDGET_SCOPE: ReadonlySet<string> = new Set<string>()
+
+export function setWidgetScope(ids: ReadonlySet<string>): void {
+  WIDGET_SCOPE = ids
+}
+
+function scopedItems<I extends { project_id?: string }>(items: I[]): I[] {
+  return WIDGET_SCOPE.size === 0 ? items : items.filter(i => WIDGET_SCOPE.has(i.project_id ?? ''))
+}
+
+function scopedProjects<P extends { id: string }>(projects: P[]): P[] {
+  return WIDGET_SCOPE.size === 0 ? projects : projects.filter(p => WIDGET_SCOPE.has(p.id))
+}
+
+function scopedDelivery<R extends { projectId?: string | null }>(rows: R[]): R[] {
+  return WIDGET_SCOPE.size === 0 ? rows : rows.filter(r => WIDGET_SCOPE.has(r.projectId ?? ''))
+}
+
+/** Contagem tenant-wide quando não há recorte; valor recalculado quando há. */
+function scopedOr(total: number, scopedValue: number): number {
+  return WIDGET_SCOPE.size === 0 ? total : scopedValue
+}
+
+function scopeIds(): string[] {
+  return [...WIDGET_SCOPE]
 }
 
 function Scroll({ children }: { children: React.ReactNode }) {
@@ -44,7 +78,7 @@ function ratioViz(part: number, total: number, color: string) {
 // ─── Queues ───────────────────────────────────────────────────────────────────
 
 export function BlockedWidget({ onNav, onOpenItem }: WidgetCtx) {
-  const items = getBlockedItems()
+  const items = scopedItems(getBlockedItems())
   return (
     <WorkQueue
       title={`Bloqueados (${items.length})`}
@@ -60,7 +94,7 @@ export function BlockedWidget({ onNav, onOpenItem }: WidgetCtx) {
 }
 
 export function ReadyWidget({ onNav, onOpenItem }: WidgetCtx) {
-  const items = getReadyItems()
+  const items = scopedItems(getReadyItems())
   return (
     <WorkQueue
       title={`Prontos para desenvolvimento (${items.length})`}
@@ -75,7 +109,7 @@ export function ReadyWidget({ onNav, onOpenItem }: WidgetCtx) {
 }
 
 export function TestingWidget({ onNav, onOpenItem }: WidgetCtx) {
-  const items = getTestingItems()
+  const items = scopedItems(getTestingItems())
   return (
     <WorkQueue
       title={`Aguardando teste (${items.length})`}
@@ -90,7 +124,7 @@ export function TestingWidget({ onNav, onOpenItem }: WidgetCtx) {
 }
 
 export function BacklogAlertWidget({ onNav, onOpenItem }: WidgetCtx) {
-  const items = getBacklogWithAlerts()
+  const items = scopedItems(getBacklogWithAlerts())
   return (
     <WorkQueue
       title={`Backlog com alerta (${items.length})`}
@@ -105,7 +139,7 @@ export function BacklogAlertWidget({ onNav, onOpenItem }: WidgetCtx) {
 }
 
 export function MyQueueWidget({ onNav, onOpenItem, userName }: WidgetCtx) {
-  const mine = liveItems().filter(w => w.assignee?.name === userName && w.status !== 'done')
+  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName && w.status !== 'done')
   return (
     <WorkQueue
       title={`Minha fila (${mine.length})`}
@@ -121,7 +155,7 @@ export function MyQueueWidget({ onNav, onOpenItem, userName }: WidgetCtx) {
 
 /** Itens em revisão / bugs — gargalos técnicos do painel do Tech Lead. */
 export function ReviewQueueWidget({ onNav, onOpenItem }: WidgetCtx) {
-  const items = liveItems().filter(w => w.status === 'in-review' || w.type === 'bug')
+  const items = scopedItems(liveItems()).filter(w => w.status === 'in-review' || w.type === 'bug')
   return (
     <WorkQueue
       title={`Gargalos de PRs / Issues em revisão (${items.length})`}
@@ -137,7 +171,7 @@ export function ReviewQueueWidget({ onNav, onOpenItem }: WidgetCtx) {
 
 /** Fila de design ativa — painel de UX/UI. */
 export function DesignQueueWidget({ onNav, onOpenItem }: WidgetCtx) {
-  const items = liveItems().filter(w =>
+  const items = scopedItems(liveItems()).filter(w =>
     w.squad_id === 'squad_design' || (w.tags ?? []).some(t => ['design', 'handoff', 'frontend'].includes(t))
   )
   return (
@@ -157,7 +191,7 @@ export function DesignQueueWidget({ onNav, onOpenItem }: WidgetCtx) {
 
 export function SprintWidget({ onNav, onOpenItem }: WidgetCtx) {
   const sprintName = liveCurrentSprintName()
-  const items = sprintName ? getSprintItems(sprintName) : []
+  const items = sprintName ? scopedItems(getSprintItems(sprintName)) : []
   if (!sprintName || items.length === 0) {
     return <EmptyState message="Nenhuma sprint ativa no escopo selecionado." action={{ label: 'Ver projetos', onClick: () => onNav('projects') }} />
   }
@@ -178,8 +212,8 @@ export function SprintWidget({ onNav, onOpenItem }: WidgetCtx) {
 // ─── KPIs genéricos ───────────────────────────────────────────────────────────
 
 export function KpiBlockedWidget({ onNav }: WidgetCtx) {
-  const n = getBlockedItems().length
-  const total = liveItems().length
+  const n = scopedItems(getBlockedItems()).length
+  const total = scopedItems(liveItems()).length
   return (
     <KpiCard
       value={String(n)} label="Itens bloqueados"
@@ -192,7 +226,7 @@ export function KpiBlockedWidget({ onNav }: WidgetCtx) {
 }
 
 export function KpiWipWidget({ onNav }: WidgetCtx) {
-  const all = liveItems()
+  const all = scopedItems(liveItems())
   const wip = all.filter(w => ['in-progress', 'in-review', 'testing'].includes(w.status)).length
   return (
     <KpiCard
@@ -206,7 +240,7 @@ export function KpiWipWidget({ onNav }: WidgetCtx) {
 
 export function KpiSprintProgressWidget({ onNav }: WidgetCtx) {
   const sprintName = liveCurrentSprintName()
-  const items = sprintName ? getSprintItems(sprintName) : []
+  const items = sprintName ? scopedItems(getSprintItems(sprintName)) : []
   const done = items.filter(i => i.status === 'done').length
   const pct = items.length > 0 ? Math.round((done / items.length) * 100) : null
   return (
@@ -222,8 +256,8 @@ export function KpiSprintProgressWidget({ onNav }: WidgetCtx) {
 }
 
 export function KpiProjectsWidget({ onNav }: WidgetCtx) {
-  const projects = liveProjects()
-  const rag = liveAggregates()?.rag ?? []
+  const projects = scopedProjects(liveProjects())
+  const rag = scopedProjects(liveAggregates()?.rag ?? [])
   const atRisk = rag.filter(p => p.rag !== 'healthy').length
   return (
     <KpiCard
@@ -238,7 +272,7 @@ export function KpiProjectsWidget({ onNav }: WidgetCtx) {
 
 export function KpiDeliveredWidget({ onNav }: WidgetCtx) {
   const agg = liveAggregates()
-  const all = liveItems()
+  const all = scopedItems(liveItems())
   const done = all.filter(w => w.status === 'done').length
   return (
     <KpiCard
@@ -342,11 +376,11 @@ export function KpiAdminInvitesWidget({ onNav }: WidgetCtx) {
 
 export function KpiPmoActiveProjectsWidget({ onNav }: WidgetCtx) {
   const agg = liveAggregates()
-  const rags = agg?.rag ?? []
+  const rags = scopedProjects(agg?.rag ?? [])
   const healthy = rags.filter(r => r.rag === 'healthy').length
   return (
     <KpiCard
-      value={String(agg?.counts?.activeProjects ?? 0)} label="Projetos Ativos"
+      value={String(scopedOr(agg?.counts?.activeProjects ?? 0, rags.length))} label="Projetos Ativos"
       sub={`${healthy} no prazo`} disclaimer="projetos ativos no tenant"
       miniViz={ratioViz(healthy, rags.length, T.success)}
       onClick={() => onNav('projects-list')}
@@ -356,8 +390,8 @@ export function KpiPmoActiveProjectsWidget({ onNav }: WidgetCtx) {
 
 export function KpiPmoAtRiskWidget({ onNav }: WidgetCtx) {
   const agg = liveAggregates()
-  const rags = agg?.rag ?? []
-  const atRisk = agg?.counts?.atRisk ?? 0
+  const rags = scopedProjects(agg?.rag ?? [])
+  const atRisk = scopedOr(agg?.counts?.atRisk ?? 0, rags.filter(r => r.rag !== 'healthy').length)
   const blocked = rags.filter(r => r.rag === 'blocked').length
   return (
     <KpiCard
@@ -402,7 +436,7 @@ export function KpiPlannedVsDoneWidget({ onNav }: WidgetCtx) {
 // ─── KPIs · Project Manager ───────────────────────────────────────────────────
 
 export function KpiPmProgressWidget({ onNav }: WidgetCtx) {
-  const sprint = getSprintItems(liveCurrentSprintName() ?? undefined)
+  const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
   const done = sprint.filter(w => w.status === 'done').length
   const total = sprint.length || 1
   return (
@@ -418,7 +452,7 @@ export function KpiPmProgressWidget({ onNav }: WidgetCtx) {
 }
 
 export function KpiPmDeadlineWidget({ onNav }: WidgetCtx) {
-  const rag = (liveAggregates()?.rag ?? [])[0]
+  const rag = (scopedProjects(liveAggregates()?.rag ?? []))[0]
   return (
     <KpiCard
       value={rag?.daysLabel ?? '—'} label="Prazo Restante"
@@ -480,19 +514,20 @@ export function KpiAdoptionWidget({ onNav }: WidgetCtx) {
 
 function usePoMetrics(): PoCardMetrics | null {
   const [m, setM] = useState<PoCardMetrics | null>(null)
+  const ids = scopeIds().join(',')
   useEffect(() => {
     let alive = true
-    fetchPoCardMetrics([])
+    fetchPoCardMetrics(ids ? ids.split(',') : [])
       .then(v => { if (alive) setM(v) })
       .catch(err => { logger.error('home.po-metrics', err) })
     return () => { alive = false }
-  }, [])
+  }, [ids])
   return m
 }
 
 export function KpiPoReadyWidget({ onNav }: WidgetCtx) {
-  const sprintPts = getSprintItems(liveCurrentSprintName() ?? undefined).reduce((s, w) => s + (w.points ?? 0), 0)
-  const readyPts = getReadyItems().reduce((s, w) => s + (w.points ?? 0), 0)
+  const sprintPts = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined)).reduce((s, w) => s + (w.points ?? 0), 0)
+  const readyPts = scopedItems(getReadyItems()).reduce((s, w) => s + (w.points ?? 0), 0)
   const pct = sprintPts > 0 ? Math.round((readyPts / sprintPts) * 100) : null
   return (
     <KpiCard
@@ -506,7 +541,7 @@ export function KpiPoReadyWidget({ onNav }: WidgetCtx) {
 }
 
 export function KpiBacklogHealthWidget({ onNav }: WidgetCtx) {
-  const backlog = getBacklogWithAlerts()
+  const backlog = scopedItems(getBacklogWithAlerts())
   const healthy = backlog.filter(w => !w.tags?.some(t => t.startsWith('Sem '))).length
   const pct = backlog.length > 0 ? Math.round((healthy / backlog.length) * 100) : 100
   return (
@@ -552,7 +587,7 @@ export function KpiReleasesHealthWidget({ onNav }: WidgetCtx) {
 // ─── KPIs · Scrum Master ──────────────────────────────────────────────────────
 
 export function KpiSprintHealthWidget({ onNav }: WidgetCtx) {
-  const sprint = getSprintItems(liveCurrentSprintName() ?? undefined)
+  const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
   const parados = sprint.filter(w => w.status === 'blocked' || (w.days_blocked ?? 0) >= 2)
   const active = sprint.length > 0
   const health = active ? Math.round(((sprint.length - parados.length) / sprint.length) * 100) : null
@@ -571,20 +606,20 @@ export function KpiSprintHealthWidget({ onNav }: WidgetCtx) {
 }
 
 export function KpiImpedimentsWidget({ onNav }: WidgetCtx) {
-  const blocked = getBlockedItems()
+  const blocked = scopedItems(getBlockedItems())
   return (
     <KpiCard
       value={String(blocked.length)} label="Impedimentos" sub="ativos"
       disclaimer="impedimentos formais sem resolução registrada"
       color={T.crit} alert={blocked.length > 0}
-      miniViz={ratioViz(blocked.length, liveItems().length, T.crit)}
+      miniViz={ratioViz(blocked.length, scopedItems(liveItems()).length, T.crit)}
       onClick={() => onNav('list')}
     />
   )
 }
 
 export function KpiSprintGoalWidget({ onNav }: WidgetCtx) {
-  const sprint = getSprintItems(liveCurrentSprintName() ?? undefined)
+  const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
   const critical = sprint.filter(w => w.status === 'blocked' || w.priority === 'critical' || w.priority === 'high')
   const active = sprint.length > 0
   return (
@@ -605,11 +640,11 @@ export function KpiSprintGoalWidget({ onNav }: WidgetCtx) {
 const nf = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 function deliveryMetrics() {
-  return computeDeliveryMetrics(liveAggregates()?.deliveryRows ?? [])
+  return computeDeliveryMetrics(scopedDelivery(liveAggregates()?.deliveryRows ?? []))
 }
 
 export function KpiCriticalBugsWidget({ onNav }: WidgetCtx) {
-  const all = liveItems()
+  const all = scopedItems(liveItems())
   const bugs = all.filter(w => w.type === 'bug' && (w.priority === 'critical' || w.priority === 'high')).length
   return (
     <KpiCard
@@ -666,7 +701,7 @@ export function KpiReworkWidget({ onNav }: WidgetCtx) {
 // ─── KPIs · Dev ───────────────────────────────────────────────────────────────
 
 export function KpiMyItemsWidget({ onNav, userName }: WidgetCtx) {
-  const mine = liveItems().filter(w => w.assignee?.name === userName)
+  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
   const blocked = mine.filter(w => w.status === 'blocked').length
   const done = mine.filter(w => w.status === 'done').length
   return (
@@ -682,7 +717,7 @@ export function KpiMyItemsWidget({ onNav, userName }: WidgetCtx) {
 
 export function KpiMyLateWidget({ onNav, userName }: WidgetCtx) {
   const today = new Date().toISOString().slice(0, 10)
-  const mine = liveItems().filter(w => w.assignee?.name === userName)
+  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
   const late = mine.filter(w => w.due_date && w.due_date <= today && w.status !== 'done')
   return (
     <KpiCard
@@ -697,8 +732,8 @@ export function KpiMyLateWidget({ onNav, userName }: WidgetCtx) {
 }
 
 export function KpiMyBlockedWidget({ onNav, userName }: WidgetCtx) {
-  const mine = liveItems().filter(w => w.assignee?.name === userName)
-  const blocked = getBlockedItems().filter(w => w.assignee?.name === userName)
+  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
+  const blocked = scopedItems(getBlockedItems()).filter(w => w.assignee?.name === userName)
   return (
     <KpiCard
       value={String(blocked.length)} label="Meus Bloqueados" sub="aguardando desbloqueio"
@@ -759,7 +794,7 @@ export function KpiUxHandoffWidget({ onNav }: WidgetCtx) {
 // ─── KPIs · QA ────────────────────────────────────────────────────────────────
 
 export function KpiQaQueueWidget({ onNav }: WidgetCtx) {
-  const testing = getTestingItems()
+  const testing = scopedItems(getTestingItems())
   return (
     <KpiCard
       value={String(testing.length)} label="Aguardando Teste" sub="Ready for QA"
@@ -771,7 +806,7 @@ export function KpiQaQueueWidget({ onNav }: WidgetCtx) {
 }
 
 export function KpiQaBugsWidget({ onNav }: WidgetCtx) {
-  const crit = liveItems().filter(w => w.type === 'bug' && (w.priority === 'critical' || w.priority === 'high')).length
+  const crit = scopedItems(liveItems()).filter(w => w.type === 'bug' && (w.priority === 'critical' || w.priority === 'high')).length
   return (
     <KpiCard
       value={String(crit)} label="Bugs Críticos" sub={crit > 0 ? 'requer atenção' : 'tudo ok'}
@@ -807,7 +842,7 @@ export function KpiQaEvidenceWidget({ onNav }: WidgetCtx) {
 // ─── Projects (RAG) ───────────────────────────────────────────────────────────
 
 export function ProjectsRagWidget({ onNav }: WidgetCtx) {
-  const projects = liveAggregates()?.rag ?? []
+  const projects = scopedProjects(liveAggregates()?.rag ?? [])
   if (projects.length === 0) {
     return <EmptyState message="Nenhum projeto no seu escopo." action={{ label: 'Ver projetos', onClick: () => onNav('projects') }} />
   }
