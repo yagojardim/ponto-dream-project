@@ -217,13 +217,12 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
     title: 'Configurações',
     steps: ['Ajustes gerais da plataforma.'],
     guide: [
-      { text: 'Configurações do projeto (abas).', image: '/help/15-configuracoes.png' },
-      { text: 'Workflow.', image: '/help/config--workflow.png' },
-      { text: 'Tipos de demanda (+ novo tipo).', image: '/help/config--tipos--novo.png' },
-      { text: 'Componentes (+ novo componente).', image: '/help/config--componentes--novo.png' },
-      { text: 'Labels (+ nova label).', image: '/help/config--labels--nova.png' },
-      { text: 'Prioridades (+ adicionar).', image: '/help/config--prioridades--add.png' },
-      { text: 'Config do Board (+ nova coluna).', image: '/help/config--board--nova-coluna.png' },
+      { heading: 'Editor de Workflow', text: 'Em Configurações, a aba Workflow gerencia os status e as categorias do fluxo (A Fazer, Em Andamento, Concluído). Arraste os status para reordenar, remova com o ×, ou use "+ Adicionar status". Essas configurações refletem no Board e na seleção de status das issues.', image: '/help/config--workflow.png', imageAlt: 'Editor de Workflow com status por categoria' },
+      { heading: 'Tipos de demanda', text: 'Na aba Tipos de Demanda você cadastra e edita os tipos disponíveis (ex.: História, Bug) com "+ novo tipo".', image: '/help/config--tipos--novo.png', imageAlt: 'Novo tipo de demanda' },
+      { heading: 'Componentes', text: 'Em Componentes você cria os componentes do projeto para classificar as demandas por parte do sistema.', image: '/help/config--componentes--novo.png', imageAlt: 'Novo componente' },
+      { heading: 'Labels', text: 'Na aba Labels você cria e organiza as etiquetas usadas nas demandas.', image: '/help/config--labels--nova.png', imageAlt: 'Nova label' },
+      { heading: 'Prioridades', text: 'Em Prioridades você ajusta os níveis (ex.: Crítica, Alta, Média, Baixa) usados no projeto.', image: '/help/config--prioridades--add.png', imageAlt: 'Adicionar prioridade' },
+      { heading: 'Config do Board', text: 'Em Config do Board você define as colunas do quadro (ex.: "+ nova coluna"), casando o board com o seu fluxo.', image: '/help/config--board--nova-coluna.png', imageAlt: 'Nova coluna do board' },
     ],
   },
   'tenant-settings': {
@@ -233,7 +232,8 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'É aqui que você define o Admin Master.',
     ],
     guide: [
-      { text: 'Identidade, slug e dados do tenant; Admin Master.', image: '/help/16-config-tenant.png' },
+      { heading: 'Endereço público (slug)', text: 'A seção "Endereço público" mostra o slug atual e o status do tenant, e permite trocar o slug (mínimo 3 caracteres, apenas letras minúsculas, números e hífen) — é o endereço pelo qual o portal do cliente é acessado.', image: '/help/16-config-tenant.png', imageAlt: 'Configurações do Tenant — endereço público e identidade' },
+      { heading: 'Identidade e localização', text: 'Em "Identidade e localização" você define o Nome de exibição, a URL do logo, a Cor primária (com o hex), o Fuso horário e o Idioma. Clique em "Salvar alterações" para aplicar.' },
     ],
   },
   modules: {
@@ -269,58 +269,8 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
     ],
     guide: [
       { text: 'Assistente de acesso do cliente — Passo 1: dados.', image: '/help/19-criar-acesso--dados.png' },
-      { text: 'Passo 2: projetos compartilhados.', image: '/help/19-criar-acesso--projetos.png' },
-      { text: 'Passo 3: permissão (Visualizador/Administrador) e responsáveis.', image: '/help/criar-acesso--permissao.png' },
-    ],
-  },
-  'client-messages': {
-    title: 'Mensagens do Cliente',
-    steps: [
-      'Chat com o cliente por projeto.',
-      'Acompanhe threads de demandas e entregas.',
-    ],
-    guide: [
-      { text: 'Chat com o cliente por projeto.', image: '/help/21-mensagens-cliente.png' },
-      { text: 'Thread de uma demanda.', image: '/help/21-mensagens--thread.png' },
-    ],
-  },
-  client: {
-    title: 'Portal Cliente',
-    steps: [
-      'Acompanhe entregas, comente e aprove.',
-      'Alterne entre o dashboard e as mensagens.',
-    ],
-    guide: [
-      { text: 'Portal do Cliente (DashView) — visão do cliente.', image: '/help/dashview--principal.png' },
-      { text: 'Mensagens no portal.', image: '/help/dashview--mensagens.png' },
-      { text: 'Menu do perfil / Alterar senha.', image: '/help/dashview--alterar-senha.png' },
-    ],
-  },
-  team: {
-    title: 'Time & Permissões',
-    steps: [
-      'Cadastre novos usuários e defina o papel de cada um.',
-      'As capabilities liberadas no cadastro controlam o acesso às telas.',
-    ],
-    guide: [
-      { text: 'Membros, papéis e permissões.', image: '/help/20-time-permissoes.png' },
-      { text: 'Aba Convites.', image: '/help/time--convites.png' },
-      { text: 'Matriz de Permissões.', image: '/help/time--matriz.png' },
-      { text: 'Aba Dashboards.', image: '/help/time--dashboards.png' },
-      { text: 'Editar membro (dados / permissões / dashboard).', image: '/help/20-editar-membro.png' },
-      { text: 'Gerar link de acesso.', image: '/help/20-time--gerar-link.png' },
-      { text: 'Suspender / Desativar membro.', image: '/help/time--desativar.png' },
-      { text: 'Convidar membro — assistente de 7 etapas.', image: '/help/20-convite-step1.png' },
-    ],
-  },
-  profile: {
-    title: 'Meu perfil',
-    steps: [
-      'Visualize e edite seus dados pessoais.',
-      'Ajuste avatar, nome e e-mail.',
-    ],
-    guide: [
-      { text: 'Seu perfil.', image: '/help/perfil.png' },
+      { text: 'Passo 2: projetos com acesso.', image: '/help/19-criar-acesso--projetos.png' },
+      { text: 'Passo 3: permissões.', image: '/help/19-criar-acesso--permissoes.png' },
     ],
   },
 }
