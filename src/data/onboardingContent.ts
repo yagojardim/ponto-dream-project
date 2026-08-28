@@ -234,102 +234,98 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
     guide: [
       { heading: 'Endereço público (slug)', text: 'A seção "Endereço público" mostra o slug atual e o status do tenant, e permite trocar o slug (mínimo 3 caracteres, apenas letras minúsculas, números e hífen) — é o endereço pelo qual o portal do cliente é acessado.', image: '/help/16-config-tenant.png', imageAlt: 'Configurações do Tenant — endereço público e identidade' },
       { heading: 'Identidade e localização', text: 'Em "Identidade e localização" você define o Nome de exibição, a URL do logo, a Cor primária (com o hex), o Fuso horário e o Idioma. Clique em "Salvar alterações" para aplicar.' },
-      { heading: 'Admin Master', text: 'A seção Admin Master mostra quem é o administrador principal. Use "Transferir" para passar o cargo a outro membro do time (requer confirmação).', image: '/help/tenant--admin-master.png', imageAlt: 'Admin Master com opção de transferência' },
     ],
   },
   modules: {
     title: 'Módulos',
     steps: [
-      'Ative e desative módulos conforme a necessidade do time.',
-      'Use "Trial" para experimentar antes de contratar.',
+      'Vitrine de módulos premium da plataforma.',
+      'Use Testar grátis (30 dias) ou solicite a ativação definitiva.',
     ],
     guide: [
-      { heading: 'Catálogo de módulos', text: 'A página Módulos lista os módulos disponíveis em cards. Cada card traz o nome, a descrição, o selo de estado (Ativo, Inativo, Trial) e os botões de ação (Ativar / Desativar / Iniciar Trial). Módulos ativos aparecem com destaque.', image: '/help/17-modulos.png', imageAlt: 'Catálogo de módulos com estado e ações' },
-      { heading: 'Ativar e desativar', text: 'Clique em "Ativar" para ligar o módulo no tenant; em "Desativar" para suspendê-lo. Módulos desativados ficam com o card esmaecido.' },
-      { heading: 'Trial (período de teste)', text: 'Use "Iniciar Trial" para experimentar o módulo por tempo limitado antes de contratar. O contador de dias restantes aparece no card.' },
+      { heading: 'Vitrine de módulos', text: 'Módulos da Plataforma é a vitrine dos recursos premium (ex.: "1 ativo · 1 contratado · 8 no catálogo"). Os contadores do topo separam Implementados, Em preview, Solicitados e Disponíveis, e as abas filtram por categoria (Inteligência e automação, Integrações, Experiência externa, Governança, Segurança…). O aviso lembra que a ativação passa por análise, sem cobrança automática.', image: '/help/17-modulos.png', imageAlt: 'Vitrine de Módulos da Plataforma' },
+      { heading: 'Abrir um módulo', text: 'Cada card traz o nome, o estado (Operacional, Incluído, Em breve), a descrição e a lista de funcionalidades. Abra o módulo para ver os detalhes e testar grátis quando disponível.', image: '/help/17-modulos--abrir-modulo.png', imageAlt: 'Detalhe de um módulo' },
+      { heading: 'Gerenciar / contratar pacotes', text: 'Em pacotes você gerencia o que está contratado e solicita a ativação definitiva dos módulos.', image: '/help/17-modulos--pacotes.png', imageAlt: 'Pacotes e contratação de módulos' },
     ],
   },
   automations: {
     title: 'Automações',
     steps: [
-      'Crie regras "Quando → Então" para automatizar o fluxo.',
-      'Ex.: Quando uma demanda mudar para Em Revisão → notifique o revisor.',
+      'Crie regras no formato quando X → faça Y.',
+      'Use para automatizar passos repetitivos do fluxo do time.',
     ],
     guide: [
-      { heading: 'Lista de automações', text: 'A tela Automações lista as regras ativas e inativas. Cada linha mostra o nome da automação, o gatilho (Quando…), a ação (Então…), o estado (Ativa/Inativa) e as opções de Editar e Excluir.', image: '/help/18-automacoes.png', imageAlt: 'Lista de automações com gatilho, ação e estado' },
-      { heading: 'Criar automação', text: 'Em "+ Nova automação" você define: Quando (evento: mudança de status, atribuição, criação, etc.) e Então (ação: notificar, mover, atribuir, etc.). Combine várias condições e ações numa mesma regra.', image: '/help/automacoes--nova.png', imageAlt: 'Criar nova automação — Quando / Então' },
-      { heading: 'Ativar e desativar', text: 'Use o toggle para ligar ou desligar uma automação sem excluí-la — útil para pausar regras temporariamente.' },
+      { heading: 'Automações ativas', text: 'A coluna da esquerda lista suas automações (ex.: "Demanda movida para Done → Notificar QA"), com um ponto verde/cinza indicando ativa ou pausada. Selecione uma para editar ou use "+ Nova automação".', image: '/help/18-automacoes.png', imageAlt: 'Lista de automações ativas' },
+      { heading: 'Disparador → Condição → Ação', text: 'A regra tem três blocos: Disparador (o gatilho, ex.: "Demanda movida de status", com De/Para status), Condição (opcional, para refinar) e Ação (o que fazer, ex.: "Enviar notificação" com mensagem que aceita variáveis como {title} e {status}). No topo você ativa/desativa, testa em "Executar agora" e clica em "Salvar".', image: '/help/18-automacoes--nova.png', imageAlt: 'Editor de automação com disparador, condição e ação' },
+      { heading: 'Adicionar condição', text: 'Em "Adicionar condição" você restringe quando a automação roda (ex.: só para bugs críticos).', image: '/help/automacoes--adicionar-condicao.png', imageAlt: 'Adicionar condição à automação' },
+      { heading: 'Log de execuções', text: 'O "Log de execuções" registra cada disparo com data/hora, o disparador, o resultado (Sucesso/erro) e os detalhes — útil para auditar e depurar a regra.', image: '/help/automacoes--log.png', imageAlt: 'Log de execuções da automação' },
     ],
   },
   'client-access': {
-    title: 'Criar Acesso Cliente',
+    title: 'Criar Acesso de Cliente',
     steps: [
-      'Cadastre empresas e contatos para o Portal do Cliente.',
-      'Defina quais projetos cada cliente enxerga.',
+      'Gere o acesso do cliente ao portal.',
+      'Escolha o que ele pode ver, comentar e aprovar.',
     ],
     guide: [
-      { heading: 'Lista de acessos', text: 'A tela Criar Acesso Cliente lista as empresas e contatos cadastrados para o Portal. Cada linha mostra a Empresa, o Contato (nome + e-mail), os Projetos vinculados e o Status (Ativo/Inativo). Use "+ Novo acesso" para cadastrar.', image: '/help/19-client-access.png', imageAlt: 'Lista de acessos de clientes com empresa, contato e projetos' },
-      { heading: 'Novo acesso', text: 'Em "+ Novo acesso" preencha Empresa, Nome do contato, E-mail e selecione os Projetos que esse cliente poderá acompanhar no portal.', image: '/help/client-access--novo.png', imageAlt: 'Formulário de novo acesso de cliente' },
-      { heading: 'Editar e desativar', text: 'Na coluna Ações você edita os dados ou desativa o acesso — o cliente perde a visibilidade imediatamente.' },
+      { heading: 'Passo 1 — Dados do cliente', text: 'O assistente tem 3 passos (Dados do cliente · Projetos · Permissão). No passo 1 você informa Nome completo e E-mail — o sistema envia automaticamente um e-mail com login e senha temporária para o cliente.', image: '/help/19-criar-acesso--dados.png', imageAlt: 'Assistente de acesso do cliente — passo 1, dados' },
+      { heading: 'Passo 2 — Projetos compartilhados', text: 'No passo 2 você escolhe quais projetos o cliente vai acompanhar no portal.', image: '/help/19-criar-acesso--projetos.png', imageAlt: 'Passo 2 — projetos compartilhados' },
+      { heading: 'Passo 3 — Permissão', text: 'No passo 3 você define o nível de acesso (Visualizador ou Administrador) e os responsáveis pelo relacionamento com o cliente.', image: '/help/criar-acesso--permissao.png', imageAlt: 'Passo 3 — permissão e responsáveis' },
     ],
   },
   'client-messages': {
     title: 'Mensagens do Cliente',
     steps: [
-      'Veja e responda mensagens enviadas pelo Portal do Cliente.',
-      'Atribua responsáveis internos para cada conversa.',
+      'Chat com o cliente por projeto.',
+      'Acompanhe threads de demandas e entregas.',
     ],
     guide: [
-      { heading: 'Inbox de mensagens', text: 'Mensagens do Cliente funciona como um inbox: à esquerda ficam as conversas (empresa + assunto + data) e à direita o conteúdo da conversa selecionada, com o histórico de mensagens e o campo de resposta.', image: '/help/20-client-messages.png', imageAlt: 'Inbox de mensagens do cliente com conversa aberta' },
-      { heading: 'Responder e atribuir', text: 'Digite a resposta no campo inferior e envie. Use "Atribuir" para definir quem do time interno cuida daquela conversa.' },
-      { heading: 'Filtros e busca', text: 'Filtre por status (Aberta / Respondida / Fechada) e busque por empresa ou assunto para encontrar conversas rapidamente.' },
+      { heading: 'Conversas por projeto', text: 'À esquerda ficam as conversas, uma por projeto, com a última mensagem e o tempo. À direita abre o chat do projeto selecionado, com o histórico por data e as mensagens do time. Você pode mencionar (@todos, @pessoa) e responder pelo campo "Digite sua resposta ao cliente…".', image: '/help/21-mensagens-cliente.png', imageAlt: 'Mensagens do Cliente — conversas por projeto e chat' },
+      { heading: 'Thread de uma demanda', text: 'As conversas podem estar amarradas a uma demanda específica (thread), para tratar dúvidas e entregas daquele item sem se misturar com o resto.', image: '/help/21-mensagens--thread.png', imageAlt: 'Thread de mensagens de uma demanda' },
+      { heading: 'Simular mensagem do cliente', text: 'O "Simular mensagem do cliente" (topo) permite testar como a conversa chega, útil para validar o fluxo antes de liberar ao cliente real.' },
     ],
   },
   client: {
-    title: 'Portal do Cliente',
+    title: 'Portal Cliente',
     steps: [
-      'Área externa onde o cliente acompanha seus projetos.',
-      'Vê o progresso, envia mensagens e consulta entregas.',
+      'Acompanhe entregas, comente e aprove.',
+      'Alterne entre o dashboard e as mensagens.',
     ],
     guide: [
-      { heading: 'Visão do cliente', text: 'O Portal do Cliente é a área externa (acessada pelo slug do tenant) onde o cliente acompanha os projetos vinculados. Ele vê cards de progresso, a lista de demandas (com status e prioridade) e pode enviar mensagens ao time.', image: '/help/21-portal-cliente.png', imageAlt: 'Portal do Cliente com progresso e lista de demandas' },
-      { heading: 'Mensagens', text: 'Na aba Mensagens o cliente inicia conversas e acompanha as respostas do time interno.' },
-      { heading: 'Entregas (Releases)', text: 'Na aba Entregas o cliente consulta as releases publicadas, com descrição e lista de itens entregues.' },
+      { heading: 'Visão do cliente (DashView)', text: 'É a tela que o cliente vê. O topo mostra o projeto selecionado e o que está sendo visualizado. Os cards trazem: Evolução do projeto (status, %, tarefas concluídas, sprint atual e prazo), Entregas desta sprint, Projetos (no prazo × em risco), Sprint ativa, Riscos abertos, Aguardando sua validação (pendências), Roadmap publicado e Entregas recentes.', image: '/help/dashview--principal.png', imageAlt: 'Portal do Cliente (DashView) com os cards de acompanhamento' },
+      { heading: 'Mensagens no portal', text: 'Pelo botão "Mensagens", o cliente troca mensagens com o time direto do portal.', image: '/help/dashview--mensagens.png', imageAlt: 'Mensagens no portal do cliente' },
+      { heading: 'Menu do perfil / alterar senha', text: 'No menu do usuário (canto superior direito) o cliente acessa a conta e pode alterar a senha.', image: '/help/dashview--alterar-senha.png', imageAlt: 'Menu do perfil e alterar senha no portal' },
     ],
   },
   team: {
     title: 'Time & Permissões',
     steps: [
-      'Gerencie membros, papéis e squads.',
-      'Convide novos membros por e-mail.',
+      'Gerencie membros, papéis e convites.',
+      'Use Convidar para adicionar pessoas ao time.',
     ],
     guide: [
-      { heading: 'Lista de membros', text: 'A tela Time & Permissões lista todos os membros do tenant. Cada linha mostra Nome, E-mail, Papel (Admin, PO, Scrum Master, Tech Lead, Dev), Squad e Status (Ativo/Inativo). Use "+ Convidar" para adicionar pessoas.', image: '/help/22-time.png', imageAlt: 'Lista de membros com papel, squad e status' },
-      { heading: 'Convidar membro', text: 'Em "+ Convidar" informe o e-mail, escolha o Papel e a Squad. O convidado recebe um link de ativação por e-mail.', image: '/help/time--convidar.png', imageAlt: 'Convidar novo membro' },
-      { heading: 'Editar papel e squad', text: 'Na coluna Ações você altera o papel ou a squad de um membro, ou desativa o acesso dele ao tenant.' },
+      { heading: 'Membros do time', text: 'A lista mostra cada membro com avatar, nome, e-mail, papel (Admin, PO, Dev…) e status do convite. Use os filtros e a busca para encontrar rapidamente.' },
+      { heading: 'Convidar membro', text: 'O botão "Convidar" abre o formulário de convite: informe o e-mail e o papel, e o sistema envia o link de ativação.' },
     ],
   },
   profile: {
     title: 'Perfil',
     steps: [
-      'Edite seu nome, avatar e dados pessoais.',
-      'Altere sua senha quando precisar.',
+      'Edite seus dados pessoais e foto.',
+      'Altere sua senha quando necessário.',
     ],
     guide: [
-      { heading: 'Dados pessoais', text: 'Na página Perfil você edita Nome, E-mail (somente leitura), Avatar (URL ou upload) e Cargo. Clique em "Salvar" para aplicar.', image: '/help/23-perfil.png', imageAlt: 'Página de perfil com dados pessoais' },
-      { heading: 'Alterar senha', text: 'Use a seção "Alterar senha" para trocar sua senha atual. Informe a senha atual e a nova (com confirmação).' },
+      { heading: 'Dados do perfil', text: 'Em Perfil você edita nome, e-mail, avatar e dados pessoais. Clique em "Salvar" para aplicar as mudanças.' },
     ],
   },
   preferences: {
     title: 'Preferências',
     steps: [
-      'Ajuste tema, idioma e notificações.',
-      'Escolha o fuso horário e o formato de data.',
+      'Ajuste notificações, idioma e tema.',
+      'Personalize a experiência do seu usuário.',
     ],
     guide: [
-      { heading: 'Tema e idioma', text: 'Em Preferências você escolhe o Tema (Claro / Escuro / Sistema), o Idioma e o Formato de data. As mudanças são aplicadas imediatamente.', image: '/help/24-preferencias.png', imageAlt: 'Preferências com tema, idioma e formato de data' },
-      { heading: 'Notificações', text: 'Na seção Notificações você liga e desliga os canais (e-mail, push, in-app) e escolhe quais eventos geram alerta (atribuição, menção, mudança de status, etc.).' },
-      { heading: 'Fuso horário', text: 'O Fuso horário define como datas e horários são exibidos para você em toda a plataforma.' },
+      { heading: 'Preferências do usuário', text: 'Em Preferências você configura idioma, tema (claro/escuro), notificações por e-mail e no app, e o fuso horário da sua conta.' },
     ],
   },
   login: {
@@ -339,45 +335,37 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Use "Esqueci a senha" para recuperar o acesso.',
     ],
     guide: [
-      { heading: 'Entrar', text: 'Na tela de Login informe seu E-mail e Senha e clique em "Entrar". Se o tenant exigir, você verá a opção de login com Google (OAuth).', image: '/help/25-login.png', imageAlt: 'Tela de login com e-mail e senha' },
-      { heading: 'Esqueci a senha', text: 'Clique em "Esqueci a senha" para receber um link de redefinição no seu e-mail cadastrado.' },
-      { heading: 'Primeiro acesso (ativação)', text: 'Se você foi convidado, use o link de ativação recebido por e-mail para criar sua senha e acessar o tenant.' },
+      { heading: 'Tela de login', text: 'Informe seu e-mail e senha para acessar a plataforma. Se esqueceu a senha, clique em "Esqueci minha senha" para receber o link de redefinição.' },
     ],
   },
   'client-login': {
     title: 'Login do Cliente',
     steps: [
-      'Acesso exclusivo do cliente ao Portal.',
-      'Use o slug do tenant + credenciais fornecidas.',
+      'Portal de acesso exclusivo para clientes.',
+      'Use as credenciais recebidas por e-mail.',
     ],
     guide: [
-      { heading: 'Entrar no Portal', text: 'O cliente acessa o Portal pelo endereço público (slug) do tenant. Na tela de login ele informa E-mail e Senha (fornecidos pelo time interno) e clica em "Entrar".', image: '/help/26-client-login.png', imageAlt: 'Tela de login do Portal do Cliente' },
-      { heading: 'Recuperar senha', text: 'Se o cliente esqueceu a senha, usa "Esqueci a senha" para receber o link de redefinição no e-mail cadastrado.' },
+      { heading: 'Acesso do cliente', text: 'O cliente acessa o portal pelo endereço público (slug) do tenant, usando o e-mail e a senha temporária recebidos no convite. Na primeira vez ele redefine a senha.' },
     ],
   },
   timesheet: {
     title: 'Lançar horas',
     steps: [
-      'Registre horas por demanda.',
-      'Envie o período para aprovação quando terminar.',
+      'Registre as horas trabalhadas por demanda.',
+      'Use o timer ou lance manualmente.',
     ],
     guide: [
-      { heading: 'Novo lançamento', text: 'Em Lançar Horas você registra o tempo por demanda. No card "Novo lançamento" escolha a Data, busque a Demanda (por nome, chave ou épico), informe as Horas e uma Descrição opcional, e clique em OK.', image: '/help/hours--novo-lancamento.png', imageAlt: 'Lançar horas — novo lançamento por demanda' },
-      { heading: 'Filtrar seus lançamentos', text: 'Os filtros Todos / Salvo / Enviado / Aprovado / Rejeitado e o seletor de mês ajudam a acompanhar a situação de cada lançamento.' },
-      { heading: 'Enviar para aprovação', text: 'No card "Enviar lançamentos para aprovação", escolha o período (mês) e clique em "Enviar para aprovação" para mandar os lançamentos salvos ao aprovador.' },
-      { heading: 'Exportar CSV', text: 'Exporte seus lançamentos em CSV quando precisar levar os dados para fora.', image: '/help/hours--exportar-csv.png', imageAlt: 'Exportar lançamentos de horas em CSV' },
+      { heading: 'Lançamento de horas', text: 'Em Timesheet você registra horas por demanda. Use o timer (play/pause) para contagem em tempo real ou lance manualmente informando a data, a demanda e a duração. O histórico fica visível na lista abaixo.' },
     ],
   },
   'hours-approval': {
-    title: 'Aprovar horas',
+    title: 'Aprovação de Horas',
     steps: [
-      'Aprove ou reprove os lançamentos da sua squad.',
-      'Exporte os dados em CSV quando precisar.',
+      'Revise e aprove os lançamentos do time.',
+      'Rejeite com justificativa quando necessário.',
     ],
     guide: [
-      { heading: 'Fila de aprovação por colaborador', text: 'Aprovar Horas agrupa os lançamentos por colaborador, com o total de horas e a quantidade de lançamentos. Os filtros Todos / Enviado / Aprovado / Rejeitado e o seletor de squad ajudam a focar. Cada linha traz Colaborador, Data, Projeto, Demanda, Horas, Descrição e Status.', image: '/help/hours--aprovar.png', imageAlt: 'Aprovar horas — fila por colaborador' },
-      { heading: 'Aprovar ou rejeitar', text: 'Aprove ou rejeite lançamento a lançamento (✓ / ✕) ou use "Aprovar todos" / "Rejeitar todos" no cabeçalho de cada colaborador.' },
-      { heading: 'Exportar CSV', text: 'Use "Exportar CSV" (ou o CSV por colaborador) para levar os dados de horas para relatórios externos.', image: '/help/hours--exportar-csv.png', imageAlt: 'Exportar horas em CSV' },
+      { heading: 'Painel de aprovação', text: 'O painel lista os lançamentos pendentes com membro, demanda, data e duração. Aprove individualmente ou em lote. Para rejeitar, informe o motivo — o membro recebe a notificação para corrigir.' },
     ],
   },
 }
