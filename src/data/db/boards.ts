@@ -3,7 +3,8 @@
 // A visibilidade usa o RBAC existente: papel/permissions + project_members (+ permission_overrides).
 import { useEffect, useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { safeCall } from '@/utils/logger'
+import { safeCall, logger } from '@/utils/logger'
+import { writeAudit } from '@/data/db/audit'
 import { can } from '@/data/permissions'
 import { useSession } from '@/data/SessionContext'
 
@@ -182,4 +183,102 @@ export function useVisibleBoards(): VisibleBoardsState {
   }, [tenantId, profileId, permKey])
 
   return { boards, loading }
+}
+
+// ─── Gestão do board (modal de configurações) ────────────────────────────────
+
+export interface BoardTeamOption {
+  id: string
+  name: string
+  avatar_initials: string | null
+  avatar_color: string | null
+}
+
+/** Membros do tenant elegíveis para alocação no board. */
+export function fetchBoardTeamOptions(tenantId: string): Promise<BoardTeamOption[]> {
+  return safeCall<BoardTeamOption[]>('boards.fetchBoardTeamOptions', async () => {
+    if (!tenantId) return []
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, avatar_initials, avatar_color')
+      .eq('tenant_id', tenantId)
+      .is('archived_at', null)
+      .order('name')
+    if (error) throw error
+    return (data ?? []) as BoardTeamOption[]
+  }, [])
+}
+
+export interface BoardSettingsInput {
+  description: string
+  teamIds: string[]
+  periodStart: string
+  periodEnd: string
+}
+
+async function currentMetadata(boardId: string): Promise<Record<string, unknown>> {
+  const { data } = await tbl('boards').select('metadata').eq('id', boardId).maybeSingle()
+  return readMeta((data as { metadata?: unknown } | null)?.metadata)
+}
+
+/** Salva descrição, equipe alocada e período do board. */
+export async function saveBoardSettings(
+  board: VisibleBoard,
+  input: BoardSettingsInput,
+  actorName: string,
+): Promise<void> {
+  try {
+    const metadata = {
+      ...(await currentMetadata(board.id)),
+      team_ids: input.teamIds,
+      period_start: input.periodStart || null,
+      period_end: input.periodEnd || null,
+    }
+    const { error } = await tbl('boards').update({
+      description: input.description.trim() || null,
+      metadata,
+    }).eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.updated', board.id, {
+      name: board.name,
+      project_id: board.project_id,
+      team_size: input.teamIds.length,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.saveBoardSettings', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao salvar o board.')
+  }
+}
+
+/** Finaliza o board — sai da lista de ativos. */
+export async function finalizeBoard(board: VisibleBoard, actorName: string): Promise<void> {
+  try {
+    const { error } = await tbl('boards')
+      .update({ status: 'completed' })
+      .eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.finalized', board.id, {
+      name: board.name, project_id: board.project_id,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.finalizeBoard', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao finalizar o board.')
+  }
+}
+
+/** Arquiva o board — define archived_at e sai da lista de ativos. */
+export async function archiveBoard(board: VisibleBoard, actorName: string): Promise<void> {
+  try {
+    const now = new Date().toISOString()
+    const { error } = await tbl('boards')
+      .update({ archived_at: now, status: 'archived' })
+      .eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.archived', board.id, {
+      name: board.name, project_id: board.project_id,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.archiveBoard', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao arquivar o board.')
+  }
 }
