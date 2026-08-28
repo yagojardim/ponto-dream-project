@@ -73,12 +73,8 @@ export function StoragePlansModal({
         actor_name: actorName,
         metadata: { pack, billing },
       })
-      if (res) {
-        await writeMilestone('storage.upgraded', moduleId, {
-          name: `Armazenamento ${pack}`, pack, billing,
-        }, { actorName })
-      }
       onToast(res ? 'Solicitação registrada' : 'Não foi possível registrar a solicitação')
+
     } finally {
       setBusy(null)
     }
