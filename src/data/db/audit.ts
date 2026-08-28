@@ -156,13 +156,22 @@ function str(v: unknown): string | null {
 export function fetchMilestones(
   limit = 15,
   projectIds: readonly string[] = [],
+  /** Quando informado, exclui marcos mais antigos que N dias. undefined = sem corte. */
+  windowDays?: number,
 ): Promise<MilestoneRow[]> {
   return safeCall<MilestoneRow[]>('audit.fetchMilestones', async () => {
-    const { data, error } = await supabase
+    let q = supabase
       .from('audit_logs')
       .select('id, action, entity_id, actor_name, after, created_at')
       .eq('tenant_id', DEFAULT_TENANT_ID)
       .in('action', MILESTONE_ACTIONS)
+
+    if (windowDays != null && windowDays > 0) {
+      const cutoff = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString()
+      q = q.gte('created_at', cutoff)
+    }
+
+    const { data, error } = await q
       .order('created_at', { ascending: false })
       .limit(Math.max(limit * 4, 60))
     if (error) throw error
