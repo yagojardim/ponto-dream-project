@@ -15,6 +15,7 @@ import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx, type WidgetD
 import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetModal'
 import { ProjFilterRow, useProjSel, useAllowedProjects } from '@/pages/DashboardHomePage'
 import { setWidgetScope } from '@/components/home/nativeWidgets'
+import { ReportChartModal, ReportsDataProvider } from '@/data/reportRegistry'
 
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
@@ -118,6 +119,8 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const [selProj, setSelProj] = useProjSel()
   const allowedProjects = useAllowedProjects()
   const [drawerItem, setDrawerItem] = useState<WorkItem | null>(null)
+  // Detalhe ampliado de um relatório (modal) — cards de velocidade/desempenho.
+  const [chartId, setChartId] = useState<string | null>(null)
   // Modo edição: mudanças ficam só em estado; Salvar persiste, Cancelar volta ao snapshot.
   const [editing, setEditing] = useState(false)
   const [snapshot, setSnapshot] = useState<StoredState | null>(null)
@@ -378,6 +381,11 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
       )}
 
       {addOpen && <AddWidgetModal onClose={() => setAddOpen(false)} onAdd={addWidget} />}
+      {chartId && (
+        <ReportsDataProvider projectIds={scope.size > 0 ? [...scope] : undefined}>
+          <ReportChartModal reportId={chartId} onClose={() => setChartId(null)} />
+        </ReportsDataProvider>
+      )}
       {drawerItem && (
         <WorkItemDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} onNav={onNav} />
       )}
