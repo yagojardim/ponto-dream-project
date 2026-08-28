@@ -224,7 +224,8 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     projectIds: scope,
     openBoard,
     openDetail,
-  }), [onNav, userName, scope, openBoard, openDetail])
+    interactive: !editing,
+  }), [onNav, userName, scope, openBoard, openDetail, editing])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     setState(prev => {
@@ -500,6 +501,8 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
         overflowY: fit ? 'hidden' : 'auto', overflowX: 'hidden',
         padding: isKpi ? 0 : 14,
         containerType: 'inline-size',
+        pointerEvents: editing ? 'none' : 'auto',
+        cursor: editing ? 'default' : undefined,
       }}
     >
       {isKpi ? def.render(ctx) : <CardShellProvider value={shell}>{def.render(ctx)}</CardShellProvider>}
@@ -551,13 +554,13 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{title}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
-          <div ref={setActionSlot} className="no-drag" style={{ display: 'flex', alignItems: 'center', gap: 8 }} />
+          <div ref={setActionSlot} className="no-drag" style={{ display: 'flex', alignItems: 'center', gap: 8, pointerEvents: editing ? 'none' : 'auto' }} />
           {tools}
         </div>
       </div>
       {body}
       {/* Rodapé fixo: região irmã fora do corpo rolável — recebe o CardStickyFooter via portal. */}
-      <div ref={setFooterSlot} className="no-drag" style={{ flexShrink: 0 }} />
+      <div ref={setFooterSlot} className="no-drag" style={{ flexShrink: 0, pointerEvents: editing ? 'none' : 'auto' }} />
     </div>
   )
 }

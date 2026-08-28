@@ -192,7 +192,10 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
       </div>
       <button
         className="no-drag"
-        onClick={() => (DEMAND_REPORTS.has(entry.id) ? ctx.openBoard() : ctx.openDetail(entry.id))}
+        onClick={() => {
+          if (!ctx.interactive) return
+          DEMAND_REPORTS.has(entry.id) ? ctx.openBoard() : ctx.openDetail(entry.id)
+        }}
         style={{
           flex: '0 0 auto', alignSelf: 'flex-start', fontSize: 11, color: T.accent,
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
