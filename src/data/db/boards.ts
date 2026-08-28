@@ -16,6 +16,13 @@ export interface VisibleBoard {
   project_id: string
   project_name: string
   status: VisibleBoardStatus
+  /** true quando o board foi finalizado (ciclo de vida), não apenas arquivado. */
+  finalized: boolean
+  archived_at: string | null
+  description: string
+  period_start: string
+  period_end: string
+  team_ids: string[]
   columns: string[]
   item_count: number
   updated_at: string
