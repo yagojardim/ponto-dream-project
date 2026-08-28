@@ -560,7 +560,7 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
       </div>
       {body}
       {/* Rodapé fixo: região irmã fora do corpo rolável — recebe o CardStickyFooter via portal. */}
-      <div ref={setFooterSlot} className="no-drag" style={{ flexShrink: 0 }} />
+      <div ref={setFooterSlot} className="no-drag" style={{ flexShrink: 0, pointerEvents: editing ? 'none' : 'auto' }} />
     </div>
   )
 }
