@@ -13,6 +13,8 @@ import { WorkItemDetailDrawer, type WorkItem } from '@/components/ds/DashboardKi
 import { CardShellProvider } from '@/components/ds/cardShell'
 import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx, type WidgetDef } from '@/data/homeWidgets'
 import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetModal'
+import { ProjFilterRow, useProjSel, useAllowedProjects } from '@/pages/DashboardHomePage'
+import { setWidgetScope } from '@/components/home/nativeWidgets'
 
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
@@ -42,6 +44,7 @@ interface Props {
 }
 
 function storageKey(userId: string, role: string) { return `altech.home.layout.${userId}.${role}` }
+function filterKey(userId: string) { return `altech.home.projfilter.${userId}` }
 
 function newId(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -112,6 +115,8 @@ function loadStored(userId: string, role: string): StoredState | null {
 export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const [state, setState] = useState<StoredState>(() => loadStored(userId, role) ?? buildDefault(role))
   const [addOpen, setAddOpen] = useState(false)
+  const [selProj, setSelProj] = useProjSel()
+  const allowedProjects = useAllowedProjects()
   const [drawerItem, setDrawerItem] = useState<WorkItem | null>(null)
   // Modo edição: mudanças ficam só em estado; Salvar persiste, Cancelar volta ao snapshot.
   const [editing, setEditing] = useState(false)
@@ -166,11 +171,45 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     try { localStorage.setItem(storageKey(userId, role), JSON.stringify(next)) } catch { /* storage indisponível */ }
   }, [userId, role])
 
+  // Filtro de projetos: restaura a seleção salva do usuário assim que os
+  // projetos permitidos chegam do banco.
+  const allowedKey = allowedProjects.map(p => p.id).join(',')
+  const restoredFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!allowedKey) return
+    const key = `${userId}|${allowedKey}`
+    if (restoredFor.current === key) return
+    restoredFor.current = key
+    try {
+      const raw = localStorage.getItem(filterKey(userId))
+      if (!raw) return
+      const parsed: unknown = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return
+      const ids = parsed.filter((v): v is string => typeof v === 'string' && allowedKey.split(',').includes(v))
+      if (ids.length > 0) setSelProj(new Set(ids))
+    } catch { /* storage indisponível */ }
+  }, [userId, allowedKey, setSelProj])
+
+  const changeProjFilter = useCallback((next: Set<string>) => {
+    setSelProj(next)
+    try { localStorage.setItem(filterKey(userId), JSON.stringify([...next])) } catch { /* noop */ }
+  }, [setSelProj, userId])
+
+  // Recorte efetivo: seleção parcial dos projetos permitidos (vazio = todos).
+  const scope = useMemo(() => {
+    const ids = [...selProj]
+    return ids.length > 0 && ids.length < allowedProjects.length ? new Set(ids) : new Set<string>()
+  }, [selProj, allowedProjects.length])
+
+  // Espelho global para os helpers não-hook dos widgets nativos.
+  setWidgetScope(scope)
+
   const ctx: WidgetCtx = useMemo(() => ({
     onNav,
     onOpenItem: setDrawerItem,
     userName,
-  }), [onNav, userName])
+    projectIds: scope,
+  }), [onNav, userName, scope])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     setState(prev => {
@@ -236,6 +275,9 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-home-panel.is-editing .altech-widget-tools { opacity: 1; }
 
       `}</style>
+
+      {/* Filtro de projetos — vale para todos os widgets do board. */}
+      <ProjFilterRow selected={selProj} onChange={changeProjFilter} />
 
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>

@@ -15,12 +15,12 @@ import {
 } from '@/data/db/homeLive'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
 import { logger } from '@/utils/logger'
-import type { WidgetCtx } from '@/components/home/nativeWidgets'
+import { scopedItems, scopedProjects, type WidgetCtx } from '@/components/home/nativeWidgets'
 
 // ─── PMO ──────────────────────────────────────────────────────────────────────
 
 export function PmoRagCard({ onNav }: WidgetCtx) {
-  const rags = liveAggregates()?.rag ?? []
+  const rags = scopedProjects(liveAggregates()?.rag ?? [])
   return (
     <SCard title="Saúde por Projeto (RAG)" help="Semáforo de saúde: 🟢 saudável · 🟡 em risco · 🔴 bloqueado.">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -46,7 +46,7 @@ export function DeliveryRhythmCard({ onNav }: WidgetCtx) {
 
 export function PmMainRagCard({ onNav }: WidgetCtx) {
   const agg = liveAggregates()
-  const mainRag = (agg?.rag ?? [])[0]
+  const mainRag = (scopedProjects(agg?.rag ?? []))[0]
   const sprintName = liveCurrentSprintName()
   if (!mainRag) return <EmptyState message="Nenhum projeto no escopo selecionado." />
   return (
@@ -214,7 +214,7 @@ const CERIMONIAS = [
 ]
 
 export function StuckAgingCard({ onOpenItem }: WidgetCtx) {
-  const sprint = getSprintItems(liveCurrentSprintName() ?? undefined)
+  const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
   const parados = sprint.filter(w => w.status === 'blocked' || (w.days_blocked ?? 0) >= 2)
   return (
     <SCard title="Itens Parados + Aging WIP" help="Há quantos dias cada demanda está parada na coluna atual.">
@@ -266,7 +266,7 @@ export function CeremoniesCard() {
 // ─── Dev ──────────────────────────────────────────────────────────────────────
 
 export function MyActiveQueueCard({ onNav, onOpenItem, userName }: WidgetCtx) {
-  const myItems = liveItems().filter(w => w.assignee?.name === userName)
+  const myItems = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
   const done = myItems.filter(w => w.status === 'done').length
   return (
     <SprintDonutCard sprintName="Minha Fila Ativa" done={done} total={myItems.length}
@@ -275,7 +275,7 @@ export function MyActiveQueueCard({ onNav, onOpenItem, userName }: WidgetCtx) {
 }
 
 export function MyBlockedCard({ onNav, onOpenItem, userName }: WidgetCtx) {
-  const blocked = getBlockedItems().filter(w => w.assignee?.name === userName)
+  const blocked = scopedItems(getBlockedItems()).filter(w => w.assignee?.name === userName)
   return (
     <WorkQueue title="Meus Bloqueados" items={blocked} onOpen={onOpenItem} showDaysBlocked
       onViewAll={() => onNav('list')} emptyMsg="Nenhum item bloqueado." />
@@ -354,7 +354,7 @@ const COBERTURA = [
 ]
 
 export function TestExecutionCard({ onNav, onOpenItem }: WidgetCtx) {
-  const testing = getTestingItems()
+  const testing = scopedItems(getTestingItems())
   return (
     <SCard title="Fila de Execução de Testes">
       {testing.length === 0
@@ -383,7 +383,7 @@ export function TestExecutionCard({ onNav, onOpenItem }: WidgetCtx) {
 }
 
 export function QaCoverageCard({ onNav, onOpenItem }: WidgetCtx) {
-  const retest = liveItems().filter(w => w.type === 'bug' && w.status === 'testing')
+  const retest = scopedItems(liveItems()).filter(w => w.type === 'bug' && w.status === 'testing')
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <WorkQueue title="Bugs para Reteste" items={retest} onOpen={onOpenItem}
@@ -406,7 +406,7 @@ export function QaCoverageCard({ onNav, onOpenItem }: WidgetCtx) {
 // ─── Blocked queue (shared body card) ─────────────────────────────────────────
 
 export function CriticalBlockersCard({ onNav, onOpenItem }: WidgetCtx) {
-  const blocked = getBlockedItems()
+  const blocked = scopedItems(getBlockedItems())
   return (
     <WorkQueue title="Bloqueadores Críticos" items={blocked} onOpen={onOpenItem}
       showDaysBlocked onViewAll={() => onNav('list')}
