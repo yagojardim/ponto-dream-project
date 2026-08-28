@@ -36,10 +36,28 @@ export interface WidgetCtx {
   openBoard: () => void
   /** Abre o detalhe ampliado (modal) de um relatório, sem trocar de tela. */
   openDetail: (reportId: string) => void
+  /** false durante edição do painel: widgets devem ignorar cliques de navegação. */
+  interactive: boolean
 }
 
-/**
- * Escopo de projetos ativo no board do Início (vazio = todos os projetos).
+/** Helpers que respeitam o modo edição (interactive = false). */
+function doNav(ctx: WidgetCtx, view: string, targetId?: string) {
+  if (!ctx.interactive) return
+  ctx.onNav(view, targetId)
+}
+function doOpenBoard(ctx: WidgetCtx) {
+  if (!ctx.interactive) return
+  ctx.openBoard()
+}
+function doOpenDetail(ctx: WidgetCtx, reportId: string) {
+  if (!ctx.interactive) return
+  ctx.openDetail(reportId)
+}
+function doOpenItem(ctx: WidgetCtx, item: WorkItem) {
+  if (!ctx.interactive) return
+  ctx.onOpenItem(item)
+}
+
  * Espelhado num módulo para que todos os widgets nativos leiam o mesmo recorte
  * sem precisar propagar props em cada helper do homeLive.
  */
