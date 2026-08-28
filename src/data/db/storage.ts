@@ -1,11 +1,59 @@
 // Storage observability data layer — read-only aggregates from the
 // v_tenant_storage / v_project_storage views plus tenant_settings.
 import { supabase } from '@/integrations/supabase/client'
-import { safeCall } from '@/utils/logger'
-import { writeAuditOnce } from '@/data/db/audit'
+import { safeCall, logger } from '@/utils/logger'
+import { writeAudit, writeAuditOnce } from '@/data/db/audit'
 import { bytesToHuman } from '@/data/db/attachments'
 
 export { bytesToHuman }
+
+/** Ação técnica (fora da whitelist do card) usada só como marco-zero da cota. */
+const QUOTA_BASELINE_ACTION = 'storage.quota_observed'
+
+/**
+ * Marco `storage.upgraded`: emitido apenas quando a cota efetiva do tenant
+ * realmente cresce em relação à última cota registrada. Na primeira leitura
+ * grava só uma linha-base técnica (invisível no card), nunca um marco falso.
+ */
+async function recordQuotaGrowth(
+  tenantId: string, effectiveBytes: number, plan: string | null,
+): Promise<void> {
+  try {
+    if (effectiveBytes <= 0) return
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('after')
+      .eq('tenant_id', tenantId)
+      .eq('entity_id', tenantId)
+      .in('action', ['storage.upgraded', QUOTA_BASELINE_ACTION])
+      .order('created_at', { ascending: false })
+      .limit(1)
+    if (error) throw error
+
+    const prevRaw = (data ?? [])[0]?.after
+    const prev = prevRaw && typeof prevRaw === 'object' && !Array.isArray(prevRaw)
+      ? Number((prevRaw as Record<string, unknown>).effective_bytes ?? 0)
+      : null
+
+    if (prev === null) {
+      await writeAudit(QUOTA_BASELINE_ACTION, tenantId, {
+        name: 'Cota de armazenamento', effective_bytes: effectiveBytes, plan,
+      }, { entityType: 'storage' })
+      return
+    }
+    if (effectiveBytes > prev) {
+      await writeAudit('storage.upgraded', tenantId, {
+        name: 'Armazenamento do tenant',
+        effective_bytes: effectiveBytes,
+        previous_bytes: prev,
+        plan,
+      }, { entityType: 'storage' })
+    }
+  } catch (err) {
+    logger.error('storage.recordQuotaGrowth', err, { tenantId })
+  }
+}
+
 
 export interface TenantStorage {
   usedBytes: number
