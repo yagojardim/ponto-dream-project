@@ -33,10 +33,33 @@ function tbl(name: string): any {
   return (supabase as unknown as { from: (t: string) => any }).from(name)
 }
 
+interface BoardRow {
+  id: string
+  tenant_id: string
+  name: string
+  project_id: string
+  status: string | null
+  description: string | null
+  metadata: unknown
+  archived_at: string | null
+  updated_at: string | null
+}
+
+function readMeta(raw: unknown): Record<string, unknown> {
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {}
+}
+function metaStr(v: unknown): string {
+  return typeof v === 'string' ? v : ''
+}
+function metaIds(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+
 /** Vê todos os boards do tenant (Admin / gestão) ou apenas os dos projetos em que participa. */
 function hasTenantWideAccess(permissions: string[]): boolean {
   return can(permissions, 'users:manage') || can(permissions, 'board:manage')
 }
+
 
 /**
  * Lista os boards que o usuário pode VISUALIZAR.
