@@ -15,7 +15,7 @@ import {
 } from '@/data/db/homeLive'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
 import { logger } from '@/utils/logger'
-import type { WidgetCtx } from '@/components/home/nativeWidgets'
+import { scopedItems, scopedProjects, type WidgetCtx } from '@/components/home/nativeWidgets'
 
 // ─── PMO ──────────────────────────────────────────────────────────────────────
 
