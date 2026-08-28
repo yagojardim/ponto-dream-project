@@ -204,12 +204,24 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   // Espelho global para os helpers não-hook dos widgets nativos.
   setWidgetScope(scope)
 
+  // Cards de demanda abrem o board; com exatamente 1 projeto no filtro, direto nele.
+  const openBoard = useCallback(() => {
+    const ids = [...selProj]
+    if (ids.length === 1) onNav('project', ids[0])
+    else onNav('boards-list')
+  }, [onNav, selProj])
+
+  // Cards de velocidade/desempenho abrem o detalhe ampliado, sem trocar de tela.
+  const openDetail = useCallback((reportId: string) => setChartId(reportId), [])
+
   const ctx: WidgetCtx = useMemo(() => ({
     onNav,
     onOpenItem: setDrawerItem,
     userName,
     projectIds: scope,
-  }), [onNav, userName, scope])
+    openBoard,
+    openDetail,
+  }), [onNav, userName, scope, openBoard, openDetail])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     setState(prev => {
