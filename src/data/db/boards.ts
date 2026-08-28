@@ -108,17 +108,28 @@ export function fetchVisibleBoards(opts: {
       countByBoard.set(i.board_id, (countByBoard.get(i.board_id) ?? 0) + 1)
     }
 
-    return boards.map(b => ({
-      id: b.id,
-      tenant_id: b.tenant_id,
-      name: b.name,
-      project_id: b.project_id,
-      project_name: projectName.get(b.project_id) ?? 'Projeto',
-      status: (b.status === 'archived' ? 'archived' : 'active') as VisibleBoardStatus,
-      columns: columnsByBoard.get(b.id) ?? [],
-      item_count: countByBoard.get(b.id) ?? 0,
-      updated_at: b.updated_at ?? new Date().toISOString(),
-    }))
+    return boards.map(b => {
+      const meta = readMeta(b.metadata)
+      const finalized = b.status === 'completed' || b.status === 'finalized'
+      const archived = !!b.archived_at || b.status === 'archived'
+      return {
+        id: b.id,
+        tenant_id: b.tenant_id,
+        name: b.name,
+        project_id: b.project_id,
+        project_name: projectName.get(b.project_id) ?? 'Projeto',
+        status: (archived || finalized ? 'archived' : 'active') as VisibleBoardStatus,
+        finalized,
+        archived_at: b.archived_at ?? null,
+        description: b.description ?? '',
+        period_start: metaStr(meta.period_start),
+        period_end: metaStr(meta.period_end),
+        team_ids: metaIds(meta.team_ids),
+        columns: columnsByBoard.get(b.id) ?? [],
+        item_count: countByBoard.get(b.id) ?? 0,
+        updated_at: b.updated_at ?? new Date().toISOString(),
+      }
+    })
   }, [])
 }
 
