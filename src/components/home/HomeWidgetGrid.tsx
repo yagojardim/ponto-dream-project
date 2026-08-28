@@ -554,7 +554,7 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{title}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
-          <div ref={setActionSlot} className="no-drag" style={{ display: 'flex', alignItems: 'center', gap: 8 }} />
+          <div ref={setActionSlot} className="no-drag" style={{ display: 'flex', alignItems: 'center', gap: 8, pointerEvents: editing ? 'none' : 'auto' }} />
           {tools}
         </div>
       </div>
