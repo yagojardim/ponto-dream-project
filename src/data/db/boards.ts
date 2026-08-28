@@ -160,6 +160,7 @@ export function fetchVisibleBoards(opts: {
 export interface VisibleBoardsState {
   boards: VisibleBoard[]
   loading: boolean
+  reload: () => void
 }
 
 /** Hook compartilhado pela Sidebar e pela BoardsListPage. */
@@ -167,6 +168,7 @@ export function useVisibleBoards(): VisibleBoardsState {
   const { activeUser } = useSession()
   const [boards, setBoards] = useState<VisibleBoard[]>([])
   const [loading, setLoading] = useState(true)
+  const [nonce, setNonce] = useState(0)
 
   const tenantId = activeUser.tenant_id
   const profileId = activeUser.user_id
@@ -180,9 +182,9 @@ export function useVisibleBoards(): VisibleBoardsState {
       .catch(() => { if (alive) setBoards([]) })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
-  }, [tenantId, profileId, permKey])
+  }, [tenantId, profileId, permKey, nonce])
 
-  return { boards, loading }
+  return { boards, loading, reload: () => setNonce(n => n + 1) }
 }
 
 // ─── Gestão do board (modal de configurações) ────────────────────────────────

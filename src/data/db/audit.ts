@@ -92,6 +92,9 @@ export const MILESTONE_META: Record<string, MilestoneMeta> = {
   'project.finalized': { label: 'Projeto finalizado',  icon: '🏁', color: 'success' },
   // Boards
   'board.created':     { label: 'Board criado',        icon: '🗂️', color: 'indigo' },
+  'board.updated':     { label: 'Board atualizado',    icon: '✏️', color: 'accent' },
+  'board.finalized':   { label: 'Board finalizado',    icon: '🏁', color: 'success' },
+  'board.archived':    { label: 'Board arquivado',     icon: '🗄️', color: 'muted' },
   // Usuários
   'user.created':      { label: 'Usuário criado',      icon: '👤', color: 'accent' },
   'user.updated':      { label: 'Usuário atualizado',  icon: '✏️', color: 'muted' },
