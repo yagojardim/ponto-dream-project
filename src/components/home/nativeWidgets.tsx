@@ -100,7 +100,9 @@ function ratioViz(part: number, total: number, color: string) {
 
 // ─── Queues ───────────────────────────────────────────────────────────────────
 
-export function BlockedWidget({ openBoard, onOpenItem }: WidgetCtx) {
+export function BlockedWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem  } = props
+  const ctx = props
   const items = scopedItems(getBlockedItems())
   return (
     <WorkQueue
@@ -116,7 +118,9 @@ export function BlockedWidget({ openBoard, onOpenItem }: WidgetCtx) {
   )
 }
 
-export function ReadyWidget({ openBoard, onOpenItem }: WidgetCtx) {
+export function ReadyWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem  } = props
+  const ctx = props
   const items = scopedItems(getReadyItems())
   return (
     <WorkQueue
@@ -131,7 +135,9 @@ export function ReadyWidget({ openBoard, onOpenItem }: WidgetCtx) {
   )
 }
 
-export function TestingWidget({ openBoard, onOpenItem }: WidgetCtx) {
+export function TestingWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem  } = props
+  const ctx = props
   const items = scopedItems(getTestingItems())
   return (
     <WorkQueue
@@ -146,7 +152,9 @@ export function TestingWidget({ openBoard, onOpenItem }: WidgetCtx) {
   )
 }
 
-export function BacklogAlertWidget({ openBoard, onOpenItem }: WidgetCtx) {
+export function BacklogAlertWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem  } = props
+  const ctx = props
   const items = scopedItems(getBacklogWithAlerts())
   return (
     <WorkQueue
@@ -161,7 +169,9 @@ export function BacklogAlertWidget({ openBoard, onOpenItem }: WidgetCtx) {
   )
 }
 
-export function MyQueueWidget({ openBoard, onOpenItem, userName }: WidgetCtx) {
+export function MyQueueWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem, userName  } = props
+  const ctx = props
   const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName && w.status !== 'done')
   return (
     <WorkQueue
@@ -177,7 +187,9 @@ export function MyQueueWidget({ openBoard, onOpenItem, userName }: WidgetCtx) {
 }
 
 /** Itens em revisão / bugs — gargalos técnicos do painel do Tech Lead. */
-export function ReviewQueueWidget({ openBoard, onOpenItem }: WidgetCtx) {
+export function ReviewQueueWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem  } = props
+  const ctx = props
   const items = scopedItems(liveItems()).filter(w => w.status === 'in-review' || w.type === 'bug')
   return (
     <WorkQueue
@@ -193,7 +205,9 @@ export function ReviewQueueWidget({ openBoard, onOpenItem }: WidgetCtx) {
 }
 
 /** Fila de design ativa — painel de UX/UI. */
-export function DesignQueueWidget({ openBoard, onOpenItem }: WidgetCtx) {
+export function DesignQueueWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem  } = props
+  const ctx = props
   const items = scopedItems(liveItems()).filter(w =>
     w.squad_id === 'squad_design' || (w.tags ?? []).some(t => ['design', 'handoff', 'frontend'].includes(t))
   )
@@ -212,7 +226,9 @@ export function DesignQueueWidget({ openBoard, onOpenItem }: WidgetCtx) {
 
 // ─── Sprint ───────────────────────────────────────────────────────────────────
 
-export function SprintWidget({ openBoard, onOpenItem }: WidgetCtx) {
+export function SprintWidget(props: WidgetCtx) {
+  const {  openBoard, onOpenItem  } = props
+  const ctx = props
   const sprintName = liveCurrentSprintName()
   const items = sprintName ? scopedItems(getSprintItems(sprintName)) : []
   if (!sprintName || items.length === 0) {
@@ -234,7 +250,9 @@ export function SprintWidget({ openBoard, onOpenItem }: WidgetCtx) {
 
 // ─── KPIs genéricos ───────────────────────────────────────────────────────────
 
-export function KpiBlockedWidget({ openBoard }: WidgetCtx) {
+export function KpiBlockedWidget(props: WidgetCtx) {
+  const {  openBoard  } = props
+  const ctx = props
   const n = scopedItems(getBlockedItems()).length
   const total = scopedItems(liveItems()).length
   return (
@@ -248,7 +266,9 @@ export function KpiBlockedWidget({ openBoard }: WidgetCtx) {
   )
 }
 
-export function KpiWipWidget({ openBoard }: WidgetCtx) {
+export function KpiWipWidget(props: WidgetCtx) {
+  const {  openBoard  } = props
+  const ctx = props
   const all = scopedItems(liveItems())
   const wip = all.filter(w => ['in-progress', 'in-review', 'testing'].includes(w.status)).length
   return (
@@ -261,7 +281,9 @@ export function KpiWipWidget({ openBoard }: WidgetCtx) {
   )
 }
 
-export function KpiSprintProgressWidget({ openDetail }: WidgetCtx) {
+export function KpiSprintProgressWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const sprintName = liveCurrentSprintName()
   const items = sprintName ? scopedItems(getSprintItems(sprintName)) : []
   const done = items.filter(i => i.status === 'done').length
@@ -278,7 +300,9 @@ export function KpiSprintProgressWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiProjectsWidget({ onNav }: WidgetCtx) {
+export function KpiProjectsWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const projects = scopedProjects(liveProjects())
   const rag = scopedProjects(liveAggregates()?.rag ?? [])
   const atRisk = rag.filter(p => p.rag !== 'healthy').length
@@ -293,7 +317,9 @@ export function KpiProjectsWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiDeliveredWidget({ openDetail }: WidgetCtx) {
+export function KpiDeliveredWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const agg = liveAggregates()
   const all = scopedItems(liveItems())
   const done = all.filter(w => w.status === 'done').length
@@ -322,7 +348,9 @@ function useAdminKpis(): AdminKpis | null {
   return kpis
 }
 
-export function KpiAdminProjectsWidget({ onNav }: WidgetCtx) {
+export function KpiAdminProjectsWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const k = useAdminKpis()
   return (
     <KpiCard
@@ -335,7 +363,9 @@ export function KpiAdminProjectsWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiAdminBoardsWidget({ onNav }: WidgetCtx) {
+export function KpiAdminBoardsWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const k = useAdminKpis()
   return (
     <KpiCard
@@ -348,7 +378,9 @@ export function KpiAdminBoardsWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiAdminModulesWidget({ onNav }: WidgetCtx) {
+export function KpiAdminModulesWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const k = useAdminKpis()
   return (
     <KpiCard
@@ -361,7 +393,9 @@ export function KpiAdminModulesWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiAdminUsersWidget({ onNav }: WidgetCtx) {
+export function KpiAdminUsersWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const k = useAdminKpis()
   return (
     <KpiCard
@@ -374,7 +408,9 @@ export function KpiAdminUsersWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiAdminInvitesWidget({ onNav }: WidgetCtx) {
+export function KpiAdminInvitesWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const k = useAdminKpis()
   const sub = k == null
     ? '—'
@@ -397,7 +433,9 @@ export function KpiAdminInvitesWidget({ onNav }: WidgetCtx) {
 
 // ─── KPIs · PMO ───────────────────────────────────────────────────────────────
 
-export function KpiPmoActiveProjectsWidget({ onNav }: WidgetCtx) {
+export function KpiPmoActiveProjectsWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const agg = liveAggregates()
   const rags = scopedProjects(agg?.rag ?? [])
   const healthy = rags.filter(r => r.rag === 'healthy').length
@@ -411,7 +449,9 @@ export function KpiPmoActiveProjectsWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiPmoAtRiskWidget({ onNav }: WidgetCtx) {
+export function KpiPmoAtRiskWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const agg = liveAggregates()
   const rags = scopedProjects(agg?.rag ?? [])
   const atRisk = scopedOr(agg?.counts?.atRisk ?? 0, rags.filter(r => r.rag !== 'healthy').length)
@@ -427,7 +467,9 @@ export function KpiPmoAtRiskWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiPredictabilityWidget({ openDetail }: WidgetCtx) {
+export function KpiPredictabilityWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const agg = liveAggregates()
   const pct = agg?.predictability ?? 0
   return (
@@ -442,7 +484,9 @@ export function KpiPredictabilityWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiPlannedVsDoneWidget({ openDetail }: WidgetCtx) {
+export function KpiPlannedVsDoneWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const agg = liveAggregates()
   const pct = agg?.consolidatedPct ?? 0
   return (
@@ -458,7 +502,9 @@ export function KpiPlannedVsDoneWidget({ openDetail }: WidgetCtx) {
 
 // ─── KPIs · Project Manager ───────────────────────────────────────────────────
 
-export function KpiPmProgressWidget({ onNav }: WidgetCtx) {
+export function KpiPmProgressWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
   const done = sprint.filter(w => w.status === 'done').length
   const total = sprint.length || 1
@@ -474,7 +520,9 @@ export function KpiPmProgressWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiPmDeadlineWidget({ onNav }: WidgetCtx) {
+export function KpiPmDeadlineWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const rag = (scopedProjects(liveAggregates()?.rag ?? []))[0]
   return (
     <KpiCard
@@ -489,7 +537,9 @@ export function KpiPmDeadlineWidget({ onNav }: WidgetCtx) {
 
 // ─── KPIs · Product Manager (métricas de produto do painel original) ──────────
 
-export function KpiMauWidget({ openDetail }: WidgetCtx) {
+export function KpiMauWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   return (
     <KpiCard
       value="930" label="MAU" sub="+8% vs mês ant."
@@ -500,7 +550,9 @@ export function KpiMauWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiStickinessWidget({ openDetail }: WidgetCtx) {
+export function KpiStickinessWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   return (
     <KpiCard
       value="7.5%" label="Stickiness" sub="DAU/MAU — meta 10-20%"
@@ -511,7 +563,9 @@ export function KpiStickinessWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiChurnWidget({ openDetail }: WidgetCtx) {
+export function KpiChurnWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   return (
     <KpiCard
       value="3.2%" label="Churn Rate" sub="meta: <2%"
@@ -522,7 +576,9 @@ export function KpiChurnWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiAdoptionWidget({ openDetail }: WidgetCtx) {
+export function KpiAdoptionWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   return (
     <KpiCard
       value="52%" label="Adoção de Features" sub="base elegível"
@@ -548,7 +604,9 @@ function usePoMetrics(): PoCardMetrics | null {
   return m
 }
 
-export function KpiPoReadyWidget({ onNav }: WidgetCtx) {
+export function KpiPoReadyWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const sprintPts = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined)).reduce((s, w) => s + (w.points ?? 0), 0)
   const readyPts = scopedItems(getReadyItems()).reduce((s, w) => s + (w.points ?? 0), 0)
   const pct = sprintPts > 0 ? Math.round((readyPts / sprintPts) * 100) : null
@@ -563,7 +621,9 @@ export function KpiPoReadyWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiBacklogHealthWidget({ onNav }: WidgetCtx) {
+export function KpiBacklogHealthWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const backlog = scopedItems(getBacklogWithAlerts())
   const healthy = backlog.filter(w => !w.tags?.some(t => t.startsWith('Sem '))).length
   const pct = backlog.length > 0 ? Math.round((healthy / backlog.length) * 100) : 100
@@ -578,7 +638,9 @@ export function KpiBacklogHealthWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiCreatedVsFinalizedWidget({ openBoard }: WidgetCtx) {
+export function KpiCreatedVsFinalizedWidget(props: WidgetCtx) {
+  const {  openBoard  } = props
+  const ctx = props
   const m = usePoMetrics()
   return (
     <KpiCard
@@ -592,7 +654,9 @@ export function KpiCreatedVsFinalizedWidget({ openBoard }: WidgetCtx) {
   )
 }
 
-export function KpiReleasesHealthWidget({ onNav }: WidgetCtx) {
+export function KpiReleasesHealthWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const m = usePoMetrics()
   return (
     <KpiCard
@@ -609,7 +673,9 @@ export function KpiReleasesHealthWidget({ onNav }: WidgetCtx) {
 
 // ─── KPIs · Scrum Master ──────────────────────────────────────────────────────
 
-export function KpiSprintHealthWidget({ openDetail }: WidgetCtx) {
+export function KpiSprintHealthWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
   const parados = sprint.filter(w => w.status === 'blocked' || (w.days_blocked ?? 0) >= 2)
   const active = sprint.length > 0
@@ -628,7 +694,9 @@ export function KpiSprintHealthWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiImpedimentsWidget({ onNav }: WidgetCtx) {
+export function KpiImpedimentsWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const blocked = scopedItems(getBlockedItems())
   return (
     <KpiCard
@@ -641,7 +709,9 @@ export function KpiImpedimentsWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiSprintGoalWidget({ onNav }: WidgetCtx) {
+export function KpiSprintGoalWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
   const critical = sprint.filter(w => w.status === 'blocked' || w.priority === 'critical' || w.priority === 'high')
   const active = sprint.length > 0
@@ -666,7 +736,9 @@ function deliveryMetrics() {
   return computeDeliveryMetrics(scopedDelivery(liveAggregates()?.deliveryRows ?? []))
 }
 
-export function KpiCriticalBugsWidget({ openBoard }: WidgetCtx) {
+export function KpiCriticalBugsWidget(props: WidgetCtx) {
+  const {  openBoard  } = props
+  const ctx = props
   const all = scopedItems(liveItems())
   const bugs = all.filter(w => w.type === 'bug' && (w.priority === 'critical' || w.priority === 'high')).length
   return (
@@ -680,7 +752,9 @@ export function KpiCriticalBugsWidget({ openBoard }: WidgetCtx) {
   )
 }
 
-export function KpiLeadTimeWidget({ openDetail }: WidgetCtx) {
+export function KpiLeadTimeWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const dm = deliveryMetrics()
   return (
     <KpiCard
@@ -694,7 +768,9 @@ export function KpiLeadTimeWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiThroughputWidget({ openDetail }: WidgetCtx) {
+export function KpiThroughputWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const dm = deliveryMetrics()
   return (
     <KpiCard
@@ -707,7 +783,9 @@ export function KpiThroughputWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiReworkWidget({ openDetail }: WidgetCtx) {
+export function KpiReworkWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   const dm = deliveryMetrics()
   return (
     <KpiCard
@@ -723,7 +801,9 @@ export function KpiReworkWidget({ openDetail }: WidgetCtx) {
 
 // ─── KPIs · Dev ───────────────────────────────────────────────────────────────
 
-export function KpiMyItemsWidget({ onNav, userName }: WidgetCtx) {
+export function KpiMyItemsWidget(props: WidgetCtx) {
+  const {  onNav, userName  } = props
+  const ctx = props
   const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
   const blocked = mine.filter(w => w.status === 'blocked').length
   const done = mine.filter(w => w.status === 'done').length
@@ -738,7 +818,9 @@ export function KpiMyItemsWidget({ onNav, userName }: WidgetCtx) {
   )
 }
 
-export function KpiMyLateWidget({ onNav, userName }: WidgetCtx) {
+export function KpiMyLateWidget(props: WidgetCtx) {
+  const {  onNav, userName  } = props
+  const ctx = props
   const today = new Date().toISOString().slice(0, 10)
   const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
   const late = mine.filter(w => w.due_date && w.due_date <= today && w.status !== 'done')
@@ -754,7 +836,9 @@ export function KpiMyLateWidget({ onNav, userName }: WidgetCtx) {
   )
 }
 
-export function KpiMyBlockedWidget({ onNav, userName }: WidgetCtx) {
+export function KpiMyBlockedWidget(props: WidgetCtx) {
+  const {  onNav, userName  } = props
+  const ctx = props
   const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
   const blocked = scopedItems(getBlockedItems()).filter(w => w.assignee?.name === userName)
   return (
@@ -770,7 +854,9 @@ export function KpiMyBlockedWidget({ onNav, userName }: WidgetCtx) {
 
 // ─── KPIs · UX/UI (mesmos thumbnails do painel original) ──────────────────────
 
-export function KpiUxFlowsWidget({ onNav }: WidgetCtx) {
+export function KpiUxFlowsWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   return (
     <KpiCard
       value="8" label="Fluxos em Design" sub="3 projetos"
@@ -781,7 +867,9 @@ export function KpiUxFlowsWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiUxPrototypesWidget({ onNav }: WidgetCtx) {
+export function KpiUxPrototypesWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   return (
     <KpiCard
       value="3" label="Protótipos p/ Val." sub="aguardando PO/usuário"
@@ -792,7 +880,9 @@ export function KpiUxPrototypesWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiUxPendingWidget({ onNav }: WidgetCtx) {
+export function KpiUxPendingWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   return (
     <KpiCard
       value="4" label="Pendências Críticas" sub="1 acessibilidade"
@@ -803,7 +893,9 @@ export function KpiUxPendingWidget({ onNav }: WidgetCtx) {
   )
 }
 
-export function KpiUxHandoffWidget({ onNav }: WidgetCtx) {
+export function KpiUxHandoffWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   return (
     <KpiCard
       value="1" label="Handoff Pronto" sub="Dashboard por Papel"
@@ -816,7 +908,9 @@ export function KpiUxHandoffWidget({ onNav }: WidgetCtx) {
 
 // ─── KPIs · QA ────────────────────────────────────────────────────────────────
 
-export function KpiQaQueueWidget({ openBoard }: WidgetCtx) {
+export function KpiQaQueueWidget(props: WidgetCtx) {
+  const {  openBoard  } = props
+  const ctx = props
   const testing = scopedItems(getTestingItems())
   return (
     <KpiCard
@@ -828,7 +922,9 @@ export function KpiQaQueueWidget({ openBoard }: WidgetCtx) {
   )
 }
 
-export function KpiQaBugsWidget({ openBoard }: WidgetCtx) {
+export function KpiQaBugsWidget(props: WidgetCtx) {
+  const {  openBoard  } = props
+  const ctx = props
   const crit = scopedItems(liveItems()).filter(w => w.type === 'bug' && (w.priority === 'critical' || w.priority === 'high')).length
   return (
     <KpiCard
@@ -840,7 +936,9 @@ export function KpiQaBugsWidget({ openBoard }: WidgetCtx) {
   )
 }
 
-export function KpiQaRejectionWidget({ openDetail }: WidgetCtx) {
+export function KpiQaRejectionWidget(props: WidgetCtx) {
+  const {  openDetail  } = props
+  const ctx = props
   return (
     <KpiCard
       value="28%" label="Taxa de Rejeição" sub="meta: <15%"
@@ -851,7 +949,9 @@ export function KpiQaRejectionWidget({ openDetail }: WidgetCtx) {
   )
 }
 
-export function KpiQaEvidenceWidget({ openBoard }: WidgetCtx) {
+export function KpiQaEvidenceWidget(props: WidgetCtx) {
+  const {  openBoard  } = props
+  const ctx = props
   return (
     <KpiCard
       value="6" label="Evidências Pendentes" sub="dev não submeteu"
@@ -864,7 +964,9 @@ export function KpiQaEvidenceWidget({ openBoard }: WidgetCtx) {
 
 // ─── Projects (RAG) ───────────────────────────────────────────────────────────
 
-export function ProjectsRagWidget({ onNav }: WidgetCtx) {
+export function ProjectsRagWidget(props: WidgetCtx) {
+  const {  onNav  } = props
+  const ctx = props
   const projects = scopedProjects(liveAggregates()?.rag ?? [])
   if (projects.length === 0) {
     return <EmptyState message="Nenhum projeto no seu escopo." action={{ label: 'Ver projetos', onClick: () => onNav('projects') }} />
