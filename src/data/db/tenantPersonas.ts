@@ -96,6 +96,9 @@ export function fetchTenantPersonas(): Promise<MockUser[]> {
       const dbRoles = [...metaRoles, ...(rolesByProfile.get(p.id) ?? []).filter(r => !metaRoles.includes(r))]
       const role: RoleContext =
         override ?? normalizeRole(p.primary_role) ?? dbRoles[0] ?? 'Dev'
+      // Dono do tenant sempre pode assumir o papel Admin (2º perfil no RoleSwitcher).
+      const available: RoleContext[] = [role, ...dbRoles.filter(r => r !== role)]
+      if (p.tenant_owner && !available.includes('Admin')) available.push('Admin')
       return buildPersona({
         user_id: p.id,
         name,
@@ -104,7 +107,7 @@ export function fetchTenantPersonas(): Promise<MockUser[]> {
         tenant_owner: !!p.tenant_owner,
         can_create_projects: !!p.can_create_projects,
         can_handle_client_messages: !!p.can_handle_client_messages,
-        available_roles: [role, ...dbRoles.filter(r => r !== role)],
+        available_roles: available,
       })
     })
 

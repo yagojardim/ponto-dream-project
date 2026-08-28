@@ -13,6 +13,8 @@ export interface CardShellValue {
   registerTitle?: (title: string) => void
   /** Slot do cabeçalho fixo onde a ação de topo do card deve ser renderizada. */
   actionSlot?: HTMLElement | null
+  /** Slot do rodapé fixo (fora da área rolável) onde o CardStickyFooter deve ser renderizado. */
+  footerSlot?: HTMLElement | null
 }
 
 const CardShellContext = createContext<CardShellValue>({ bare: false })

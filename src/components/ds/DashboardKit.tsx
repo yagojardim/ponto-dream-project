@@ -191,8 +191,26 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
 /**
  * Rodapé fixo e opaco de um card: fica colado na base da área rolável,
  * com fundo sólido para o conteúdo não aparecer por trás.
+ * Quando a casca do board interativo expõe um footerSlot (fora do scroll),
+ * o rodapé é portado para lá via portal — preso de verdade, sem sticky.
  */
 export function CardStickyFooter({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+  const shell = useCardShell()
+
+  if (shell.footerSlot) {
+    return createPortal(
+      <div style={{
+        flexShrink: 0,
+        padding: '10px 14px',
+        borderTop: `1px solid ${T.border}`,
+        backgroundColor: T.bgPage,
+        backgroundImage: `linear-gradient(${T.bgSurface}, ${T.bgSurface})`,
+        ...style,
+      }}>{children}</div>,
+      shell.footerSlot,
+    )
+  }
+
   return (
     <div style={{
       position: 'sticky', bottom: 0, zIndex: 2, flexShrink: 0,
