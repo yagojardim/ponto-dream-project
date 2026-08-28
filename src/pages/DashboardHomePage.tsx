@@ -361,24 +361,71 @@ export function AdminModulesCard({ onNav }: { onNav: (v: string, targetId?: stri
   )
 }
 
-export function AdminAuditCard() {
-  const [rows, setRows] = useState<AdminActivityRow[] | null>(null)
+/** Cores dos marcos por categoria — mapeadas nos tokens do design system. */
+const MILESTONE_COLORS: Record<MilestoneMeta['color'], string> = {
+  accent: T.accent, success: T.success, warn: T.warn, crit: T.crit,
+  indigo: T.indigo, purple: T.purple, muted: T.text3,
+}
+
+/**
+ * Feed curado de marcos do tenant (audit_logs). Só ações da whitelist —
+ * nada de chave técnica crua e nada fabricado.
+ */
+export function AdminAuditCard({ projectIds }: { projectIds?: ReadonlySet<string> } = {}) {
+  const [rows, setRows] = useState<MilestoneRow[] | null>(null)
+  const [showAll, setShowAll] = useState(false)
+  const scopeKey = projectIds ? [...projectIds].sort().join(',') : ''
+
   useEffect(() => {
     let alive = true
-    void fetchRecentAdminActivity(8).then(list => { if (alive) setRows(list) })
+    const ids = scopeKey ? scopeKey.split(',') : []
+    void fetchMilestones(15, ids).then(list => { if (alive) setRows(list) })
     return () => { alive = false }
-  }, [])
+  }, [scopeKey])
 
-  const entries: AuditEntry[] = (rows ?? []).map(r => ({
-    action: r.action,
-    user: r.entityType,
-    by: r.actorName ?? 'sistema',
-    when: relativeTime(r.createdAt),
-  }))
+  if (rows === null) {
+    return <SCard title="Auditoria — Marcos do Tenant"><LoadingState /></SCard>
+  }
+
+  const visible = showAll ? rows : rows.slice(0, 6)
 
   return (
-    <SCard title="Auditoria — Atividade Administrativa Recente">
-      {rows === null ? <LoadingState /> : <AuditFeed entries={entries} />}
+    <SCard title="Auditoria — Marcos do Tenant">
+      {rows.length === 0
+        ? <EmptyState message="Nenhum marco registrado ainda." />
+        : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {visible.map(r => {
+                const color = MILESTONE_COLORS[r.meta.color]
+                return (
+                  <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <span aria-hidden style={{ fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>{r.meta.icon}</span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 12, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontWeight: 600, color }}>{r.meta.label}</span>
+                        {r.targetName ? <span style={{ color: T.text2 }}> · {r.targetName}</span> : null}
+                      </div>
+                      <div style={{ fontSize: 10, color: T.text3, marginTop: 2 }}>
+                        {r.actorName ?? 'sistema'} · {relativeTime(r.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {rows.length > visible.length && (
+              <button
+                className="no-drag"
+                onClick={() => setShowAll(true)}
+                style={{
+                  marginTop: 10, fontSize: 11, color: T.accent, background: 'none',
+                  border: 'none', padding: 0, cursor: 'pointer',
+                }}
+              >Ver todos →</button>
+            )}
+          </>
+        )}
     </SCard>
   )
 }
