@@ -4,6 +4,7 @@
 // e é devolvido uma única vez para montar o link. NUNCA logar o token.
 import { supabase } from '../../integrations/supabase/client'
 import { safeCall, logger } from '../../utils/logger'
+import { writeAudit as writeMilestone } from './audit'
 import { DEFAULT_TENANT_ID } from './timeline'
 
 function tbl(name: string): any {
@@ -105,10 +106,15 @@ export function consumeToken(rawToken: string): Promise<boolean> {
       .update({ used_at: new Date().toISOString() })
       .eq('token_hash', token_hash)
       .is('used_at', null)
-      .select('id, profile_id')
+      .select('id, profile_id, purpose')
     if (error) throw error
     const row = (data ?? [])[0]
-    if (row) await audit('activation_token_consumed', row.profile_id, { consumed: true })
+    if (row) {
+      await audit('activation_token_consumed', row.profile_id, { consumed: true })
+      if (row.purpose === 'first_access') {
+        await writeMilestone('invite.accepted', row.profile_id, { profile_id: row.profile_id })
+      }
+    }
     return !!row
   }, false)
 }
