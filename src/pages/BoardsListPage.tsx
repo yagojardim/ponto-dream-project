@@ -229,11 +229,33 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {pBoards.map(b => (
-                <BoardCard key={b.id} board={b} onOpen={() => onSelectBoard(b.id)} />
+                <BoardCard key={b.id} board={b} onOpen={() => onSelectBoard(b.id)} onSettings={() => setSettingsBoard(b)} />
               ))}
             </div>
           </div>
         ))
+      )}
+
+      {settingsBoard && (
+        <BoardSettingsModal
+          board={settingsBoard}
+          actorName={activeUser.name}
+          onClose={() => setSettingsBoard(null)}
+          onDone={(msg, close) => {
+            setToast(msg)
+            window.setTimeout(() => setToast(null), 2600)
+            reload()
+            if (close) setSettingsBoard(null)
+          }}
+        />
+      )}
+
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 200,
+          background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 8,
+          padding: '9px 16px', fontSize: 12, color: T.text1, boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+        }}>{toast}</div>
       )}
     </div>
   )
