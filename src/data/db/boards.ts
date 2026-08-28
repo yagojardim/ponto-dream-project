@@ -73,18 +73,14 @@ export function fetchVisibleBoards(opts: {
     }
 
     let query = tbl('boards')
-      .select('id, tenant_id, name, project_id, status, updated_at')
+      .select('id, tenant_id, name, project_id, status, description, metadata, archived_at, updated_at')
       .eq('tenant_id', tenantId)
-      .is('archived_at', null)
       .order('name')
     if (allowedProjectIds) query = query.in('project_id', allowedProjectIds)
 
     const boardsRes = await query
     if (boardsRes.error) throw new Error(boardsRes.error.message)
-    const boards = (boardsRes.data ?? []) as {
-      id: string; tenant_id: string; name: string; project_id: string
-      status: string | null; updated_at: string | null
-    }[]
+    const boards = (boardsRes.data ?? []) as BoardRow[]
     if (boards.length === 0) return []
 
     const projectIds = [...new Set(boards.map(b => b.project_id).filter(Boolean))]
