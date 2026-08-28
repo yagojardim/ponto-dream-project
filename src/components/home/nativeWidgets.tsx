@@ -109,8 +109,8 @@ export function BlockedWidget({ openBoard, onOpenItem }: WidgetCtx) {
       showDaysBlocked
       maxItems={20}
       emptyMsg="Nenhum item bloqueado no seu escopo."
-      onOpen={onOpenItem}
-      onViewAll={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -124,8 +124,8 @@ export function ReadyWidget({ openBoard, onOpenItem }: WidgetCtx) {
       items={items}
       maxItems={20}
       emptyMsg="Nenhum item pronto para iniciar."
-      onOpen={onOpenItem}
-      onViewAll={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -139,8 +139,8 @@ export function TestingWidget({ openBoard, onOpenItem }: WidgetCtx) {
       items={items}
       maxItems={20}
       emptyMsg="Nada aguardando validação de QA."
-      onOpen={onOpenItem}
-      onViewAll={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -154,8 +154,8 @@ export function BacklogAlertWidget({ openBoard, onOpenItem }: WidgetCtx) {
       items={items}
       maxItems={20}
       emptyMsg="Backlog sem itens em alerta."
-      onOpen={onOpenItem}
-      onViewAll={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -169,8 +169,8 @@ export function MyQueueWidget({ openBoard, onOpenItem, userName }: WidgetCtx) {
       items={mine}
       maxItems={20}
       emptyMsg="Você não tem demandas abertas atribuídas."
-      onOpen={onOpenItem}
-      onViewAll={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -185,8 +185,8 @@ export function ReviewQueueWidget({ openBoard, onOpenItem }: WidgetCtx) {
       items={items}
       maxItems={20}
       emptyMsg="Nenhum gargalo no momento."
-      onOpen={onOpenItem}
-      onViewAll={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -203,8 +203,8 @@ export function DesignQueueWidget({ openBoard, onOpenItem }: WidgetCtx) {
       items={items}
       maxItems={20}
       emptyMsg="Fila de design vazia."
-      onOpen={onOpenItem}
-      onViewAll={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -216,7 +216,7 @@ export function SprintWidget({ openBoard, onOpenItem }: WidgetCtx) {
   const sprintName = liveCurrentSprintName()
   const items = sprintName ? scopedItems(getSprintItems(sprintName)) : []
   if (!sprintName || items.length === 0) {
-    return <EmptyState message="Nenhuma sprint ativa no escopo selecionado." action={{ label: 'Ver board', onClick: () => openBoard() }} />
+    return <EmptyState message="Nenhuma sprint ativa no escopo selecionado." action={{ label: 'Ver board', onClick: () => doOpenBoard(ctx) }} />
   }
   const done = items.filter(i => i.status === 'done').length
   return (
@@ -225,8 +225,8 @@ export function SprintWidget({ openBoard, onOpenItem }: WidgetCtx) {
       done={done}
       total={items.length}
       items={items}
-      onOpen={onOpenItem}
-      onViewSprint={() => openBoard()}
+      onOpen={item => doOpenItem(ctx, item)}
+      onViewSprint={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
     />
   )
@@ -243,7 +243,7 @@ export function KpiBlockedWidget({ openBoard }: WidgetCtx) {
       sub={n > 0 ? 'Precisam de desbloqueio' : 'Nenhum impedimento'}
       color={n > 0 ? T.crit : T.success} alert={n > 0}
       miniViz={ratioViz(n, total, n > 0 ? T.crit : T.success)}
-      onClick={() => openBoard()}
+      onClick={() => doOpenBoard(ctx)}
     />
   )
 }
@@ -256,7 +256,7 @@ export function KpiWipWidget({ openBoard }: WidgetCtx) {
       value={String(wip)} label="Trabalho em andamento" sub="Em progresso, revisão ou teste"
       color={T.accent}
       miniViz={ratioViz(wip, all.length, T.accent)}
-      onClick={() => openBoard()}
+      onClick={() => doOpenBoard(ctx)}
     />
   )
 }
@@ -273,7 +273,7 @@ export function KpiSprintProgressWidget({ openDetail }: WidgetCtx) {
       sub={sprintName ?? 'Sem sprint ativa'}
       color={T.success}
       miniViz={<BurndownChart variant="thumbnail" />}
-      onClick={() => openDetail('burndown')}
+      onClick={() => doOpenDetail(ctx, 'burndown')}
     />
   )
 }
@@ -288,7 +288,7 @@ export function KpiProjectsWidget({ onNav }: WidgetCtx) {
       sub={atRisk > 0 ? `${atRisk} em risco ou bloqueado` : 'Todos saudáveis'}
       color={atRisk > 0 ? T.warn : T.success}
       miniViz={ratioViz(rag.length - atRisk, rag.length, atRisk > 0 ? T.warn : T.success)}
-      onClick={() => onNav('projects')}
+      onClick={() => doNav(ctx, 'projects')}
     />
   )
 }
@@ -303,7 +303,7 @@ export function KpiDeliveredWidget({ openDetail }: WidgetCtx) {
       sub={agg ? 'Total no escopo atual' : 'Sem dados'}
       color={T.success}
       miniViz={ratioViz(done, all.length, T.success)}
-      onClick={() => openDetail('velocity')}
+      onClick={() => doOpenDetail(ctx, 'velocity')}
     />
   )
 }
@@ -330,7 +330,7 @@ export function KpiAdminProjectsWidget({ onNav }: WidgetCtx) {
       sub={k ? `${k.projects.active} ativo${k.projects.active !== 1 ? 's' : ''}` : 'carregando…'}
       disclaimer="projetos do tenant (não arquivados)"
       miniViz={k ? ratioViz(k.projects.active, k.projects.total, T.accent) : undefined}
-      onClick={() => onNav('projects-list')}
+      onClick={() => doNav(ctx, 'projects-list')}
     />
   )
 }
@@ -343,7 +343,7 @@ export function KpiAdminBoardsWidget({ onNav }: WidgetCtx) {
       sub={k ? `${k.boards.active} ativo${k.boards.active !== 1 ? 's' : ''}` : 'carregando…'}
       disclaimer="boards de Kanban do tenant"
       miniViz={k ? ratioViz(k.boards.active, k.boards.total, T.indigo) : undefined}
-      onClick={() => onNav('boards-list')}
+      onClick={() => doNav(ctx, 'boards-list')}
     />
   )
 }
@@ -356,7 +356,7 @@ export function KpiAdminModulesWidget({ onNav }: WidgetCtx) {
       sub={k ? `de ${k.modules.total}` : 'carregando…'}
       disclaimer="módulos habilitados para este tenant"
       miniViz={k ? ratioViz(k.modules.active, k.modules.total, T.purple) : undefined}
-      onClick={() => onNav('modules')}
+      onClick={() => doNav(ctx, 'modules')}
     />
   )
 }
@@ -369,7 +369,7 @@ export function KpiAdminUsersWidget({ onNav }: WidgetCtx) {
       sub={k ? `${k.users.active} ativo${k.users.active !== 1 ? 's' : ''}${k.users.blocked ? ` · ${k.users.blocked} bloqueado(s)` : ''}` : 'carregando…'}
       disclaimer="perfis registrados no tenant"
       miniViz={k ? ratioViz(k.users.active, k.users.total, T.success) : undefined}
-      onClick={() => onNav('team:membros')}
+      onClick={() => doNav(ctx, 'team:membros')}
     />
   )
 }
@@ -390,7 +390,7 @@ export function KpiAdminInvitesWidget({ onNav }: WidgetCtx) {
       color={k && k.invites.pending > 0 ? T.warn : undefined}
       alert={!!k && k.invites.pending > 0}
       miniViz={k ? ratioViz(k.invites.pending, Math.max(k.users.total, 1), T.warn) : undefined}
-      onClick={() => onNav('team:convites')}
+      onClick={() => doNav(ctx, 'team:convites')}
     />
   )
 }
@@ -406,7 +406,7 @@ export function KpiPmoActiveProjectsWidget({ onNav }: WidgetCtx) {
       value={String(scopedOr(agg?.counts?.activeProjects ?? 0, rags.length))} label="Projetos Ativos"
       sub={`${healthy} no prazo`} disclaimer="projetos ativos no tenant"
       miniViz={ratioViz(healthy, rags.length, T.success)}
-      onClick={() => onNav('projects-list')}
+      onClick={() => doNav(ctx, 'projects-list')}
     />
   )
 }
@@ -422,7 +422,7 @@ export function KpiPmoAtRiskWidget({ onNav }: WidgetCtx) {
       sub={`${blocked} crítico(s)`} disclaimer="projetos com RAG amarelo ou vermelho"
       color={T.warn} alert={atRisk > 0}
       miniViz={ratioViz(atRisk, rags.length, T.warn)}
-      onClick={() => onNav('projects-list')}
+      onClick={() => doNav(ctx, 'projects-list')}
     />
   )
 }
@@ -437,7 +437,7 @@ export function KpiPredictabilityWidget({ openDetail }: WidgetCtx) {
       sub="meta: 80%" disclaimer="% do planejado efetivamente entregue"
       color={pct < 80 ? T.warn : T.success} alert={pct < 80}
       miniViz={ratioViz(pct, 100, pct < 80 ? T.warn : T.success)}
-      onClick={() => openDetail('velocity')}
+      onClick={() => doOpenDetail(ctx, 'velocity')}
     />
   )
 }
@@ -451,7 +451,7 @@ export function KpiPlannedVsDoneWidget({ openDetail }: WidgetCtx) {
       sub={`${agg?.done ?? 0}/${agg?.planned ?? 0} itens`}
       disclaimer="itens concluídos sobre o total planejado"
       miniViz={ratioViz(pct, 100, T.accent)}
-      onClick={() => openDetail('velocity')}
+      onClick={() => doOpenDetail(ctx, 'velocity')}
     />
   )
 }
@@ -469,7 +469,7 @@ export function KpiPmProgressWidget({ onNav }: WidgetCtx) {
       sub={`${done}/${sprint.length} itens concluídos`}
       disclaimer="% de tarefas concluídas na sprint ativa"
       miniViz={<BurndownChart variant="thumbnail" />}
-      onClick={() => onNav('project')}
+      onClick={() => doNav(ctx, 'project')}
     />
   )
 }
@@ -482,7 +482,7 @@ export function KpiPmDeadlineWidget({ onNav }: WidgetCtx) {
       sub={rag?.periodEnd ? `Entrega: ${rag.periodEnd}` : 'sem data definida'}
       disclaimer="dias até a data de entrega planejada"
       miniViz={rag ? ratioViz(rag.pct, 100, T.accent) : undefined}
-      onClick={() => onNav('gantt')}
+      onClick={() => doNav(ctx, 'gantt')}
     />
   )
 }
@@ -495,7 +495,7 @@ export function KpiMauWidget({ openDetail }: WidgetCtx) {
       value="930" label="MAU" sub="+8% vs mês ant."
       disclaimer="usuários únicos ativos nos últimos 30 dias" color={T.success}
       miniViz={<MiniSparkline data={[{ label: 'Jan', value: 720 }, { value: 750 }, { value: 800 }, { value: 860 }, { value: 900 }, { label: 'Jun', value: 930 }]} color="#34d399" />}
-      onClick={() => openDetail('health')}
+      onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
 }
@@ -506,7 +506,7 @@ export function KpiStickinessWidget({ openDetail }: WidgetCtx) {
       value="7.5%" label="Stickiness" sub="DAU/MAU — meta 10-20%"
       disclaimer="frequência de uso: ativos diários ÷ mensais" color={T.warn}
       miniViz={<MiniSparkline data={[{ label: 'Jan', value: 6.1 }, { value: 6.4 }, { value: 6.8 }, { value: 7.0 }, { value: 7.2 }, { label: 'Jun', value: 7.5 }]} color="#f5a524" />}
-      onClick={() => openDetail('health')}
+      onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
 }
@@ -517,7 +517,7 @@ export function KpiChurnWidget({ openDetail }: WidgetCtx) {
       value="3.2%" label="Churn Rate" sub="meta: <2%"
       disclaimer="taxa de abandono por tenant — sem impacto billing" color={T.crit} alert
       miniViz={<MiniSparkline data={[{ label: 'Jan', value: 2.8 }, { value: 2.9 }, { value: 3.0 }, { value: 3.1 }, { value: 3.2 }, { label: 'Jun', value: 3.2 }]} color="#ef4444" />}
-      onClick={() => openDetail('health')}
+      onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
 }
@@ -528,7 +528,7 @@ export function KpiAdoptionWidget({ openDetail }: WidgetCtx) {
       value="52%" label="Adoção de Features" sub="base elegível"
       disclaimer="% médio de adoção sobre base elegível por feature"
       miniViz={<MiniBarChart data={[{ label: 'Jan', value: 38 }, { label: 'Feb', value: 42 }, { label: 'Mar', value: 46 }, { label: 'Abr', value: 49 }, { label: 'Mai', value: 51 }, { label: 'Jun', value: 52, current: true }]} />}
-      onClick={() => openDetail('health')}
+      onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
 }
@@ -558,7 +558,7 @@ export function KpiPoReadyWidget({ onNav }: WidgetCtx) {
       sub={sprintPts > 0 ? 'pts prontos ÷ velocity' : 'sem sprint ativa'}
       disclaimer="pontos prontos ÷ velocidade média da sprint"
       miniViz={ratioViz(pct ?? 0, 100, T.accent)}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -573,7 +573,7 @@ export function KpiBacklogHealthWidget({ onNav }: WidgetCtx) {
       disclaimer="itens saudáveis ÷ total de itens avaliáveis"
       color={pct < 60 ? T.warn : T.success} alert={pct < 60}
       miniViz={ratioViz(pct, 100, pct < 60 ? T.warn : T.success)}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -587,7 +587,7 @@ export function KpiCreatedVsFinalizedWidget({ openBoard }: WidgetCtx) {
       disclaimer="itens finalizados vs criados no(s) projeto(s) selecionado(s)"
       color={T.success}
       miniViz={<MiniBarChart data={m?.createdVsFinalized.weekly ?? []} showAvg={false} />}
-      onClick={() => openBoard()}
+      onClick={() => doOpenBoard(ctx)}
     />
   )
 }
@@ -602,7 +602,7 @@ export function KpiReleasesHealthWidget({ onNav }: WidgetCtx) {
       color={m?.releasesHealth.overdue ? T.warn : (m && m.releasesHealth.healthPct >= 70 ? T.success : T.warn)}
       alert={m?.releasesHealth.overdue ?? false}
       miniViz={<MiniBarChart data={m?.releasesHealth.perRelease ?? []} showAvg={false} />}
-      onClick={() => onNav('releases')}
+      onClick={() => doNav(ctx, 'releases')}
     />
   )
 }
@@ -623,7 +623,7 @@ export function KpiSprintHealthWidget({ openDetail }: WidgetCtx) {
       color={health != null && health < 60 ? T.warn : T.success}
       alert={health != null && health < 60}
       miniViz={active ? <BurndownChart variant="thumbnail" /> : undefined}
-      onClick={() => openDetail('burndown')}
+      onClick={() => doOpenDetail(ctx, 'burndown')}
     />
   )
 }
@@ -636,7 +636,7 @@ export function KpiImpedimentsWidget({ onNav }: WidgetCtx) {
       disclaimer="impedimentos formais sem resolução registrada"
       color={T.crit} alert={blocked.length > 0}
       miniViz={ratioViz(blocked.length, scopedItems(liveItems()).length, T.crit)}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -653,7 +653,7 @@ export function KpiSprintGoalWidget({ onNav }: WidgetCtx) {
       disclaimer="itens que ameaçam atingir o objetivo da sprint"
       color={critical.length > 0 ? T.warn : T.success} alert={critical.length > 0}
       miniViz={ratioViz(critical.length, sprint.length, T.warn)}
-      onClick={() => onNav('project')}
+      onClick={() => doNav(ctx, 'project')}
     />
   )
 }
@@ -675,7 +675,7 @@ export function KpiCriticalBugsWidget({ openBoard }: WidgetCtx) {
       disclaimer="bugs P0/P1 bloqueando entrega ou em produção"
       color={T.crit} alert={bugs > 0}
       miniViz={ratioViz(bugs, all.filter(w => w.type === 'bug').length, T.crit)}
-      onClick={() => openBoard()}
+      onClick={() => doOpenBoard(ctx)}
     />
   )
 }
@@ -689,7 +689,7 @@ export function KpiLeadTimeWidget({ openDetail }: WidgetCtx) {
       color={dm.leadTimeDias != null && dm.leadTimeDias > 14 ? T.warn : undefined}
       alert={dm.leadTimeDias != null && dm.leadTimeDias > 14}
       miniViz={ratioViz(Math.min(dm.leadTimeDias ?? 0, 30), 30, dm.leadTimeDias != null && dm.leadTimeDias > 14 ? T.warn : T.accent)}
-      onClick={() => openDetail('leadtime')}
+      onClick={() => doOpenDetail(ctx, 'leadtime')}
     />
   )
 }
@@ -702,7 +702,7 @@ export function KpiThroughputWidget({ openDetail }: WidgetCtx) {
       sub="concluídas por semana" disclaimer="demandas concluídas por semana no escopo"
       alert={dm.vazaoSemana != null && dm.vazaoSemana < 1}
       miniViz={ratioViz(Math.min(dm.vazaoSemana ?? 0, 10), 10, T.accent)}
-      onClick={() => openDetail('velocity')}
+      onClick={() => doOpenDetail(ctx, 'velocity')}
     />
   )
 }
@@ -716,7 +716,7 @@ export function KpiReworkWidget({ openDetail }: WidgetCtx) {
       color={dm.taxaBugsPct != null && dm.taxaBugsPct > 20 ? T.warn : undefined}
       alert={dm.taxaBugsPct != null && dm.taxaBugsPct > 20}
       miniViz={ratioViz(dm.taxaBugsPct ?? 0, 100, dm.taxaBugsPct != null && dm.taxaBugsPct > 20 ? T.warn : T.accent)}
-      onClick={() => openDetail('leadtime')}
+      onClick={() => doOpenDetail(ctx, 'leadtime')}
     />
   )
 }
@@ -733,7 +733,7 @@ export function KpiMyItemsWidget({ onNav, userName }: WidgetCtx) {
       sub={`${blocked} bloqueado${blocked !== 1 ? 's' : ''}`}
       disclaimer="tarefas atribuídas a mim nesta sprint"
       miniViz={ratioViz(done, mine.length, T.accent)}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -749,7 +749,7 @@ export function KpiMyLateWidget({ onNav, userName }: WidgetCtx) {
       disclaimer="itens com prazo hoje ou já vencido"
       color={late.length ? T.crit : undefined} alert={late.length > 0}
       miniViz={ratioViz(late.length, mine.length, T.crit)}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -763,7 +763,7 @@ export function KpiMyBlockedWidget({ onNav, userName }: WidgetCtx) {
       disclaimer="minhas tarefas aguardando desbloqueio externo"
       color={T.warn} alert={blocked.length > 0}
       miniViz={ratioViz(blocked.length, mine.length, T.warn)}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -776,7 +776,7 @@ export function KpiUxFlowsWidget({ onNav }: WidgetCtx) {
       value="8" label="Fluxos em Design" sub="3 projetos"
       disclaimer="fluxos com trabalho de design em progresso"
       miniViz={<MiniBarChart data={[{ label: 'S10', value: 5 }, { label: 'S11', value: 7 }, { label: 'S12', value: 6 }, { label: 'S13', value: 8, current: true }]} showAvg={false} />}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -787,7 +787,7 @@ export function KpiUxPrototypesWidget({ onNav }: WidgetCtx) {
       value="3" label="Protótipos p/ Val." sub="aguardando PO/usuário"
       disclaimer="protótipos aguardando feedback de usuário ou PO" color={T.accent}
       miniViz={<MiniSparkline data={[{ label: 'S10', value: 1 }, { value: 2 }, { value: 4 }, { label: 'S13', value: 3 }]} color="#3b82f6" />}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -798,7 +798,7 @@ export function KpiUxPendingWidget({ onNav }: WidgetCtx) {
       value="4" label="Pendências Críticas" sub="1 acessibilidade"
       disclaimer="fluxos sem spec, protótipo ou validação completa" color={T.crit} alert
       miniViz={<MiniSparkline data={[{ label: 'S10', value: 6 }, { value: 5 }, { value: 5 }, { label: 'S13', value: 4 }]} color="#ef4444" />}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -809,7 +809,7 @@ export function KpiUxHandoffWidget({ onNav }: WidgetCtx) {
       value="1" label="Handoff Pronto" sub="Dashboard por Papel"
       disclaimer="entregas de design prontas para implementação" color={T.success}
       miniViz={<MiniBarChart data={[{ label: 'S10', value: 0 }, { label: 'S11', value: 2 }, { label: 'S12', value: 1 }, { label: 'S13', value: 1, current: true }]} showAvg={false} />}
-      onClick={() => onNav('list')}
+      onClick={() => doNav(ctx, 'list')}
     />
   )
 }
@@ -823,7 +823,7 @@ export function KpiQaQueueWidget({ openBoard }: WidgetCtx) {
       value={String(testing.length)} label="Aguardando Teste" sub="Ready for QA"
       disclaimer="itens em fila de QA ou em homologação ativa"
       miniViz={<MiniBarChart data={[{ label: 'S10', value: 8 }, { label: 'S11', value: 10 }, { label: 'S12', value: 7 }, { label: 'S13', value: testing.length, current: true }]} showAvg={false} />}
-      onClick={() => openBoard()}
+      onClick={() => doOpenBoard(ctx)}
     />
   )
 }
@@ -835,7 +835,7 @@ export function KpiQaBugsWidget({ openBoard }: WidgetCtx) {
       value={String(crit)} label="Bugs Críticos" sub={crit > 0 ? 'requer atenção' : 'tudo ok'}
       disclaimer="bugs P0/P1 bloqueando entrega da sprint" color={T.crit} alert={crit > 0}
       miniViz={<MiniSparkline data={[{ label: 'S8', value: 9 }, { value: 7 }, { value: 8 }, { value: 6 }, { value: 5 }, { label: 'S13', value: crit }]} color="#ef4444" />}
-      onClick={() => openBoard()}
+      onClick={() => doOpenBoard(ctx)}
     />
   )
 }
@@ -846,7 +846,7 @@ export function KpiQaRejectionWidget({ openDetail }: WidgetCtx) {
       value="28%" label="Taxa de Rejeição" sub="meta: <15%"
       disclaimer="% de itens devolvidos ao Dev pelo QA" color={T.warn} alert
       miniViz={<MiniSparkline data={[{ label: 'S8', value: 18 }, { value: 20 }, { value: 22 }, { value: 25 }, { value: 26 }, { label: 'S13', value: 28 }]} color="#f5a524" />}
-      onClick={() => openDetail('leadtime')}
+      onClick={() => doOpenDetail(ctx, 'leadtime')}
     />
   )
 }
@@ -857,7 +857,7 @@ export function KpiQaEvidenceWidget({ openBoard }: WidgetCtx) {
       value="6" label="Evidências Pendentes" sub="dev não submeteu"
       disclaimer="bugs sem evidência de reprodução registrada" color={T.warn}
       miniViz={<MiniBarChart data={[{ label: 'S10', value: 4 }, { label: 'S11', value: 7 }, { label: 'S12', value: 5 }, { label: 'S13', value: 6, current: true }]} showAvg={false} />}
-      onClick={() => openBoard()}
+      onClick={() => doOpenBoard(ctx)}
     />
   )
 }
@@ -880,7 +880,7 @@ export function ProjectsRagWidget({ onNav }: WidgetCtx) {
           pct={p.pct}
           daysLabel={`${p.done}/${p.total} itens`}
           reason={p.reason}
-          onClick={() => onNav('project', p.id)}
+          onClick={() => doNav(ctx, 'project', p.id)}
         />
       ))}
     </Scroll>
