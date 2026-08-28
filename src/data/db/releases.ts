@@ -83,15 +83,20 @@ async function writeAudit(
   before: AuditPayload | null,
   after: AuditPayload | null,
 ): Promise<void> {
-  await supabase.from('audit_logs').insert({
-    tenant_id: DEFAULT_TENANT_ID,
-    entity_type: 'release',
-    entity_id: entityId,
-    action,
-    actor_name: actorName,
-    before,
-    after,
-  })
+  try {
+    const { error } = await supabase.from('audit_logs').insert({
+      tenant_id: DEFAULT_TENANT_ID,
+      entity_type: 'release',
+      entity_id: entityId,
+      action,
+      actor_name: actorName,
+      before,
+      after,
+    })
+    if (error) throw error
+  } catch (err) {
+    logger.error('releases.writeAudit', err, { entityId, action })
+  }
 }
 
 export interface CreateReleaseInput {
@@ -372,5 +377,10 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
   await writeAudit(release.id, 'release.closed', actorName, null, {
     outcome, shipped: shippedCount, deferred: nextReleaseId ? deferredCount : 0, returned: returnedItems.length,
   })
+
+  await writeMilestone('release.finalized', release.id, {
+    name: release.name, version: release.version, project_id: release.project_id,
+    shipped: shippedCount, returned: returnedItems.length,
+  }, { actorName })
 }
 
