@@ -220,8 +220,8 @@ const ROLE_DEFAULTS: Record<string, string[]> = {
   admin: [
     'native.kpi-admin-projects', 'native.kpi-admin-boards', 'native.kpi-admin-modules',
     'native.kpi-admin-users', 'native.kpi-admin-invites',
-    'native.admin-users', 'native.admin-modules', 'native.admin-audit', 'native.projects-rag',
-    'report.health',
+    'native.admin-users', 'native.admin-modules', 'native.admin-audit',
+    'report.health', 'native.projects-rag',
   ],
   pmo: [
     'native.kpi-pmo-active', 'native.kpi-pmo-risk', 'native.kpi-predictability', 'native.kpi-planned-done',
@@ -252,7 +252,7 @@ const ROLE_DEFAULTS: Record<string, string[]> = {
   'tech-lead': [
     'native.kpi-critical-bugs', 'native.kpi-leadtime', 'native.kpi-throughput', 'native.kpi-rework',
     'native.review-queue', 'native.client-feed',
-    'report.leadtime', 'report.bugs',
+    'report.leadtime',
   ],
   dev: [
     'native.kpi-my-items', 'native.kpi-my-late', 'native.kpi-my-blocked',

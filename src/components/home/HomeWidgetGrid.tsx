@@ -44,7 +44,7 @@ interface Props {
   onNav: (view: string, targetId?: string) => void
 }
 
-function storageKey(userId: string, role: string) { return `altech.home.layout.${userId}.${role}` }
+function storageKey(userId: string, role: string) { return `altech.home.layout.v2.${userId}.${role}` }
 function filterKey(userId: string) { return `altech.home.projfilter.${userId}` }
 
 function newId(): string {
