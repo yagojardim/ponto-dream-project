@@ -52,6 +52,7 @@ import { can } from '../data/permissions'
 import { countActiveModules, listModules, type ModuleView } from '../data/db/modules'
 import { getMembers, setMemberStatus, type MemberRow, type MemberStatus } from '@/data/db/members'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
+import { fetchMilestones, type MilestoneRow, type MilestoneMeta } from '@/data/db/audit'
 import { countPendingInvites, nearestExpiry } from '../data/invites'
 import { HomeWidgetGrid } from '@/components/home/HomeWidgetGrid'
 
