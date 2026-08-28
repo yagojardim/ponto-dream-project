@@ -8,6 +8,7 @@ import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
 import { sortSprintsByStartDate } from './sprints'
 import { safeCall, logger } from '../../utils/logger'
+import { writeAudit as writeMilestone } from '@/data/db/audit'
 
 export { DEFAULT_TENANT_ID }
 
@@ -420,6 +421,9 @@ async function createClientPortalUsers__raw(
     await writeAudit('client_portal_user', u.id, 'portal.access_created',
       input.actorName ?? 'Sistema', null,
       { email: u.email, project_id: u.project_id, portal_role: u.portal_role })
+    await writeMilestone('dashview_user.created', u.id, {
+      name: u.name ?? u.email, email: u.email, project_id: u.project_id,
+    }, { actorName: input.actorName ?? null })
   }
   return created
 }

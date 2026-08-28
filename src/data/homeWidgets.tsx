@@ -146,7 +146,7 @@ const NATIVE: WidgetDef[] = [
   // Cards de corpo dos painéis originais
   card('native.admin-users',    'Usuários & Convites',       6,  c => <AdminUsersCard onNav={c.onNav} />),
   card('native.admin-modules',  'Módulos',                   6,  c => <AdminModulesCard onNav={c.onNav} />),
-  card('native.admin-audit',    'Auditoria',                 12, () => <AdminAuditCard />),
+  card('native.admin-audit',    'Auditoria',                 12, c => <AdminAuditCard projectIds={c.projectIds} />),
   card('native.client-feed',    'Client Feed',               12, () => <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />),
   card('native.pmo-rag',        'Saúde por Projeto (RAG)',   6,  c => <PmoRagCard {...c} />),
   card('native.critical-blockers', 'Bloqueadores Críticos',  6,  c => <CriticalBlockersCard {...c} />),

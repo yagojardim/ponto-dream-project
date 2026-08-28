@@ -5,6 +5,7 @@ import { DEFAULT_TENANT_ID } from './timeline'
 import { updateWorkItemField, addComment } from './workItem'
 import * as notifications from './notifications'
 import { logger } from '../../utils/logger'
+import { writeAudit as writeMilestone, writeAuditOnce } from './audit'
 
 export { DEFAULT_TENANT_ID }
 
@@ -54,6 +55,15 @@ export async function listReleases(): Promise<ReleasesData> {
     ['profiles', profiles.error], ['projects', projects.error],
   ].find(([, err]) => err) as [string, { message: string }] | undefined
   if (failed) throw new Error(missingTableMessage(failed[0], failed[1].message))
+
+  // Marco derivado: release vencida e ainda não lançada — registrado 1x só.
+  const today = new Date().toISOString().slice(0, 10)
+  for (const r of releases.data ?? []) {
+    if (r.state === 'released' || !r.release_date || r.release_date >= today) continue
+    await writeAuditOnce('release.overdue', r.id, {
+      name: r.name, version: r.version, project_id: r.project_id, release_date: r.release_date,
+    })
+  }
 
   return {
     releases: releases.data ?? [],
@@ -230,6 +240,11 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
     metadata: metadata as Tables['releases']['Update']['metadata'],
   }).eq('id', release.id).eq('tenant_id', DEFAULT_TENANT_ID)
   if (error) throw new Error(missingTableMessage('releases', error.message))
+
+  await writeMilestone('release.finalized', release.id, {
+    name: release.name, version: release.version, project_id: release.project_id,
+    outcome, shipped: shippedCount, returned: returnedCount, deferred: deferredCount,
+  }, { actorName })
 
   const loadItems = async (ids: string[]) => ids.length > 0
     ? (await supabase.from('work_items')

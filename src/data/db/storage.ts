@@ -2,6 +2,7 @@
 // v_tenant_storage / v_project_storage views plus tenant_settings.
 import { supabase } from '@/integrations/supabase/client'
 import { safeCall } from '@/utils/logger'
+import { writeAuditOnce } from '@/data/db/audit'
 import { bytesToHuman } from '@/data/db/attachments'
 
 export { bytesToHuman }
@@ -49,6 +50,13 @@ export async function fetchTenantStorage(tenantId: string): Promise<TenantStorag
     const fileCount  = Number(usageRes.data?.file_count ?? 0)
     const quotaBytes = Number(settingsRes.data?.storage_quota_bytes ?? 0)
     const extraBytes = Number(settingsRes.data?.extra_storage_bytes ?? 0)
+
+    const effective = quotaBytes + extraBytes
+    if (effective > 0 && usedBytes >= effective) {
+      await writeAuditOnce('storage.full', tenantId, {
+        name: 'Armazenamento do tenant', used_bytes: usedBytes, effective_bytes: effective,
+      })
+    }
 
     return {
       usedBytes,

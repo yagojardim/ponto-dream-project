@@ -3,6 +3,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID, projectColor } from './timeline'
+import { writeAudit as writeMilestone } from './audit'
 import { safeCall } from '@/utils/logger'
 import { can } from '@/data/permissions'
 
@@ -197,6 +198,11 @@ export async function createProject(input: CreateProjectInput): Promise<ProjectR
   await writeAudit(project.id, 'project.created', actorName, null, {
     key: project.key, name: project.name, board_type: boardType,
   })
+  await writeMilestone('board.created', board.id, {
+    name: boardType === 'scrum' ? 'Sprint Board' : 'Kanban',
+    project_id: project.id,
+    board_type: boardType,
+  }, { actorName })
 
   return project
 }
@@ -233,6 +239,13 @@ export async function updateProject(
   const { error } = await supabase.from('projects')
     .update(payload).eq('id', project.id).eq('tenant_id', DEFAULT_TENANT_ID)
   if (error) throw fail('projects', error.message)
+
+  // Marcos: arquivar e finalizar têm chave própria no feed de auditoria.
+  if (patch.archivedAt) {
+    await writeMilestone('project.archived', project.id, { name: project.name, project_id: project.id }, { actorName })
+  } else if (patch.status === 'completed') {
+    await writeMilestone('project.finalized', project.id, { name: project.name, project_id: project.id }, { actorName })
+  }
 
   await writeAudit(project.id, 'project.updated', actorName, {
     name: project.name, status: project.status, period_start: project.period_start,

@@ -5,6 +5,7 @@
 // Persistido em tenant_settings.metadata (jsonb já existente) — sem migração.
 import { useEffect, useState } from 'react'
 import { supabase } from '../../integrations/supabase/client'
+import { writeAudit as writeMilestone } from '@/data/db/audit'
 import { DEFAULT_TENANT_ID } from './timeline'
 import { safeCall } from '../../utils/logger'
 import type { RoleContext } from '../session'
@@ -113,6 +114,7 @@ export function saveProfileReportsAccess(profileId: string, value: boolean): Pro
       .eq('id', profileId).eq('tenant_id', DEFAULT_TENANT_ID)
     if (error) throw error
     accessCache.set(profileId, value)
+    await writeMilestone('user.updated', profileId, { reports_access: value })
     return true
   }, false)
 }
