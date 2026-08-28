@@ -3,6 +3,7 @@
 // Tudo escopado por tenant_id — nunca cross-tenant.
 import { supabase } from '../../integrations/supabase/client'
 import { safeCall, logger } from '../../utils/logger'
+import { writeAudit as writeMilestone } from './audit'
 import { DEFAULT_TENANT_ID } from './timeline'
 import { DEFAULT_DASHBOARD_BY_ROLE, type DashboardType, type RoleContext } from '../session'
 
@@ -223,6 +224,14 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
       })
     } catch (err) {
       logger.error('invite.audit', err, { profileId })
+    }
+
+    // Marcos do tenant: criação do usuário e, quando for convite, o envio.
+    await writeMilestone('user.created', profileId, {
+      name: input.name, email: input.email, role: input.role,
+    })
+    if (input.status !== 'active') {
+      await writeMilestone('invite.sent', profileId, { name: input.name, email: input.email })
     }
 
     return profileId

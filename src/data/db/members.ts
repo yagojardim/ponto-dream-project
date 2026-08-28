@@ -4,6 +4,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
 import { safeCall, logger } from '../../utils/logger'
+import { writeAudit as writeMilestone } from './audit'
 
 export { DEFAULT_TENANT_ID }
 
@@ -75,6 +76,14 @@ export async function setMemberStatus(
     } catch (err) {
       logger.error('members.setMemberStatus.audit', err, { id, status })
     }
+    const milestone = status === 'blocked' ? 'user.suspended'
+      : status === 'inactive' ? 'user.deactivated' : 'user.reactivated'
+    const { data: who } = await t('profiles')
+      .select('name, email').eq('id', id).eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle()
+    await writeMilestone(milestone, id, {
+      name: (who?.name ?? who?.email ?? null) as string | null,
+      status,
+    }, { actorName: actorName ?? null })
     return true
   }, false)
 }
