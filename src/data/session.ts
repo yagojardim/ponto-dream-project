@@ -149,7 +149,6 @@ export function availableRoleChoices(user: MockUser): RoleChoice[] {
   const base = user.available_roles?.length ? user.available_roles : [user.role_context]
   // Dono do tenant vê somente Admin Master, nunca o papel Admin comum.
   const roles = base
-    .filter((r): r is RoleContext => r !== ADMIN_MASTER_ROLE)
     .filter((r) => !user.tenant_owner || r !== 'Admin')
     .filter((r, i, arr) => arr.indexOf(r) === i)
   const list: RoleChoice[] = [...roles]
