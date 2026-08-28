@@ -233,6 +233,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         /* Controles de edição: barra flutuante só no hover, sem chrome permanente. */
         .altech-widget-tools { opacity: 0; transition: opacity 0.12s; }
         .altech-widget-card:hover .altech-widget-tools { opacity: 1; }
+        .altech-home-panel.is-editing .altech-widget-tools { opacity: 1; }
 
       `}</style>
 
@@ -413,13 +414,18 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
   onRemove: () => void
 }) {
   const [nativeTitle, setNativeTitle] = useState<string | null>(null)
+  const [actionSlot, setActionSlot] = useState<HTMLDivElement | null>(null)
   const fit = def.overflow === 'fit'
   const isKpi = def.kind === 'kpi'
   const title = customTitle ?? nativeTitle ?? def.title
 
   const shell = useMemo(
-    () => ({ bare: true, registerTitle: (t: string) => setNativeTitle(prev => (prev === t ? prev : t)) }),
-    [],
+    () => ({
+      bare: true,
+      registerTitle: (t: string) => setNativeTitle(prev => (prev === t ? prev : t)),
+      actionSlot,
+    }),
+    [actionSlot],
   )
 
   const body = (
@@ -436,27 +442,28 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
     </div>
   )
 
-  const tools = editing ? (
+  const tools = (
     <div className="altech-widget-tools no-drag" style={{
       display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, maxWidth: '60%',
     }}>
-      <EditableTitle value={title} onConfirm={onRename} />
+      {editing && <EditableTitle value={title} onConfirm={onRename} />}
       <RemoveButton onClick={onRemove} />
     </div>
-  ) : null
+  )
 
   if (isKpi) {
     return (
       <>
         {body}
-        {editing && (
+        {(
+
           <div className="altech-widget-tools no-drag" style={{
             position: 'absolute', top: 6, right: 6, zIndex: 3,
             display: 'flex', alignItems: 'center', gap: 4,
             background: T.bgSurface2, border: `1px solid ${T.border}`,
             borderRadius: 8, padding: '2px 4px', maxWidth: '85%',
           }}>
-            <EditableTitle value={title} onConfirm={onRename} />
+            {editing && <EditableTitle value={title} onConfirm={onRename} />}
             <RemoveButton onClick={onRemove} />
           </div>
         )}
@@ -480,7 +487,10 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
           fontSize: 12, fontWeight: 600, color: T.text1,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{title}</span>
-        {tools}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
+          <div ref={setActionSlot} className="no-drag" style={{ display: 'flex', alignItems: 'center', gap: 8 }} />
+          {tools}
+        </div>
       </div>
       {body}
     </div>
