@@ -45,11 +45,11 @@ export function setWidgetScope(ids: ReadonlySet<string>): void {
   WIDGET_SCOPE = ids
 }
 
-function scopedItems<I extends { project_id?: string }>(items: I[]): I[] {
+export function scopedItems<I extends { project_id?: string }>(items: I[]): I[] {
   return WIDGET_SCOPE.size === 0 ? items : items.filter(i => WIDGET_SCOPE.has(i.project_id ?? ''))
 }
 
-function scopedProjects<P extends { id: string }>(projects: P[]): P[] {
+export function scopedProjects<P extends { id: string }>(projects: P[]): P[] {
   return WIDGET_SCOPE.size === 0 ? projects : projects.filter(p => WIDGET_SCOPE.has(p.id))
 }
 
