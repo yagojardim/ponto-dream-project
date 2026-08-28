@@ -234,32 +234,65 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
     guide: [
       { heading: 'Endereço público (slug)', text: 'A seção "Endereço público" mostra o slug atual e o status do tenant, e permite trocar o slug (mínimo 3 caracteres, apenas letras minúsculas, números e hífen) — é o endereço pelo qual o portal do cliente é acessado.', image: '/help/16-config-tenant.png', imageAlt: 'Configurações do Tenant — endereço público e identidade' },
       { heading: 'Identidade e localização', text: 'Em "Identidade e localização" você define o Nome de exibição, a URL do logo, a Cor primária (com o hex), o Fuso horário e o Idioma. Clique em "Salvar alterações" para aplicar.' },
-      { heading: 'Admin Master', text: 'A seção Admin Master mostra quem é o administrador principal do tenant. Use "Transferir papel" para mudar.', image: '/help/tenant--admin-master.png', imageAlt: 'Admin Master do tenant' },
+      { heading: 'Admin Master', text: 'O campo Admin Master define quem controla o tenant — só é editável pelo admin atual. Alterar o Admin Master transfere o controle total.' },
     ],
   },
   modules: {
     title: 'Módulos',
     steps: [
-      'Vitrine de módulos premium da plataforma.',
-      'Use Testar grátis (30 dias) ou solicite a ativação definitiva.',
+      'Ative apenas os módulos que o time precisa.',
+      'Módulos inativos ficam ocultos na sidebar.',
     ],
     guide: [
-      { heading: 'Vitrine de módulos', text: 'Módulos da Plataforma é a vitrine dos recursos premium (ex.: "1 ativo · 1 contratado · 8 no catálogo"). Os contadores do topo separam Implementados, Em preview, Solicitados e Disponíveis, e as abas filtram por categoria (Inteligência e automação, Integrações, Experiência externa, Governança, Segurança…). O aviso lembra que a ativação passa por análise, sem cobrança automática.', image: '/help/17-modulos.png', imageAlt: 'Vitrine de Módulos da Plataforma' },
-      { heading: 'Abrir um módulo', text: 'Cada card traz o nome, o estado (Operacional, Incluído, Em breve), a descrição e a lista de funcionalidades. Abra o módulo para ver os detalhes e testar grátis quando disponível.', image: '/help/17-modulos--abrir-modulo.png', imageAlt: 'Detalhe de um módulo' },
-      { heading: 'Gerenciar / contratar pacotes', text: 'Em pacotes você gerencia o que está contratado e solicita a ativação definitiva dos módulos.', image: '/help/17-modulos--pacotes.png', imageAlt: 'Pacotes e contratação de módulos' },
+      { heading: 'Catálogo de módulos', text: 'O catálogo lista todos os módulos disponíveis com seu status (ativo/inativo). Ative ou desative cada módulo conforme a necessidade do time — módulos inativos somem da sidebar.' },
+      { heading: 'Detalhes do módulo', text: 'Clique em um módulo para ver a descrição, os recursos incluídos e o botão de ativação/desativação.' },
     ],
   },
   automations: {
     title: 'Automações',
     steps: [
-      'Crie regras no formato quando X → faça Y.',
-      'Use para automatizar passos repetitivos do fluxo do time.',
+      'Crie regras que disparam ações automaticamente.',
+      'Combine gatilhos e condições para automatizar o fluxo.',
     ],
     guide: [
-      { heading: 'Automações ativas', text: 'A coluna da esquerda lista suas automações (ex.: "Demanda movida para Done → Notificar QA"), com um ponto verde/cinza indicando ativa ou pausada. Selecione uma para editar ou use "+ Nova automação".', image: '/help/18-automacoes.png', imageAlt: 'Lista de automações ativas' },
-      { heading: 'Disparador → Condição → Ação', text: 'A regra tem três blocos: Disparador (o gatilho, ex.: "Demanda movida de status", com De/Para status), Condição (opcional, para refinar) e Ação (o que fazer, ex.: "Enviar notificação" com mensagem que aceita variáveis como {title} e {status}). No topo você ativa/desativa, testa em "Executar agora" e clica em "Salvar".', image: '/help/18-automacoes--nova.png', imageAlt: 'Editor de automação com disparador, condição e ação' },
-      { heading: 'Adicionar condição', text: 'Em "Adicionar condição" você restringe quando a automação roda (ex.: só para bugs críticos).', image: '/help/automacoes--adicionar-condicao.png', imageAlt: 'Adicionar condição à automação' },
-      { heading: 'Log de execuções', text: 'O "Log de execuções" registra cada disparo com data/hora, o disparador, o resultado (Sucesso/erro) e os detalhes — útil para auditar e depurar a regra.', image: '/help/automacoes--log.png', imageAlt: 'Log de execuções da automação' },
+      { heading: 'Lista de automações', text: 'A tela mostra as automações existentes com nome, gatilho, status (ativa/inativa) e última execução. Use "+ Nova automação" para criar.' },
+      { heading: 'Construtor de regra', text: 'No construtor você define o Gatilho (quando dispara), as Condições (filtros) e as Ações (o que acontece). Combine vários para montar fluxos complexos.' },
+    ],
+  },
+  'client-access': {
+    title: 'Criar Acesso de Cliente',
+    steps: [
+      'Gere o acesso do cliente ao portal.',
+      'Escolha o que ele pode ver, comentar e aprovar.',
+    ],
+    guide: [
+      { heading: 'Passo 1 — Dados do cliente', text: 'O assistente tem 3 passos (Dados do cliente · Projetos · Permissão). No passo 1 você informa Nome completo e E-mail — o sistema envia automaticamente um e-mail com login e senha temporária para o cliente.', image: '/help/19-criar-acesso--dados.png', imageAlt: 'Assistente de acesso do cliente — passo 1, dados' },
+      { heading: 'Passo 2 — Projetos compartilhados', text: 'No passo 2 você escolhe quais projetos o cliente vai acompanhar no portal.', image: '/help/19-criar-acesso--projetos.png', imageAlt: 'Passo 2 — projetos compartilhados' },
+      { heading: 'Passo 3 — Permissão', text: 'No passo 3 você define o nível de acesso (Visualizador ou Administrador) e os responsáveis pelo relacionamento com o cliente.', image: '/help/criar-acesso--permissao.png', imageAlt: 'Passo 3 — permissão e responsáveis' },
+    ],
+  },
+  'client-messages': {
+    title: 'Mensagens do Cliente',
+    steps: [
+      'Chat com o cliente por projeto.',
+      'Acompanhe threads de demandas e entregas.',
+    ],
+    guide: [
+      { heading: 'Conversas por projeto', text: 'À esquerda ficam as conversas, uma por projeto, com a última mensagem e o tempo. À direita abre o chat do projeto selecionado, com o histórico por data e as mensagens do time. Você pode mencionar (@todos, @pessoa) e responder pelo campo "Digite sua resposta ao cliente…".', image: '/help/21-mensagens-cliente.png', imageAlt: 'Mensagens do Cliente — conversas por projeto e chat' },
+      { heading: 'Thread de uma demanda', text: 'As conversas podem estar amarradas a uma demanda específica (thread), para tratar dúvidas e entregas daquele item sem se misturar com o resto.', image: '/help/21-mensagens--thread.png', imageAlt: 'Thread de mensagens de uma demanda' },
+      { heading: 'Simular mensagem do cliente', text: 'O "Simular mensagem do cliente" (topo) permite testar como a conversa chega, útil para validar o fluxo antes de liberar ao cliente real.' },
+    ],
+  },
+  client: {
+    title: 'Portal Cliente',
+    steps: [
+      'Acompanhe entregas, comente e aprove.',
+      'Alterne entre o dashboard e as mensagens.',
+    ],
+    guide: [
+      { heading: 'Visão do cliente (DashView)', text: 'É a tela que o cliente vê. O topo mostra o projeto selecionado e o que está sendo visualizado. Os cards trazem: Evolução do projeto (status, %, tarefas concluídas, sprint atual e prazo), Entregas desta sprint, Projetos (no prazo × em risco), Sprint ativa, Riscos abertos, Aguardando sua validação (pendências), Roadmap publicado e Entregas recentes.', image: '/help/dashview--principal.png', imageAlt: 'Portal do Cliente (DashView) com os cards de acompanhamento' },
+      { heading: 'Mensagens no portal', text: 'Pelo botão "Mensagens", o cliente troca mensagens com o time direto do portal.', image: '/help/dashview--mensagens.png', imageAlt: 'Mensagens no portal do cliente' },
+      { heading: 'Menu do perfil / alterar senha', text: 'No menu do usuário (canto superior direito) o cliente acessa a conta e pode alterar a senha.', image: '/help/dashview--alterar-senha.png', imageAlt: 'Menu do perfil e alterar senha no portal' },
     ],
   },
 }
