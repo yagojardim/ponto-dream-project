@@ -224,7 +224,8 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     projectIds: scope,
     openBoard,
     openDetail,
-  }), [onNav, userName, scope, openBoard, openDetail])
+    interactive: !editing,
+  }), [onNav, userName, scope, openBoard, openDetail, editing])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     setState(prev => {
