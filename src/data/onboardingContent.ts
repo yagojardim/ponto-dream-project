@@ -184,8 +184,9 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Use os operadores para refinar e encontrar demandas rapidamente.',
     ],
     guide: [
-      { text: 'Busca avançada por condições.', image: '/help/12-filtros.png' },
-      { text: 'Adicionar condição.', image: '/help/filtros--adicionar-condicao.png' },
+      { heading: 'Construtor de filtros', text: 'À esquerda fica o Construtor de Filtros: escolha a lógica do grupo (AND / OR) e vá adicionando condições (tipo, status, prioridade, responsável, sprint, épico…). À direita o resultado atualiza em tempo real, mostrando quantas issues foram encontradas.', image: '/help/12-filtros.png', imageAlt: 'Construtor de filtros com condições e resultado' },
+      { heading: 'Adicionar condição', text: 'Cada "+ Adicionar condição" cria uma nova regra. Combinando várias com AND/OR você monta buscas bem específicas.', image: '/help/filtros--adicionar-condicao.png', imageAlt: 'Adicionar condição ao filtro' },
+      { heading: 'Filtros salvos e Aplicar como visão', text: 'Salve buscas recorrentes em "Filtros salvos" (ex.: "Bugs críticos", "Minhas issues abertas") e reutilize quando quiser. "Aplicar como visão" transforma o filtro atual numa visão da lista de resultados.' },
     ],
   },
   navigator: {
@@ -195,9 +196,9 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Selecione vários itens para edição em massa (status, prioridade, responsável, sprint, épico).',
     ],
     guide: [
-      { text: 'Tabela com colunas configuráveis e edição em massa.', image: '/help/13-issue-navigator.png' },
-      { text: 'Escolher colunas.', image: '/help/navigator--colunas.png' },
-      { text: 'Edição em massa (Bulk Change).', image: '/help/navigator--bulk-change.png' },
+      { heading: 'Tabela avançada', text: 'O Issue Navigator é a tabela mais completa de demandas: colunas de Chave, Tipo, Título, Status, Prioridade, Responsável, Sprint, Pontos, Épico e Prazo — todas ordenáveis. Use "Filtro rápido…" para buscar e o rodapé mostra quantas demandas estão sendo exibidas.', image: '/help/13-issue-navigator.png', imageAlt: 'Issue Navigator com tabela configurável e seleção múltipla' },
+      { heading: 'Escolher colunas', text: 'Em "Colunas" você liga e desliga as colunas para ver só o que importa.', image: '/help/navigator--colunas.png', imageAlt: 'Escolha de colunas do Issue Navigator' },
+      { heading: 'Edição em massa (Bulk Change)', text: 'Marque os checkboxes de várias demandas e use "Bulk Change" para alterar status, prioridade, responsável, sprint ou épico de todas de uma vez. "Exportar" leva a seleção para CSV.', image: '/help/navigator--bulk-change.png', imageAlt: 'Edição em massa (Bulk Change)' },
     ],
   },
   reports: {
@@ -207,8 +208,9 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Filtre por projeto para comparar escopos.',
     ],
     guide: [
-      { text: 'Indicadores: velocity, burndown, CFD, RAG, workload.', image: '/help/14-relatorios.png' },
-      { text: 'Gerenciar atribuições de cards.', image: '/help/relatorios--atribuicoes.png' },
+      { heading: 'Painel de indicadores', text: 'Relatórios & Insights reúne as métricas de desempenho e saúde do projeto em cards: Burndown Chart (restante × ideal), Velocity Chart (pontos por sprint com a média), CFD / Cumulative Flow (distribuição por status nos últimos dias), Bugs por Severidade, Criados vs Resolvidos e Workload por Pessoa.', image: '/help/14-relatorios.png', imageAlt: 'Relatórios & Insights com Burndown, Velocity e CFD' },
+      { heading: 'Liberar e atribuir relatórios', text: 'Cada card tem "✓ Liberado" e "Atribuir": você controla quais relatórios ficam visíveis e para quais papéis/dashboards eles são liberados.' },
+      { heading: 'Gerenciar atribuições', text: 'O botão "Gerenciar atribuições" abre a central onde você define, de uma vez, quais relatórios cada perfil enxerga.', image: '/help/relatorios--atribuicoes.png', imageAlt: 'Gerenciar atribuições de relatórios' },
     ],
   },
   config: {
@@ -318,51 +320,7 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Ajuste avatar, nome e e-mail.',
     ],
     guide: [
-      { text: 'Seu perfil.', image: '/help/perfil--meu-perfil.png' },
-    ],
-  },
-  preferences: {
-    title: 'Preferências',
-    steps: [
-      'Ajuste notificações, idioma e comportamentos da conta.',
-      'Configure preferências da plataforma.',
-    ],
-    guide: [
-      { text: 'Preferências da conta.', image: '/help/perfil--preferencias.png' },
-    ],
-  },
-  login: {
-    title: 'Login — Gestão',
-    steps: [
-      'Acesse a área de gestão do Altech Project.',
-      'Use "Esqueci a senha" para redefinir sua senha.',
-    ],
-    guide: [
-      { text: 'Login + "Esqueci a senha".', image: '/help/login-gestao--esqueci.png' },
-    ],
-  },
-  'client-login': {
-    title: 'Login — Portal',
-    steps: [
-      'Acesse o portal do cliente do Altech Project.',
-      'Use "Esqueci minha senha" para redefinir sua senha.',
-    ],
-    guide: [
-      { text: 'Login do cliente + "Esqueci minha senha".', image: '/help/login-portal--esqueci.png' },
-    ],
-  },
-  timesheet: {
-    title: 'Lançar horas',
-    steps: [
-      'Registre horas por demanda.',
-      'Envie o período para aprovação quando terminar.',
-    ],
-  },
-  'hours-approval': {
-    title: 'Aprovar horas',
-    steps: [
-      'Aprove ou reprove os lançamentos da sua squad.',
-      'Exporte os dados em CSV quando precisar.',
+      { text: 'Seu perfil.', image: '/help/perfil.png' },
     ],
   },
 }
