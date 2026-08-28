@@ -131,7 +131,10 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Selecione 1 ou mais projetos para comparar indicadores.',
     ],
     guide: [
-      { text: 'Saúde do portfólio; selecione 1+ projetos.', image: '/help/08-dashboard-executivo.png' },
+      { heading: 'Saúde dos projetos', text: 'No topo, cada projeto vira um card com selo Saudável ou Bloqueado, o progresso (barra + %) e, quando há impedimentos, quantos itens estão bloqueados. Use o seletor no canto para escolher 1 ou mais projetos e comparar.', image: '/help/08-dashboard-executivo.png', imageAlt: 'Dashboard executivo com saúde dos projetos e indicadores' },
+      { heading: 'Funcionalidades e Planejado × Concluído', text: 'A faixa "Funcionalidades" mostra o avanço do escopo Pro (concluídas × pontos). Em "Planejado × Concluído" aparece o consolidado (% e pontos concluídos), com Velocity média e Previsibilidade, além do recorte por projeto.' },
+      { heading: 'Sprint atual e entregas próximas', text: 'O painel lateral resume a Sprint atual e as Entregas próximas dos projetos selecionados — quando não há sprint ou prazo, ele avisa.' },
+      { heading: 'Impedimentos & bloqueios ativos', text: 'A seção de impedimentos lista as demandas travadas com o selo Bloqueado e há quanto tempo (ex.: "1d bloqueado"). Use "Ver todos" para a lista completa.' },
     ],
   },
   storage: {
@@ -141,9 +144,11 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Acompanhe o consumo de armazenamento por projeto.',
     ],
     guide: [
-      { text: 'Consumo de armazenamento por projeto.', image: '/help/09-armazenamento.png' },
-      { text: 'Fazer upgrade de plano.', image: '/help/storage--upgrade.png' },
-      { text: 'Abrir/gerenciar arquivos.', image: '/help/storage--arquivo.png' },
+      { heading: 'Consumo do tenant e plano', text: 'A Gestão de Armazenamento mostra o consumo de anexos por tenant e por projeto (somente leitura). O card do topo traz o total usado sobre o limite do plano (ex.: "6.9 MB de 1.00 GB"), o número de arquivos, o plano atual e o botão "Fazer upgrade".', image: '/help/09-armazenamento.png', imageAlt: 'Gestão de Armazenamento com consumo do tenant e por projeto' },
+      { heading: 'Ativos, finalizados e arquivados', text: 'Os três cards separam o consumo por situação do projeto: Ativos, Finalizados e Pausados / Arquivados, cada um com a quantidade de projetos e a fatia do consumo total.' },
+      { heading: 'Consumo por projeto e arquivos', text: 'A tabela lista os projetos com ID, data de criação, quem criou, o consumo, a fatia (barra) e os botões "Arquivos" (gerenciar os anexos) e "Abrir" (ir ao projeto).' },
+      { heading: 'Fazer upgrade', text: 'Ao clicar em "Fazer upgrade" você amplia o limite de armazenamento do tenant.', image: '/help/storage--upgrade.png', imageAlt: 'Upgrade de plano de armazenamento' },
+      { heading: 'Abrir / gerenciar arquivos', text: 'Em "Arquivos" você abre a lista de anexos do projeto para consultar ou gerenciar o que foi enviado.', image: '/help/storage--arquivo.png', imageAlt: 'Gerenciamento de arquivos do projeto' },
     ],
   },
   epics: {
@@ -153,10 +158,10 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Em projetos Pro, veja a árvore completa com roll-up de pontos.',
     ],
     guide: [
-      { text: 'Épicos do projeto; em projetos Pro, árvore Épico → Funcionalidade.', image: '/help/10-epicos.png' },
-      { text: 'Criar épico.', image: '/help/10-epicos--novo.png' },
-      { text: 'Nova funcionalidade.', image: '/help/epicos--nova-funcionalidade.png' },
-      { text: 'Detalhe do épico.', image: '/help/epicos--detalhe.png' },
+      { heading: 'Épicos por projeto', text: 'A tela agrupa os épicos por projeto (ex.: "21 épicos"). Cada épico é um card com código (EP-01), título, um anel de progresso (% concluído), a contagem de issues (ex.: "3/3 concluídas"), o detalhamento por status (Backlog, A Fazer, Em andamento, Em revisão, Concluído), o total de Story Points e os responsáveis.', image: '/help/10-epicos.png', imageAlt: 'Épicos agrupados por projeto com anel de progresso' },
+      { heading: 'Ver issues do épico', text: 'Use "▼ Ver issues (N)" dentro do card para expandir e ver as demandas que compõem aquele épico.', image: '/help/epicos--detalhe.png', imageAlt: 'Detalhe do épico com suas issues' },
+      { heading: 'Criar épico', text: 'O botão "+ Novo" (por projeto) cria um épico novo.', image: '/help/10-epicos--novo.png', imageAlt: 'Criar épico' },
+      { heading: 'Nova funcionalidade', text: 'Em projetos Pro, você adiciona Funcionalidades dentro do épico, formando a árvore Épico → Funcionalidade → demanda com roll-up de pontos.', image: '/help/epicos--nova-funcionalidade.png', imageAlt: 'Nova funcionalidade dentro do épico' },
     ],
   },
   releases: {
@@ -167,9 +172,9 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Use Fechar release para separar entregues × retornados.',
     ],
     guide: [
-      { text: 'Releases agrupadas por projeto.', image: '/help/11-releases.png' },
-      { text: 'Nova release.', image: '/help/11-releases--nova-release.png' },
-      { text: 'Editar release.', image: '/help/11-releases--editar.png' },
+      { heading: 'Releases por projeto', text: 'As releases ficam agrupadas por projeto. Cada card traz a versão (ex.: "v1.0.0"), o nome, a data, o selo de estado (Lançada), a contagem de issues (ex.: "51/51"), a descrição, a barra de progresso e "▼ Ver issues" para abrir a lista vinculada. Use "Editar" para ajustar a release.', image: '/help/11-releases.png', imageAlt: 'Releases agrupadas por projeto com versão e progresso' },
+      { heading: 'Nova release', text: 'Em "+ Nova release" você cria uma versão (nome, descrição e período) e vincula as demandas do projeto que entram naquela entrega.', image: '/help/11-releases--nova-release.png', imageAlt: 'Criação de nova release' },
+      { heading: 'Editar release', text: 'Em "Editar" você ajusta os dados da release e, ao fechá-la, separa o que foi entregue do que retornou.', image: '/help/11-releases--editar.png', imageAlt: 'Edição de release' },
     ],
   },
   filters: {
