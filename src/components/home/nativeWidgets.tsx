@@ -59,7 +59,7 @@ function doOpenItem(ctx: WidgetCtx, item: WorkItem) {
 }
 
 /**
- * Escelhado num módulo para que todos os widgets nativos leiam o mesmo recorte
+ * Espelhado num módulo para que todos os widgets nativos leiam o mesmo recorte
  * sem precisar propagar props em cada helper do homeLive.
  */
 let WIDGET_SCOPE: ReadonlySet<string> = new Set<string>()
