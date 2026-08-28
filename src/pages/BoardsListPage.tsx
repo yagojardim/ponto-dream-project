@@ -141,7 +141,7 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
   const [toast, setToast] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<BoardStatus | 'all'>('all')
+  const [statusFilter, setStatusFilter] = useState<BoardStatus | 'all'>('active')
 
   const totalActive = boards.filter(b => b.status === 'active').length
 
