@@ -4,7 +4,7 @@
  * can be dropped into the interactive Home grid.
  */
 import type { ReactNode } from 'react'
-import { REPORT_CARDS_LIST, navigateToReport, ChartFillProvider, ReportsDataProvider } from '@/data/reportRegistry'
+import { REPORT_CARDS_LIST, ChartFillProvider, ReportsDataProvider } from '@/data/reportRegistry'
 import {
   BlockedWidget, ReadyWidget, TestingWidget, BacklogAlertWidget, MyQueueWidget,
   ReviewQueueWidget, DesignQueueWidget,
@@ -169,6 +169,9 @@ const NATIVE: WidgetDef[] = [
   card('native.qa-coverage',    'Aging / Rejeição (QA)',     6,  c => <QaCoverageCard {...c} />),
 ]
 
+/** Relatórios de DEMANDAS: o clique abre o board; os demais abrem o detalhe in-place. */
+const DEMAND_REPORTS = new Set<string>(['criados', 'bugs', 'aging'])
+
 const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
   id: `report.${entry.id}`,
   title: entry.title,
@@ -189,13 +192,13 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
       </div>
       <button
         className="no-drag"
-        onClick={() => navigateToReport(entry, ctx.onNav)}
+        onClick={() => (DEMAND_REPORTS.has(entry.id) ? ctx.openBoard() : ctx.openDetail(entry.id))}
         style={{
           flex: '0 0 auto', alignSelf: 'flex-start', fontSize: 11, color: T.accent,
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
         }}
       >
-        Abrir relatório →
+        {DEMAND_REPORTS.has(entry.id) ? 'Abrir board →' : 'Ver detalhes'}
       </button>
     </div>
   ),
