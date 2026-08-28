@@ -33,7 +33,10 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Priorize o que está bloqueado ou em revisão.',
     ],
     guide: [
-      { text: 'Minha Fila — Suas demandas atribuídas, priorizadas.', image: '/help/01-minha-fila.png' },
+      { heading: 'Cards de resumo (topo)', text: 'Os seis cards do topo resumem sua fila: Total (tudo atribuído a você), Em Dev (em desenvolvimento), Em Revisão, Bloqueados, P. Alta/Crit (prioridade alta ou crítica) e Concluídos. Servem de termômetro rápido antes de abrir a lista.', image: '/help/01-minha-fila.png', imageAlt: 'Minha Fila com cards de resumo, filtros e estado vazio' },
+      { heading: 'Filtrar, agrupar e ordenar', text: 'Use “Filtrar issues…” para buscar por texto. Em Agrupar você separa por Status, Prioridade, Sprint ou Projeto. Em Ordenar escolhe Prioridade, Status ou Prazo. Assim você monta a visão da sua fila do jeito que trabalha.' },
+      { heading: 'Ver board', text: 'O botão “Ver board” (canto superior direito) leva direto ao quadro Kanban do contexto atual, para você atuar na demanda sem sair procurando.' },
+      { heading: 'Mostrar concluídas e estado vazio', text: 'Quando não há nada pendente aparece “Tudo concluído por aqui”. Clique em “Mostrar concluídas” (ou no botão do topo) para reexibir o que você já finalizou e consultar o histórico.' },
     ],
   },
   calendar: {
@@ -43,11 +46,12 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Gere as cerimônias e conecte sua agenda Google.',
     ],
     guide: [
-      { text: 'Prazos e cerimônias da sprint no calendário.', image: '/help/02-calendario.png' },
-      { text: 'Alterne a visão: Mês / Semana / Dia / Hoje.', image: '/help/calendario--mes.png' },
-      { text: 'Botão Criar: novo evento (use “mais opções” para os campos completos).', image: '/help/calendario--criar-mais-opcoes.png' },
-      { text: 'Gerar cerimônias da sprint (daily/planning/review/retro).', image: '/help/02-calendario--gerar-cerimonias.png' },
-      { text: 'Integrar sua agenda Google.', image: '/help/02-calendario--integrar-agenda.png' },
+      { heading: 'Visão geral', text: 'O Calendário reúne prazos e cerimônias da sprint. Na barra de topo ficam: “+ Criar”, as visões (Mês / Semana / Dia), o atalho “Hoje”, o seletor de Sprint, “Gerar cerimônias da sprint”, as setas de navegação e “Integrar agenda”.', image: '/help/02-calendario.png', imageAlt: 'Calendário na visão Dia com cerimônias da sprint' },
+      { heading: 'Visão Mês / Semana / Dia', text: 'Alterne entre Mês, Semana e Dia. Na Semana, o dia atual fica destacado e as cerimônias aparecem coloridas (ex.: Daily em verde, Planning em âmbar). Cada evento mostra horário e título.', image: '/help/calendario--semana.png', imageAlt: 'Calendário na visão Semana' },
+      { heading: 'Visão “Hoje”', text: 'O botão “Hoje” abre o dia atual hora a hora, com uma linha marcando o horário corrente. Slots livres exibem “Clique para criar evento”; cerimônias aparecem como blocos (ex.: “Daily — Sprint 3”, 09:00–09:15).', image: '/help/calendario--hoje.png', imageAlt: 'Calendário na visão Hoje com a linha do horário atual' },
+      { heading: 'Criar evento', text: 'Em “+ Criar” você registra um evento novo. Use “mais opções” para abrir todos os campos (título, data/hora, descrição, participantes).', image: '/help/calendario--criar-mais-opcoes.png', imageAlt: 'Criação de evento com mais opções' },
+      { heading: 'Gerar cerimônias da sprint', text: 'O botão “Gerar cerimônias da sprint” cria automaticamente Daily, Planning, Review e Retro da sprint selecionada, já posicionadas no calendário.', image: '/help/02-calendario--gerar-cerimonias.png', imageAlt: 'Gerar cerimônias da sprint' },
+      { heading: 'Integrar sua agenda Google', text: 'Em “Integrar agenda” você conecta sua conta Google para sincronizar os eventos do calendário com a sua agenda pessoal.', image: '/help/02-calendario--integrar-agenda.png', imageAlt: 'Integração com a agenda Google' },
     ],
   },
   'projects-list': {
@@ -58,9 +62,10 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Ainda no ⋯ é possível finalizar ou arquivar o projeto.',
     ],
     guide: [
-      { text: 'Lista de projetos; expanda para ver tarefas; menu ⋯ para editar/finalizar/arquivar.', image: '/help/03-projetos.png' },
-      { text: '“+ Novo Projeto”: nome, cliente, chave, tipo (Scrum/Kanban), período.', image: '/help/03-projetos--novo-projeto.png' },
-      { text: 'Parte de baixo do formulário: estrutura de trabalho (Funcionalidades/Pro) e responsável.', image: '/help/03-projetos--novo-projeto-baixo.png' },
+      { heading: 'Lista e contadores', text: 'O topo mostra o resumo do portfólio (ex.: “3 projetos · 1 em progresso · 59 tarefas · 53 concluídas”). Cada linha traz o nome do projeto (com o cliente logo abaixo), Período, Progresso (barra + %), Status (planejamento / em progresso) e o Responsável.', image: '/help/03-projetos.png', imageAlt: 'Lista de projetos com progresso, status e responsável' },
+      { heading: 'Expandir e menu ⋯', text: 'Clique na setinha para expandir o projeto e ver suas tarefas. No menu ⋯ (coluna Ações) você edita descrição, período e equipe, além de finalizar ou arquivar o projeto.' },
+      { heading: 'Novo Projeto — dados principais', text: 'Em “+ Novo Projeto” preencha Nome do projeto (obrigatório), Cliente, Chave (obrigatória) e o Tipo — Scrum ou Kanban. O Período (datas de início e fim) alimenta a régua do Gantt e da Timeline.', image: '/help/03-projetos--novo-projeto.png', imageAlt: 'Formulário Novo Projeto — dados principais' },
+      { heading: 'Novo Projeto — estrutura e responsável', text: 'Na parte de baixo do formulário você ativa “Usar Funcionalidades” (estrutura de trabalho dos projetos Pro) e define o Responsável antes de clicar em Criar.', image: '/help/03-projetos--novo-projeto-baixo.png', imageAlt: 'Novo Projeto — estrutura de trabalho e responsável' },
     ],
   },
   'boards-list': {
