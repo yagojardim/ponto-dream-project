@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { T } from '../components/ds/tokens'
 import { useVisibleBoards, type VisibleBoard, type VisibleBoardStatus } from '@/data/db/boards'
+import { BoardSettingsModal } from '@/components/BoardSettingsModal'
+import { useSession } from '@/data/SessionContext'
 
 type BoardDef = VisibleBoard
 type BoardStatus = VisibleBoardStatus
@@ -24,8 +26,9 @@ function ProjectDot({ projectId }: { projectId: string }) {
   return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 99, background: colors[projectId] ?? T.border2, flexShrink: 0, marginTop: 1 }} />
 }
 
-function BoardCard({ board, onOpen }: { board: BoardDef; onOpen: () => void }) {
+function BoardCard({ board, onOpen, onSettings }: { board: BoardDef; onOpen: () => void; onSettings: () => void }) {
   const [hovered, setHovered] = useState(false)
+  const [menu, setMenu] = useState(false)
   const isArchived = board.status === 'archived'
 
   return (
@@ -60,7 +63,9 @@ function BoardCard({ board, onOpen }: { board: BoardDef; onOpen: () => void }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{board.name}</span>
           {isArchived && (
-            <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 600, color: T.text3, background: T.bgPage, border: `1px solid ${T.border}`, borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Arquivado</span>
+            <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 600, color: T.text3, background: T.bgPage, border: `1px solid ${T.border}`, borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              {board.finalized && !board.archived_at ? 'Finalizado' : 'Arquivado'}
+            </span>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -90,6 +95,37 @@ function BoardCard({ board, onOpen }: { board: BoardDef; onOpen: () => void }) {
         <span style={{ fontSize: 11, color: T.text3 }}>{fmtRelative(board.updated_at)}</span>
       </div>
 
+      {/* Menu de gestão */}
+      <div style={{ position: 'relative', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+        <button
+          aria-label="Gerenciar board"
+          onClick={() => setMenu(v => !v)}
+          style={{
+            width: 26, height: 26, borderRadius: 6, cursor: 'pointer',
+            background: menu ? T.bgPage : 'transparent', border: `1px solid ${menu ? T.border : 'transparent'}`,
+            color: T.text3, fontSize: 15, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >⋯</button>
+        {menu && (
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenu(false)} />
+            <div style={{
+              position: 'absolute', top: 30, right: 0, zIndex: 41, minWidth: 190,
+              background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 4,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            }}>
+              <button
+                onClick={() => { setMenu(false); onSettings() }}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '7px 10px', borderRadius: 6,
+                  background: 'transparent', border: 'none', color: T.text2, fontSize: 12, cursor: 'pointer',
+                }}
+              >Configurações do board</button>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Chevron */}
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, opacity: hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
         <path d="M5 3l4 4-4 4" stroke={T.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -99,7 +135,10 @@ function BoardCard({ board, onOpen }: { board: BoardDef; onOpen: () => void }) {
 }
 
 export default function BoardsListPage({ onSelectBoard }: Props) {
-  const { boards, loading } = useVisibleBoards()
+  const { boards, loading, reload } = useVisibleBoards()
+  const { activeUser } = useSession()
+  const [settingsBoard, setSettingsBoard] = useState<BoardDef | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<BoardStatus | 'all'>('all')
