@@ -146,7 +146,10 @@ export function roleChoiceLabel(choice: RoleChoice): string {
 
 /** Papéis que o usuário pode assumir na Home (principal primeiro). */
 export function availableRoleChoices(user: MockUser): RoleChoice[] {
-  const roles = (user.available_roles?.length ? user.available_roles : [user.role_context])
+  const base = user.available_roles?.length ? user.available_roles : [user.role_context]
+  // Dono do tenant vê somente Admin Master, nunca o papel Admin comum.
+  const roles = base
+    .filter((r) => !user.tenant_owner || r !== 'Admin')
     .filter((r, i, arr) => arr.indexOf(r) === i)
   const list: RoleChoice[] = [...roles]
   if (user.tenant_owner && !list.includes(ADMIN_MASTER_ROLE as RoleChoice)) {
