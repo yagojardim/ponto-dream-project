@@ -110,7 +110,7 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'O período cadastrado no projeto define a régua do gráfico.',
     ],
     guide: [
-      { text: 'Cronograma com dependências e prazos.', image: '/help/06-gantt.png' },
+      { heading: 'Cronograma por projeto', text: 'O Gantt mostra um cronograma por datas. À esquerda ficam os projetos (com bolinha de cor) e, expandindo, suas demandas; à direita, a régua por trimestre/mês com as barras posicionadas no período. Use o seletor "Todos os projetos" para focar em um projeto e a marca "Hoje" para se localizar no tempo.', image: '/help/06-gantt.png', imageAlt: 'Gráfico Gantt com barras por projeto e mês' },
     ],
   },
   timeline: {
@@ -120,7 +120,8 @@ export const ONBOARDING_TIPS: Record<string, OnboardingTip> = {
       'Arraste ou redimensione as barras para ajustar datas — as mudanças persistem.',
     ],
     guide: [
-      { text: 'Linha do tempo Projeto → Funcionalidade → demanda; arraste as barras.', image: '/help/07-timeline.png' },
+      { heading: 'Roadmap arrastável', text: 'A Timeline é o roadmap do período (ex.: "jul 2026 — set 2026"). A hierarquia é Projeto → Épico → Issue, e cada issue tem uma barra na linha do tempo. Arraste ou redimensione as barras para ajustar datas — as mudanças persistem. As cores indicam o estado: Em andamento (azul), Concluído (verde) e Bloqueado (vermelho).', image: '/help/07-timeline.png', imageAlt: 'Timeline / Roadmap com barras arrastáveis por issue' },
+      { heading: 'Visões e agrupamento', text: 'Alterne entre Semana, Mês e Quarter e escolha o seletor de projetos. Em "Agrupar por" use Projeto → Épico e refine com os filtros de Status, Tipo, Responsável, Sprint e Épico. As faixas verticais marcam as sprints (Sprint 1, Sprint 2…).' },
     ],
   },
   dashboard: {
