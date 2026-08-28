@@ -4,7 +4,6 @@ import { Modal } from '@/components/ds/Modal'
 import { T } from '@/components/ds/tokens'
 import { bytesToHuman } from '@/data/db/storage'
 import { findModuleIdByKey, requestActivation } from '@/data/db/modules'
-import { writeAudit as writeMilestone } from '@/data/db/audit'
 
 export const STORAGE_MODULE_KEY = 'STORAGE_MANAGER'
 
