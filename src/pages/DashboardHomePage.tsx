@@ -371,62 +371,80 @@ const MILESTONE_COLORS: Record<MilestoneMeta['color'], string> = {
 /**
  * Feed curado de marcos do tenant (audit_logs). Só ações da whitelist —
  * nada de chave técnica crua e nada fabricado.
+ *
+ * Card: mostra apenas os últimos 10 dias. "Ver todos →" abre a visão completa
+ * em um rodapé sticky opaco, igual ao "+ Convidar usuário".
  */
 export function AdminAuditCard({ projectIds }: { projectIds?: ReadonlySet<string> } = {}) {
   const [rows, setRows] = useState<MilestoneRow[] | null>(null)
+  const [allCount, setAllCount] = useState<number | null>(null)
   const [showAll, setShowAll] = useState(false)
   const scopeKey = projectIds ? [...projectIds].sort().join(',') : ''
 
   useEffect(() => {
     let alive = true
     const ids = scopeKey ? scopeKey.split(',') : []
-    void fetchMilestones(15, ids).then(list => { if (alive) setRows(list) })
+
+    // Carrega sempre a contagem completa (sem corte de dias) para saber se há mais.
+    void fetchMilestones(1, ids).then(list => {
+      if (!alive) return
+      setAllCount(list.length)
+    })
+
+    // Visão resumo: só os últimos 10 dias. Visão completa: tudo.
+    void fetchMilestones(60, ids, showAll ? undefined : 10).then(list => {
+      if (!alive) return
+      setRows(list)
+    })
+
     return () => { alive = false }
-  }, [scopeKey])
+  }, [scopeKey, showAll])
 
   if (rows === null) {
     return <SCard title="Auditoria — Marcos do Tenant"><LoadingState /></SCard>
   }
 
-  const visible = showAll ? rows : rows.slice(0, 6)
+  const hasAny = (allCount ?? 0) > 0
+  const isLimited = !showAll && hasAny
 
   return (
-    <SCard title="Auditoria — Marcos do Tenant">
+    <SCard title="Auditoria — Marcos do Tenant" bodyStyle={{ minHeight: 0 }}>
       {rows.length === 0
-        ? <EmptyState message="Nenhum marco registrado ainda." />
+        ? <EmptyState message={showAll ? 'Nenhum marco registrado ainda.' : 'Nenhum marco nos últimos 10 dias.'} />
         : (
-          <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {visible.map(r => {
-                const color = MILESTONE_COLORS[r.meta.color]
-                return (
-                  <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <span aria-hidden style={{ fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>{r.meta.icon}</span>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 12, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontWeight: 600, color }}>{r.meta.label}</span>
-                        {r.targetName ? <span style={{ color: T.text2 }}> · {r.targetName}</span> : null}
-                      </div>
-                      <div style={{ fontSize: 10, color: T.text3, marginTop: 2 }}>
-                        {r.actorName ?? 'sistema'} · {relativeTime(r.createdAt)}
-                      </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0 }}>
+            {rows.map(r => {
+              const color = MILESTONE_COLORS[r.meta.color]
+              return (
+                <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <span aria-hidden style={{ fontSize: 13, lineHeight: '18px', flexShrink: 0 }}>{r.meta.icon}</span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 12, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontWeight: 600, color }}>{r.meta.label}</span>
+                      {r.targetName ? <span style={{ color: T.text2 }}> · {r.targetName}</span> : null}
+                    </div>
+                    <div style={{ fontSize: 10, color: T.text3, marginTop: 2 }}>
+                      {r.actorName ?? 'sistema'} · {relativeTime(r.createdAt)}
                     </div>
                   </div>
-                )
-              })}
-            </div>
-            {rows.length > visible.length && (
-              <button
-                className="no-drag"
-                onClick={() => setShowAll(true)}
-                style={{
-                  marginTop: 10, fontSize: 11, color: T.accent, background: 'none',
-                  border: 'none', padding: 0, cursor: 'pointer',
-                }}
-              >Ver todos →</button>
-            )}
-          </>
+                </div>
+              )
+            })}
+          </div>
         )}
+      {hasAny && (
+        <CardStickyFooter>
+          <button
+            className="no-drag"
+            onClick={() => setShowAll(s => !s)}
+            style={{
+              width: '100%', fontSize: 11, color: T.accent,
+              background: `${T.accent}12`, border: `1px solid ${T.accent}33`,
+              borderRadius: 6, padding: '6px', cursor: 'pointer',
+            }}
+          >{showAll ? 'Ver resumo ←' : 'Ver todos →'}</button>
+        </CardStickyFooter>
+      )}
     </SCard>
   )
 }
