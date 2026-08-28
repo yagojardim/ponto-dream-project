@@ -3,7 +3,8 @@
 // A visibilidade usa o RBAC existente: papel/permissions + project_members (+ permission_overrides).
 import { useEffect, useState } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { safeCall } from '@/utils/logger'
+import { safeCall, logger } from '@/utils/logger'
+import { writeAudit } from '@/data/db/audit'
 import { can } from '@/data/permissions'
 import { useSession } from '@/data/SessionContext'
 
@@ -16,6 +17,13 @@ export interface VisibleBoard {
   project_id: string
   project_name: string
   status: VisibleBoardStatus
+  /** true quando o board foi finalizado (ciclo de vida), não apenas arquivado. */
+  finalized: boolean
+  archived_at: string | null
+  description: string
+  period_start: string
+  period_end: string
+  team_ids: string[]
   columns: string[]
   item_count: number
   updated_at: string
@@ -26,10 +34,33 @@ function tbl(name: string): any {
   return (supabase as unknown as { from: (t: string) => any }).from(name)
 }
 
+interface BoardRow {
+  id: string
+  tenant_id: string
+  name: string
+  project_id: string
+  status: string | null
+  description: string | null
+  metadata: unknown
+  archived_at: string | null
+  updated_at: string | null
+}
+
+function readMeta(raw: unknown): Record<string, unknown> {
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {}
+}
+function metaStr(v: unknown): string {
+  return typeof v === 'string' ? v : ''
+}
+function metaIds(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+
 /** Vê todos os boards do tenant (Admin / gestão) ou apenas os dos projetos em que participa. */
 function hasTenantWideAccess(permissions: string[]): boolean {
   return can(permissions, 'users:manage') || can(permissions, 'board:manage')
 }
+
 
 /**
  * Lista os boards que o usuário pode VISUALIZAR.
@@ -66,18 +97,14 @@ export function fetchVisibleBoards(opts: {
     }
 
     let query = tbl('boards')
-      .select('id, tenant_id, name, project_id, status, updated_at')
+      .select('id, tenant_id, name, project_id, status, description, metadata, archived_at, updated_at')
       .eq('tenant_id', tenantId)
-      .is('archived_at', null)
       .order('name')
     if (allowedProjectIds) query = query.in('project_id', allowedProjectIds)
 
     const boardsRes = await query
     if (boardsRes.error) throw new Error(boardsRes.error.message)
-    const boards = (boardsRes.data ?? []) as {
-      id: string; tenant_id: string; name: string; project_id: string
-      status: string | null; updated_at: string | null
-    }[]
+    const boards = (boardsRes.data ?? []) as BoardRow[]
     if (boards.length === 0) return []
 
     const projectIds = [...new Set(boards.map(b => b.project_id).filter(Boolean))]
@@ -105,23 +132,35 @@ export function fetchVisibleBoards(opts: {
       countByBoard.set(i.board_id, (countByBoard.get(i.board_id) ?? 0) + 1)
     }
 
-    return boards.map(b => ({
-      id: b.id,
-      tenant_id: b.tenant_id,
-      name: b.name,
-      project_id: b.project_id,
-      project_name: projectName.get(b.project_id) ?? 'Projeto',
-      status: (b.status === 'archived' ? 'archived' : 'active') as VisibleBoardStatus,
-      columns: columnsByBoard.get(b.id) ?? [],
-      item_count: countByBoard.get(b.id) ?? 0,
-      updated_at: b.updated_at ?? new Date().toISOString(),
-    }))
+    return boards.map(b => {
+      const meta = readMeta(b.metadata)
+      const finalized = b.status === 'completed' || b.status === 'finalized'
+      const archived = !!b.archived_at || b.status === 'archived'
+      return {
+        id: b.id,
+        tenant_id: b.tenant_id,
+        name: b.name,
+        project_id: b.project_id,
+        project_name: projectName.get(b.project_id) ?? 'Projeto',
+        status: (archived || finalized ? 'archived' : 'active') as VisibleBoardStatus,
+        finalized,
+        archived_at: b.archived_at ?? null,
+        description: b.description ?? '',
+        period_start: metaStr(meta.period_start),
+        period_end: metaStr(meta.period_end),
+        team_ids: metaIds(meta.team_ids),
+        columns: columnsByBoard.get(b.id) ?? [],
+        item_count: countByBoard.get(b.id) ?? 0,
+        updated_at: b.updated_at ?? new Date().toISOString(),
+      }
+    })
   }, [])
 }
 
 export interface VisibleBoardsState {
   boards: VisibleBoard[]
   loading: boolean
+  reload: () => void
 }
 
 /** Hook compartilhado pela Sidebar e pela BoardsListPage. */
@@ -129,6 +168,7 @@ export function useVisibleBoards(): VisibleBoardsState {
   const { activeUser } = useSession()
   const [boards, setBoards] = useState<VisibleBoard[]>([])
   const [loading, setLoading] = useState(true)
+  const [nonce, setNonce] = useState(0)
 
   const tenantId = activeUser.tenant_id
   const profileId = activeUser.user_id
@@ -142,7 +182,105 @@ export function useVisibleBoards(): VisibleBoardsState {
       .catch(() => { if (alive) setBoards([]) })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
-  }, [tenantId, profileId, permKey])
+  }, [tenantId, profileId, permKey, nonce])
 
-  return { boards, loading }
+  return { boards, loading, reload: () => setNonce(n => n + 1) }
+}
+
+// ─── Gestão do board (modal de configurações) ────────────────────────────────
+
+export interface BoardTeamOption {
+  id: string
+  name: string
+  avatar_initials: string | null
+  avatar_color: string | null
+}
+
+/** Membros do tenant elegíveis para alocação no board. */
+export function fetchBoardTeamOptions(tenantId: string): Promise<BoardTeamOption[]> {
+  return safeCall<BoardTeamOption[]>('boards.fetchBoardTeamOptions', async () => {
+    if (!tenantId) return []
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, avatar_initials, avatar_color')
+      .eq('tenant_id', tenantId)
+      .is('archived_at', null)
+      .order('name')
+    if (error) throw error
+    return (data ?? []) as BoardTeamOption[]
+  }, [])
+}
+
+export interface BoardSettingsInput {
+  description: string
+  teamIds: string[]
+  periodStart: string
+  periodEnd: string
+}
+
+async function currentMetadata(boardId: string): Promise<Record<string, unknown>> {
+  const { data } = await tbl('boards').select('metadata').eq('id', boardId).maybeSingle()
+  return readMeta((data as { metadata?: unknown } | null)?.metadata)
+}
+
+/** Salva descrição, equipe alocada e período do board. */
+export async function saveBoardSettings(
+  board: VisibleBoard,
+  input: BoardSettingsInput,
+  actorName: string,
+): Promise<void> {
+  try {
+    const metadata = {
+      ...(await currentMetadata(board.id)),
+      team_ids: input.teamIds,
+      period_start: input.periodStart || null,
+      period_end: input.periodEnd || null,
+    }
+    const { error } = await tbl('boards').update({
+      description: input.description.trim() || null,
+      metadata,
+    }).eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.updated', board.id, {
+      name: board.name,
+      project_id: board.project_id,
+      team_size: input.teamIds.length,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.saveBoardSettings', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao salvar o board.')
+  }
+}
+
+/** Finaliza o board — sai da lista de ativos. */
+export async function finalizeBoard(board: VisibleBoard, actorName: string): Promise<void> {
+  try {
+    const { error } = await tbl('boards')
+      .update({ status: 'completed' })
+      .eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.finalized', board.id, {
+      name: board.name, project_id: board.project_id,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.finalizeBoard', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao finalizar o board.')
+  }
+}
+
+/** Arquiva o board — define archived_at e sai da lista de ativos. */
+export async function archiveBoard(board: VisibleBoard, actorName: string): Promise<void> {
+  try {
+    const now = new Date().toISOString()
+    const { error } = await tbl('boards')
+      .update({ archived_at: now, status: 'archived' })
+      .eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.archived', board.id, {
+      name: board.name, project_id: board.project_id,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.archiveBoard', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao arquivar o board.')
+  }
 }
