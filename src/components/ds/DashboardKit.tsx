@@ -148,7 +148,9 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
       <CardShellProvider value={{ bare: false }}>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, flex: '1 1 auto' }}>
           {action && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, flexShrink: 0 }}>{action}</div>
+            shell.actionSlot
+              ? createPortal(action, shell.actionSlot)
+              : <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8, flexShrink: 0 }}>{action}</div>
           )}
           {bodyStyle
             ? <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', ...bodyStyle }}>{children}</div>
