@@ -10,9 +10,9 @@ import {
   KpiCard, RagCard, ProgressCard, WorkQueue, SprintDonutCard,
   WorkItemDetailDrawer, FilterBar, ProjectMultiSelect,
   SCard, CardStickyFooter, ProgressBar, StatusBadge, ConditionalTag, Av,
-  AuditFeed, ActivityTimeline, EmptyState, LoadingState,
+  ActivityTimeline, EmptyState, LoadingState,
   MiniBarChart, MiniSparkline,
-  type WorkItem, type FilterState, type RagStatus, type AuditEntry,
+  type WorkItem, type FilterState, type RagStatus,
 } from '../components/ds/DashboardKit'
 import {
   MOCK_TENANT, MOCK_USERS,
