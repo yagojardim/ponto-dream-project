@@ -477,6 +477,7 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
 }) {
   const [nativeTitle, setNativeTitle] = useState<string | null>(null)
   const [actionSlot, setActionSlot] = useState<HTMLDivElement | null>(null)
+  const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null)
   const fit = def.overflow === 'fit'
   const isKpi = def.kind === 'kpi'
   const title = customTitle ?? nativeTitle ?? def.title
@@ -486,8 +487,9 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
       bare: true,
       registerTitle: (t: string) => setNativeTitle(prev => (prev === t ? prev : t)),
       actionSlot,
+      footerSlot,
     }),
-    [actionSlot],
+    [actionSlot, footerSlot],
   )
 
   const body = (
@@ -554,6 +556,8 @@ function WidgetShell({ def, ctx, customTitle, editing, onRename, onRemove }: {
         </div>
       </div>
       {body}
+      {/* Rodapé fixo: região irmã fora do corpo rolável — recebe o CardStickyFooter via portal. */}
+      <div ref={setFooterSlot} className="no-drag" style={{ flexShrink: 0 }} />
     </div>
   )
 }
