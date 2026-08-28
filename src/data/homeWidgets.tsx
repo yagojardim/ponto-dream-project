@@ -4,7 +4,7 @@
  * can be dropped into the interactive Home grid.
  */
 import type { ReactNode } from 'react'
-import { REPORT_CARDS_LIST, navigateToReport, ChartFillProvider } from '@/data/reportRegistry'
+import { REPORT_CARDS_LIST, navigateToReport, ChartFillProvider, ReportsDataProvider } from '@/data/reportRegistry'
 import {
   BlockedWidget, ReadyWidget, TestingWidget, BacklogAlertWidget, MyQueueWidget,
   ReviewQueueWidget, DesignQueueWidget,
@@ -182,7 +182,9 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
     <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <ChartFillProvider>
-          <entry.Component />
+          <ReportsDataProvider projectIds={ctx.projectIds.size > 0 ? [...ctx.projectIds] : undefined}>
+            <entry.Component />
+          </ReportsDataProvider>
         </ChartFillProvider>
       </div>
       <button

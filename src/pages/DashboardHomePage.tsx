@@ -93,7 +93,7 @@ let ALLOWED_TENANT_WIDE = false
 /** Escopo efetivo enviado aos agregados (undefined só para gestão sem recorte). */
 let SCOPE_IDS: string[] | undefined = undefined
 
-function ProjFilterRow({ selected, onChange }: { selected: Set<string>; onChange: (s: Set<string>) => void }) {
+export function ProjFilterRow({ selected, onChange }: { selected: Set<string>; onChange: (s: Set<string>) => void }) {
   const { allowed } = useContext(HomeFilterCtx)
   const partial = allowed.length > 0 && selected.size > 0 && selected.size < allowed.length
   return (
@@ -109,6 +109,11 @@ function ProjFilterRow({ selected, onChange }: { selected: Set<string>; onChange
       <ProjectMultiSelect projects={allowed} selected={selected} onChange={onChange} />
     </div>
   )
+}
+
+/** Projetos permitidos ao perfil — usado pelo board interativo do Início. */
+export function useAllowedProjects(): ProjOption[] {
+  return useContext(HomeFilterCtx).allowed
 }
 
 /** Project options come from the database, restricted to the profile's scope. */
@@ -139,7 +144,7 @@ function sessionScope(user: MockUser): UserScope | null {
 }
 
 /** Every panel shares the same selection, so one filter drives all cards. */
-function useProjSel(): [Set<string>, (s: Set<string>) => void] {
+export function useProjSel(): [Set<string>, (s: Set<string>) => void] {
   const { sel, setSel } = useContext(HomeFilterCtx)
   return [sel, setSel]
 }
