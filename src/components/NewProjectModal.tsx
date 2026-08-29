@@ -360,6 +360,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                 </div>
               </div>
 
+              <div data-tour="project-structure" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Work structure / Features toggle */}
               <div>
                 <label style={labelStyle}>Estrutura de trabalho <HelpHint title="Usar Funcionalidades" text="Ative para incluir um nível de 'Funcionalidade' entre o Épico e a História (Épico → Funcionalidade → História → Subtarefa). Desligado, a hierarquia é Épico → História → Subtarefa. Pode ser mudado depois nas configurações do projeto." /></label>
@@ -399,6 +400,8 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                   style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
                 />
               </div>
+              </div>
+
 
               {error && (
                 <p style={{ fontSize: 12, color: T.crit }}>{error}</p>
