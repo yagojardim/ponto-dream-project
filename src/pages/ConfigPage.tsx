@@ -68,7 +68,7 @@ function WorkflowTab() {
   }
 
   return (
-    <div>
+    <div data-tour="config-workflow">
       <div style={{ marginBottom:20 }}>
         <div style={{ fontSize:15, fontWeight:600, color:T.text1, marginBottom:4 }}>Editor de Workflow</div>
         <div style={{ fontSize:13, color:T.text3 }}>Gerencie os status e categorias do seu fluxo de trabalho.</div>
@@ -697,7 +697,7 @@ export default function ConfigPage() {
       color:T.text1, fontFamily:'Inter,sans-serif',
     }}>
       {/* Tab sidebar */}
-      <div style={{
+      <div data-tour="config-tabs" style={{
         width:200, minWidth:200, borderRight:`1px solid ${T.border}`,
         background:T.bgSurface, paddingTop:24, display:'flex', flexDirection:'column',
       }}>

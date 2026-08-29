@@ -149,7 +149,7 @@ export default function AutomationsPage() {
     <div style={{ display:'flex', height:'100%', background:T.bgPage, color:T.text1, fontFamily:'Inter,sans-serif', position:'relative' }}>
 
       {/* Sidebar */}
-      <div style={{ width:280, minWidth:280, borderRight:`1px solid ${T.border}`, display:'flex', flexDirection:'column', background:T.bgSurface }}>
+      <div data-tour="automations-list" style={{ width:280, minWidth:280, borderRight:`1px solid ${T.border}`, display:'flex', flexDirection:'column', background:T.bgSurface }}>
         <div style={{ padding:'20px 16px 12px', borderBottom:`1px solid ${T.border}` }}>
           <div style={{ fontSize:11, fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', color:T.text3, marginBottom:12 }}>Automações ativas</div>
           <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
@@ -180,6 +180,7 @@ export default function AutomationsPage() {
         </div>
         <div style={{ padding:16, marginTop:'auto' }}>
           <button
+            data-tour="automations-new"
             onClick={addNew}
             style={{
               width:'100%', padding:'9px 0', borderRadius:8, border:`1px dashed ${T.accentBorder}`,
@@ -265,7 +266,7 @@ export default function AutomationsPage() {
         </div>
 
         {/* Builder flow */}
-        <div style={{ display:'flex', flexDirection:'column', gap:0, marginBottom:36 }}>
+        <div data-tour="automations-editor" style={{ display:'flex', flexDirection:'column', gap:0, marginBottom:36 }}>
 
           {/* TRIGGER card */}
           <div style={{

@@ -640,7 +640,7 @@ export default function ModulesPortfolioPage({ onNav }: Props) {
       </div>
 
       {/* KPI strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
+      <div data-tour="modules-counters" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
         {[
           { label: 'Implementados', value: mods.filter(m => m.status === 'implemented' || m.status === 'operational').length, color: D.blue },
           { label: 'Em preview',    value: mods.filter(m => m.status === 'preview').length,        color: D.violet },
@@ -687,7 +687,7 @@ export default function ModulesPortfolioPage({ onNav }: Props) {
       )}
 
       {/* Grid by category */}
-      {!loading && !loadErr && displayedCats.map(cat => {
+      {!loading && !loadErr && displayedCats.map((cat, catIdx) => {
         const catMods = mods.filter(m => m.category === cat)
         if (catMods.length === 0) return null
         return (
@@ -701,7 +701,8 @@ export default function ModulesPortfolioPage({ onNav }: Props) {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
-              {catMods.map(mod => (
+              {catMods.map((mod, modIdx) => (
+                <div key={mod.id} data-tour={catIdx === 0 && modIdx === 0 ? 'modules-card' : undefined}>
                 <ModulePortfolioCard
                   key={mod.id}
                   mod={mod}
@@ -711,6 +712,7 @@ export default function ModulesPortfolioPage({ onNav }: Props) {
                   onAction={handleAction}
                   onTrial={handleTrial}
                 />
+                </div>
               ))}
             </div>
           </div>

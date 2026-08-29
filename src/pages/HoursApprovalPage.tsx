@@ -314,14 +314,14 @@ export default function HoursApprovalPage() {
               </button>
             </>
           )}
-          <button onClick={() => exportCSV(filtered, `horas-${filterSquad === 'all' ? 'todos' : filterSquad}.csv`)} style={{ padding: '7px 14px', borderRadius: 8, background: T.bgPage, border: `1px solid ${T.border}`, color: T.text2, fontSize: 12, cursor: 'pointer' }}>
+          <button data-tour="ha-export" onClick={() => exportCSV(filtered, `horas-${filterSquad === 'all' ? 'todos' : filterSquad}.csv`)} style={{ padding: '7px 14px', borderRadius: 8, background: T.bgPage, border: `1px solid ${T.border}`, color: T.text2, fontSize: 12, cursor: 'pointer' }}>
             ↓ Exportar CSV
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div data-tour="ha-filters" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
         {(['all', 'submitted', 'approved', 'rejected'] as const).map(s => (
           <button key={s} onClick={() => setFilterStatus(s)} style={{
             padding: '4px 11px', borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: 'pointer',
@@ -372,7 +372,7 @@ export default function HoursApprovalPage() {
                 <span style={{ fontSize: 11, color: T.text3 }}>
                   {laneHours.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}h · {laneEntries.length} lançamento{laneEntries.length !== 1 ? 's' : ''}
                 </span>
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                <div data-tour="ha-actions" style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
                   <button onClick={() => exportCSV(laneEntries, `horas-${lane.name.replace(/\s+/g, '-').toLowerCase()}.csv`)}
                     style={{ padding: '4px 10px', borderRadius: 6, background: T.bgPage, border: `1px solid ${T.border}`, color: T.text2, fontSize: 11, cursor: 'pointer' }}>↓ CSV</button>
                   {laneSubmitted.length > 0 && (

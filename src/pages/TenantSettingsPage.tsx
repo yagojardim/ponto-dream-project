@@ -132,7 +132,7 @@ export default function TenantSettingsPage() {
       )}
 
       {/* ── Identidade / slug ── */}
-      <section style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+      <section data-tour="tenant-slug" style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20, marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: T.text1, marginBottom: 14 }}>Endereço público</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
@@ -184,7 +184,7 @@ export default function TenantSettingsPage() {
       </section>
 
       {/* ── Branding / localização ── */}
-      <section style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+      <section data-tour="tenant-identity" style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 600, color: T.text1, marginBottom: 14 }}>Identidade e localização</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
