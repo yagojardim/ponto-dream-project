@@ -335,6 +335,9 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                   ))}
                 </div>
               </div>
+              </div>
+
+
 
               {/* Period */}
               <div>
