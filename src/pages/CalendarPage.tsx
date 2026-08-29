@@ -1186,6 +1186,7 @@ export default function CalendarPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: `1px solid ${T.border}`, background: T.bgSurface, flexShrink: 0, flexWrap: 'wrap' }}>
         {/* + Criar */}
         <button
+          data-tour="cal-create"
           onClick={() => openCreate(anchor)}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
@@ -1197,7 +1198,7 @@ export default function CalendarPage() {
         </button>
 
         {/* View toggle */}
-        <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: `1px solid ${T.border}` }}>
+        <div data-tour="cal-views" style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: `1px solid ${T.border}` }}>
           {(['month','week','day'] as CalView[]).map(v => (
             <button key={v} onClick={() => setView(v)} style={{
               padding: '5px 14px', fontSize: 12, cursor: 'pointer',
@@ -1215,6 +1216,7 @@ export default function CalendarPage() {
         {canManageSprint && sprintOpts.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <select
+              data-tour="cal-sprint"
               value={sprintSel}
               onChange={e => setSprintSel(e.target.value)}
               style={{ ...toolBtn, padding: '5px 8px', maxWidth: 180 }}
@@ -1222,6 +1224,7 @@ export default function CalendarPage() {
               {sprintOpts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <button
+              data-tour="cal-ceremonies"
               onClick={() => setCeremonyDialog(true)}
               disabled={generating}
               title="Cria daily, planning, pré-review, review e retrospectivas da sprint"
@@ -1246,6 +1249,7 @@ export default function CalendarPage() {
 
         {/* Integrações de agenda */}
         <button
+          data-tour="cal-integrate"
           onClick={() => setShowGSync(true)}
           style={{
             ...toolBtn, marginLeft: 'auto',

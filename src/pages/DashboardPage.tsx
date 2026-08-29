@@ -344,7 +344,7 @@ export default function DashboardPage({ onNav, initialProjectId }: { onNav?: (v:
             {sprint && ` · ${sprint.name} · termina em ${fmtDate(sprint.endDate ?? undefined)}`}
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div data-tour="dash-projects" className="flex items-center gap-3 flex-shrink-0">
           {projectOptions.length > 0 && selected && (
             <ProjectDropdown options={projectOptions} selected={selected} onChange={setSelected} />
           )}
@@ -378,7 +378,7 @@ export default function DashboardPage({ onNav, initialProjectId }: { onNav?: (v:
       {agg && visProjects.length > 0 && (
         <>
           {/* 1. Health row */}
-          <div>
+          <div data-tour="dash-health">
             <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color:'var(--text-muted,#546278)' }}>
               Saúde dos projetos
             </p>
@@ -464,6 +464,7 @@ export default function DashboardPage({ onNav, initialProjectId }: { onNav?: (v:
               </Section>
 
               {/* Blockers */}
+              <div data-tour="dash-impediments">
               <Section
                 title={
                   <div className="flex items-center gap-2.5">
@@ -517,7 +518,9 @@ export default function DashboardPage({ onNav, initialProjectId }: { onNav?: (v:
                   })}
                 </div>
               </Section>
+              </div>
             </div>
+
 
             {/* Right: sprint */}
             <div className="min-w-0">

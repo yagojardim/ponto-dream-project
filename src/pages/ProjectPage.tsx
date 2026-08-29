@@ -1298,6 +1298,7 @@ function BoardTab({
           const disabled = !canManageSprint || !isActive
           return (
             <button
+              data-tour="board-end-sprint"
               onClick={()=>{ if(!disabled && currentSprint) onCompleteSprint(currentSprint) }}
               disabled={disabled}
               title={!canManageSprint ? 'Requer permissão: Gerenciar Sprint' : !isActive ? 'Nenhuma sprint ativa selecionada' : `Encerrar ${currentSprint?.name}`}
@@ -1317,6 +1318,7 @@ function BoardTab({
         })()}
         <HelpHint text="Fecha a sprint, calcula a velocity pelas demandas concluídas e move as não-concluídas para a próxima sprint ou para o backlog." label="Ajuda sobre Encerrar sprint" />
         <button
+          data-tour="board-start-daily"
           onClick={()=>{ if(canManageSprint) setDailyOpen(true) }}
           disabled={!canManageSprint}
           title={canManageSprint ? 'Iniciar a daily com o board ao vivo' : 'Requer permissão: Gerenciar Sprint (sprint:manage)'}
@@ -1335,6 +1337,7 @@ function BoardTab({
           clearAll={() => { setFilterA([]); setFilterP([]); setFilterType([]); setFilterFeatures([]) }}
           trigger={
             <button
+              data-tour="board-filters"
               className="h-7 pl-2.5 pr-2 rounded-lg text-[11px] font-medium flex items-center gap-1.5 flex-shrink-0 transition-all"
               style={{
                 background: S.surface2,
@@ -2855,7 +2858,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-0.5 p-0.5 rounded-lg" style={{ background: S.bg, border: `1px solid ${S.border}` }}>
+        <div data-tour="board-tabs" className="flex items-center gap-0.5 p-0.5 rounded-lg" style={{ background: S.bg, border: `1px solid ${S.border}` }}>
           {(['Board', 'Backlog', 'Sprints'] as Tab[]).map(t => (
             <button
               key={t}

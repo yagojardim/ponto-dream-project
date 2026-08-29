@@ -26,13 +26,14 @@ function ProjectDot({ projectId }: { projectId: string }) {
   return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 99, background: colors[projectId] ?? T.border2, flexShrink: 0, marginTop: 1 }} />
 }
 
-function BoardCard({ board, onOpen, onSettings }: { board: BoardDef; onOpen: () => void; onSettings: () => void }) {
+function BoardCard({ board, onOpen, onSettings, tourAnchor }: { board: BoardDef; onOpen: () => void; onSettings: () => void; tourAnchor?: boolean }) {
   const [hovered, setHovered] = useState(false)
   const [menu, setMenu] = useState(false)
   const isArchived = board.status === 'archived'
 
   return (
     <div
+      data-tour={tourAnchor ? 'board-card' : undefined}
       onClick={onOpen}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -219,7 +220,7 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
           <div style={{ fontSize: 12, color: T.text3, marginTop: 4 }}>Ajuste os filtros ou tente outra busca.</div>
         </div>
       ) : (
-        Object.entries(byProject).map(([projId, { name, boards: pBoards }]) => (
+        Object.entries(byProject).map(([projId, { name, boards: pBoards }], pi) => (
           <div key={projId} style={{ marginBottom: 24 }}>
             {/* Project header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, paddingLeft: 2 }}>
@@ -228,8 +229,8 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
               <span style={{ fontSize: 11, color: T.text3 }}>— {pBoards.length} board{pBoards.length !== 1 ? 's' : ''}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {pBoards.map(b => (
-                <BoardCard key={b.id} board={b} onOpen={() => onSelectBoard(b.id)} onSettings={() => setSettingsBoard(b)} />
+              {pBoards.map((b, bi) => (
+                <BoardCard key={b.id} board={b} tourAnchor={pi === 0 && bi === 0} onOpen={() => onSelectBoard(b.id)} onSettings={() => setSettingsBoard(b)} />
               ))}
             </div>
           </div>
