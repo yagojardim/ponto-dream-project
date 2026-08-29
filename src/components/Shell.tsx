@@ -82,7 +82,6 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
           onViewChange={v => { onViewChange(v as View); setActiveNav(v) }}
           onCreateIssue={onCreateIssue}
           onOpenClientMessages={onOpenClientMessages}
-          onOpenHelp={() => {}}
         />
         <main className="flex-1 min-w-0 overflow-x-hidden" style={{ overflowY: 'auto' }}>
           <WelcomeModal onNav={handleNav} />

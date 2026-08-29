@@ -19,7 +19,6 @@ interface HeaderProps {
   currentView:    View
   onViewChange:   (v: string, targetId?: string) => void
   onOpenClientMessages?: (projectId: string) => void
-  onOpenHelp?: () => void
 }
 
 const viewLabels: Partial<Record<View, string>> = {
@@ -105,7 +104,7 @@ function rowToNotif(r: NotificationRow): NotifItem {
   }
 }
 
-export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientMessages, onOpenHelp }: HeaderProps) {
+export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientMessages }: HeaderProps) {
   const [cmdOpen,    setCmdOpen]    = useState(false)
   const [cmdQuery,   setCmdQuery]   = useState('')
   const [cmdResults, setCmdResults] = useState<SearchResult[]>([])
