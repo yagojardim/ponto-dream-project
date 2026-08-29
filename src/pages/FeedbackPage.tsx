@@ -107,6 +107,15 @@ function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => voi
             style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}
           >▶ Iniciar tour desta tela</button>
         )}
+        {extraToursFor(view).map(t => (
+          <button
+            key={t.id}
+            onClick={() => { onNav?.(view); startTour(t.steps) }}
+            className="self-start mt-2 h-9 px-4 rounded-lg text-[13px] font-semibold"
+            style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}
+          >▶ {t.label}</button>
+        ))}
+
       </ArticleHeader>
 
       {blocks.length > 1 && (
