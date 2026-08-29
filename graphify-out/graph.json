@@ -5317,7 +5317,7 @@
       "file_type": "code",
       "norm_label": "notifitem",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L77"
+      "source_location": "L76"
     },
     {
       "id": "src_components_header_view",
@@ -21132,7 +21132,7 @@
       "file_type": "code",
       "norm_label": "header()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L108"
+      "source_location": "L107"
     },
     {
       "id": "src_components_header_header_handlecmdkeydown",
@@ -21143,7 +21143,7 @@
       "file_type": "code",
       "norm_label": "handlecmdkeydown()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L223"
+      "source_location": "L222"
     },
     {
       "id": "src_components_header_header_handlemarkallread",
@@ -21154,7 +21154,7 @@
       "file_type": "code",
       "norm_label": "handlemarkallread()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L174"
+      "source_location": "L173"
     },
     {
       "id": "src_components_header_header_handlenotifclick",
@@ -21165,7 +21165,7 @@
       "file_type": "code",
       "norm_label": "handlenotifclick()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L182"
+      "source_location": "L181"
     },
     {
       "id": "src_components_header_header_handleselectresult",
@@ -21176,7 +21176,7 @@
       "file_type": "code",
       "norm_label": "handleselectresult()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L215"
+      "source_location": "L214"
     },
     {
       "id": "src_components_header_header_handleswitchuser",
@@ -21187,7 +21187,7 @@
       "file_type": "code",
       "norm_label": "handleswitchuser()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L200"
+      "source_location": "L199"
     },
     {
       "id": "src_components_header_rowtonotif",
@@ -21198,7 +21198,7 @@
       "file_type": "code",
       "norm_label": "rowtonotif()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L95"
+      "source_location": "L94"
     },
     {
       "id": "src_components_header_today",
@@ -21209,7 +21209,7 @@
       "file_type": "code",
       "norm_label": "today()",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L73"
+      "source_location": "L72"
     },
     {
       "id": "src_data_db_globalsearch_searchglobal",
@@ -31179,7 +31179,7 @@
       "file_type": "code",
       "norm_label": "notif_icon",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L93"
+      "source_location": "L92"
     },
     {
       "id": "src_components_header_role_context_color",
@@ -31189,7 +31189,7 @@
       "file_type": "code",
       "norm_label": "role_context_color",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L60"
+      "source_location": "L59"
     },
     {
       "id": "src_components_header_role_context_label",
@@ -31199,7 +31199,7 @@
       "file_type": "code",
       "norm_label": "role_context_label",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L53"
+      "source_location": "L52"
     },
     {
       "id": "src_components_header_static_notifications",
@@ -31209,7 +31209,7 @@
       "file_type": "code",
       "norm_label": "static_notifications",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L88"
+      "source_location": "L87"
     },
     {
       "id": "src_components_header_viewlabels",
@@ -31219,7 +31219,7 @@
       "file_type": "code",
       "norm_label": "viewlabels",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L25"
+      "source_location": "L24"
     },
     {
       "id": "src_lib_auth_inspection_mode_enabled",
@@ -33362,7 +33362,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L120",
+      "source_location": "L119",
       "weight": 1.0
     },
     {
@@ -33374,7 +33374,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L154",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -33386,7 +33386,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L401",
+      "source_location": "L400",
       "weight": 1.0
     },
     {
@@ -33398,7 +33398,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L233",
+      "source_location": "L232",
       "weight": 1.0
     },
     {
@@ -55178,7 +55178,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L182",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
@@ -55190,7 +55190,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L200",
+      "source_location": "L199",
       "weight": 1.0
     },
     {
@@ -55202,7 +55202,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L215",
+      "source_location": "L214",
       "weight": 1.0
     },
     {
@@ -83683,7 +83683,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L108",
+      "source_location": "L107",
       "weight": 1.0
     },
     {
@@ -83716,7 +83716,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L25",
+      "source_location": "L24",
       "weight": 1.0
     },
     {
@@ -83727,7 +83727,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L53",
+      "source_location": "L52",
       "weight": 1.0
     },
     {
@@ -83738,7 +83738,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L60",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -83749,7 +83749,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L73",
+      "source_location": "L72",
       "weight": 1.0
     },
     {
@@ -83760,7 +83760,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L77",
+      "source_location": "L76",
       "weight": 1.0
     },
     {
@@ -83771,7 +83771,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L88",
+      "source_location": "L87",
       "weight": 1.0
     },
     {
@@ -83782,7 +83782,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L93",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -83793,7 +83793,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L95",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -83804,7 +83804,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L174",
+      "source_location": "L173",
       "weight": 1.0
     },
     {
@@ -83815,7 +83815,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Header.tsx",
-      "source_location": "L223",
+      "source_location": "L222",
       "weight": 1.0
     },
     {
@@ -108802,7 +108802,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/components/Header.tsx",
-      "source_location": "L163",
+      "source_location": "L162",
       "weight": 1.0
     },
     {
@@ -110103,5 +110103,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "929978144eea5318828fc260ee3cc301f9175b51"
+  "built_at_commit": "43539680b6ab8cf28eba12879bc5b60d0d42e220"
 }
