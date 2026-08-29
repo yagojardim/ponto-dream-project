@@ -487,6 +487,7 @@ export default function MyTasksPage({ onNav }: { onNav?: (view: string, targetId
 
         {/* Quick link to board */}
         <button
+          data-tour="mf-board"
           onClick={() => onNav?.('project')}
           style={{
             padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500,
