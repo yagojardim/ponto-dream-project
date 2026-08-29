@@ -8,6 +8,9 @@ export interface TourStep {
   placement?: 'top' | 'bottom' | 'left' | 'right'
   navigateTo?: string
   advanceOn?: 'next' | 'target-appears'
+  fields?: { label: string; hint: string }[]
+  clickOnNext?: string
+  optional?: boolean
 }
 
 interface Rect { top: number; left: number; width: number; height: number }
@@ -56,8 +59,12 @@ export function GuidedTour({
   const go = useCallback((next: number) => {
     setRect(null)
     targetRef.current = null
-    setIndex(Math.max(0, Math.min(steps.length - 1, next)))
-  }, [steps.length])
+    if (next >= steps.length) {
+      onFinish()
+      return
+    }
+    setIndex(Math.max(0, next))
+  }, [steps.length, onFinish])
 
   // Resolve the target for the current step (navigating first if needed).
   useEffect(() => {
@@ -65,7 +72,14 @@ export function GuidedTour({
     if (!step) return
     if (step.navigateTo) onNav(step.navigateTo)
     void waitFor(step.selector).then(el => {
-      if (!alive || !el) return
+      if (!alive) return
+      if (!el) {
+        // Target not found — if optional, skip this step
+        if (step.optional) {
+          go(index + 1)
+        }
+        return
+      }
       targetRef.current = el
       el.scrollIntoView({ block: 'center', behavior: 'smooth' })
       setRect(rectOf(el))
@@ -87,6 +101,19 @@ export function GuidedTour({
     }, 200)
     return () => window.clearInterval(id)
   }, [index, step, steps, go])
+
+  // If target disappears and step is optional, skip.
+  useEffect(() => {
+    if (!step || !step.optional || !targetRef.current) return
+    const id = window.setInterval(() => {
+      const el = document.querySelector(step.selector) as HTMLElement | null
+      if (!el) {
+        window.clearInterval(id)
+        go(index + 1)
+      }
+    }, 300)
+    return () => window.clearInterval(id)
+  }, [index, step, go])
 
   // Keep the spotlight glued to the target.
   useLayoutEffect(() => {
@@ -131,6 +158,22 @@ export function GuidedTour({
     else { popTop = hole.top + hole.height + 14; popLeft = hole.left }
     popLeft = Math.max(12, Math.min(popLeft, vw - POP_W - 12))
     popTop = Math.max(12, Math.min(popTop, vh - 210))
+  }
+
+  function handleNext() {
+    if (step.clickOnNext) {
+      const target = document.querySelector(step.clickOnNext) as HTMLElement | null
+      if (target) {
+        target.click()
+        setTimeout(() => {
+          if (last) onFinish()
+          else go(index + 1)
+        }, 250)
+        return
+      }
+    }
+    if (last) onFinish()
+    else go(index + 1)
   }
 
   return (
@@ -181,6 +224,18 @@ export function GuidedTour({
         <p className="m-0 text-[13px] font-semibold" style={{ color: T.text1 }}>{step.title}</p>
         <p className="mt-1.5 mb-0 text-[12px]" style={{ color: T.text2 }}>{step.body}</p>
 
+        {step.fields && step.fields.length > 0 && (
+          <ul className="mt-2 mb-0 pl-3 flex flex-col gap-1" style={{ listStyle: 'none' }}>
+            {step.fields.map((f, i) => (
+              <li key={i} className="text-[11px]" style={{ color: T.text2 }}>
+                <span style={{ color: T.text1, fontWeight: 600 }}>{f.label}</span>
+                {' — '}
+                <span>{f.hint}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div className="mt-4 flex items-center justify-between gap-3">
           <span className="text-[11px]" style={{ color: T.text3 }}>{index + 1} de {steps.length}</span>
           <div className="flex items-center gap-2">
@@ -197,7 +252,7 @@ export function GuidedTour({
               >Anterior</button>
             )}
             <button
-              onClick={() => (last ? onFinish() : go(index + 1))}
+              onClick={handleNext}
               className="h-7 px-3 rounded-md text-[11px] font-semibold"
               style={{ background: T.accent, color: '#fff', border: 'none' }}
             >{last ? 'Concluir' : 'Próximo'}</button>

@@ -10,9 +10,10 @@ export interface OnboardingState {
   guideDisabled: boolean
   projectTourDone: boolean
   tips: Record<string, boolean>
+  toursDone: Record<string, boolean>
 }
 
-const EMPTY: OnboardingState = { welcomeDone: false, guideDisabled: false, projectTourDone: false, tips: {} }
+const EMPTY: OnboardingState = { welcomeDone: false, guideDisabled: false, projectTourDone: false, tips: {}, toursDone: {} }
 
 export function useOnboarding() {
   const { activeUser } = useSession()
@@ -32,6 +33,7 @@ export function useOnboarding() {
           guideDisabled: Boolean(v?.guideDisabled),
           projectTourDone: Boolean(v?.projectTourDone),
           tips: v?.tips ?? {},
+          toursDone: v?.toursDone ?? {},
         })
         setLoaded(true)
       })
@@ -73,6 +75,16 @@ export function useOnboarding() {
 
   const isTipSeen = useCallback((view: string) => Boolean(state.tips[view]), [state.tips])
 
+  const markTourDone = useCallback((id: string) => {
+    setState(prev => {
+      const next = { ...prev, toursDone: { ...prev.toursDone, [id]: true } }
+      persist(next)
+      return next
+    })
+  }, [persist])
+
+  const isTourDone = useCallback((id: string) => Boolean(state.toursDone[id]), [state.toursDone])
+
   return {
     loaded,
     welcomeDone: state.welcomeDone,
@@ -83,5 +95,7 @@ export function useOnboarding() {
     disableGuide,
     isTipSeen,
     markTipSeen,
+    markTourDone,
+    isTourDone,
   }
 }

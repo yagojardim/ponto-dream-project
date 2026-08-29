@@ -6,7 +6,8 @@ import { screenLabelFromUrl } from '@/lib/screenLabel'
 import { ONBOARDING_TIPS } from '@/data/onboardingContent'
 import type { OnboardingGuideBlock } from '@/data/onboardingContent'
 import { VIEW_LABELS } from '@/App'
-import { startProjectTour } from '@/hooks/useProjectTour'
+import { startTour } from '@/hooks/useProjectTour'
+import { hasTour, tourStepsFor } from '@/data/tourSteps'
 
 const RATINGS: { value: number; emoji: string; label: string }[] = [
   { value: 1, emoji: '😞', label: 'Muito ruim' },
@@ -86,22 +87,25 @@ function ArticleHeader({ section, title, subtitle, children }: {
 }
 
 function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => void }) {
+  const { activeUser } = useSession()
   const tip = ONBOARDING_TIPS[view]
   const [broken, setBroken] = useState<Record<string, boolean>>({})
   if (!tip) return null
   const blocks = blocksOf(view)
   const intro = (tip.guide?.length ? tip.guide[0].text : tip.steps.join(' ')).replace(/\*\*/g, '')
   const label = viewLabel(view, tip.title)
+  const role = activeUser?.role_context ?? null
+  const viewHasTour = hasTour(view, role)
 
   return (
     <article className="flex flex-col" style={{ gap: 40 }}>
       <ArticleHeader section={`Central de Ajuda › ${label}`} title={label} subtitle={intro}>
-        {view === 'home' && (
+        {viewHasTour && (
           <button
-            onClick={() => { onNav?.('projects-list'); startProjectTour() }}
+            onClick={() => { onNav?.(view); startTour(tourStepsFor(view, role)) }}
             className="self-start mt-2 h-9 px-4 rounded-lg text-[13px] font-semibold"
             style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}
-          >▶ Iniciar tour: criar um projeto</button>
+          >▶ Iniciar tour desta tela</button>
         )}
       </ArticleHeader>
 
