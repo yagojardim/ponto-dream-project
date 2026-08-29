@@ -403,17 +403,16 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
           <div className="w-px h-4" style={{ background: T.border }} />
 
           {/* Help */}
-          {onOpenHelp && (
-            <button
-              onClick={onOpenHelp}
-              title="Como usar esta tela"
-              aria-label="Como usar esta tela"
-              className="w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-semibold transition-colors"
-              style={{ color: T.text3, background: T.bgSurface2, border: `1px solid ${T.border}` }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = T.text1 }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = T.text3 }}
-            >?</button>
-          )}
+          <button
+            onClick={() => onViewChange('feedback')}
+            title="Como usar esta tela"
+            aria-label="Como usar esta tela"
+            className="w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-semibold transition-colors"
+            style={{ color: T.text3, background: T.bgSurface2, border: `1px solid ${T.border}` }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = T.text1 }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = T.text3 }}
+          >?</button>
+
 
           {/* Notification bell */}
           <div className="relative">
