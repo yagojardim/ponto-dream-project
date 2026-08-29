@@ -8,7 +8,7 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       selector: '[data-tour="new-project-btn"]',
       placement: 'bottom',
       title: 'Criar um projeto',
-      body: 'Clique em “+ Novo Projeto” para abrir o formulário.',
+      body: 'Clique em "+ Novo Projeto" para abrir o formulário.',
       clickOnNext: '[data-tour="new-project-btn"]',
     },
     {
@@ -54,7 +54,7 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       selector: '[data-tour="project-save"]',
       placement: 'top',
       title: 'Criar',
-      body: 'Revise e clique em “Criar” para salvar o projeto. (O tour não cria por você.)',
+      body: 'Revise e clique em "Criar" para salvar o projeto. (O tour não cria por você.)',
     },
   ],
 
@@ -64,6 +64,20 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       placement: 'bottom',
       title: 'Seus boards',
       body: 'Um quadro Kanban por projeto. Abra um board para trabalhar nele.',
+      optional: true,
+    },
+    {
+      selector: '[data-tour="board-new"]',
+      placement: 'bottom',
+      title: 'Criar um board',
+      body: 'Crie boards adicionais como visões filtradas do mesmo projeto (ex.: por squad, só bugs, por componente).',
+      optional: true,
+    },
+    {
+      selector: '[data-tour="board-switcher"]',
+      placement: 'bottom',
+      title: 'Trocar de board',
+      body: 'Alterne entre os boards do projeto. O board padrão mostra todas as demandas.',
       optional: true,
     },
     {
@@ -131,13 +145,13 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       selector: '[data-tour="cal-create"]',
       placement: 'bottom',
       title: 'Criar evento',
-      body: 'Clique em “+ Criar” para agendar reuniões, cerimônias e marcos.',
+      body: 'Clique em "+ Criar" para agendar reuniões, cerimônias e marcos.',
     },
     {
       selector: '[data-tour="cal-views"]',
       placement: 'bottom',
       title: 'Mês / Semana / Dia',
-      body: 'Alterne a visão do calendário; “Hoje” volta para o dia atual.',
+      body: 'Alterne a visão do calendário; "Hoje" volta para o dia atual.',
     },
     {
       selector: '[data-tour="cal-sprint"]',
@@ -175,25 +189,25 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
   ],
 
   releases: [
-    { selector: '[data-tour="releases-card"]', navigateTo: 'releases', placement: 'bottom', title: 'Releases por versão', body: 'Cada release traz versão, estado, progresso e as issues vinculadas. Em “Editar” você ajusta e fecha a release.', optional: true },
+    { selector: '[data-tour="releases-card"]', navigateTo: 'releases', placement: 'bottom', title: 'Releases por versão', body: 'Cada release traz versão, estado, progresso e as issues vinculadas. Em "Editar" você ajusta e fecha a release.', optional: true },
     { selector: '[data-tour="releases-new"]', placement: 'left', title: 'Nova release', body: 'Crie uma versão e vincule as demandas que entram na entrega.', optional: true, clickOnNext: '[data-tour="releases-new"]' },
   ],
 
   filters: [
     { selector: '[data-tour="filters-builder"]', navigateTo: 'filters', placement: 'right', title: 'Construtor de filtros', body: 'Escolha a lógica do grupo (AND/OR) e vá somando condições.', optional: true },
     { selector: '[data-tour="filters-add"]', placement: 'right', title: 'Adicionar condição', body: 'Cada condição refina a busca (tipo, status, prioridade, responsável, sprint, épico…).', optional: true },
-    { selector: '[data-tour="filters-saved"]', placement: 'right', title: 'Filtros salvos', body: 'Salve buscas recorrentes e use “Aplicar como visão” para transformar o filtro numa visão.', optional: true },
+    { selector: '[data-tour="filters-saved"]', placement: 'right', title: 'Filtros salvos', body: 'Salve buscas recorrentes e use "Aplicar como visão" para transformar o filtro numa visão.', optional: true },
   ],
 
   navigator: [
     { selector: '[data-tour="nav-quickfilter"]', navigateTo: 'navigator', placement: 'bottom', title: 'Filtro rápido', body: 'Busque e ordene por qualquer coluna (Chave, Status, Prioridade, Sprint, Épico, Prazo…).', optional: true },
     { selector: '[data-tour="nav-columns"]', placement: 'bottom', title: 'Colunas', body: 'Escolha quais colunas aparecem na tabela.', optional: true },
-    { selector: '[data-tour="nav-bulk"]', placement: 'bottom', title: 'Edição em massa', body: 'Marque vários itens e use “Bulk Change” para alterar status/prioridade/responsável de uma vez. “Exportar” leva para CSV.', optional: true },
+    { selector: '[data-tour="nav-bulk"]', placement: 'bottom', title: 'Edição em massa', body: 'Marque vários itens e use "Bulk Change" para alterar status/prioridade/responsável de uma vez. "Exportar" leva para CSV.', optional: true },
   ],
 
   reports: [
     { selector: '[data-tour="reports-cards"]', navigateTo: 'reports', placement: 'bottom', title: 'Indicadores', body: 'Burndown, Velocity, CFD, Bugs por Severidade, Criados vs Resolvidos e Workload por Pessoa.', optional: true },
-    { selector: '[data-tour="reports-assign"]', placement: 'left', title: 'Liberar / atribuir relatórios', body: 'Controle quais relatórios ficam visíveis e para quais papéis, em “Gerenciar atribuições”.', optional: true },
+    { selector: '[data-tour="reports-assign"]', placement: 'left', title: 'Liberar / atribuir relatórios', body: 'Controle quais relatórios ficam visíveis e para quais papéis, em "Gerenciar atribuições".', optional: true },
   ],
 
   config: [
@@ -203,7 +217,7 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
 
   'tenant-settings': [
     { selector: '[data-tour="tenant-slug"]', navigateTo: 'tenant-settings', placement: 'bottom', title: 'Endereço público (slug)', body: 'O slug é o endereço pelo qual o portal do cliente é acessado (mínimo 3 caracteres, minúsculas/números/hífen).', optional: true },
-    { selector: '[data-tour="tenant-identity"]', placement: 'bottom', title: 'Identidade e localização', body: 'Nome de exibição, logo, cor primária, fuso horário e idioma. Clique em “Salvar alterações”.', optional: true },
+    { selector: '[data-tour="tenant-identity"]', placement: 'bottom', title: 'Identidade e localização', body: 'Nome de exibição, logo, cor primária, fuso horário e idioma. Clique em "Salvar alterações".', optional: true },
   ],
 
   modules: [
@@ -212,8 +226,8 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
   ],
 
   automations: [
-    { selector: '[data-tour="automations-list"]', navigateTo: 'automations', placement: 'right', title: 'Automações', body: 'Suas regras ativas/pausadas no formato “quando X → faça Y”.', optional: true },
-    { selector: '[data-tour="automations-editor"]', placement: 'left', title: 'Disparador → Condição → Ação', body: 'Monte a regra: gatilho, condição opcional e ação. Teste em “Executar agora” e acompanhe o Log de execuções.', optional: true },
+    { selector: '[data-tour="automations-list"]', navigateTo: 'automations', placement: 'right', title: 'Automações', body: 'Suas regras ativas/pausadas no formato "quando X → faça Y".', optional: true },
+    { selector: '[data-tour="automations-editor"]', placement: 'left', title: 'Disparador → Condição → Ação', body: 'Monte a regra: gatilho, condição opcional e ação. Teste em "Executar agora" e acompanhe o Log de execuções.', optional: true },
     { selector: '[data-tour="automations-new"]', placement: 'left', title: 'Nova automação', body: 'Crie uma regra nova.', optional: true, clickOnNext: '[data-tour="automations-new"]' },
   ],
 
@@ -236,7 +250,7 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
 
   'hours-approval': [
     { selector: '[data-tour="ha-filters"]', navigateTo: 'hours-approval', placement: 'bottom', title: 'Fila de aprovação', body: 'Lançamentos agrupados por colaborador; filtre por status e por squad.', optional: true },
-    { selector: '[data-tour="ha-actions"]', placement: 'left', title: 'Aprovar ou rejeitar', body: 'Aprove/rejeite item a item, ou use “Aprovar todos / Rejeitar todos” por colaborador.', optional: true },
+    { selector: '[data-tour="ha-actions"]', placement: 'left', title: 'Aprovar ou rejeitar', body: 'Aprove/rejeite item a item, ou use "Aprovar todos / Rejeitar todos" por colaborador.', optional: true },
     { selector: '[data-tour="ha-export"]', placement: 'left', title: 'Exportar CSV', body: 'Leve os dados de horas para relatórios externos.', optional: true },
   ],
 }
@@ -260,7 +274,7 @@ const HOME_TOUR: TourStep[] = [
     selector: '[data-tour="home-edit"]',
     placement: 'left',
     title: 'Editar painel',
-    body: 'Reorganize, inclua ou remova cards. “Restaurar padrão” volta ao layout do seu papel.',
+    body: 'Reorganize, inclua ou remova cards. "Restaurar padrão" volta ao layout do seu papel.',
   },
   {
     selector: '[data-tour="home-add"]',
@@ -295,7 +309,7 @@ const DASH_TOUR: TourStep[] = [
     selector: '[data-tour="dash-impediments"]',
     placement: 'top',
     title: 'Impedimentos',
-    body: 'As demandas bloqueadas e há quanto tempo. “Ver todos” abre a lista.',
+    body: 'As demandas bloqueadas e há quanto tempo. "Ver todos" abre a lista.',
     optional: true,
   },
 ]

@@ -179,6 +179,16 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
             {boards.length - totalActive > 0 && <span style={{ marginLeft: 8, color: T.text3 }}>· {boards.length - totalActive} arquivado{boards.length - totalActive !== 1 ? 's' : ''}</span>}
           </div>
         </div>
+        <button
+          data-tour="board-new"
+          style={{
+            padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            background: T.accent, color: '#fff', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Novo board
+        </button>
       </div>
 
       {/* Filters */}
