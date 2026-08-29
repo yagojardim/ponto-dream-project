@@ -231,6 +231,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
           <>
             {/* Body */}
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 16, overflowY: 'auto' }}>
+              <div data-tour="project-basics" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Tenant (read-only) */}
               <div>
                 <label style={labelStyle}>Workspace</label>
@@ -263,6 +264,8 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                   onChange={e => setClient(e.target.value)}
                   style={inputStyle}
                 />
+              </div>
+
               </div>
 
               {/* Key */}

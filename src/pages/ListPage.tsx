@@ -504,7 +504,7 @@ export default function ListPage() {
     <>
     <div style={{ background:T.bgPage, height:'100%', display:'flex', flexDirection:'column' }}>
       {/* Toolbar */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'14px 20px', borderBottom:`1px solid ${T.border}`, background:T.bgSurface, flexWrap:'wrap' }}>
+      <div data-tour="list-filters" style={{ display:'flex', alignItems:'center', gap:10, padding:'14px 20px', borderBottom:`1px solid ${T.border}`, background:T.bgSurface, flexWrap:'wrap' }}>
         <span style={{ color:T.text1, fontWeight:700, fontSize:15, marginRight:8 }}>Backlog</span>
         <input
           placeholder="Filtrar por título…"
@@ -544,7 +544,7 @@ export default function ListPage() {
           <option value="">Funcionalidade</option>
           {features.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
         </select>
-        <span style={{color:T.text3,fontSize:13,marginLeft:4}}>Agrupar:</span>
+        <span data-tour="list-group" style={{color:T.text3,fontSize:13,marginLeft:4}}>Agrupar:</span>
         {(['none','sprint','epic'] as GroupBy[]).map(g => (
           <button key={g} onClick={() => setGroupBy(g)} style={{
             padding:'4px 10px', borderRadius:5, fontSize:12, cursor:'pointer',
@@ -556,7 +556,7 @@ export default function ListPage() {
           </button>
         ))}
         <div style={{marginLeft:'auto',display:'flex',gap:8,position:'relative'}} ref={colsRef}>
-          <button onClick={() => setColsOpen(o=>!o)} style={{
+          <button data-tour="list-columns" onClick={() => setColsOpen(o=>!o)} style={{
             padding:'5px 12px', borderRadius:5, fontSize:12, cursor:'pointer',
             background: colsOpen ? T.accentDim : T.bgSurface2,
             color: colsOpen ? T.accent : T.text2,
@@ -576,7 +576,7 @@ export default function ListPage() {
               ))}
             </div>
           )}
-          <button onClick={exportCsv} disabled={loading || rows.length === 0} style={{
+          <button data-tour="list-export" onClick={exportCsv} disabled={loading || rows.length === 0} style={{
             padding:'5px 12px', borderRadius:5, fontSize:12,
             cursor: loading || rows.length === 0 ? 'not-allowed' : 'pointer',
             opacity: loading || rows.length === 0 ? 0.5 : 1,

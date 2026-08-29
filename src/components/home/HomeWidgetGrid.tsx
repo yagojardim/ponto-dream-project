@@ -298,6 +298,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         <button
+          data-tour="home-add"
           onClick={() => setAddOpen(true)}
           style={{
             fontSize: 12, fontWeight: 600, color: T.accent, background: T.accentDim,
@@ -319,6 +320,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         ) : (
           <>
             <button
+              data-tour="home-edit"
               onClick={startEditing}
               style={{ fontSize: 11, color: T.text2, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer' }}
             >✎ Editar painel</button>
@@ -344,6 +346,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           >+ Adicionar card</button>
         </div>
       ) : (
+        <div data-tour="home-cards">
         <ResponsiveGridLayout
           className="altech-home-grid"
           layouts={layouts}
@@ -379,6 +382,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
           })}
 
         </ResponsiveGridLayout>
+        </div>
       )}
 
       {addOpen && <AddWidgetModal onClose={() => setAddOpen(false)} onAdd={addWidget} />}

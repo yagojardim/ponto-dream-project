@@ -98,7 +98,7 @@ export function ProjFilterRow({ selected, onChange }: { selected: Set<string>; o
   const { allowed } = useContext(HomeFilterCtx)
   const partial = allowed.length > 0 && selected.size > 0 && selected.size < allowed.length
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 }}>
+    <div data-tour="home-projects" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 }}>
       {partial && (
         <span style={{
           fontSize: 10, fontWeight: 600, color: T.accent, background: `${T.accent}14`,
@@ -1973,7 +1973,7 @@ function RoleSwitcher({ onRoleChange }: { onRoleChange: () => void }) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)} style={{
+      <button data-tour="home-role" onClick={() => setOpen(o => !o)} style={{
         fontSize: 11, color: T.text2, background: T.bgSurface,
         border: `1px solid ${T.border}`, borderRadius: 6, padding: '4px 10px',
         cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
