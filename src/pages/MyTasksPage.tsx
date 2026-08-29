@@ -317,7 +317,7 @@ function StatStrip({ items }: { items: WorkItem[] }) {
   ]
 
   return (
-    <div className="grid grid-cols-6 gap-3 mb-6">
+    <div data-tour="mf-cards" className="grid grid-cols-6 gap-3 mb-6">
       {stats.map(s => (
         <div
           key={s.label}
@@ -355,7 +355,7 @@ function Toolbar({
   })
 
   return (
-    <div className="flex items-center gap-3 mb-4 flex-wrap">
+    <div data-tour="mf-tools" className="flex items-center gap-3 mb-4 flex-wrap">
       {/* Search */}
       <div
         className="flex items-center gap-2 h-8 px-3 rounded-lg"

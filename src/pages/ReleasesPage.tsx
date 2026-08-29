@@ -143,7 +143,7 @@ export default function ReleasesPage() {
           fontSize: 13, color: T.text1, background: T.accentDim,
           border: `1px solid ${T.accentBorder ?? T.accent}`, borderRadius: 8,
           padding: '8px 18px', cursor: 'pointer', fontWeight: 600,
-        }} onClick={() => { setEditing(null); setModalOpen(true) }}>+ Nova release</button>
+        }} data-tour="releases-new" onClick={() => { setEditing(null); setModalOpen(true) }}>+ Nova release</button>
       </div>
 
       {loading && <StateBox>Carregando releases…</StateBox>}
@@ -176,7 +176,7 @@ export default function ReleasesPage() {
 
               {sectionExpanded && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 20 }}>
-                  {group.releases.map(release => {
+                  {group.releases.map((release, relIdx) => {
                     const releaseIssues = items.filter(i => i.release_id === release.id)
                     const outcome = releaseOutcome(release.metadata)
                     const done = outcome ? outcome.shipped : releaseIssues.filter(i => i.status === 'done').length
@@ -191,7 +191,7 @@ export default function ReleasesPage() {
                     const returnedIssues = items.filter(i => returnedFrom(i.metadata)?.version === release.version)
 
                     return (
-                      <div key={release.id} style={{
+                      <div key={release.id} data-tour={relIdx === 0 ? 'releases-card' : undefined} style={{
                         background: T.bgSurface, border: `1px solid ${T.border}`,
                         borderRadius: 12, padding: '20px 24px',
                         boxShadow: '0 4px 16px rgba(0,0,0,0.25)',

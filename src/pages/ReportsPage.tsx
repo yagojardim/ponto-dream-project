@@ -707,6 +707,7 @@ function ReportsPageInner({ projError }: { projError: string | null }) {
             </p>
           </div>
           <button
+            data-tour="reports-assign"
             onClick={canManage ? () => setBatchOpen(true) : undefined}
             disabled={!canManage}
             title={!canManage ? 'Requer permissão: Gerenciar Cards de Dashboard' : undefined}
@@ -745,7 +746,7 @@ function ReportsPageInner({ projError }: { projError: string | null }) {
       )}
 
       {/* ── Report grid ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: px(16), padding: px(24) }}>
+      <div data-tour="reports-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: px(16), padding: px(24) }}>
         {REPORT_CARDS.map(def => (
           <ReportCard key={def.id} def={def} canManage={canManage} tick={tick} onAssign={openAssign} focused={focusId === def.id}>
             <CardContent id={def.id} />

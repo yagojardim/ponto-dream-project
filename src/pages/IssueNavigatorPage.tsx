@@ -141,6 +141,7 @@ export default function IssueNavigatorPage() {
 
         {/* Quick filter */}
         <input
+          data-tour="nav-quickfilter"
           value={quickFilter}
           onChange={e => setQuickFilter(e.target.value)}
           placeholder="Filtro rápido..."
@@ -154,7 +155,7 @@ export default function IssueNavigatorPage() {
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {/* Column config */}
           <div ref={colRef} style={{ position: 'relative' }}>
-            <button onClick={() => setColPopover(p => !p)} style={{
+            <button data-tour="nav-columns" onClick={() => setColPopover(p => !p)} style={{
               fontSize: 12, color: T.text2, background: T.bgSurface2,
               border: `1px solid ${T.border}`, borderRadius: 8, padding: '6px 14px', cursor: 'pointer',
             }}>⚙ Colunas</button>
@@ -187,6 +188,7 @@ export default function IssueNavigatorPage() {
 
           {/* Bulk Change */}
           <button
+            data-tour="nav-bulk"
             onClick={() => selCount > 0 && setBulkOpen(true)}
             disabled={selCount === 0}
             style={{
