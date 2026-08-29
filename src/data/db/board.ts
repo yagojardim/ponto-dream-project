@@ -5,12 +5,17 @@ import type { Database } from '../../integrations/supabase/types'
 import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID, epicColor } from './timeline'
 import { sortSprintsByStartDate } from './sprints'
+import { writeAudit as writeMilestone } from './audit'
+import { SCRUM_COLUMNS, KANBAN_COLUMNS } from './boardColumnDefs'
+import { applyBoardFilter } from './filterTranslator'
+import type { BoardFilter } from './filterTranslator'
 
 export { DEFAULT_TENANT_ID }
+export type { BoardFilter }
 
 type Tables = Database['public']['Tables']
 
-export type BoardRow = Pick<Tables['boards']['Row'], 'id' | 'project_id' | 'name' | 'board_type' | 'status'>
+export type BoardRow = Pick<Tables['boards']['Row'], 'id' | 'project_id' | 'name' | 'board_type' | 'status' | 'filter'>
 export type BoardColumnRow = Pick<
   Tables['board_columns']['Row'],
   'id' | 'board_id' | 'name' | 'category' | 'position' | 'wip_limit'
@@ -83,6 +88,18 @@ function missingTableMessage(table: string, message: string): string {
   return message
 }
 
+function fail(table: string, message: string): Error {
+  return new Error(missingTableMessage(table, message))
+}
+
+/** Parses the JSONB filter column into a typed BoardFilter (or null when empty). */
+function parseBoardFilter(raw: unknown): BoardFilter | null {
+  if (!raw || typeof raw !== 'object') return null
+  const obj = raw as Record<string, unknown>
+  if (!Array.isArray(obj.conditions) || obj.conditions.length === 0) return null
+  return obj as unknown as BoardFilter
+}
+
 /**
  * Loads everything the Kanban needs. When `projectId` is omitted the first
  * active board of the tenant is used.
@@ -92,7 +109,7 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
 
   let boardsQuery = supabase
     .from('boards')
-    .select('id, project_id, name, board_type, status')
+    .select('id, project_id, name, board_type, status, filter')
     .eq('tenant_id', tid)
     .is('archived_at', null)
     .order('name')
@@ -101,7 +118,7 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
   const boardsRes = await boardsQuery
   if (boardsRes.error) throw new Error(missingTableMessage('boards', boardsRes.error.message))
 
-  const boards = boardsRes.data ?? []
+  const boards = (boardsRes.data ?? []) as BoardRow[]
   const board =
     (boardId ? boards.find(b => b.id === boardId) : undefined) ??
     (boardName ? boards.find(b => b.name.toLowerCase() === boardName.toLowerCase()) : undefined) ??
@@ -111,14 +128,22 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
     return { board: null, project: null, boards, columns: [], items: [], sprints: [], epics: [], features: [], profiles: [] }
   }
 
+  // Build items query: always scoped by project_id, then apply board.filter on top.
+  const boardFilter = parseBoardFilter(board.filter)
+  let itemsQuery = supabase
+    .from('work_items')
+    .select('id, key, title, description, type, status, priority, severity, project_id, board_id, board_column_id, sprint_id, epic_id, feature_id, assignee_id, reporter_id, story_points, position, is_blocked, blocked_reason, due_date')
+    .eq('tenant_id', tid)
+    .eq('project_id', board.project_id)
+    .is('archived_at', null)
+  // Apply board filter conditions (synonym-aware) — no-op when filter is empty.
+  itemsQuery = applyBoardFilter(itemsQuery, boardFilter)
+
   const [columnsRes, statusesRes, itemsRes, sprintsRes, epicsRes, featuresRes, profilesRes, projectRes] = await Promise.all([
     supabase.from('board_columns').select('id, board_id, name, category, position, wip_limit')
       .eq('tenant_id', tid).eq('board_id', board.id).order('position'),
     supabase.from('board_column_statuses').select('board_column_id, status_key').eq('tenant_id', tid),
-    supabase.from('work_items')
-      .select('id, key, title, description, type, status, priority, severity, project_id, board_id, board_column_id, sprint_id, epic_id, feature_id, assignee_id, reporter_id, story_points, position, is_blocked, blocked_reason, due_date')
-      .eq('tenant_id', tid).eq('project_id', board.project_id).is('archived_at', null)
-      .order('position'),
+    itemsQuery.order('position'),
     supabase.from('sprints').select('id, project_id, name, goal, state, start_date, end_date, velocity, metadata')
       .eq('tenant_id', tid).eq('project_id', board.project_id).is('archived_at', null)
       .order('start_date', { ascending: true, nullsFirst: false }),
@@ -155,7 +180,7 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
     project: projectRes.data ?? null,
     boards,
     columns,
-    items: itemsRes.data ?? [],
+    items: (itemsRes.data ?? []) as BoardItemRow[],
     sprints: ((sprintsRes.data ?? []) as BoardSprintRow[]).slice().sort(sortSprintsByStartDate),
     epics: epicsRes.data ?? [],
     features: featuresRes.data ?? [],
@@ -289,4 +314,146 @@ export async function createWorkItem(
   await writeAudit(data.id, 'work_item.created', actorName, {}, { key: data.key, title: data.title, status: data.status })
 
   return data as BoardItemRow
+}
+
+// ─── Board CRUD ───────────────────────────────────────────────────────────────
+
+export interface CreateBoardInput {
+  name: string
+  boardType: 'scrum' | 'kanban'
+  filter?: BoardFilter
+}
+
+/** Creates a new board for the project, cloning the base columns + statuses. */
+export async function createBoard(
+  projectId: string,
+  input: CreateBoardInput,
+  actorName = 'Sistema',
+): Promise<BoardRow> {
+  const tid = DEFAULT_TENANT_ID
+  const boardType = input.boardType
+  const filter = input.filter ?? {}
+
+  const { data: board, error } = await supabase.from('boards').insert({
+    tenant_id: tid,
+    project_id: projectId,
+    name: input.name,
+    board_type: boardType,
+    status: 'active',
+    filter: filter as unknown as Tables['boards']['Insert']['filter'],
+  }).select('id, project_id, name, board_type, status, filter').single()
+
+  if (error || !board) throw fail('boards', error?.message ?? 'Falha ao criar o board.')
+
+  // Clone base columns
+  const defs = boardType === 'scrum' ? SCRUM_COLUMNS : KANBAN_COLUMNS
+  const { data: columns, error: colErr } = await supabase.from('board_columns').insert(
+    defs.map((c, i) => ({
+      tenant_id: tid,
+      board_id: board.id,
+      name: c.name,
+      category: c.category,
+      position: i,
+    })),
+  ).select('id, position')
+
+  if (colErr) throw fail('board_columns', colErr.message)
+
+  // Clone board_column_statuses
+  const statusRows = (columns ?? []).flatMap(col => {
+    const def = defs[col.position]
+    return (def?.statuses ?? []).map(status_key => ({
+      tenant_id: tid,
+      board_column_id: col.id,
+      status_key,
+    }))
+  })
+  if (statusRows.length > 0) {
+    const { error: bcsErr } = await supabase.from('board_column_statuses').insert(statusRows)
+    if (bcsErr) throw fail('board_column_statuses', bcsErr.message)
+  }
+
+  // Emit milestone
+  await writeMilestone('board.created', board.id, {
+    name: input.name,
+    project_id: projectId,
+    board_type: boardType,
+  }, { actorName })
+
+  return board as BoardRow
+}
+
+export interface UpdateBoardInput {
+  name?: string
+  filter?: BoardFilter
+}
+
+/** Updates board name and/or filter. */
+export async function updateBoard(
+  boardId: string,
+  input: UpdateBoardInput,
+  actorName = 'Sistema',
+): Promise<void> {
+  const payload: Tables['boards']['Update'] = {}
+  if (input.name !== undefined) payload.name = input.name
+  if (input.filter !== undefined) payload.filter = input.filter as unknown as Tables['boards']['Update']['filter']
+  if (Object.keys(payload).length === 0) return
+
+  const { error } = await supabase.from('boards')
+    .update(payload)
+    .eq('id', boardId)
+    .eq('tenant_id', DEFAULT_TENANT_ID)
+  if (error) throw fail('boards', error.message)
+
+  await writeMilestone('board.updated', boardId, {
+    ...(input.name !== undefined ? { name: input.name } : {}),
+    has_filter: input.filter !== undefined,
+  }, { actorName })
+}
+
+/**
+ * Archives a board. Prevents archiving the default board (the one with the
+ * earliest created_at for the project).
+ */
+export async function archiveBoard(
+  boardId: string,
+  actorName = 'Sistema',
+): Promise<void> {
+  const tid = DEFAULT_TENANT_ID
+
+  // Load the target board
+  const { data: target, error: targetErr } = await supabase.from('boards')
+    .select('id, project_id, name, created_at')
+    .eq('id', boardId)
+    .eq('tenant_id', tid)
+    .maybeSingle()
+  if (targetErr) throw fail('boards', targetErr.message)
+  if (!target) throw new Error('Board não encontrado.')
+
+  // Find the oldest board of the same project (the default one)
+  const { data: oldest, error: oldestErr } = await supabase.from('boards')
+    .select('id')
+    .eq('tenant_id', tid)
+    .eq('project_id', target.project_id)
+    .is('archived_at', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (oldestErr) throw fail('boards', oldestErr.message)
+
+  if (oldest && oldest.id === boardId) {
+    throw new Error('Não é possível arquivar o board padrão do projeto (o mais antigo).')
+  }
+
+  const now = new Date().toISOString()
+  const { error } = await supabase.from('boards')
+    .update({ archived_at: now, status: 'archived' })
+    .eq('id', boardId)
+    .eq('tenant_id', tid)
+  if (error) throw fail('boards', error.message)
+
+  await writeMilestone('board.archived', boardId, {
+    name: target.name,
+    project_id: target.project_id,
+  }, { actorName })
 }

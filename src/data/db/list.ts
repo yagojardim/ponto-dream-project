@@ -5,8 +5,10 @@ import { DEFAULT_TENANT_ID } from './timeline'
 import { epicColor, PRIORITY_FROM_DB, PRIORITY_TO_DB } from './board'
 import { sortSprintsByStartDate } from './sprints'
 import { STATUS_TO_DB, uiStatusFromDb } from './workItem'
+import { STATUS_MATCHES, PRIORITY_MATCHES, TYPE_MATCHES } from './filterTranslator'
 
 export { DEFAULT_TENANT_ID, epicColor, PRIORITY_FROM_DB, PRIORITY_TO_DB, STATUS_TO_DB, uiStatusFromDb }
+export { STATUS_MATCHES, PRIORITY_MATCHES, TYPE_MATCHES }
 
 type Tables = Database['public']['Tables']
 
@@ -52,32 +54,6 @@ function missingTableMessage(table: string, message: string): string {
 }
 
 const sel = (s: string): string => s
-
-/** UI filter value → every value the database may actually store for it. */
-const STATUS_MATCHES: Record<string, string[]> = {
-  backlog: ['backlog'],
-  todo: ['todo', 'to_do', 'a_fazer'],
-  'in-progress': ['in_progress', 'in-progress', 'doing', 'em_andamento'],
-  'in-review': ['in_review', 'in-review', 'review', 'em_revisao'],
-  blocked: ['blocked', 'bloqueado'],
-  done: ['done', 'concluido', 'concluído'],
-}
-
-const PRIORITY_MATCHES: Record<string, string[]> = {
-  critical: ['critical', 'critica', 'crítica'],
-  high: ['high', 'alta'],
-  medium: ['medium', 'media', 'média'],
-  low: ['low', 'baixa'],
-}
-
-const TYPE_MATCHES: Record<string, string[]> = {
-  story: ['story', 'user_story', 'historia', 'história'],
-  bug: ['bug', 'erro', 'defeito'],
-  task: ['task', 'tarefa'],
-  subtask: ['subtask', 'sub_task', 'subtarefa'],
-  epic: ['epic', 'epico', 'épico'],
-  feature: ['feature', 'funcionalidade'],
-}
 
 export async function listWorkItems(filters: ListFilters = {}): Promise<ListData> {
   const tid = DEFAULT_TENANT_ID

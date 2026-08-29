@@ -6,8 +6,9 @@ import { DEFAULT_TENANT_ID, projectColor } from './timeline'
 import { writeAudit as writeMilestone } from './audit'
 import { safeCall } from '@/utils/logger'
 import { can } from '@/data/permissions'
+import { SCRUM_COLUMNS, KANBAN_COLUMNS } from './boardColumnDefs'
 
-export { DEFAULT_TENANT_ID, projectColor }
+export { DEFAULT_TENANT_ID, projectColor, SCRUM_COLUMNS, KANBAN_COLUMNS }
 
 type Tables = Database['public']['Tables']
 
@@ -120,21 +121,6 @@ export function projectUsesFeatures(p: { metadata?: unknown } | null | undefined
   const m = (p?.metadata ?? {}) as Record<string, unknown>
   return m.uses_features === true
 }
-
-
-const SCRUM_COLUMNS: { name: string; category: string; statuses: string[] }[] = [
-  { name: 'Backlog', category: 'todo', statuses: ['backlog'] },
-  { name: 'A Fazer', category: 'todo', statuses: ['todo'] },
-  { name: 'Em Andamento', category: 'in_progress', statuses: ['in_progress', 'blocked'] },
-  { name: 'Em Revisão', category: 'in_progress', statuses: ['in_review'] },
-  { name: 'Concluído', category: 'done', statuses: ['done'] },
-]
-
-const KANBAN_COLUMNS: { name: string; category: string; statuses: string[] }[] = [
-  { name: 'A Fazer', category: 'todo', statuses: ['backlog', 'todo'] },
-  { name: 'Executando', category: 'in_progress', statuses: ['in_progress', 'in_review', 'blocked'] },
-  { name: 'Concluído', category: 'done', statuses: ['done'] },
-]
 
 /** Creates a project plus its default board, columns and lead membership. */
 export async function createProject(input: CreateProjectInput): Promise<ProjectRow> {
