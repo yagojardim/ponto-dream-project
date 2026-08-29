@@ -518,7 +518,9 @@ export default function DashboardPage({ onNav, initialProjectId }: { onNav?: (v:
                   })}
                 </div>
               </Section>
+              </div>
             </div>
+
 
             {/* Right: sprint */}
             <div className="min-w-0">
