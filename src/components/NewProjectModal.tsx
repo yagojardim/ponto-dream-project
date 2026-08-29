@@ -268,6 +268,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
 
               </div>
 
+              <div data-tour="project-key-type" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Key */}
               <div>
                 <label style={labelStyle}>Chave <span style={{ color: T.crit }}>*</span> <HelpHint title="Chave do projeto" text="Código curto (3-6 letras, maiúsculas) usado como prefixo das demandas — ex.: a chave WEB gera WEB-101, WEB-102. Serve para identificar e separar as demandas de cada projeto. Deve ser única no tenant e evite mudar depois." /></label>
@@ -334,6 +335,9 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                   ))}
                 </div>
               </div>
+              </div>
+
+
 
               {/* Period */}
               <div>
@@ -360,6 +364,7 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                 </div>
               </div>
 
+              <div data-tour="project-structure" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Work structure / Features toggle */}
               <div>
                 <label style={labelStyle}>Estrutura de trabalho <HelpHint title="Usar Funcionalidades" text="Ative para incluir um nível de 'Funcionalidade' entre o Épico e a História (Épico → Funcionalidade → História → Subtarefa). Desligado, a hierarquia é Épico → História → Subtarefa. Pode ser mudado depois nas configurações do projeto." /></label>
@@ -399,6 +404,8 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                   style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }}
                 />
               </div>
+              </div>
+
 
               {error && (
                 <p style={{ fontSize: 12, color: T.crit }}>{error}</p>

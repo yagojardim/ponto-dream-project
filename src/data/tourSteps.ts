@@ -23,11 +23,33 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       ],
     },
     {
+      selector: '[data-tour="project-key-type"]',
+      placement: 'right',
+      title: 'Chave e tipo',
+      body: 'Mais dois campos importantes:',
+      fields: [
+        { label: 'Chave', hint: 'código curto em maiúsculas (ex.: WEB) usado como prefixo das demandas — WEB-101. Único no tenant.' },
+        { label: 'Tipo', hint: 'Scrum (trabalho em sprints) ou Kanban (fluxo contínuo). Define as colunas padrão do board.' },
+      ],
+    },
+    {
       selector: '[data-tour="project-dates"]',
       placement: 'right',
       title: 'Tipo e período',
       body: 'Escolha Scrum ou Kanban e, se quiser, defina início e fim (alimenta Gantt/Timeline). Dá para ajustar depois.',
     },
+    {
+      selector: '[data-tour="project-structure"]',
+      placement: 'right',
+      title: 'Estrutura, responsável e descrição',
+      body: 'Para fechar o cadastro:',
+      fields: [
+        { label: 'Estrutura de trabalho', hint: 'ative "Usar Funcionalidades" para ter Épico → Funcionalidade → História; desligado é Épico → História.' },
+        { label: 'Responsável', hint: 'lead do projeto — é adicionado automaticamente como membro.' },
+        { label: 'Descrição', hint: 'objetivo/resumo do projeto (opcional).' },
+      ],
+    },
+
     {
       selector: '[data-tour="project-save"]',
       placement: 'top',
