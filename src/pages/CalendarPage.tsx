@@ -1266,7 +1266,7 @@ export default function CalendarPage() {
 
       {/* ── Month view ──────────────────────────────────────────────────────── */}
       {view === 'month' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 12, overflow: 'hidden' }}>
+        <div data-tour="cal-grid" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 12, overflow: 'hidden' }}>
           {/* DOW headers */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 1, marginBottom: 1 }}>
             {DOW_PT.map(d => (

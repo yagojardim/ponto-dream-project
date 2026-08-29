@@ -327,3 +327,22 @@ export function hasTour(view: string, role?: RoleContext | null): boolean {
 export function tourIdFor(view: string, role?: RoleContext | null): string {
   return role && TOUR_STEPS_BY_ROLE[view]?.[role] ? `${view}:${role}` : view
 }
+
+// ── Tours extras (sob demanda) — não entram em hasTour nem no auto-início ──
+export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: TourStep[] }[]> = {
+  calendar: [
+    {
+      id: 'calendar-ceremonies',
+      label: 'Gerador de cerimônias da sprint',
+      steps: [
+        { selector: '[data-tour="cal-sprint"]', navigateTo: 'calendar', placement: 'bottom', title: 'Escolha a sprint', body: 'Selecione a sprint cujas cerimônias você quer gerar.', optional: true },
+        { selector: '[data-tour="cal-ceremonies"]', placement: 'bottom', title: 'Gerar cerimônias', body: 'Cria automaticamente Daily, Planning, Review e Retro dessa sprint, já posicionadas no calendário.' },
+        { selector: '[data-tour="cal-grid"]', placement: 'top', title: 'Onde aparecem', body: 'As cerimônias entram no calendário coloridas por tipo. Clique em uma para ver detalhes ou editar.', optional: true },
+      ],
+    },
+  ],
+}
+
+export function extraToursFor(view: string): { id: string; label: string; steps: TourStep[] }[] {
+  return EXTRA_TOURS[view] ?? []
+}
