@@ -7,7 +7,7 @@ import { ONBOARDING_TIPS } from '@/data/onboardingContent'
 import type { OnboardingGuideBlock } from '@/data/onboardingContent'
 import { VIEW_LABELS } from '@/App'
 import { startTour } from '@/hooks/useProjectTour'
-import { hasTour, tourStepsFor } from '@/data/tourSteps'
+import { hasTour, tourStepsFor, extraToursFor } from '@/data/tourSteps'
 
 const RATINGS: { value: number; emoji: string; label: string }[] = [
   { value: 1, emoji: '😞', label: 'Muito ruim' },
