@@ -591,7 +591,7 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
           })}
         </div>
         {canManage && (
-          <button onClick={onInvite} style={{
+          <button data-tour="team-invite" onClick={onInvite} style={{
             padding:'7px 16px', borderRadius:8, fontSize:13, fontWeight:600,
             background:T.accent, color:'#fff', border:'none', cursor:'pointer',
             display:'flex', alignItems:'center', gap:6,
@@ -663,7 +663,7 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
                       {u.modules_enabled.length>4&&<span style={{ fontSize:10, color:T.text3 }}>+{u.modules_enabled.length-4}</span>}
                     </div>
                   </td>
-                  <td style={{ padding:'12px 16px' }}>
+                  <td data-tour="team-actions" style={{ padding:'12px 16px' }}>
                     {isConfirming ? (
                       <div className="flex items-center gap-2">
                         <span style={{ fontSize:11, color:T.warn }}>Confirmar?</span>
@@ -1286,7 +1286,7 @@ export default function TeamPage({ onInvite, initialTab }: { onInvite?: () => vo
       <KpiStrip />
 
       <div style={{ background:T.bgSurface, borderRadius:14, border:`1px solid ${T.border}`, padding:'0 24px 24px' }}>
-        <div style={{ padding:'16px 0 0' }}>
+        <div data-tour="team-tabs" style={{ padding:'16px 0 0' }}>
           <TabBar active={tab} onChange={setTab} pendingCount={pendingCount}/>
         </div>
         {tabContent(canManage)}

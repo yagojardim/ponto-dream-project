@@ -173,6 +173,50 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
     { selector: '[data-tour="reports-cards"]', navigateTo: 'reports', placement: 'bottom', title: 'Indicadores', body: 'Burndown, Velocity, CFD, Bugs por Severidade, Criados vs Resolvidos e Workload por Pessoa.', optional: true },
     { selector: '[data-tour="reports-assign"]', placement: 'left', title: 'Liberar / atribuir relatórios', body: 'Controle quais relatórios ficam visíveis e para quais papéis, em “Gerenciar atribuições”.', optional: true },
   ],
+
+  config: [
+    { selector: '[data-tour="config-tabs"]', navigateTo: 'config', placement: 'right', title: 'Abas de configuração', body: 'Workflow, Tipos de Demanda, Componentes, Labels, Prioridades e Config do Board.', optional: true },
+    { selector: '[data-tour="config-workflow"]', placement: 'bottom', title: 'Editor de Workflow', body: 'Gerencie os status por categoria (arraste para reordenar, remova, adicione). Reflete no Board e na seleção de status das issues.', optional: true },
+  ],
+
+  'tenant-settings': [
+    { selector: '[data-tour="tenant-slug"]', navigateTo: 'tenant-settings', placement: 'bottom', title: 'Endereço público (slug)', body: 'O slug é o endereço pelo qual o portal do cliente é acessado (mínimo 3 caracteres, minúsculas/números/hífen).', optional: true },
+    { selector: '[data-tour="tenant-identity"]', placement: 'bottom', title: 'Identidade e localização', body: 'Nome de exibição, logo, cor primária, fuso horário e idioma. Clique em “Salvar alterações”.', optional: true },
+  ],
+
+  modules: [
+    { selector: '[data-tour="modules-counters"]', navigateTo: 'modules', placement: 'bottom', title: 'Vitrine de módulos', body: 'Contadores por situação (Implementados, Em preview, Solicitados, Disponíveis) e filtros por categoria.', optional: true },
+    { selector: '[data-tour="modules-card"]', placement: 'bottom', title: 'Abrir um módulo', body: 'Cada card mostra estado e funcionalidades; abra para ver detalhes, testar grátis ou solicitar a ativação.', optional: true },
+  ],
+
+  automations: [
+    { selector: '[data-tour="automations-list"]', navigateTo: 'automations', placement: 'right', title: 'Automações', body: 'Suas regras ativas/pausadas no formato “quando X → faça Y”.', optional: true },
+    { selector: '[data-tour="automations-editor"]', placement: 'left', title: 'Disparador → Condição → Ação', body: 'Monte a regra: gatilho, condição opcional e ação. Teste em “Executar agora” e acompanhe o Log de execuções.', optional: true },
+    { selector: '[data-tour="automations-new"]', placement: 'left', title: 'Nova automação', body: 'Crie uma regra nova.', optional: true, clickOnNext: '[data-tour="automations-new"]' },
+  ],
+
+  team: [
+    { selector: '[data-tour="team-tabs"]', navigateTo: 'team', placement: 'bottom', title: 'Membros e permissões', body: 'Abas: Membros, Convites, Matriz de Permissões e Dashboards.', optional: true },
+    { selector: '[data-tour="team-invite"]', placement: 'left', title: 'Convidar membro', body: 'Assistente para cadastrar dados, papel, squad, módulos e dashboard.', optional: true, clickOnNext: '[data-tour="team-invite"]' },
+    { selector: '[data-tour="team-actions"]', placement: 'left', title: 'Ações do membro', body: 'Editar, gerar link de acesso, suspender ou desativar cada membro.', optional: true },
+  ],
+
+  'client-access': [
+    { selector: '[data-tour="ca-start"]', navigateTo: 'client-access', placement: 'bottom', title: 'Acesso do cliente', body: 'Assistente de 3 passos: Dados do cliente, Projetos compartilhados e Permissão.', optional: true },
+    { selector: '[data-tour="ca-permission"]', placement: 'bottom', title: 'Permissão', body: 'Defina Visualizador ou Administrador e os responsáveis. Um e-mail com login e senha temporária é enviado ao cliente.', optional: true },
+  ],
+
+  timesheet: [
+    { selector: '[data-tour="ts-new"]', navigateTo: 'timesheet', placement: 'bottom', title: 'Novo lançamento', body: 'Escolha a data, busque a demanda (nome/chave/épico), informe as horas e uma descrição opcional.', optional: true },
+    { selector: '[data-tour="ts-filters"]', placement: 'bottom', title: 'Acompanhar', body: 'Filtre por Salvo/Enviado/Aprovado/Rejeitado e por mês.', optional: true },
+    { selector: '[data-tour="ts-submit"]', placement: 'top', title: 'Enviar para aprovação', body: 'Escolha o período e envie os lançamentos salvos ao aprovador.', optional: true },
+  ],
+
+  'hours-approval': [
+    { selector: '[data-tour="ha-filters"]', navigateTo: 'hours-approval', placement: 'bottom', title: 'Fila de aprovação', body: 'Lançamentos agrupados por colaborador; filtre por status e por squad.', optional: true },
+    { selector: '[data-tour="ha-actions"]', placement: 'left', title: 'Aprovar ou rejeitar', body: 'Aprove/rejeite item a item, ou use “Aprovar todos / Rejeitar todos” por colaborador.', optional: true },
+    { selector: '[data-tour="ha-export"]', placement: 'left', title: 'Exportar CSV', body: 'Leve os dados de horas para relatórios externos.', optional: true },
+  ],
 }
 
 

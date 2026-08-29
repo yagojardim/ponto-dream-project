@@ -182,7 +182,7 @@ export default function ClientAccessPage({ onBack }: Props) {
   // --- Stepper ---
   function Stepper() {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 40 }}>
+      <div data-tour="ca-start" style={{ display: 'flex', alignItems: 'center', marginBottom: 40 }}>
         {[1, 2, 3].map((s, i) => {
           const isActive = step === s && !done
           const isCompleted = done || step > s
@@ -459,7 +459,7 @@ export default function ClientAccessPage({ onBack }: Props) {
 
           {/* STEP 3 */}
           {step === 3 && (
-            <div>
+            <div data-tour="ca-permission">
               <div style={sectionTitle}>Nível de acesso</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                 {([

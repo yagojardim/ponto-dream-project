@@ -343,7 +343,7 @@ export default function TimesheetPage() {
           <div style={{ fontSize: 20, fontWeight: 700, color: T.text1 }}>Lançar Horas</div>
           <div style={{ fontSize: 12, color: T.text3, marginTop: 2 }}>Registre as horas trabalhadas por demanda</div>
         </div>
-        <button onClick={() => setShowForm(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, background: T.accent, border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        <button data-tour="ts-new" onClick={() => setShowForm(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, background: T.accent, border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> Novo lançamento
         </button>
       </div>
@@ -386,7 +386,7 @@ export default function TimesheetPage() {
 
       {/* History — single tab with status / month filters */}
       <div style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-        <div style={{ padding: '12px 18px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div data-tour="ts-filters" style={{ padding: '12px 18px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {(['all', 'draft', 'submitted', 'approved', 'rejected'] as const).map(s => (
             <button key={s} onClick={() => setFilterStatus(s)} style={{
               padding: '4px 11px', borderRadius: 99, fontSize: 11, fontWeight: 600, cursor: 'pointer',
@@ -492,7 +492,7 @@ export default function TimesheetPage() {
                 Finalizar
               </button>
             ) : (
-              <button onClick={() => { void handleSendApproval() }} disabled={sendableInPeriod.length === 0} style={{ padding: '7px 18px', borderRadius: 8, background: sendableInPeriod.length > 0 ? T.accent : T.border2, border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: sendableInPeriod.length > 0 ? 'pointer' : 'not-allowed' }}>
+              <button data-tour="ts-submit" onClick={() => { void handleSendApproval() }} disabled={sendableInPeriod.length === 0} style={{ padding: '7px 18px', borderRadius: 8, background: sendableInPeriod.length > 0 ? T.accent : T.border2, border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: sendableInPeriod.length > 0 ? 'pointer' : 'not-allowed' }}>
                 Enviar para aprovação →
               </button>
             )}
