@@ -124,7 +124,7 @@ export default function FiltersPage() {
   return (
     <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
       {/* Left panel */}
-      <div style={{
+      <div data-tour="filters-builder" style={{
         width: 320, flexShrink: 0, background: T.bgSurface, borderRight: `1px solid ${T.border}`,
         padding: 20, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16,
       }}>
@@ -202,7 +202,7 @@ export default function FiltersPage() {
               </div>
             )
           })}
-          <button onClick={addCondition} style={{
+          <button data-tour="filters-add" onClick={addCondition} style={{
             fontSize: 12, color: T.accent, background: T.accentDim,
             border: `1px solid ${T.accent}40`, borderRadius: 8, padding: '7px 14px',
             cursor: 'pointer', textAlign: 'left',
@@ -212,7 +212,7 @@ export default function FiltersPage() {
         <div style={{ height: 1, background: T.border }} />
 
         {/* Saved filters */}
-        <div>
+        <div data-tour="filters-saved">
           <div style={{ fontSize: 11, color: T.text3, marginBottom: 8, fontWeight: 600 }}>Filtros salvos</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {SAVED_FILTERS.map((f, i) => (

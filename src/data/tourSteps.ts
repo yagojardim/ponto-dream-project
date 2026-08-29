@@ -139,7 +139,42 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       optional: true,
     },
   ],
+
+  'my-tasks': [
+    { selector: '[data-tour="mf-cards"]', navigateTo: 'my-tasks', placement: 'bottom', title: 'Resumo da sua fila', body: 'Os cards do topo resumem: Total, Em Dev, Em Revisão, Bloqueados, Prioridade Alta/Crítica e Concluídos.', optional: true },
+    { selector: '[data-tour="mf-tools"]', placement: 'bottom', title: 'Filtrar, agrupar e ordenar', body: 'Busque por texto, agrupe por Status/Prioridade/Sprint/Projeto e ordene por Prioridade/Status/Prazo.', optional: true },
+    { selector: '[data-tour="mf-board"]', placement: 'left', title: 'Ver board', body: 'Abre o Kanban do contexto atual para você atuar na demanda.', optional: true },
+  ],
+
+  epics: [
+    { selector: '[data-tour="epics-card"]', navigateTo: 'epics', placement: 'bottom', title: 'Épicos por projeto', body: 'Cada épico mostra o anel de progresso, o detalhamento por status e o total de story points.', optional: true },
+    { selector: '[data-tour="epics-issues"]', placement: 'bottom', title: 'Ver issues do épico', body: 'Expanda para ver as demandas que compõem o épico.', optional: true },
+    { selector: '[data-tour="epics-new"]', placement: 'left', title: 'Novo épico', body: 'Crie um épico no projeto. Em projetos Pro dá para adicionar Funcionalidades dentro do épico.', optional: true, clickOnNext: '[data-tour="epics-new"]' },
+  ],
+
+  releases: [
+    { selector: '[data-tour="releases-card"]', navigateTo: 'releases', placement: 'bottom', title: 'Releases por versão', body: 'Cada release traz versão, estado, progresso e as issues vinculadas. Em “Editar” você ajusta e fecha a release.', optional: true },
+    { selector: '[data-tour="releases-new"]', placement: 'left', title: 'Nova release', body: 'Crie uma versão e vincule as demandas que entram na entrega.', optional: true, clickOnNext: '[data-tour="releases-new"]' },
+  ],
+
+  filters: [
+    { selector: '[data-tour="filters-builder"]', navigateTo: 'filters', placement: 'right', title: 'Construtor de filtros', body: 'Escolha a lógica do grupo (AND/OR) e vá somando condições.', optional: true },
+    { selector: '[data-tour="filters-add"]', placement: 'right', title: 'Adicionar condição', body: 'Cada condição refina a busca (tipo, status, prioridade, responsável, sprint, épico…).', optional: true },
+    { selector: '[data-tour="filters-saved"]', placement: 'right', title: 'Filtros salvos', body: 'Salve buscas recorrentes e use “Aplicar como visão” para transformar o filtro numa visão.', optional: true },
+  ],
+
+  navigator: [
+    { selector: '[data-tour="nav-quickfilter"]', navigateTo: 'navigator', placement: 'bottom', title: 'Filtro rápido', body: 'Busque e ordene por qualquer coluna (Chave, Status, Prioridade, Sprint, Épico, Prazo…).', optional: true },
+    { selector: '[data-tour="nav-columns"]', placement: 'bottom', title: 'Colunas', body: 'Escolha quais colunas aparecem na tabela.', optional: true },
+    { selector: '[data-tour="nav-bulk"]', placement: 'bottom', title: 'Edição em massa', body: 'Marque vários itens e use “Bulk Change” para alterar status/prioridade/responsável de uma vez. “Exportar” leva para CSV.', optional: true },
+  ],
+
+  reports: [
+    { selector: '[data-tour="reports-cards"]', navigateTo: 'reports', placement: 'bottom', title: 'Indicadores', body: 'Burndown, Velocity, CFD, Bugs por Severidade, Criados vs Resolvidos e Workload por Pessoa.', optional: true },
+    { selector: '[data-tour="reports-assign"]', placement: 'left', title: 'Liberar / atribuir relatórios', body: 'Controle quais relatórios ficam visíveis e para quais papéis, em “Gerenciar atribuições”.', optional: true },
+  ],
 }
+
 
 // Tours que variam por papel (só onde o layout muda: home e dashboard).
 const HOME_TOUR: TourStep[] = [

@@ -586,6 +586,7 @@ export default function EpicsPage() {
                 {canCreateEpic && (
                   <div ref={newMenuRef} style={{ position: 'relative' }}>
                     <button
+                      data-tour="epics-new"
                       onClick={() => {
                         if (!hasFeatures) { setNewMenuProjectId(null); openNewEpic(project.id); return }
                         setNewMenuProjectId(prev => (prev === project.id ? null : project.id))
@@ -633,7 +634,7 @@ export default function EpicsPage() {
                       Nenhum épico neste projeto ainda.
                     </p>
                   ) : (
-                    projectEpics.map(epic => {
+                    projectEpics.map((epic, epicIdx) => {
                       const color = epicColorOf(epic.color)
                       const epicItems = items.filter(i => i.epic_id === epic.id)
                       const done = epicItems.filter(i => i.status === 'done').length
@@ -694,7 +695,7 @@ export default function EpicsPage() {
                       }
 
                       return (
-                        <div key={epic.id} style={{
+                        <div key={epic.id} data-tour={epicIdx === 0 ? 'epics-card' : undefined} style={{
                           background: T.bgSurface, border: `1px solid ${T.border}`,
                           borderRadius: 12, overflow: 'hidden',
                           boxShadow: '0 4px 20px rgba(0,0,0,0.3)', display: 'flex',
@@ -794,6 +795,7 @@ export default function EpicsPage() {
 
                             {/* Expand button */}
                             <button
+                              data-tour={epicIdx === 0 ? 'epics-issues' : undefined}
                               onClick={() => setExpanded(prev => ({ ...prev, [epic.id]: !prev[epic.id] }))}
                               style={{
                                 fontSize: 12, color, background: `${color}18`,
