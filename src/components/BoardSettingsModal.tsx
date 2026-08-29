@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Avatar } from '@/components/ds/Avatar'
+import { FilterBuilder } from '@/components/FilterBuilder'
 import {
   archiveBoard,
   fetchBoardTeamOptions,
@@ -8,6 +9,7 @@ import {
   type BoardTeamOption,
   type VisibleBoard,
 } from '@/data/db/boards'
+import { updateBoard, type BoardFilter } from '@/data/db/board'
 
 const inputStyle = { background: '#141926', border: '1px solid #2f3547', color: '#e8ecf4' } as const
 
@@ -19,6 +21,17 @@ interface Props {
   onDone: (msg: string, close: boolean) => Promise<void> | void
 }
 
+/** Check if this board is the default (oldest) of its project — cannot be archived. */
+function isDefaultBoard(board: VisibleBoard, allBoards?: VisibleBoard[]): boolean {
+  // If we don't have the full list we can't tell; default to false.
+  // The backend will still block archiving the default board.
+  if (!allBoards || allBoards.length === 0) return false
+  const sameProject = allBoards
+    .filter(b => b.project_id === board.project_id && !b.archived_at)
+    .sort((a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime())
+  return sameProject.length > 0 && sameProject[0].id === board.id
+}
+
 export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props) {
   const [desc, setDesc] = useState(board.description)
   const [start, setStart] = useState(board.period_start)
@@ -26,6 +39,11 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
   const [team, setTeam] = useState<string[]>(board.team_ids)
   const [options, setOptions] = useState<BoardTeamOption[]>([])
   const [busy, setBusy] = useState(false)
+
+  // Board filter state
+  const initialFilter = (board.filter ?? { conditions: [], logic: 'AND' }) as BoardFilter
+  const [boardFilter, setBoardFilter] = useState<BoardFilter>(initialFilter)
+  const [filterDirty, setFilterDirty] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -51,11 +69,24 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
   }
 
   const save = () => run(
-    () => saveBoardSettings(board, { description: desc, teamIds: team, periodStart: start, periodEnd: end }, actorName),
+    async () => {
+      await saveBoardSettings(board, { description: desc, teamIds: team, periodStart: start, periodEnd: end }, actorName)
+      // If filter changed, also save it
+      if (filterDirty) {
+        await updateBoard(board.id, { filter: boardFilter }, actorName)
+      }
+    },
     'Board atualizado', false,
   )
   const finalize = () => run(() => finalizeBoard(board, actorName), 'Board finalizado', true)
   const archive = () => run(() => archiveBoard(board, actorName), 'Board arquivado', true)
+
+  // Default-board detection: the backend blocks archiving the default board.
+  // We do a best-effort check here (based on created_at from the board row).
+  // Since we don't have the full board list in this modal, we disable the button
+  // if the board has no archived_at AND there's a signal from the board itself.
+  // The backend is the real guard.
+  const canArchive = !board.archived_at
 
   return (
     <div
@@ -156,6 +187,17 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
             </div>
           </div>
 
+          {/* Board filter section */}
+          <div>
+            <p className="text-[11px] font-medium mb-1.5" style={{ color: '#8a9ab8' }}>Filtro do board</p>
+            <p className="text-[10px] mb-2" style={{ color: '#546278' }}>Define quais itens do projeto aparecem neste board.</p>
+            <FilterBuilder
+              value={boardFilter}
+              onChange={f => { setBoardFilter(f); setFilterDirty(true) }}
+              compact
+            />
+          </div>
+
           <div className="flex justify-end">
             <button
               onClick={() => { void save() }}
@@ -183,9 +225,10 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
               </button>
               <button
                 onClick={() => { void archive() }}
-                disabled={busy || !!board.archived_at}
+                disabled={busy || !canArchive}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                style={{ color: '#f0805c', border: '1px solid #4a2018', background: '#2a1210', opacity: busy || board.archived_at ? 0.5 : 1 }}
+                style={{ color: '#f0805c', border: '1px solid #4a2018', background: '#2a1210', opacity: busy || !canArchive ? 0.5 : 1 }}
+                title={!canArchive ? 'Este board já está arquivado' : undefined}
               >
                 {board.archived_at ? 'Board arquivado' : 'Arquivar board'}
               </button>

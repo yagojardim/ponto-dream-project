@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { T } from '../components/ds/tokens'
 import { useVisibleBoards, type VisibleBoard, type VisibleBoardStatus } from '@/data/db/boards'
 import { BoardSettingsModal } from '@/components/BoardSettingsModal'
+import { NewBoardModal } from '@/components/NewBoardModal'
 import { useSession } from '@/data/SessionContext'
 
 type BoardDef = VisibleBoard
@@ -30,6 +31,11 @@ function BoardCard({ board, onOpen, onSettings, tourAnchor }: { board: BoardDef;
   const [hovered, setHovered] = useState(false)
   const [menu, setMenu] = useState(false)
   const isArchived = board.status === 'archived'
+
+  const filterCount = (() => {
+    const f = board.filter as { conditions?: unknown[] } | null | undefined
+    return (f && Array.isArray(f.conditions)) ? f.conditions.length : 0
+  })()
 
   return (
     <div
@@ -66,6 +72,14 @@ function BoardCard({ board, onOpen, onSettings, tourAnchor }: { board: BoardDef;
           {isArchived && (
             <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 600, color: T.text3, background: T.bgPage, border: `1px solid ${T.border}`, borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               {board.finalized && !board.archived_at ? 'Finalizado' : 'Arquivado'}
+            </span>
+          )}
+          {filterCount > 0 && (
+            <span style={{
+              flexShrink: 0, fontSize: 10, fontWeight: 600, color: T.accent,
+              background: T.accentDim, borderRadius: 4, padding: '1px 6px',
+            }}>
+              {filterCount} filtro{filterCount > 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -140,6 +154,7 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
   const { activeUser } = useSession()
   const [settingsBoard, setSettingsBoard] = useState<BoardDef | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [showNewModal, setShowNewModal] = useState(false)
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<BoardStatus | 'all'>('active')
@@ -181,6 +196,7 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
         </div>
         <button
           data-tour="board-new"
+          onClick={() => setShowNewModal(true)}
           style={{
             padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
             background: T.accent, color: '#fff', border: 'none', cursor: 'pointer',
@@ -260,6 +276,17 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
           }}
         />
       )}
+
+      <NewBoardModal
+        open={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        onCreated={() => {
+          reload()
+          setToast('Board criado com sucesso')
+          window.setTimeout(() => setToast(null), 2600)
+        }}
+        actorName={activeUser.name}
+      />
 
       {toast && (
         <div style={{
