@@ -15,7 +15,17 @@ export type { BoardFilter }
 
 type Tables = Database['public']['Tables']
 
-export type BoardRow = Pick<Tables['boards']['Row'], 'id' | 'project_id' | 'name' | 'board_type' | 'status' | 'filter'>
+// `filter` (jsonb) existe no banco mas ainda não está nos tipos gerados do Supabase.
+export interface BoardRow {
+  id: string
+  project_id: string
+  name: string
+  board_type: string
+  status: string | null
+  filter: unknown
+}
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+const boardsTbl = () => (supabase as unknown as { from: (t: string) => any }).from('boards')
 export type BoardColumnRow = Pick<
   Tables['board_columns']['Row'],
   'id' | 'board_id' | 'name' | 'category' | 'position' | 'wip_limit'
