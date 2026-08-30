@@ -6,7 +6,7 @@ import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID, epicColor } from './timeline'
 import { sortSprintsByStartDate } from './sprints'
 import { writeAudit as writeMilestone } from './audit'
-import { SCRUM_COLUMNS, KANBAN_COLUMNS, type BoardColumnDef } from './boardColumnDefs'
+import { SCRUM_COLUMNS, KANBAN_COLUMNS, type BoardColumnDef as BaseColumnDef } from './boardColumnDefs'
 import { applyBoardFilter } from './filterTranslator'
 import type { BoardFilter } from './filterTranslator'
 
