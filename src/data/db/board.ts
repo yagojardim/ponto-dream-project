@@ -6,7 +6,7 @@ import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID, epicColor } from './timeline'
 import { sortSprintsByStartDate } from './sprints'
 import { writeAudit as writeMilestone } from './audit'
-import { SCRUM_COLUMNS, KANBAN_COLUMNS } from './boardColumnDefs'
+import { SCRUM_COLUMNS, KANBAN_COLUMNS, type BoardColumnDef as BaseColumnDef } from './boardColumnDefs'
 import { applyBoardFilter } from './filterTranslator'
 import type { BoardFilter } from './filterTranslator'
 
@@ -322,6 +322,8 @@ export interface CreateBoardInput {
   name: string
   boardType: 'scrum' | 'kanban'
   filter?: BoardFilter
+  /** Colunas personalizadas; quando ausente usa o template do boardType. */
+  columns?: BaseColumnDef[]
 }
 
 /** Creates a new board for the project, cloning the base columns + statuses. */
@@ -346,7 +348,9 @@ export async function createBoard(
   if (error || !board) throw fail('boards', error?.message ?? 'Falha ao criar o board.')
 
   // Clone base columns
-  const defs = boardType === 'scrum' ? SCRUM_COLUMNS : KANBAN_COLUMNS
+  const defs: BaseColumnDef[] = input.columns && input.columns.length > 0
+    ? input.columns
+    : (boardType === 'scrum' ? SCRUM_COLUMNS : KANBAN_COLUMNS)
   const { data: columns, error: colErr } = await supabase.from('board_columns').insert(
     defs.map((c, i) => ({
       tenant_id: tid,
