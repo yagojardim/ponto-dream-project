@@ -6,7 +6,7 @@ import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID, epicColor } from './timeline'
 import { sortSprintsByStartDate } from './sprints'
 import { writeAudit as writeMilestone } from './audit'
-import { SCRUM_COLUMNS, KANBAN_COLUMNS } from './boardColumnDefs'
+import { SCRUM_COLUMNS, KANBAN_COLUMNS, type BoardColumnDef } from './boardColumnDefs'
 import { applyBoardFilter } from './filterTranslator'
 import type { BoardFilter } from './filterTranslator'
 
@@ -322,6 +322,8 @@ export interface CreateBoardInput {
   name: string
   boardType: 'scrum' | 'kanban'
   filter?: BoardFilter
+  /** Colunas personalizadas; quando ausente usa o template do boardType. */
+  columns?: BoardColumnDef[]
 }
 
 /** Creates a new board for the project, cloning the base columns + statuses. */
