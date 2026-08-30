@@ -323,7 +323,7 @@ export interface CreateBoardInput {
   boardType: 'scrum' | 'kanban'
   filter?: BoardFilter
   /** Colunas personalizadas; quando ausente usa o template do boardType. */
-  columns?: BoardColumnDef[]
+  columns?: BaseColumnDef[]
 }
 
 /** Creates a new board for the project, cloning the base columns + statuses. */
@@ -348,7 +348,9 @@ export async function createBoard(
   if (error || !board) throw fail('boards', error?.message ?? 'Falha ao criar o board.')
 
   // Clone base columns
-  const defs = boardType === 'scrum' ? SCRUM_COLUMNS : KANBAN_COLUMNS
+  const defs: BaseColumnDef[] = input.columns && input.columns.length > 0
+    ? input.columns
+    : (boardType === 'scrum' ? SCRUM_COLUMNS : KANBAN_COLUMNS)
   const { data: columns, error: colErr } = await supabase.from('board_columns').insert(
     defs.map((c, i) => ({
       tenant_id: tid,
