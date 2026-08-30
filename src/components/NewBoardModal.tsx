@@ -92,6 +92,8 @@ interface Props {
 export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorName = 'Sistema' }: Props) {
   const [name, setName] = useState('')
   const [boardType, setBoardType] = useState<'scrum' | 'kanban'>('scrum')
+  const [colMode, setColMode] = useState<'template' | 'custom'>('template')
+  const [customCols, setCustomCols] = useState<string[]>([])
   const [filter, setFilter] = useState<BoardFilter>({ conditions: [], logic: 'AND' })
   const [projectId, setProjectId] = useState(fixedProjectId ?? '')
   const [projects, setProjects] = useState<ProjectRow[]>([])
@@ -103,6 +105,8 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
     // Reset form
     setName('')
     setBoardType('scrum')
+    setColMode('template')
+    setCustomCols([])
     setFilter({ conditions: [], logic: 'AND' })
     setError(null)
     if (fixedProjectId) {
@@ -118,10 +122,19 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
 
   async function handleCreate() {
     if (!name.trim() || !projectId) return
+    if (colMode === 'custom' && customCols.length === 0) {
+      setError('Informe ao menos uma coluna.')
+      return
+    }
     setBusy(true)
     setError(null)
     try {
-      await createBoard(projectId, { name: name.trim(), boardType, filter }, actorName)
+      await createBoard(projectId, {
+        name: name.trim(),
+        boardType,
+        filter,
+        ...(colMode === 'custom' ? { columns: buildCustomColumns(customCols) } : {}),
+      }, actorName)
       onCreated()
       onClose()
     } catch (e) {
@@ -131,7 +144,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
     }
   }
 
-  const valid = name.trim().length > 0 && !!projectId
+  const valid = name.trim().length > 0 && !!projectId && (colMode === 'template' || customCols.length > 0)
 
   const inputSt: React.CSSProperties = {
     background: T.bgSurface2, border: `1px solid ${T.border}`, color: T.text1,
