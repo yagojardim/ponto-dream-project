@@ -4,7 +4,6 @@ import { Avatar } from './ds/Avatar'
 import { Tooltip } from './ds/Tooltip'
 import { T } from './ds/tokens'
 import { useSession } from '../data/SessionContext'
-import { useVisibleBoards } from '@/data/db/boards'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import { can, type Capability, PERMISSION_MATRIX } from '../data/permissions'
 import { MOCK_USERS, type RoleContext } from '../data/session'
@@ -720,13 +719,8 @@ export function Sidebar({ collapsed, onToggle, activeNav, onNav }: SidebarProps)
   const hasReportsFlag = useProfileReportsAccess(activeUser.user_id)
   const reportsAllowed = canAccessReports(permissions, hasReportsFlag)
 
-  // Boards visíveis (RBAC + tenant). Em erro de leitura degrada para lista vazia.
-  const { boards: visibleBoards, loading: boardsLoading } = useVisibleBoards()
-  const boardsDisabled = !boardsLoading && visibleBoards.length === 0
-  const NO_BOARDS_LABEL = 'Você não tem acesso a nenhum board'
-
   const groups         = getGroups(activeUser.role_context, permissions, isTenantOwner)
-    .map(g => ({ ...g, items: g.items.filter(i => (i.id !== 'reports' || reportsAllowed) && !(i.id === 'boards-list' && boardsDisabled)) }))
+    .map(g => ({ ...g, items: g.items.filter(i => i.id !== 'reports' || reportsAllowed) }))
     .filter(g => g.items.length > 0)
   const canLogHours      = can(permissions, 'log:hours')
   const canApproveHours  = can(permissions, 'approve:hours')
@@ -803,8 +797,6 @@ export function Sidebar({ collapsed, onToggle, activeNav, onNav }: SidebarProps)
                 active={activeNav === item.id}
                 onClick={() => onNav(item.id)}
                 collapsed
-                disabled={item.id === 'boards-list' && boardsDisabled}
-                disabledLabel={item.id === 'boards-list' ? NO_BOARDS_LABEL : undefined}
               />
             ))
         ) : (
@@ -831,8 +823,6 @@ export function Sidebar({ collapsed, onToggle, activeNav, onNav }: SidebarProps)
                       active={activeNav === item.id}
                       collapsed={false}
                       onClick={() => onNav(item.id)}
-                      disabled={item.id === 'boards-list' && boardsDisabled}
-                      disabledLabel={item.id === 'boards-list' ? NO_BOARDS_LABEL : undefined}
                     />
                     </span>
                   )}
