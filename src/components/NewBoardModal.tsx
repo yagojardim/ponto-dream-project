@@ -208,27 +208,60 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
           />
         </div>
 
-        {/* Board type */}
-        <div className="flex flex-col gap-1">
+        {/* Board columns */}
+        <div className="flex flex-col gap-2">
           <label className="text-[11px] font-semibold" style={{ color: T.text3 }}>Base de colunas</label>
-          <div className="flex gap-2">
-            {(['scrum', 'kanban'] as const).map(bt => (
+
+          {/* Mode toggle */}
+          <div className="inline-flex gap-1 p-1 rounded-lg self-start" style={{ background: T.bgSurface2, border: `1px solid ${T.border}` }}>
+            {([['template', 'Template pronto'], ['custom', 'Personalizado']] as const).map(([m, label]) => (
               <button
-                key={bt}
-                onClick={() => setBoardType(bt)}
-                className="px-4 h-9 rounded-lg text-[13px] font-medium"
+                key={m}
+                onClick={() => setColMode(m)}
+                className="px-3 h-7 rounded-md text-[12px] font-medium"
                 style={{
-                  background: boardType === bt ? `${T.accent}22` : T.bgSurface2,
-                  color: boardType === bt ? T.accent : T.text2,
-                  border: `1px solid ${boardType === bt ? T.accent : T.border}`,
+                  background: colMode === m ? `${T.accent}22` : 'transparent',
+                  color: colMode === m ? T.accent : T.text3,
                   cursor: 'pointer',
                 }}
               >
-                {bt === 'scrum' ? 'Scrum (5 colunas)' : 'Kanban (3 colunas)'}
+                {label}
               </button>
             ))}
           </div>
+
+          {colMode === 'template' ? (
+            <div className="flex gap-2">
+              {(['scrum', 'kanban'] as const).map(bt => (
+                <button
+                  key={bt}
+                  onClick={() => setBoardType(bt)}
+                  className="px-4 h-9 rounded-lg text-[13px] font-medium"
+                  style={{
+                    background: boardType === bt ? `${T.accent}22` : T.bgSurface2,
+                    color: boardType === bt ? T.accent : T.text2,
+                    border: `1px solid ${boardType === bt ? T.accent : T.border}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {bt === 'scrum' ? 'Scrum (5 colunas)' : 'Kanban (3 colunas)'}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <>
+              <ColumnChipsInput
+                values={customCols}
+                onChange={setCustomCols}
+                placeholder="Digite uma coluna e Enter…"
+              />
+              <p className="text-[11px]" style={{ color: T.text3 }}>
+                Os status são distribuídos automaticamente pela ordem das colunas. Depois você pode renomear, reordenar e remapear em Configurações › Workflow.
+              </p>
+            </>
+          )}
         </div>
+
 
         {/* Filter */}
         <div className="flex flex-col gap-2">
