@@ -39,6 +39,8 @@ function tbl(name: string): any {
 
 interface BoardRow {
   id: string
+  created_at?: string | null
+  filter?: unknown
   tenant_id: string
   name: string
   project_id: string
@@ -100,7 +102,7 @@ export function fetchVisibleBoards(opts: {
     }
 
     let query = tbl('boards')
-      .select('id, tenant_id, name, project_id, status, description, metadata, archived_at, updated_at')
+      .select('id, tenant_id, name, project_id, status, description, metadata, archived_at, updated_at, created_at, filter')
       .eq('tenant_id', tenantId)
       .order('name')
     if (allowedProjectIds) query = query.in('project_id', allowedProjectIds)
@@ -155,6 +157,8 @@ export function fetchVisibleBoards(opts: {
         columns: columnsByBoard.get(b.id) ?? [],
         item_count: countByBoard.get(b.id) ?? 0,
         updated_at: b.updated_at ?? new Date().toISOString(),
+        created_at: b.created_at ?? null,
+        filter: b.filter ?? {},
       }
     })
   }, [])
