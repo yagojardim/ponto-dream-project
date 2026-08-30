@@ -146,7 +146,7 @@ export function SCard({ title, action, children, style, bodyStyle, help, helpTit
 
   if (shell.bare) {
     return (
-      <CardShellProvider value={{ bare: false }}>
+      <CardShellProvider value={{ bare: false, footerSlot: shell.footerSlot }}>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0, flex: '1 1 auto' }}>
           {action && (
             shell.actionSlot
