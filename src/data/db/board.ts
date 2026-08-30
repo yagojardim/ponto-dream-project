@@ -117,8 +117,7 @@ function parseBoardFilter(raw: unknown): BoardFilter | null {
 export async function fetchBoardData(projectId?: string, boardId?: string, boardName?: string): Promise<BoardData> {
   const tid = DEFAULT_TENANT_ID
 
-  let boardsQuery = supabase
-    .from('boards')
+  let boardsQuery = boardsTbl()
     .select('id, project_id, name, board_type, status, filter')
     .eq('tenant_id', tid)
     .is('archived_at', null)
