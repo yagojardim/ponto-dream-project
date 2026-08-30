@@ -345,14 +345,16 @@ export async function createBoard(
   const boardType = input.boardType
   const filter = input.filter ?? {}
 
-  const { data: board, error } = await supabase.from('boards').insert({
+  const { data: boardRaw, error } = await boardsTbl().insert({
     tenant_id: tid,
     project_id: projectId,
     name: input.name,
     board_type: boardType,
     status: 'active',
-    filter: filter as unknown as Tables['boards']['Insert']['filter'],
+    filter,
   }).select('id, project_id, name, board_type, status, filter').single()
+
+  const board = boardRaw as BoardRow | null
 
   if (error || !board) throw fail('boards', error?.message ?? 'Falha ao criar o board.')
 
