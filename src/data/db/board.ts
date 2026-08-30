@@ -409,12 +409,12 @@ export async function updateBoard(
   input: UpdateBoardInput,
   actorName = 'Sistema',
 ): Promise<void> {
-  const payload: Tables['boards']['Update'] = {}
+  const payload: Record<string, unknown> = {}
   if (input.name !== undefined) payload.name = input.name
-  if (input.filter !== undefined) payload.filter = input.filter as unknown as Tables['boards']['Update']['filter']
+  if (input.filter !== undefined) payload.filter = input.filter
   if (Object.keys(payload).length === 0) return
 
-  const { error } = await supabase.from('boards')
+  const { error } = await boardsTbl()
     .update(payload)
     .eq('id', boardId)
     .eq('tenant_id', DEFAULT_TENANT_ID)
