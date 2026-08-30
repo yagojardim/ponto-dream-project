@@ -213,7 +213,7 @@ export function CardStickyFooter({ children, style }: { children: ReactNode; sty
 
   return (
     <div style={{
-      position: 'sticky', bottom: 0, zIndex: 2, flexShrink: 0,
+      position: 'sticky', bottom: 0, zIndex: 5, flexShrink: 0,
       marginTop: 12, paddingTop: 10,
       borderTop: `1px solid ${T.border}`,
       backgroundColor: T.bgPage,

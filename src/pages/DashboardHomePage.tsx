@@ -289,7 +289,7 @@ export function AdminUsersCard({ onNav, onInvite, actorName }: {
         : ordered.length === 0
           ? <EmptyState message={failed ? 'Não foi possível carregar os usuários.' : 'Nenhum usuário no tenant.'} />
           : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 0, paddingRight: 6 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 6, paddingBottom: 44 }}>
               {displayedUsers.map(u => {
                 const c = STATUS_COLOR[u.status] ?? T.neutral
                 const isActive = u.status === 'active'
@@ -412,7 +412,7 @@ export function AdminAuditCard({ projectIds }: { projectIds?: ReadonlySet<string
       {rows.length === 0
         ? <EmptyState message={showAll ? 'Nenhum marco registrado ainda.' : 'Nenhum marco nos últimos 10 dias.'} />
         : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 44 }}>
             {rows.map(r => {
               const color = MILESTONE_COLORS[r.meta.color]
               return (
