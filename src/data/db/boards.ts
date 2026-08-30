@@ -27,6 +27,9 @@ export interface VisibleBoard {
   columns: string[]
   item_count: number
   updated_at: string
+  created_at: string | null
+  /** Escopo do board no formato do Construtor de Filtros ({} = sem filtro). */
+  filter: unknown
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
