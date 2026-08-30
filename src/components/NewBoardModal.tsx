@@ -1,9 +1,84 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { T } from './ds/tokens'
 import { Modal } from './ds/Modal'
 import { FilterBuilder } from './FilterBuilder'
 import { createBoard, type BoardFilter } from '@/data/db/board'
+import type { BoardColumnDef } from '@/data/db/boardColumnDefs'
 import { listProjects, type ProjectRow } from '@/data/db/projects'
+
+/** Mapeia nomes de colunas (na ordem) para defs com status auto-distribuídos. */
+function buildCustomColumns(names: string[]): BoardColumnDef[] {
+  const n = names.length
+  if (n === 0) return []
+  if (n === 1) {
+    return [{ name: names[0], category: 'todo', statuses: ['backlog', 'todo', 'in_progress', 'in_review', 'blocked', 'done'] }]
+  }
+  if (n === 2) {
+    return [
+      { name: names[0], category: 'todo', statuses: ['backlog', 'todo', 'in_progress', 'in_review', 'blocked'] },
+      { name: names[1], category: 'done', statuses: ['done'] },
+    ]
+  }
+  const middleNames = names.slice(1, -1)
+  const active = ['in_progress', 'in_review', 'blocked']
+  const middle: BoardColumnDef[] = middleNames.map((nm, i) => ({
+    name: nm,
+    category: 'in_progress',
+    statuses: middleNames.length === 1 ? active : (active[i] ? [active[i]] : []),
+  }))
+  return [
+    { name: names[0], category: 'todo', statuses: ['backlog', 'todo'] },
+    ...middle,
+    { name: names[n - 1], category: 'done', statuses: ['done'] },
+  ]
+}
+
+/** Campo de chips: digitar + Enter adiciona; × remove; mantém a ordem. */
+function ColumnChipsInput({ values, onChange, placeholder }: {
+  values: string[]
+  onChange: (v: string[]) => void
+  placeholder?: string
+}) {
+  const [query, setQuery] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function add(raw: string) {
+    const v = raw.trim()
+    if (!v) return
+    if (values.some(x => x.toLowerCase() === v.toLowerCase())) { setQuery(''); return }
+    onChange([...values, v])
+    setQuery('')
+  }
+
+  return (
+    <div>
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {values.map((s, i) => (
+            <span key={`${s}-${i}`} className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px]"
+              style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}>
+              <span className="opacity-60">{i + 1}.</span>{s}
+              <button onClick={() => onChange(values.filter((_, j) => j !== i))} className="leading-none text-[12px]" style={{ color: T.accent }}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') { e.preventDefault(); add(query) }
+          if (e.key === 'Backspace' && !query && values.length > 0) onChange(values.slice(0, -1))
+        }}
+        onBlur={() => add(query)}
+        placeholder={placeholder}
+        className="h-9 px-3 text-[13px] rounded-lg border outline-none w-full"
+        style={{ background: T.bgSurface2, border: `1px solid ${T.border}`, color: T.text1 }}
+      />
+    </div>
+  )
+}
 
 interface Props {
   open: boolean
