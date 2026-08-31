@@ -48,6 +48,26 @@ export interface BoardFilter {
   logic?: 'AND' | 'OR'
 }
 
+/** Colunas do tipo uuid — uma condição só é aplicada se o valor for um uuid válido. */
+const UUID_FIELDS = new Set(['assignee_id', 'reporter_id', 'sprint_id', 'epic_id', 'feature_id', 'board_id', 'project_id', 'board_column_id'])
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Descarta condições/valores inválidos (ex.: texto livre num campo uuid) para que
+ * um filtro malformado NUNCA derrube o carregamento do board. Só sobram as aplicáveis.
+ */
+function applicableConditions(conditions: FilterCondition[]): FilterCondition[] {
+  const out: FilterCondition[] = []
+  for (const cond of conditions) {
+    if (!UUID_FIELDS.has(cond.field)) { out.push(cond); continue }
+    const vals = (Array.isArray(cond.value) ? cond.value : [cond.value])
+      .filter(v => typeof v === 'string' && UUID_RE.test(v))
+    if (vals.length === 0) continue
+    out.push({ ...cond, value: vals.length === 1 ? vals[0] : vals })
+  }
+  return out
+}
+
 /** Expand a UI value to all DB synonyms for the given field. */
 function expandValues(field: string, values: string[]): string[] {
   const synonyms = FIELD_SYNONYMS[field]
@@ -80,7 +100,8 @@ export function applyBoardFilter<Q extends {
 }>(query: Q, filter: BoardFilter | null | undefined): Q {
   if (!filter || !filter.conditions || filter.conditions.length === 0) return query
 
-  const conditions = filter.conditions
+  const conditions = applicableConditions(filter.conditions)
+  if (conditions.length === 0) return query
   const logic = filter.logic ?? 'AND'
 
   if (logic === 'AND') {
