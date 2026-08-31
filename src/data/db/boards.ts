@@ -16,6 +16,8 @@ export interface VisibleBoard {
   name: string
   project_id: string
   project_name: string
+  /** Cliente do projeto (projects.client_name); null quando não definido. */
+  client_name: string | null
   status: VisibleBoardStatus
   /** true quando o board foi finalizado (ciclo de vida), não apenas arquivado. */
   finalized: boolean
@@ -116,13 +118,17 @@ export function fetchVisibleBoards(opts: {
     const boardIds = boards.map(b => b.id)
 
     const [projectsRes, columnsRes, itemsRes] = await Promise.all([
-      tbl('projects').select('id, name').eq('tenant_id', tenantId).in('id', projectIds),
+      tbl('projects').select('id, name, client_name').eq('tenant_id', tenantId).in('id', projectIds),
       tbl('board_columns').select('id, board_id, name, position').eq('tenant_id', tenantId).in('board_id', boardIds).order('position'),
       tbl('work_items').select('id, board_id').eq('tenant_id', tenantId).in('board_id', boardIds),
     ])
 
     const projectName = new Map<string, string>()
-    for (const p of (projectsRes.data ?? []) as { id: string; name: string }[]) projectName.set(p.id, p.name)
+    const projectClient = new Map<string, string | null>()
+    for (const p of (projectsRes.data ?? []) as { id: string; name: string; client_name: string | null }[]) {
+      projectName.set(p.id, p.name)
+      projectClient.set(p.id, p.client_name ?? null)
+    }
 
     const columnsByBoard = new Map<string, string[]>()
     for (const c of (columnsRes.data ?? []) as { board_id: string; name: string }[]) {
@@ -147,6 +153,7 @@ export function fetchVisibleBoards(opts: {
         name: b.name,
         project_id: b.project_id,
         project_name: projectName.get(b.project_id) ?? 'Projeto',
+        client_name: projectClient.get(b.project_id) ?? null,
         status: (archived || finalized ? 'archived' : 'active') as VisibleBoardStatus,
         finalized,
         archived_at: b.archived_at ?? null,
