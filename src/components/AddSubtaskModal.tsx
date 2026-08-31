@@ -18,12 +18,15 @@ interface Props {
   /** Perfis reais do tenant. */
   members?:    SubtaskMember[]
   onClose:     () => void
-  onCreate:    (sub: { title:string; description:string; priority:SubPriority; assigneeId:string|null; storyPoints:number }) => void
+  onCreate:    (sub: { title:string; description:string; priority:SubPriority; assigneeId:string|null; storyPoints:number; type:'subtask'|'bug' }) => void
 }
 
 export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose, onCreate }: Props) {
+  const [childType,   setChildType]   = useState<'subtask'|'bug'>('subtask')
   const [title,       setTitle]       = useState('')
   const [description, setDescription] = useState('')
+  const [reproSteps,  setReproSteps]  = useState('')
+  const [environment, setEnvironment] = useState('')
   const [priority,    setPriority]    = useState<SubPriority>('medium')
   const [assignee,    setAssignee]    = useState('')
   const [estimate,    setEstimate]    = useState(1)
@@ -35,7 +38,14 @@ export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose,
 
   function handleCreate() {
     if (!title.trim()) return
-    onCreate({ title: title.trim(), description: description.trim(), priority, assigneeId: assignee || null, storyPoints: estimate })
+    let desc = description.trim()
+    if (childType === 'bug') {
+      const extra: string[] = []
+      if (reproSteps.trim())  extra.push(`Passos para reproduzir:\n${reproSteps.trim()}`)
+      if (environment.trim()) extra.push(`Ambiente: ${environment.trim()}`)
+      if (extra.length) desc = [desc, extra.join('\n\n')].filter(Boolean).join('\n\n')
+    }
+    onCreate({ title: title.trim(), description: desc, priority, assigneeId: assignee || null, storyPoints: estimate, type: childType })
     onClose()
   }
 
@@ -44,7 +54,7 @@ export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose,
     <div onClick={e=>{if(e.target===e.currentTarget)onClose()}} style={{ position:'fixed',inset:0,background:'rgba(0,0,0,.72)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000 }}>
       <div style={{ background:T.bgSurface,border:`1px solid ${T.border}`,borderRadius:16,padding:28,boxShadow:T.shadowModal,width:440 }}>
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20 }}>
-          <h2 style={{ margin:0,fontSize:17,fontWeight:700,color:T.text1 }}>Nova Subtarefa</h2>
+          <h2 style={{ margin:0,fontSize:17,fontWeight:700,color:T.text1 }}>Adicionar item filho</h2>
           <button onClick={onClose} style={{ background:'none',border:'none',color:T.text3,fontSize:20,cursor:'pointer',lineHeight:1 }}>×</button>
         </div>
 
@@ -56,6 +66,18 @@ export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose,
         </div>
 
         <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
+          <div>
+            <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Tipo</label>
+            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:6 }}>
+              {([['subtask','Subtarefa'],['bug','Bug']] as const).map(([k,lbl]) => (
+                <button key={k} type="button" onClick={()=>setChildType(k)}
+                  style={{ padding:'7px 4px',borderRadius:8,cursor:'pointer',fontSize:12,fontWeight:600,
+                    background: childType===k ? `${T.accent}18` : 'transparent',
+                    border:`1px solid ${childType===k ? T.accent : T.border}`,
+                    color: childType===k ? T.accent : T.text3 }}>{lbl}</button>
+              ))}
+            </div>
+          </div>
           <div>
             <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Resumo *</label>
             <input autoFocus value={title} onChange={e=>setTitle(e.target.value)} placeholder="Título da subtarefa"
@@ -86,6 +108,22 @@ export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose,
 
 
 
+          {childType === 'bug' && (
+            <>
+              <div>
+                <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Passos para reproduzir</label>
+                <textarea rows={3} value={reproSteps} onChange={e=>setReproSteps(e.target.value)}
+                  placeholder={'1. …\n2. …\n3. …'}
+                  style={{ ...inputStyle, resize:'vertical', fontFamily:'inherit' }} />
+              </div>
+              <div>
+                <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Ambiente</label>
+                <input value={environment} onChange={e=>setEnvironment(e.target.value)}
+                  placeholder="Ex.: Produção, Staging, Chrome 128…" style={inputStyle} />
+              </div>
+            </>
+          )}
+
           <div style={{ display:'grid',gridTemplateColumns:'1fr 120px',gap:12 }}>
             <div>
               <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Responsável</label>
@@ -104,7 +142,7 @@ export function AddSubtaskModal({ parentKey, parentTitle, members = [], onClose,
         <div style={{ display:'flex',justifyContent:'flex-end',gap:10,marginTop:24,paddingTop:20,borderTop:`1px solid ${T.border}` }}>
           <button onClick={onClose} style={{ padding:'8px 18px',borderRadius:8,background:'transparent',color:T.text2,border:`1px solid ${T.border}`,fontSize:13,cursor:'pointer' }}>Cancelar</button>
           <button onClick={handleCreate} disabled={!title.trim()} style={{ padding:'8px 20px',borderRadius:8,background:title.trim()?T.accent:T.border,color:title.trim()?'#fff':T.text3,border:'none',fontSize:13,fontWeight:600,cursor:title.trim()?'pointer':'not-allowed',opacity:title.trim()?1:.55 }}>
-            Criar subtarefa
+            {childType === 'bug' ? 'Criar bug' : 'Criar subtarefa'}
           </button>
         </div>
       </div>
