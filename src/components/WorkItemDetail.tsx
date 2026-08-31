@@ -1193,7 +1193,7 @@ export function WorkItemDetail({ data: dataProp, itemId: itemIdProp, onUpdate, o
   return (
     <>
       {showDone && <DoneTransitionModal onConfirm={handleDoneConfirm} onClose={()=>setShowDone(false)} />}
-      {addRelOpen && <AddRelationModal currentIssueKey={local.key} onClose={()=>setAddRelOpen(false)} onAdd={handleAddRelation} />}
+      {addRelOpen && <AddRelationModal currentIssueKey={local.key} projectId={dbRef.current?.item.project_id ?? null} excludeId={itemId ?? null} onClose={()=>setAddRelOpen(false)} onAdd={handleAddRelation} />}
       {subtaskOpen && (
         <AddSubtaskModal
           parentKey={local.key}
