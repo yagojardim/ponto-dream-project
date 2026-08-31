@@ -78,13 +78,18 @@ function conditionsToFilter(conditions: InternalCondition[], logic: 'AND' | 'OR'
   }
 }
 
+/** Campos que apontam para colunas uuid — exigem seleção por id (nunca texto livre). */
+const UUID_FIELDS: FieldKey[] = ['assignee_id', 'sprint_id', 'epic_id']
+
 interface FilterBuilderProps {
   value?: BoardFilter | null
   onChange: (filter: BoardFilter) => void
   compact?: boolean
+  /** Opções reais por campo (ex.: Responsável/Sprint/Épico do projeto). */
+  options?: Partial<Record<FieldKey, { value: string; label: string }[]>>
 }
 
-export function FilterBuilder({ value, onChange, compact = false }: FilterBuilderProps) {
+export function FilterBuilder({ value, onChange, compact = false, options }: FilterBuilderProps) {
   const [conditions, setConditions] = useState<InternalCondition[]>(() => conditionsFromFilter(value))
   const [logic, setLogic] = useState<'AND' | 'OR'>(value?.logic ?? 'AND')
 
@@ -145,8 +150,9 @@ export function FilterBuilder({ value, onChange, compact = false }: FilterBuilde
 
       {/* Conditions */}
       {conditions.map(cond => {
-        const opts = FIELD_OPTIONS[cond.field] ?? []
+        const opts = options?.[cond.field] ?? FIELD_OPTIONS[cond.field] ?? []
         const hasOpts = opts.length > 0
+        const isUuidField = UUID_FIELDS.includes(cond.field)
         return (
           <div key={cond.id} style={{
             background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: compact ? 8 : 10,
@@ -188,6 +194,10 @@ export function FilterBuilder({ value, onChange, compact = false }: FilterBuilde
               >
                 <option value="">— selecione —</option>
                 {opts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            ) : isUuidField ? (
+              <select disabled value="" style={{ ...sel, opacity: 0.6 }}>
+                <option value="">— selecione um projeto para listar —</option>
               </select>
             ) : (
               <input
