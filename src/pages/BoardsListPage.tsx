@@ -165,17 +165,36 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
     if (statusFilter !== 'all' && b.status !== statusFilter) return false
     if (search.trim()) {
       const q = search.toLowerCase()
-      if (!b.name.toLowerCase().includes(q) && !b.project_name.toLowerCase().includes(q)) return false
+      if (
+        !b.name.toLowerCase().includes(q) &&
+        !b.project_name.toLowerCase().includes(q) &&
+        !(b.client_name ?? '').toLowerCase().includes(q)
+      ) return false
     }
     return true
   })
 
-  // Group by project
-  const byProject: Record<string, { name: string; boards: BoardDef[] }> = {}
+  // Group by Client → Project → boards (case-insensitive: "Cobasi" e "cobasi" = mesmo cliente)
+  const CLIENT_NONE = 'Sem cliente'
+  const byClient = new Map<string, { label: string; projs: Map<string, { name: string; boards: BoardDef[] }> }>()
   for (const b of filtered) {
-    if (!byProject[b.project_id]) byProject[b.project_id] = { name: b.project_name, boards: [] }
-    byProject[b.project_id].boards.push(b)
+    const raw = b.client_name && b.client_name.trim() ? b.client_name.trim() : CLIENT_NONE
+    const key = raw.toLowerCase()
+    let cg = byClient.get(key)
+    if (!cg) { cg = { label: raw, projs: new Map() }; byClient.set(key, cg) }
+    else if (/[A-Z]/.test(raw) && !/[A-Z]/.test(cg.label)) cg.label = raw
+    let proj = cg.projs.get(b.project_id)
+    if (!proj) { proj = { name: b.project_name, boards: [] }; cg.projs.set(b.project_id, proj) }
+    proj.boards.push(b)
   }
+  const clientGroups = [...byClient.values()]
+    .sort((a, b) => (a.label.toLowerCase() === 'sem cliente' ? 1 : b.label.toLowerCase() === 'sem cliente' ? -1 : a.label.localeCompare(b.label)))
+    .map(cg => ({
+      client: cg.label,
+      projects: [...cg.projs.entries()]
+        .map(([projId, v]) => ({ projId, name: v.name, boards: v.boards }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    }))
 
   const inputSt: React.CSSProperties = {
     padding: '7px 11px', borderRadius: 7, background: T.bgPage,
@@ -246,17 +265,30 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
           <div style={{ fontSize: 12, color: T.text3, marginTop: 4 }}>Ajuste os filtros ou tente outra busca.</div>
         </div>
       ) : (
-        Object.entries(byProject).map(([projId, { name, boards: pBoards }], pi) => (
-          <div key={projId} style={{ marginBottom: 24 }}>
-            {/* Project header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, paddingLeft: 2 }}>
-              <ProjectDot projectId={projId} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: T.text2, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{name}</span>
-              <span style={{ fontSize: 11, color: T.text3 }}>— {pBoards.length} board{pBoards.length !== 1 ? 's' : ''}</span>
+        clientGroups.map((cg, ci) => (
+          <div key={cg.client} style={{ marginBottom: 28 }}>
+            {/* Client header (agrupamento principal) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <span style={{ width: 9, height: 9, borderRadius: 99, background: T.accent, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 800, color: T.text1, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{cg.client}</span>
+              <span style={{ fontSize: 11, color: T.text3 }}>· {cg.projects.length} projeto{cg.projects.length !== 1 ? 's' : ''}</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {pBoards.map((b, bi) => (
-                <BoardCard key={b.id} board={b} tourAnchor={pi === 0 && bi === 0} onOpen={() => onSelectBoard(b.id)} onSettings={() => setSettingsBoard(b)} />
+            {/* Projetos do cliente */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18, paddingLeft: 14, borderLeft: `1px solid ${T.border}` }}>
+              {cg.projects.map((pg, pi) => (
+                <div key={pg.projId}>
+                  {/* Project header (segundo agrupamento) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, paddingLeft: 2 }}>
+                    <ProjectDot projectId={pg.projId} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: T.text2, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{pg.name}</span>
+                    <span style={{ fontSize: 11, color: T.text3 }}>— {pg.boards.length} board{pg.boards.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {pg.boards.map((b, bi) => (
+                      <BoardCard key={b.id} board={b} tourAnchor={ci === 0 && pi === 0 && bi === 0} onOpen={() => onSelectBoard(b.id)} onSettings={() => setSettingsBoard(b)} />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
