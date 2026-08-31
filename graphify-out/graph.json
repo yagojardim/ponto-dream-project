@@ -24574,7 +24574,7 @@
       "file_type": "code",
       "norm_label": "celltext()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L296"
+      "source_location": "L324"
     },
     {
       "id": "src_pages_listpage_listpage_csvescape",
@@ -24585,7 +24585,7 @@
       "file_type": "code",
       "norm_label": "csvescape()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L314"
+      "source_location": "L342"
     },
     {
       "id": "src_pages_listpage_listpage_exportcsv",
@@ -24596,7 +24596,7 @@
       "file_type": "code",
       "norm_label": "exportcsv()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L318"
+      "source_location": "L346"
     },
     {
       "id": "src_pages_listpage_listpage_grouprows",
@@ -24607,7 +24607,7 @@
       "file_type": "code",
       "norm_label": "grouprows()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L275"
+      "source_location": "L303"
     },
     {
       "id": "src_pages_listpage_listpage_persistfield",
@@ -24618,7 +24618,7 @@
       "file_type": "code",
       "norm_label": "persistfield()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L256"
+      "source_location": "L284"
     },
     {
       "id": "src_pages_listpage_listpage_rendercell",
@@ -24629,7 +24629,7 @@
       "file_type": "code",
       "norm_label": "rendercell()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L341"
+      "source_location": "L369"
     },
     {
       "id": "src_pages_listpage_listpage_togglecol",
@@ -24640,7 +24640,7 @@
       "file_type": "code",
       "norm_label": "togglecol()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L249"
+      "source_location": "L277"
     },
     {
       "id": "src_pages_listpage_listpage_togglesort",
@@ -24651,7 +24651,7 @@
       "file_type": "code",
       "norm_label": "togglesort()",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L244"
+      "source_location": "L272"
     },
     {
       "id": "src_pages_listpage_uitype",
@@ -52483,7 +52483,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L199",
+      "source_location": "L227",
       "weight": 1.0
     },
     {
@@ -52495,7 +52495,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L219",
+      "source_location": "L247",
       "weight": 1.0
     },
     {
@@ -52507,7 +52507,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L321",
+      "source_location": "L349",
       "weight": 1.0
     },
     {
@@ -52519,7 +52519,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L322",
+      "source_location": "L350",
       "weight": 1.0
     },
     {
@@ -52531,7 +52531,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L266",
+      "source_location": "L294",
       "weight": 1.0
     },
     {
@@ -52543,7 +52543,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L386",
+      "source_location": "L414",
       "weight": 1.0
     },
     {
@@ -52555,7 +52555,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L472",
+      "source_location": "L500",
       "weight": 1.0
     },
     {
@@ -57211,7 +57211,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L244",
+      "source_location": "L272",
       "weight": 1.0
     },
     {
@@ -57223,7 +57223,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L249",
+      "source_location": "L277",
       "weight": 1.0
     },
     {
@@ -57235,7 +57235,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L275",
+      "source_location": "L303",
       "weight": 1.0
     },
     {
@@ -57247,7 +57247,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L341",
+      "source_location": "L369",
       "weight": 1.0
     },
     {
@@ -106432,7 +106432,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L256",
+      "source_location": "L284",
       "weight": 1.0
     },
     {
@@ -106443,7 +106443,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L296",
+      "source_location": "L324",
       "weight": 1.0
     },
     {
@@ -106454,7 +106454,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L314",
+      "source_location": "L342",
       "weight": 1.0
     },
     {
@@ -106465,7 +106465,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ListPage.tsx",
-      "source_location": "L318",
+      "source_location": "L346",
       "weight": 1.0
     },
     {
@@ -111886,5 +111886,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e8a15edf633d24a2316f7137699d99bdf8ffc0a3"
+  "built_at_commit": "b4e2e3d8ea96d45fd164e94de7b278da8500c172"
 }
