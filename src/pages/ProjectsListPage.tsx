@@ -820,11 +820,14 @@ export default function ProjectsListPage({ onNav }: Props) {
           onClose={() => setNewProjOpen(false)}
           onSuccess={() => { setNewProjOpen(false); onNav?.('project') }}
           onCreate={handleCreateProject}
-          leads={profiles.map(p => ({
-            id: p.id,
-            name: p.name,
-            initials: p.avatar_initials ?? p.name.slice(0, 2).toUpperCase(),
-          }))}
+          leads={profiles
+            .filter(p => p.can_create_projects)
+            .map(p => ({
+              id: p.id,
+              name: p.name,
+              initials: p.avatar_initials ?? p.name.slice(0, 2).toUpperCase(),
+            }))}
+          clients={[...new Set(rows.map(r => r.client_name).filter((c): c is string => !!c && c.trim().length > 0))].sort((a, b) => a.localeCompare(b))}
           existingKeys={rows.map(r => r.key)}
           tenantName={tenantName}
         />
