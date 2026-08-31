@@ -1,74 +1,300 @@
-import { MOCK_TENANT } from './session'
+// Boards visíveis para o usuário autenticado.
+// Sempre escopado pelo tenant do próprio usuário — nunca cross-tenant.
+// A visibilidade usa o RBAC existente: papel/permissions + project_members (+ permission_overrides).
+import { useEffect, useState } from 'react'
+import { supabase } from '@/integrations/supabase/client'
+import { safeCall, logger } from '@/utils/logger'
+import { writeAudit } from '@/data/db/audit'
+import { can } from '@/data/permissions'
+import { useSession } from '@/data/SessionContext'
 
-export type BoardStatus = 'active' | 'archived'
+export type VisibleBoardStatus = 'active' | 'archived'
 
-export interface BoardDef {
-  id:          string
-  tenant_id:   string
-  name:        string
-  project_id:  string
+export interface VisibleBoard {
+  id: string
+  tenant_id: string
+  name: string
+  project_id: string
   project_name: string
-  status:      BoardStatus
-  columns:     string[]   // column names in order
-  wip_limit?:  number
-  item_count:  number
-  updated_at:  string
+  /** Cliente do projeto (projects.client_name); null quando não definido. */
+  client_name: string | null
+  status: VisibleBoardStatus
+  /** true quando o board foi finalizado (ciclo de vida), não apenas arquivado. */
+  finalized: boolean
+  archived_at: string | null
+  description: string
+  period_start: string
+  period_end: string
+  team_ids: string[]
+  columns: string[]
+  item_count: number
+  updated_at: string
+  created_at: string | null
+  /** Escopo do board no formato do Construtor de Filtros ({} = sem filtro). */
+  filter: unknown
 }
 
-const T = MOCK_TENANT.tenant_id
-
-const MOCK_BOARDS: BoardDef[] = [
-  {
-    id: 'board_001', tenant_id: T,
-    name: 'Sprint Board',
-    project_id: 'proj_001', project_name: 'Website Relaunch',
-    status: 'active',
-    columns: ['Backlog', 'A Fazer', 'Em Dev', 'Em Revisão', 'Concluído'],
-    wip_limit: 6, item_count: 38,
-    updated_at: '2025-07-24T10:30:00Z',
-  },
-  {
-    id: 'board_002', tenant_id: T,
-    name: 'Design Review Flow',
-    project_id: 'proj_001', project_name: 'Website Relaunch',
-    status: 'active',
-    columns: ['Aguardando', 'Em Revisão UX', 'Aprovado', 'Handoff Dev'],
-    wip_limit: 4, item_count: 14,
-    updated_at: '2025-07-23T16:00:00Z',
-  },
-  {
-    id: 'board_003', tenant_id: T,
-    name: 'DevOps Pipeline',
-    project_id: 'proj_002', project_name: 'Infra Migration',
-    status: 'active',
-    columns: ['Planejado', 'Em Execução', 'Validação', 'Concluído'],
-    wip_limit: 3, item_count: 21,
-    updated_at: '2025-07-25T09:15:00Z',
-  },
-  {
-    id: 'board_004', tenant_id: T,
-    name: 'iOS & Android Release',
-    project_id: 'proj_003', project_name: 'Mobile App',
-    status: 'active',
-    columns: ['Backlog', 'Em Dev', 'QA', 'Release Candidate', 'Publicado'],
-    wip_limit: 5, item_count: 27,
-    updated_at: '2025-07-22T14:45:00Z',
-  },
-  {
-    id: 'board_005', tenant_id: T,
-    name: 'Sprint Q1 2025',
-    project_id: 'proj_001', project_name: 'Website Relaunch',
-    status: 'archived',
-    columns: ['Backlog', 'A Fazer', 'Em Dev', 'Em Revisão', 'Concluído'],
-    item_count: 52,
-    updated_at: '2025-04-01T18:00:00Z',
-  },
-]
-
-export function getBoardsForScope(project_ids: string[], tenant_id: string): BoardDef[] {
-  return MOCK_BOARDS.filter(b => b.tenant_id === tenant_id && project_ids.includes(b.project_id))
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function tbl(name: string): any {
+  return (supabase as unknown as { from: (t: string) => any }).from(name)
 }
 
-export function getBoardById(id: string): BoardDef | undefined {
-  return MOCK_BOARDS.find(b => b.id === id)
+interface BoardRow {
+  id: string
+  created_at?: string | null
+  filter?: unknown
+  tenant_id: string
+  name: string
+  project_id: string
+  status: string | null
+  description: string | null
+  metadata: unknown
+  archived_at: string | null
+  updated_at: string | null
+}
+
+function readMeta(raw: unknown): Record<string, unknown> {
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {}
+}
+function metaStr(v: unknown): string {
+  return typeof v === 'string' ? v : ''
+}
+function metaIds(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+
+/** Vê todos os boards do tenant (Admin / gestão) ou apenas os dos projetos em que participa. */
+function hasTenantWideAccess(permissions: string[]): boolean {
+  return can(permissions, 'users:manage') || can(permissions, 'board:manage')
+}
+
+
+/**
+ * Lista os boards que o usuário pode VISUALIZAR.
+ * Degrada para lista vazia em qualquer falha de leitura (nunca lança).
+ */
+export function fetchVisibleBoards(opts: {
+  tenantId: string
+  profileId: string
+  permissions: string[]
+}): Promise<VisibleBoard[]> {
+  const { tenantId, profileId, permissions } = opts
+
+  return safeCall<VisibleBoard[]>('boards.fetchVisibleBoards', async () => {
+    if (!tenantId) return []
+
+    let allowedProjectIds: string[] | null = null // null ⇒ todos do tenant
+
+    if (!hasTenantWideAccess(permissions)) {
+      const [members, overrides] = await Promise.all([
+        tbl('project_members').select('project_id').eq('tenant_id', tenantId).eq('profile_id', profileId),
+        tbl('permission_overrides').select('scope_id, scope_type, granted')
+          .eq('tenant_id', tenantId).eq('profile_id', profileId),
+      ])
+
+      const ids = new Set<string>()
+      for (const row of (members.data ?? []) as { project_id: string }[]) {
+        if (row.project_id) ids.add(row.project_id)
+      }
+      for (const row of (overrides.data ?? []) as { scope_id: string | null; scope_type: string | null; granted: boolean | null }[]) {
+        if (row.granted !== false && row.scope_type === 'project' && row.scope_id) ids.add(row.scope_id)
+      }
+      allowedProjectIds = [...ids]
+      if (allowedProjectIds.length === 0) return []
+    }
+
+    let query = tbl('boards')
+      .select('id, tenant_id, name, project_id, status, description, metadata, archived_at, updated_at, created_at, filter')
+      .eq('tenant_id', tenantId)
+      .order('name')
+    if (allowedProjectIds) query = query.in('project_id', allowedProjectIds)
+
+    const boardsRes = await query
+    if (boardsRes.error) throw new Error(boardsRes.error.message)
+    const boards = (boardsRes.data ?? []) as BoardRow[]
+    if (boards.length === 0) return []
+
+    const projectIds = [...new Set(boards.map(b => b.project_id).filter(Boolean))]
+    const boardIds = boards.map(b => b.id)
+
+    const [projectsRes, columnsRes, itemsRes] = await Promise.all([
+      tbl('projects').select('id, name, client_name').eq('tenant_id', tenantId).in('id', projectIds),
+      tbl('board_columns').select('id, board_id, name, position').eq('tenant_id', tenantId).in('board_id', boardIds).order('position'),
+      tbl('work_items').select('id, board_id').eq('tenant_id', tenantId).in('board_id', boardIds),
+    ])
+
+    const projectName = new Map<string, string>()
+    const projectClient = new Map<string, string | null>()
+    for (const p of (projectsRes.data ?? []) as { id: string; name: string; client_name: string | null }[]) {
+      projectName.set(p.id, p.name)
+      projectClient.set(p.id, p.client_name ?? null)
+    }
+
+    const columnsByBoard = new Map<string, string[]>()
+    for (const c of (columnsRes.data ?? []) as { board_id: string; name: string }[]) {
+      const list = columnsByBoard.get(c.board_id) ?? []
+      list.push(c.name)
+      columnsByBoard.set(c.board_id, list)
+    }
+
+    const countByBoard = new Map<string, number>()
+    for (const i of (itemsRes.data ?? []) as { board_id: string | null }[]) {
+      if (!i.board_id) continue
+      countByBoard.set(i.board_id, (countByBoard.get(i.board_id) ?? 0) + 1)
+    }
+
+    return boards.map(b => {
+      const meta = readMeta(b.metadata)
+      const finalized = b.status === 'completed' || b.status === 'finalized'
+      const archived = !!b.archived_at || b.status === 'archived'
+      return {
+        id: b.id,
+        tenant_id: b.tenant_id,
+        name: b.name,
+        project_id: b.project_id,
+        project_name: projectName.get(b.project_id) ?? 'Projeto',
+        client_name: projectClient.get(b.project_id) ?? null,
+        status: (archived || finalized ? 'archived' : 'active') as VisibleBoardStatus,
+        finalized,
+        archived_at: b.archived_at ?? null,
+        description: b.description ?? '',
+        period_start: metaStr(meta.period_start),
+        period_end: metaStr(meta.period_end),
+        team_ids: metaIds(meta.team_ids),
+        columns: columnsByBoard.get(b.id) ?? [],
+        item_count: countByBoard.get(b.id) ?? 0,
+        updated_at: b.updated_at ?? new Date().toISOString(),
+        created_at: b.created_at ?? null,
+        filter: b.filter ?? {},
+      }
+    })
+  }, [])
+}
+
+export interface VisibleBoardsState {
+  boards: VisibleBoard[]
+  loading: boolean
+  reload: () => void
+}
+
+/** Hook compartilhado pela Sidebar e pela BoardsListPage. */
+export function useVisibleBoards(): VisibleBoardsState {
+  const { activeUser } = useSession()
+  const [boards, setBoards] = useState<VisibleBoard[]>([])
+  const [loading, setLoading] = useState(true)
+  const [nonce, setNonce] = useState(0)
+
+  const tenantId = activeUser.tenant_id
+  const profileId = activeUser.user_id
+  const permKey = activeUser.permissions.join(',')
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    fetchVisibleBoards({ tenantId, profileId, permissions: permKey ? permKey.split(',') : [] })
+      .then(rows => { if (alive) setBoards(rows) })
+      .catch(() => { if (alive) setBoards([]) })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [tenantId, profileId, permKey, nonce])
+
+  return { boards, loading, reload: () => setNonce(n => n + 1) }
+}
+
+// ─── Gestão do board (modal de configurações) ────────────────────────────────
+
+export interface BoardTeamOption {
+  id: string
+  name: string
+  avatar_initials: string | null
+  avatar_color: string | null
+}
+
+/** Membros do tenant elegíveis para alocação no board. */
+export function fetchBoardTeamOptions(tenantId: string): Promise<BoardTeamOption[]> {
+  return safeCall<BoardTeamOption[]>('boards.fetchBoardTeamOptions', async () => {
+    if (!tenantId) return []
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, avatar_initials, avatar_color')
+      .eq('tenant_id', tenantId)
+      .is('archived_at', null)
+      .order('name')
+    if (error) throw error
+    return (data ?? []) as BoardTeamOption[]
+  }, [])
+}
+
+export interface BoardSettingsInput {
+  description: string
+  teamIds: string[]
+  periodStart: string
+  periodEnd: string
+}
+
+async function currentMetadata(boardId: string): Promise<Record<string, unknown>> {
+  const { data } = await tbl('boards').select('metadata').eq('id', boardId).maybeSingle()
+  return readMeta((data as { metadata?: unknown } | null)?.metadata)
+}
+
+/** Salva descrição, equipe alocada e período do board. */
+export async function saveBoardSettings(
+  board: VisibleBoard,
+  input: BoardSettingsInput,
+  actorName: string,
+): Promise<void> {
+  try {
+    const metadata = {
+      ...(await currentMetadata(board.id)),
+      team_ids: input.teamIds,
+      period_start: input.periodStart || null,
+      period_end: input.periodEnd || null,
+    }
+    const { error } = await tbl('boards').update({
+      description: input.description.trim() || null,
+      metadata,
+    }).eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.updated', board.id, {
+      name: board.name,
+      project_id: board.project_id,
+      team_size: input.teamIds.length,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.saveBoardSettings', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao salvar o board.')
+  }
+}
+
+/** Finaliza o board — sai da lista de ativos. */
+export async function finalizeBoard(board: VisibleBoard, actorName: string): Promise<void> {
+  try {
+    const { error } = await tbl('boards')
+      .update({ status: 'completed' })
+      .eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.finalized', board.id, {
+      name: board.name, project_id: board.project_id,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.finalizeBoard', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao finalizar o board.')
+  }
+}
+
+/** Arquiva o board — define archived_at e sai da lista de ativos. */
+export async function archiveBoard(board: VisibleBoard, actorName: string): Promise<void> {
+  try {
+    const now = new Date().toISOString()
+    const { error } = await tbl('boards')
+      .update({ archived_at: now, status: 'archived' })
+      .eq('id', board.id).eq('tenant_id', board.tenant_id)
+    if (error) throw new Error(error.message)
+    await writeAudit('board.archived', board.id, {
+      name: board.name, project_id: board.project_id,
+    }, { actorName })
+  } catch (err) {
+    logger.error('boards.archiveBoard', err, { boardId: board.id })
+    throw err instanceof Error ? err : new Error('Falha ao arquivar o board.')
+  }
 }
