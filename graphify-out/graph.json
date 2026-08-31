@@ -8276,7 +8276,7 @@
       "file_type": "code",
       "norm_label": "newprojectmodal()",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L74"
+      "source_location": "L76"
     },
     {
       "id": "src_components_newprojectmodal_newprojectmodal_handlecreate",
@@ -8287,7 +8287,7 @@
       "file_type": "code",
       "norm_label": "handlecreate()",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L114"
+      "source_location": "L116"
     },
     {
       "id": "src_components_newprojectmodal_newprojectmodal_handlekeychange",
@@ -8298,7 +8298,7 @@
       "file_type": "code",
       "norm_label": "handlekeychange()",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L108"
+      "source_location": "L110"
     },
     {
       "id": "src_components_newprojectmodal_newprojectmodal_handlenamechange",
@@ -8309,7 +8309,7 @@
       "file_type": "code",
       "norm_label": "handlenamechange()",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L94"
+      "source_location": "L96"
     },
     {
       "id": "src_components_newprojectmodal_newprojectmodal_handlereset",
@@ -8320,7 +8320,7 @@
       "file_type": "code",
       "norm_label": "handlereset()",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L140"
+      "source_location": "L142"
     },
     {
       "id": "supabase_functions_gcal_disconnect_index_json",
@@ -30836,7 +30836,7 @@
       "file_type": "code",
       "norm_label": "dialog",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L41"
+      "source_location": "L43"
     },
     {
       "id": "src_components_newprojectmodal_inputstyle",
@@ -30846,7 +30846,7 @@
       "file_type": "code",
       "norm_label": "inputstyle",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L54"
+      "source_location": "L56"
     },
     {
       "id": "src_components_newprojectmodal_labelstyle",
@@ -30856,7 +30856,7 @@
       "file_type": "code",
       "norm_label": "labelstyle",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L66"
+      "source_location": "L68"
     },
     {
       "id": "src_components_newprojectmodal_overlay",
@@ -30866,7 +30866,7 @@
       "file_type": "code",
       "norm_label": "overlay",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L31"
+      "source_location": "L33"
     },
     {
       "id": "src_data_db_storage",
@@ -56301,7 +56301,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L108",
+      "source_location": "L110",
       "weight": 1.0
     },
     {
@@ -56313,7 +56313,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L94",
+      "source_location": "L96",
       "weight": 1.0
     },
     {
@@ -87294,7 +87294,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L31",
+      "source_location": "L33",
       "weight": 1.0
     },
     {
@@ -87305,7 +87305,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L41",
+      "source_location": "L43",
       "weight": 1.0
     },
     {
@@ -87327,7 +87327,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L54",
+      "source_location": "L56",
       "weight": 1.0
     },
     {
@@ -87338,7 +87338,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L66",
+      "source_location": "L68",
       "weight": 1.0
     },
     {
@@ -87349,7 +87349,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L74",
+      "source_location": "L76",
       "weight": 1.0
     },
     {
@@ -87360,7 +87360,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L114",
+      "source_location": "L116",
       "weight": 1.0
     },
     {
@@ -87371,7 +87371,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L140",
+      "source_location": "L142",
       "weight": 1.0
     },
     {
@@ -111741,7 +111741,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/components/NewProjectModal.tsx",
-      "source_location": "L122",
+      "source_location": "L124",
       "weight": 1.0
     },
     {
@@ -112394,5 +112394,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a8c1890571e303bed86f8654cc0d625f5cbd0d96"
+  "built_at_commit": "f23a0cdbc555bcaeef8e8829028aa962f9e81829"
 }
