@@ -364,6 +364,7 @@ function EditProjectModal({ project, tasks, members, profiles, actorName, onClos
     return [...ids].map(id => byId.get(id)).filter((p): p is ProjectProfileRow => !!p)
   }, [members, profiles, own, raw.id, raw.lead_id])
 
+  const [name, setName] = useState(raw.name ?? '')
   const [desc, setDesc] = useState(raw.description ?? '')
   const [start, setStart] = useState(raw.period_start ?? derivedStart)
   const [end, setEnd] = useState(raw.period_end ?? derivedEnd)
@@ -389,6 +390,7 @@ function EditProjectModal({ project, tasks, members, profiles, actorName, onClos
 
   const save = () => run(
     () => updateProject(raw, {
+      name: name.trim() || raw.name,
       description: desc.trim() || null,
       periodStart: start || null,
       periodEnd: end || null,
@@ -456,6 +458,18 @@ function EditProjectModal({ project, tasks, members, profiles, actorName, onClos
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Nome do projeto</span>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg text-xs outline-none"
+              style={inputStyle}
+              placeholder="Nome do projeto"
+            />
+          </label>
+
           <label className="flex flex-col gap-1">
             <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Descrição</span>
             <textarea
@@ -686,20 +700,26 @@ export default function ProjectsListPage({ onNav }: Props) {
     [rows, tasks, profiles, boards],
   )
 
-  /** Projetos agrupados por Cliente (Cliente → Projetos). "Sem cliente" vai por último. */
+  /**
+   * Projetos agrupados por Cliente (Cliente → Projetos), case-insensitive:
+   * "Cobasi" e "cobasi" caem no mesmo grupo. Rótulo prefere a variante com maiúscula.
+   * "Sem cliente" vai por último.
+   */
   const projectsByClient = useMemo(() => {
-    const groups = new Map<string, Project[]>()
+    const groups = new Map<string, { label: string; items: Project[] }>()
     for (const p of projects) {
-      const key = p.client && p.client !== '—' ? p.client : 'Sem cliente'
-      const arr = groups.get(key) ?? []
-      arr.push(p)
-      groups.set(key, arr)
+      const raw = p.client && p.client !== '—' ? p.client.trim() : 'Sem cliente'
+      const key = raw.toLowerCase()
+      let g = groups.get(key)
+      if (!g) { g = { label: raw, items: [] }; groups.set(key, g) }
+      else if (/[A-Z]/.test(raw) && !/[A-Z]/.test(g.label)) g.label = raw
+      g.items.push(p)
     }
-    return [...groups.entries()]
-      .sort((a, b) =>
-        a[0] === 'Sem cliente' ? 1 : b[0] === 'Sem cliente' ? -1 : a[0].localeCompare(b[0]),
-      )
-      .map(([client, items]) => ({ client, items }))
+    return [...groups.values()].sort((a, b) =>
+      a.label.toLowerCase() === 'sem cliente' ? 1
+        : b.label.toLowerCase() === 'sem cliente' ? -1
+          : a.label.localeCompare(b.label),
+    )
   }, [projects])
 
   // Keep the open modal in sync with reloaded data
@@ -806,13 +826,13 @@ export default function ProjectsListPage({ onNav }: Props) {
               </thead>
               <tbody>
                 {projectsByClient.map(group => (
-                  <Fragment key={group.client}>
+                  <Fragment key={group.label.toLowerCase()}>
                     <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid #1c2c45' }}>
                       <td colSpan={7} className="py-2 px-6">
                         <div className="flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#3B82F6' }} />
                           <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#8aa0bd' }}>
-                            {group.client}
+                            {group.label}
                           </span>
                           <span className="text-[10px]" style={{ color: '#546278' }}>
                             · {group.items.length} {group.items.length === 1 ? 'projeto' : 'projetos'}
