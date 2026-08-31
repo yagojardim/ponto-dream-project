@@ -20,8 +20,10 @@ interface Props {
   onSuccess: (projectKey: string, projectName: string) => void
   /** Real persistence hook — when given, "Criar" inserts the project in the database. */
   onCreate?: (input: NewProjectInput) => Promise<void>
-  /** Real leads loaded from the database. */
+  /** Real leads loaded from the database (já filtrados para quem pode criar projetos). */
   leads?: { id: string; name: string; initials: string }[]
+  /** Clientes já existentes no tenant, para o seletor (permite escolher um ou digitar novo). */
+  clients?: string[]
   /** Keys already used in the database (duplicate guard). */
   existingKeys?: string[]
   /** Nome do tenant atual — exibido como rótulo read-only. */
@@ -71,7 +73,7 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
 }
 
-export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingKeys, tenantName }: Props) {
+export function NewProjectModal({ onClose, onSuccess, onCreate, leads, clients, existingKeys, tenantName }: Props) {
   const [name, setName] = useState('')
   const [client, setClient] = useState('')
   const [key, setKey] = useState('')
@@ -255,15 +257,19 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
 
               {/* Client */}
               <div>
-                <label style={labelStyle}>Cliente <HelpHint text="Empresa ou cliente atendido por este projeto. Permite separar os projetos por cliente dentro da mesma organização (tenant)." /></label>
+                <label style={labelStyle}>Cliente <HelpHint text="Empresa ou cliente atendido por este projeto. Escolha um cliente já existente ou digite um novo. É por ele que os projetos são agrupados." /></label>
                 <input
                   type="text"
                   data-tour="project-client"
-                  placeholder="Ex: Cobasi"
+                  list="new-project-client-options"
+                  placeholder="Escolha um cliente ou digite um novo"
                   value={client}
                   onChange={e => setClient(e.target.value)}
                   style={inputStyle}
                 />
+                <datalist id="new-project-client-options">
+                  {(clients ?? []).map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
 
               </div>
@@ -293,48 +299,6 @@ export function NewProjectModal({ onClose, onSuccess, onCreate, leads, existingK
                 )}
               </div>
 
-              {/* Type */}
-              <div>
-                <label style={labelStyle}>Tipo <HelpHint text="Scrum = trabalho organizado em sprints (ciclos). Kanban = fluxo contínuo sem sprints. Define as colunas padrão do board." /></label>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  {(['scrum', 'kanban'] as const).map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setType(t)}
-                      style={{
-                        flex: 1,
-                        padding: '14px 16px',
-                        borderRadius: 10,
-                        border: `1px solid ${type === t ? T.accentBorder : T.border}`,
-                        background: type === t ? T.accentDim : T.bgSurface2,
-                        color: type === t ? T.accent : T.text2,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 8,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {t === 'scrum' ? (
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 2" />
-                          <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                      ) : (
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <rect x="3" y="5" width="4" height="14" rx="1.5" fill="currentColor" opacity="0.5" />
-                          <rect x="10" y="5" width="4" height="10" rx="1.5" fill="currentColor" opacity="0.7" />
-                          <rect x="17" y="5" width="4" height="7" rx="1.5" fill="currentColor" />
-                        </svg>
-                      )}
-                      {t === 'scrum' ? 'Scrum' : 'Kanban'}
-                    </button>
-                  ))}
-                </div>
-              </div>
               </div>
 
 
