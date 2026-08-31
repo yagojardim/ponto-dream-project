@@ -14,7 +14,7 @@ export type EpicRow = Pick<Tables['epics']['Row'], 'id' | 'project_id' | 'name' 
 export type SprintRow = Pick<Tables['sprints']['Row'], 'id' | 'project_id' | 'name' | 'start_date' | 'end_date' | 'state'>
 export type WorkItemRow = Pick<
   Tables['work_items']['Row'],
-  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'epic_id' | 'feature_id' | 'sprint_id' | 'start_date' | 'due_date' | 'assignee_id' | 'is_blocked'
+  'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'epic_id' | 'feature_id' | 'sprint_id' | 'parent_id' | 'start_date' | 'due_date' | 'assignee_id' | 'is_blocked'
 >
 export type TimelineFeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name'>
 export type DependencyRow = Pick<Tables['dependencies']['Row'], 'source_id' | 'target_id' | 'relation_type'>
@@ -79,7 +79,7 @@ export async function fetchTimelineData(): Promise<TimelineData> {
       .eq('tenant_id', tid).is('archived_at', null).order('name'),
     supabase.from('sprints').select('id, project_id, name, start_date, end_date, state')
       .eq('tenant_id', tid).is('archived_at', null).order('start_date', { ascending: true, nullsFirst: false }),
-    supabase.from('work_items').select('id, key, title, type, status, project_id, epic_id, feature_id, sprint_id, start_date, due_date, assignee_id, is_blocked')
+    supabase.from('work_items').select('id, key, title, type, status, project_id, epic_id, feature_id, sprint_id, parent_id, start_date, due_date, assignee_id, is_blocked')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
     supabase.from('features').select('id, epic_id, name')
       .eq('tenant_id', tid).is('archived_at', null).order('name'),
