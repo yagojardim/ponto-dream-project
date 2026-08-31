@@ -332,30 +332,43 @@ export async function removeAcceptanceCriterion(
 }
 
 /** Links two work items. `targetKey` accepts the human key (WEB-101) or an id. */
-/** Demandas reais do projeto disponíveis para vincular (exclui a própria e arquivadas). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Demandas reais disponíveis para vincular (todo o tenant, exclui a própria e arquivadas).
+ * `currentProjectId` só define a ordenação (mesmo projeto primeiro); vínculos podem ser cross-project.
+ */
 export async function listLinkableItems(
-  projectId: string, excludeId?: string,
-): Promise<{ id: string; key: string; title: string }[]> {
+  currentProjectId?: string | null, excludeId?: string,
+): Promise<{ id: string; key: string; title: string; projectName: string }[]> {
   const tid = DEFAULT_TENANT_ID
-  if (!projectId) return []
-  const { data, error } = await supabase
-    .from('work_items')
-    .select('id, key, title')
-    .eq('tenant_id', tid)
-    .eq('project_id', projectId)
-    .is('archived_at', null)
-    .order('key')
-  if (error) throw fail('work_items', error.message)
-  const rows = (data ?? []) as { id: string; key: string; title: string }[]
-  return excludeId ? rows.filter(r => r.id !== excludeId) : rows
+  const [itemsRes, projsRes] = await Promise.all([
+    supabase.from('work_items').select('id, key, title, project_id')
+      .eq('tenant_id', tid).is('archived_at', null).order('key'),
+    supabase.from('projects').select('id, name').eq('tenant_id', tid),
+  ])
+  if (itemsRes.error) throw fail('work_items', itemsRes.error.message)
+  const projName = new Map(((projsRes.data ?? []) as { id: string; name: string }[]).map(p => [p.id, p.name]))
+  const rows = ((itemsRes.data ?? []) as { id: string; key: string; title: string; project_id: string }[])
+    .filter(r => r.id !== excludeId)
+  rows.sort((a, b) => {
+    const as = a.project_id === currentProjectId ? 0 : 1
+    const bs = b.project_id === currentProjectId ? 0 : 1
+    return as !== bs ? as - bs : a.key.localeCompare(b.key)
+  })
+  return rows.map(r => ({ id: r.id, key: r.key, title: r.title, projectName: projName.get(r.project_id) ?? '' }))
 }
 
 export async function addDependency(
   sourceId: string, targetKeyOrId: string, relationType: string, actorName = 'Sistema',
 ): Promise<{ relation: DependencyRow; item: RelatedItemRow }> {
   const tid = DEFAULT_TENANT_ID
-  const targetRes = await supabase.from('work_items').select(RELATED_COLS)
-    .eq('tenant_id', tid).or(`id.eq.${targetKeyOrId},key.eq.${targetKeyOrId}`).maybeSingle()
+  const base = supabase.from('work_items').select(RELATED_COLS).eq('tenant_id', tid)
+  // Nunca comparar uma key (ex.: "PZERO-116") contra a coluna uuid `id` — quebra o cast.
+  const targetRes = await (UUID_RE.test(targetKeyOrId)
+    ? base.eq('id', targetKeyOrId)
+    : base.eq('key', targetKeyOrId)
+  ).maybeSingle()
   if (targetRes.error) throw fail('work_items', targetRes.error.message)
   const target = targetRes.data as RelatedItemRow | null
   if (!target) throw new Error(`Issue "${targetKeyOrId}" não encontrada.`)
