@@ -7,6 +7,7 @@ import {
 import { projectUsesFeatures } from '../data/db/projects'
 import { getUserPref, saveUserPref } from '../data/db/userPrefs'
 import { useSession } from '../data/SessionContext'
+import { WorkItemDetail } from '../components/WorkItemDetail'
 
 const ROW_H = 52
 const HEADER_H = 48
@@ -54,6 +55,8 @@ interface TimelinePrefs {
   filters: Filters
   collapsed: string[]
   projects: string[]
+  /** Projetos já conhecidos quando as prefs foram salvas — para detectar projetos novos. */
+  knownProjects: string[]
 }
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -283,6 +286,8 @@ export default function TimelinePage() {
   const [hovered, setHovered] = useState<string | null>(null)
   const [dragging, setDragging] = useState<{ id: string; startX: number; orig: Span } | null>(null)
   const [saving, setSaving] = useState<Set<string>>(new Set())
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const knownProjectsRef = useRef<string[] | null>(null)
 
   // Scroll-sync + resizable sidebar refs/state
   const leftBodyRef = useRef<HTMLDivElement>(null)
@@ -333,11 +338,34 @@ export default function TimelinePage() {
         if (p.filters) setFilters({ ...EMPTY_FILTERS, ...p.filters })
         if (Array.isArray(p.collapsed)) setCollapsed(new Set(p.collapsed))
         if (Array.isArray(p.projects) && p.projects.length > 0) setSelectedProjects(new Set(p.projects))
+        knownProjectsRef.current = Array.isArray(p.knownProjects)
+          ? p.knownProjects
+          : (Array.isArray(p.projects) ? p.projects : [])
       }
       setPrefsReady(true)
     })
     return () => { cancelled = true }
   }, [profileId])
+
+  // Projetos criados depois de as prefs terem sido salvas entram SELECIONADOS por
+  // padrão — senão a Timeline não mostraria um projeto recém-criado no banco.
+  useEffect(() => {
+    if (!data || !prefsReady) return
+    const known = knownProjectsRef.current
+    if (!known) return
+    const fresh = data.projects.map(p => p.id).filter(id => !known.includes(id))
+    if (fresh.length > 0) {
+      setSelectedProjects(prev => new Set([...(prev ?? []), ...fresh]))
+      knownProjectsRef.current = [...known, ...fresh]
+    }
+  }, [data, prefsReady])
+
+  const reloadData = useCallback(() => {
+    fetchTimelineData()
+      .then(d => { setData(d); setSpans(buildSpans(d)) })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Persist preferences (database, debounced) ───────────────────────────────
   useEffect(() => {
@@ -346,10 +374,11 @@ export default function TimelinePage() {
       zoom, groupBy, filters,
       collapsed: [...collapsed],
       projects: selectedProjects ? [...selectedProjects] : [],
+      knownProjects: data ? data.projects.map(p => p.id) : (knownProjectsRef.current ?? []),
     }
     const t = setTimeout(() => { void saveUserPref(profileId, PREF_KEY, payload) }, 500)
     return () => clearTimeout(t)
-  }, [prefsReady, profileId, zoom, groupBy, filters, collapsed, selectedProjects])
+  }, [prefsReady, profileId, zoom, groupBy, filters, collapsed, selectedProjects, data])
 
   /** Derives each item's span: own dates → sprint dates → project period. */
   function buildSpans(d: TimelineData): Record<string, Span> {
@@ -872,7 +901,8 @@ export default function TimelinePage() {
                 const statusColor = statusCfg?.color ?? T.text3
                 return (
                   <div key={`i-${row.id}`}
-                    style={{ height: ROW_H, display: 'flex', alignItems: 'center', padding: '0 12px 0 32px', borderBottom: `1px solid ${T.border}`, background: hovered === row.id ? T.bgSurface2 : T.bgSurface }}
+                    style={{ height: ROW_H, display: 'flex', alignItems: 'center', padding: '0 12px 0 32px', borderBottom: `1px solid ${T.border}`, background: hovered === row.id ? T.bgSurface2 : T.bgSurface, cursor: 'pointer' }}
+                    onClick={() => setSelectedId(wi.id)}
                     onMouseEnter={() => setHovered(row.id)} onMouseLeave={() => setHovered(null)}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
                       {(() => {
@@ -1073,6 +1103,14 @@ export default function TimelinePage() {
             )}
           </div>
         </div>
+      )}
+      {selectedId && (
+        <WorkItemDetail
+          itemId={selectedId}
+          onUpdate={reloadData}
+          onClose={() => { setSelectedId(null); reloadData() }}
+          mode="drawer"
+        />
       )}
     </div>
   )
