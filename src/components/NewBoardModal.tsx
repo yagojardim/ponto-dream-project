@@ -5,6 +5,7 @@ import { FilterBuilder } from './FilterBuilder'
 import { createBoard, type BoardFilter } from '@/data/db/board'
 import type { BoardColumnDef } from '@/data/db/boardColumnDefs'
 import { listProjects, type ProjectRow } from '@/data/db/projects'
+import { fetchBoardFilterOptions, type BoardFilterOptions } from '@/data/db/filterOptions'
 
 /** Mapeia nomes de colunas (na ordem) para defs com status auto-distribuídos. */
 function buildCustomColumns(names: string[]): BoardColumnDef[] {
@@ -97,6 +98,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
   const [filter, setFilter] = useState<BoardFilter>({ conditions: [], logic: 'AND' })
   const [projectId, setProjectId] = useState(fixedProjectId ?? '')
   const [projects, setProjects] = useState<ProjectRow[]>([])
+  const [filterOptions, setFilterOptions] = useState<BoardFilterOptions>({ assignee_id: [], sprint_id: [], epic_id: [] })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -119,6 +121,14 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
       }).catch(() => {})
     }
   }, [open, fixedProjectId])
+
+  // Carrega Responsável/Sprint/Épico do projeto escolhido para o Construtor de Filtros.
+  useEffect(() => {
+    if (!open || !projectId) { setFilterOptions({ assignee_id: [], sprint_id: [], epic_id: [] }); return }
+    let alive = true
+    fetchBoardFilterOptions(projectId).then(opts => { if (alive) setFilterOptions(opts) })
+    return () => { alive = false }
+  }, [open, projectId])
 
   async function handleCreate() {
     if (!name.trim() || !projectId) return
@@ -267,7 +277,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
         <div className="flex flex-col gap-2">
           <label className="text-[11px] font-semibold" style={{ color: T.text3 }}>Filtro do board (opcional)</label>
           <p className="text-[11px]" style={{ color: T.text3 }}>Define quais itens do projeto aparecem neste board.</p>
-          <FilterBuilder value={filter} onChange={setFilter} compact />
+          <FilterBuilder value={filter} onChange={setFilter} options={filterOptions} compact />
         </div>
 
         {error && (
