@@ -1175,14 +1175,14 @@ export function WorkItemDetail({ data: dataProp, itemId: itemIdProp, onUpdate, o
   // ── Subtarefas ───────────────────────────────────────────────────────────────
   const subtaskMembers = (dbRef.current?.profiles ?? []).map(p => ({ id: p.id, name: p.name }))
 
-  const handleCreateSubtask = useCallback(async (sub: { title:string; description:string; priority:'critical'|'high'|'medium'|'low'; assigneeId:string|null; storyPoints:number }) => {
+  const handleCreateSubtask = useCallback(async (sub: { title:string; description:string; priority:'critical'|'high'|'medium'|'low'; assigneeId:string|null; storyPoints:number; type:'subtask'|'bug' }) => {
     const parent = dbRef.current?.item
     if (!itemId || !parent) { setToast('Item ainda não carregado.'); return }
     try {
-      await addSubtask(parent, sub.title, activeUser.name, { assigneeId: sub.assigneeId, storyPoints: sub.storyPoints, description: sub.description, priority: sub.priority })
+      await addSubtask(parent, sub.title, activeUser.name, { assigneeId: sub.assigneeId, storyPoints: sub.storyPoints, description: sub.description, priority: sub.priority, type: sub.type })
       const fresh = await getWorkItem(itemId)
       applyDetail(fresh)
-      setToast('Subtarefa criada')
+      setToast(sub.type === 'bug' ? 'Bug criado' : 'Subtarefa criada')
     } catch (err) {
       setToast(err instanceof Error ? err.message : 'Falha ao criar subtarefa')
     }
