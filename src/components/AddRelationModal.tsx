@@ -1,14 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { T } from './ds/tokens'
 import { HelpHint } from './ds/HelpHint'
+import { listLinkableItems } from '@/data/db/workItem'
 
-const SAMPLE_ISSUES = [
-  { key: 'PM-101', title: 'Homepage hero — layout explorations' },
-  { key: 'PM-102', title: 'Login form validation falha em dispositivos iOS' },
-  { key: 'PM-103', title: 'Design system: atualizar tokens de cor' },
-  { key: 'PM-104', title: 'Onboarding flow — passo a passo mobile' },
-  { key: 'PM-105', title: 'Performance audit — core web vitals' },
-]
+interface LinkableIssue { key: string; title: string }
 
 const REL_TYPES = [
   'bloqueia',
@@ -22,22 +17,39 @@ const REL_TYPES = [
 
 interface Props {
   currentIssueKey: string
+  /** Projeto do item atual — usado para buscar as demandas reais disponíveis. */
+  projectId?: string | null
+  /** Id do item atual, para não listá-lo como opção. */
+  excludeId?: string | null
   onClose: () => void
   onAdd: (relation: { type: string; targetKey: string }) => void
 }
 
-export function AddRelationModal({ currentIssueKey, onClose, onAdd }: Props) {
+export function AddRelationModal({ currentIssueKey, projectId, excludeId, onClose, onAdd }: Props) {
   const [relType, setRelType] = useState('bloqueia')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [showList, setShowList] = useState(false)
+  const [issues, setIssues] = useState<LinkableIssue[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const filtered = SAMPLE_ISSUES.filter(
+  useEffect(() => {
+    if (!projectId) { setIssues([]); return }
+    let alive = true
+    setLoading(true)
+    listLinkableItems(projectId, excludeId ?? undefined)
+      .then(rows => { if (alive) setIssues(rows.map(r => ({ key: r.key, title: r.title }))) })
+      .catch(() => { if (alive) setIssues([]) })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [projectId, excludeId])
+
+  const filtered = issues.filter(
     i =>
       i.key !== currentIssueKey &&
       (i.key.toLowerCase().includes(query.toLowerCase()) ||
         i.title.toLowerCase().includes(query.toLowerCase()))
-  )
+  ).slice(0, 50)
 
   function handleSelect(key: string) {
     setSelected(key)
@@ -51,7 +63,7 @@ export function AddRelationModal({ currentIssueKey, onClose, onAdd }: Props) {
     onClose()
   }
 
-  const selectedIssue = SAMPLE_ISSUES.find(i => i.key === selected)
+  const selectedIssue = issues.find(i => i.key === selected)
 
   return (
     <div
@@ -139,7 +151,7 @@ export function AddRelationModal({ currentIssueKey, onClose, onAdd }: Props) {
                   value={query}
                   onChange={e => { setQuery(e.target.value); setShowList(true) }}
                   onFocus={() => setShowList(true)}
-                  placeholder="Buscar demanda (ex: WEB-118)"
+                  placeholder={loading ? 'Carregando demandas…' : 'Buscar demanda (ex: WEB-118)'}
                   style={{
                     width: '100%', height: 36, padding: '0 12px', fontSize: 13, borderRadius: 8,
                     background: T.bgSurface2, border: `1px solid ${T.border}`, color: T.text1,
@@ -151,6 +163,16 @@ export function AddRelationModal({ currentIssueKey, onClose, onAdd }: Props) {
                     setTimeout(() => setShowList(false), 150)
                   }}
                 />
+                {showList && filtered.length === 0 && (
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
+                    background: T.bgSurface, border: `1px solid ${T.border2}`, borderRadius: 10,
+                    boxShadow: T.shadowModal, zIndex: 10, padding: '10px 12px',
+                    fontSize: 12, color: T.text3,
+                  }}>
+                    {loading ? 'Carregando demandas…' : query ? 'Nenhuma demanda encontrada.' : 'Nenhuma outra demanda neste projeto.'}
+                  </div>
+                )}
                 {showList && filtered.length > 0 && (
                   <div style={{
                     position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4,
