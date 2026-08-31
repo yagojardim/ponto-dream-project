@@ -3553,7 +3553,7 @@
       "file_type": "code",
       "norm_label": "props",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L644"
+      "source_location": "L658"
     },
     {
       "id": "src_pages_projectslistpage_subtask",
@@ -15748,7 +15748,7 @@
       "file_type": "code",
       "norm_label": "buildprojects()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L600"
+      "source_location": "L614"
     },
     {
       "id": "src_pages_projectslistpage_buildprojects_tosubtask",
@@ -15759,7 +15759,7 @@
       "file_type": "code",
       "norm_label": "tosubtask()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L608"
+      "source_location": "L622"
     },
     {
       "id": "src_pages_projectslistpage_countalltasks",
@@ -15836,7 +15836,7 @@
       "file_type": "code",
       "norm_label": "projectslistpage()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L648"
+      "source_location": "L662"
     },
     {
       "id": "src_pages_projectslistpage_projectslistpage_handleopenproject",
@@ -15847,7 +15847,7 @@
       "file_type": "code",
       "norm_label": "handleopenproject()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L714"
+      "source_location": "L734"
     },
     {
       "id": "src_pages_projectslistpage_projectslistpage_handleopentask",
@@ -15858,7 +15858,7 @@
       "file_type": "code",
       "norm_label": "handleopentask()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L718"
+      "source_location": "L738"
     },
     {
       "id": "src_pages_projectslistpage_projectslistpage_showtoast",
@@ -15869,7 +15869,7 @@
       "file_type": "code",
       "norm_label": "showtoast()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L738"
+      "source_location": "L758"
     },
     {
       "id": "src_pages_projectslistpage_statusbadge",
@@ -18905,7 +18905,7 @@
       "file_type": "code",
       "norm_label": "run()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L376"
+      "source_location": "L377"
     },
     {
       "id": "src_pages_projectslistpage_projectslistpage_handlecreateproject",
@@ -18916,7 +18916,7 @@
       "file_type": "code",
       "norm_label": "handlecreateproject()",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L722"
+      "source_location": "L742"
     },
     {
       "id": "src_data_timesheets_addentry",
@@ -53333,7 +53333,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L631",
+      "source_location": "L645",
       "weight": 1.0
     },
     {
@@ -53345,7 +53345,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L632",
+      "source_location": "L646",
       "weight": 1.0
     },
     {
@@ -53357,7 +53357,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L633",
+      "source_location": "L647",
       "weight": 1.0
     },
     {
@@ -53369,7 +53369,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L612",
+      "source_location": "L626",
       "weight": 1.0
     },
     {
@@ -53381,7 +53381,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L391",
+      "source_location": "L392",
       "weight": 1.0
     },
     {
@@ -53405,7 +53405,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L649",
+      "source_location": "L663",
       "weight": 1.0
     },
     {
@@ -53417,7 +53417,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L650",
+      "source_location": "L664",
       "weight": 1.0
     },
     {
@@ -53429,7 +53429,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L669",
+      "source_location": "L683",
       "weight": 1.0
     },
     {
@@ -53441,7 +53441,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L685",
+      "source_location": "L699",
       "weight": 1.0
     },
     {
@@ -53453,7 +53453,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L710",
+      "source_location": "L730",
       "weight": 1.0
     },
     {
@@ -53465,7 +53465,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L712",
+      "source_location": "L732",
       "weight": 1.0
     },
     {
@@ -53477,7 +53477,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L723",
+      "source_location": "L743",
       "weight": 1.0
     },
     {
@@ -57485,7 +57485,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L608",
+      "source_location": "L622",
       "weight": 1.0
     },
     {
@@ -57497,7 +57497,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L376",
+      "source_location": "L377",
       "weight": 1.0
     },
     {
@@ -57509,7 +57509,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L738",
+      "source_location": "L758",
       "weight": 1.0
     },
     {
@@ -107601,7 +107601,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L600",
+      "source_location": "L614",
       "weight": 1.0
     },
     {
@@ -107623,7 +107623,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L644",
+      "source_location": "L658",
       "weight": 1.0
     },
     {
@@ -107634,7 +107634,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L648",
+      "source_location": "L662",
       "weight": 1.0
     },
     {
@@ -107689,7 +107689,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L714",
+      "source_location": "L734",
       "weight": 1.0
     },
     {
@@ -107700,7 +107700,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L718",
+      "source_location": "L738",
       "weight": 1.0
     },
     {
@@ -107711,7 +107711,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectsListPage.tsx",
-      "source_location": "L722",
+      "source_location": "L742",
       "weight": 1.0
     },
     {
@@ -111525,5 +111525,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8d06c08215dd9ce89d33293ccec317f791334c80"
+  "built_at_commit": "395a58600f171f40443761b8094600fa7246d18d"
 }
