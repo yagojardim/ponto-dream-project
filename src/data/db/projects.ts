@@ -21,7 +21,7 @@ export type ProjectTaskRow = Pick<
   'id' | 'key' | 'title' | 'type' | 'status' | 'project_id' | 'parent_id' | 'assignee_id' | 'start_date' | 'due_date' | 'progress'
 >
 
-export type ProjectProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
+export type ProjectProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color' | 'can_create_projects'>
 export type ProjectMemberRow = Pick<Tables['project_members']['Row'], 'project_id' | 'profile_id' | 'project_role'>
 export type ProjectBoardRow = Pick<Tables['boards']['Row'], 'id' | 'project_id' | 'name' | 'board_type'>
 
@@ -62,7 +62,7 @@ export async function listProjects(): Promise<ProjectsData> {
       .select('id, key, title, type, status, project_id, parent_id, assignee_id, start_date, due_date, progress')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
 
-    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
+    supabase.from('profiles').select('id, name, avatar_initials, avatar_color, can_create_projects').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('project_members').select('project_id, profile_id, project_role').eq('tenant_id', tid),
     supabase.from('boards').select('id, project_id, name, board_type').eq('tenant_id', tid).is('archived_at', null),
 
