@@ -446,7 +446,8 @@ export default function TimelinePage() {
   const filteredItems = useMemo(() => {
     if (!data || !selectedProjects) return []
     return data.workItems.filter(w => {
-      if (!spans[w.id]) return false
+      // Itens sem data (sem data própria, sem sprint e projeto sem período) continuam
+      // na lista, marcados como "sem data" — só não desenham barra até serem agendados.
       if (!selectedProjects.has(w.project_id)) return false
       if (filters.status && w.status !== filters.status) return false
       if (filters.type && w.type !== filters.type) return false
@@ -914,6 +915,10 @@ export default function TimelinePage() {
                       <span style={{ color: T.accent, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{wi.key}</span>
                       {showTitle && (
                         <span style={{ color: T.text2, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={wi.title}>{wi.title}</span>
+                      )}
+                      {!span && (
+                        <span title="Sem data ou sprint — defina para posicionar na linha do tempo"
+                          style={{ flexShrink: 0, fontSize: 9, fontWeight: 700, color: T.text3, background: `${T.text3}22`, borderRadius: 5, padding: '1px 5px' }}>sem data</span>
                       )}
                     </div>
                     {showMeta && (
