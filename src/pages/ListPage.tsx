@@ -192,6 +192,34 @@ export default function ListPage() {
     search: search.trim() || undefined,
   }), [fProject, fStatus, fPriority, fType, fAssignee, fSprint, fEpic, fFeature, search])
 
+  // Opções em cascata: Épico/Funcionalidade/Sprint respeitam o Projeto selecionado
+  // (e Funcionalidade respeita o Épico). Quando não há projeto, mostram tudo.
+  const visibleEpics = useMemo(
+    () => (fProject ? epics.filter(e => e.project_id === fProject) : epics),
+    [epics, fProject],
+  )
+  const visibleSprints = useMemo(
+    () => (fProject ? sprints.filter(s => s.project_id === fProject) : sprints),
+    [sprints, fProject],
+  )
+  const visibleFeatures = useMemo(() => {
+    if (fEpic) return features.filter(f => f.epic_id === fEpic)
+    if (fProject) {
+      const epicIds = new Set(visibleEpics.map(e => e.id))
+      return features.filter(f => f.epic_id != null && epicIds.has(f.epic_id))
+    }
+    return features
+  }, [features, fEpic, fProject, visibleEpics])
+
+  // Limpa seleções que saíram de escopo (ex.: trocou de projeto e o épico não pertence a ele).
+  useEffect(() => {
+    if (fEpic && !visibleEpics.some(e => e.id === fEpic)) setFEpic('')
+    if (fSprint && !visibleSprints.some(s => s.id === fSprint)) setFSprint('')
+  }, [visibleEpics, visibleSprints, fEpic, fSprint])
+  useEffect(() => {
+    if (fFeature && !visibleFeatures.some(f => f.id === fFeature)) setFFeature('')
+  }, [visibleFeatures, fFeature])
+
   const load = useCallback(async (f: ListFilters) => {
     setLoading(true)
     setError(null)
@@ -534,15 +562,15 @@ export default function ListPage() {
         </select>
         <select value={fSprint} onChange={e => setFSprint(e.target.value)} style={selectStyle} aria-label="Sprint">
           <option value="">Sprint</option>
-          {sprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          {visibleSprints.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         <select value={fEpic} onChange={e => setFEpic(e.target.value)} style={selectStyle} aria-label="Épico">
           <option value="">Épico</option>
-          {epics.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+          {visibleEpics.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
         <select value={fFeature} onChange={e => setFFeature(e.target.value)} style={selectStyle} aria-label="Funcionalidade">
           <option value="">Funcionalidade</option>
-          {features.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          {visibleFeatures.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
         </select>
         <span data-tour="list-group" style={{color:T.text3,fontSize:13,marginLeft:4}}>Agrupar:</span>
         {(['none','sprint','epic'] as GroupBy[]).map(g => (
