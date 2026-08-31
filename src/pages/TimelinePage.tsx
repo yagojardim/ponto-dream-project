@@ -271,7 +271,30 @@ function TimelineSkeleton() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 type Row =
   | { kind: 'group'; id: string; level: 0 | 1; label: string; color: string; count: number }
-  | { kind: 'item'; id: string; item: WorkItemRow; color: string }
+  | { kind: 'item'; id: string; item: WorkItemRow; color: string; depth: number }
+
+/** Ordena itens de um grupo colocando cada filho (parent_id) logo abaixo do pai, com profundidade. */
+function orderByParent(items: WorkItemRow[]): { item: WorkItemRow; depth: number }[] {
+  const ids = new Set(items.map(i => i.id))
+  const childrenOf = new Map<string, WorkItemRow[]>()
+  const roots: WorkItemRow[] = []
+  items.forEach(i => {
+    const p = i.parent_id
+    if (p && ids.has(p)) {
+      const arr = childrenOf.get(p) ?? []
+      arr.push(i); childrenOf.set(p, arr)
+    } else {
+      roots.push(i)
+    }
+  })
+  const out: { item: WorkItemRow; depth: number }[] = []
+  const walk = (i: WorkItemRow, depth: number) => {
+    out.push({ item: i, depth })
+    ;(childrenOf.get(i.id) ?? []).forEach(c => walk(c, depth + 1))
+  }
+  roots.forEach(r => walk(r, 0))
+  return out
+}
 
 export default function TimelinePage() {
   const { activeUser } = useSession()
@@ -494,14 +517,14 @@ export default function TimelinePage() {
           const eKey = `project:${project.id}:epic:${epic.id}`
           out.push({ kind: 'group', id: eKey, level: 1, label: epic.name, color: ec, count: epicItems.length })
           if (collapsed.has(eKey)) return
-          epicItems.forEach(item => out.push({ kind: 'item', id: item.id, item, color: ec }))
+          orderByParent(epicItems).forEach(({ item, depth }) => out.push({ kind: 'item', id: item.id, item, color: ec, depth }))
         })
 
         const orphans = items.filter(i => !i.epic_id || !epics.some(e => e.id === i.epic_id))
         if (orphans.length > 0) {
           const oKey = `project:${project.id}:epic:__none`
           out.push({ kind: 'group', id: oKey, level: 1, label: 'Sem épico', color: T.text3, count: orphans.length })
-          if (!collapsed.has(oKey)) orphans.forEach(item => out.push({ kind: 'item', id: item.id, item, color: T.text3 }))
+          if (!collapsed.has(oKey)) orderByParent(orphans).forEach(({ item, depth }) => out.push({ kind: 'item', id: item.id, item, color: T.text3, depth }))
         }
       })
       return out
@@ -531,7 +554,7 @@ export default function TimelinePage() {
             const fKey = `project:${project.id}:feature:${key}`
             out.push({ kind: 'group', id: fKey, level: 1, label: g.label, color: fc, count: g.items.length })
             if (collapsed.has(fKey)) return
-            g.items.forEach(item => out.push({ kind: 'item', id: item.id, item, color: fc }))
+            orderByParent(g.items).forEach(({ item, depth }) => out.push({ kind: 'item', id: item.id, item, color: fc, depth }))
           })
       })
       return out
@@ -570,7 +593,7 @@ export default function TimelinePage() {
       .forEach(([key, b]) => {
         out.push({ kind: 'group', id: key, level: 0, label: b.label, color: b.color, count: b.items.length })
         if (collapsed.has(key)) return
-        b.items.forEach(item => out.push({ kind: 'item', id: item.id, item, color: b.color }))
+        orderByParent(b.items).forEach(({ item, depth }) => out.push({ kind: 'item', id: item.id, item, color: b.color, depth }))
       })
 
     return out
@@ -902,10 +925,13 @@ export default function TimelinePage() {
                 const statusColor = statusCfg?.color ?? T.text3
                 return (
                   <div key={`i-${row.id}`}
-                    style={{ height: ROW_H, display: 'flex', alignItems: 'center', padding: '0 12px 0 32px', borderBottom: `1px solid ${T.border}`, background: hovered === row.id ? T.bgSurface2 : T.bgSurface, cursor: 'pointer' }}
+                    style={{ height: ROW_H, display: 'flex', alignItems: 'center', padding: `0 12px 0 ${32 + row.depth * 16}px`, borderBottom: `1px solid ${T.border}`, background: hovered === row.id ? T.bgSurface2 : T.bgSurface, cursor: 'pointer' }}
                     onClick={() => setSelectedId(wi.id)}
                     onMouseEnter={() => setHovered(row.id)} onMouseLeave={() => setHovered(null)}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
+                      {row.depth > 0 && (
+                        <span style={{ color: T.text3, fontSize: 11, flexShrink: 0, lineHeight: 1, marginRight: 1 }}>&#x2514;</span>
+                      )}
                       {(() => {
                         const g = TYPE_GLYPH[String(wi.type ?? '').toLowerCase()]
                         return g ? (
