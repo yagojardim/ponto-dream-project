@@ -3,7 +3,7 @@ import { T } from './ds/tokens'
 import { HelpHint } from './ds/HelpHint'
 import { listLinkableItems } from '@/data/db/workItem'
 
-interface LinkableIssue { key: string; title: string }
+interface LinkableIssue { key: string; title: string; projectName: string }
 
 const REL_TYPES = [
   'bloqueia',
@@ -34,21 +34,22 @@ export function AddRelationModal({ currentIssueKey, projectId, excludeId, onClos
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!projectId) { setIssues([]); return }
     let alive = true
     setLoading(true)
-    listLinkableItems(projectId, excludeId ?? undefined)
-      .then(rows => { if (alive) setIssues(rows.map(r => ({ key: r.key, title: r.title }))) })
+    listLinkableItems(projectId ?? undefined, excludeId ?? undefined)
+      .then(rows => { if (alive) setIssues(rows.map(r => ({ key: r.key, title: r.title, projectName: r.projectName }))) })
       .catch(() => { if (alive) setIssues([]) })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [projectId, excludeId])
 
+  const q = query.toLowerCase()
   const filtered = issues.filter(
     i =>
       i.key !== currentIssueKey &&
-      (i.key.toLowerCase().includes(query.toLowerCase()) ||
-        i.title.toLowerCase().includes(query.toLowerCase()))
+      (i.key.toLowerCase().includes(q) ||
+        i.title.toLowerCase().includes(q) ||
+        i.projectName.toLowerCase().includes(q))
   ).slice(0, 50)
 
   function handleSelect(key: string) {
@@ -139,7 +140,10 @@ export function AddRelationModal({ currentIssueKey, projectId, excludeId, onClos
                   fontSize: 10, fontWeight: 700, fontFamily: 'monospace',
                   padding: '2px 6px', borderRadius: 4, background: T.accent, color: '#fff',
                 }}>{selected}</span>
-                <span style={{ flex: 1, fontSize: 12, color: T.text1 }}>{selectedIssue?.title}</span>
+                <span style={{ flex: 1, fontSize: 12, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {selectedIssue?.title}
+                  {selectedIssue?.projectName && <span style={{ marginLeft: 6, fontSize: 10, color: T.text3 }}>· {selectedIssue.projectName}</span>}
+                </span>
                 <button
                   onClick={() => setSelected(null)}
                   style={{ fontSize: 14, color: T.text3, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}
@@ -196,7 +200,10 @@ export function AddRelationModal({ currentIssueKey, projectId, excludeId, onClos
                           padding: '2px 6px', borderRadius: 4, background: T.accentDim,
                           color: T.accent, flexShrink: 0,
                         }}>{issue.key}</span>
-                        <span style={{ fontSize: 12, color: T.text1 }}>{issue.title}</span>
+                        <span style={{ fontSize: 12, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{issue.title}</span>
+                        {issue.projectName && (
+                          <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{issue.projectName}</span>
+                        )}
                       </button>
                     ))}
                   </div>
