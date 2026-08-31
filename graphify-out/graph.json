@@ -6205,7 +6205,7 @@
       "file_type": "code",
       "norm_label": "props",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L16"
+      "source_location": "L17"
     },
     {
       "id": "src_components_filterbuilder_fieldkey",
@@ -23620,7 +23620,7 @@
       "file_type": "code",
       "norm_label": "boardsettingsmodal()",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L35"
+      "source_location": "L36"
     },
     {
       "id": "src_components_boardsettingsmodal_boardsettingsmodal_run",
@@ -23631,7 +23631,7 @@
       "file_type": "code",
       "norm_label": "run()",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L58"
+      "source_location": "L67"
     },
     {
       "id": "src_components_boardsettingsmodal_boardsettingsmodal_toggle",
@@ -23642,7 +23642,7 @@
       "file_type": "code",
       "norm_label": "toggle()",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L54"
+      "source_location": "L63"
     },
     {
       "id": "src_components_boardsettingsmodal_isdefaultboard",
@@ -23653,7 +23653,7 @@
       "file_type": "code",
       "norm_label": "isdefaultboard()",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L25"
+      "source_location": "L26"
     },
     {
       "id": "src_components_filterbuilder_conditionsfromfilter",
@@ -32622,7 +32622,7 @@
       "file_type": "code",
       "norm_label": "inputstyle",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L14"
+      "source_location": "L15"
     },
     {
       "id": "src_components_filterbuilder",
@@ -33539,7 +33539,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L50",
+      "source_location": "L52",
       "weight": 1.0
     },
     {
@@ -33551,7 +33551,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L73",
+      "source_location": "L82",
       "weight": 1.0
     },
     {
@@ -33563,7 +33563,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L76",
+      "source_location": "L85",
       "weight": 1.0
     },
     {
@@ -33575,7 +33575,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L81",
+      "source_location": "L90",
       "weight": 1.0
     },
     {
@@ -33587,7 +33587,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L82",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -55907,7 +55907,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L54",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -55919,7 +55919,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L58",
+      "source_location": "L67",
       "weight": 1.0
     },
     {
@@ -58392,7 +58392,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L17",
+      "source_location": "L18",
       "weight": 1.0
     },
     {
@@ -83274,7 +83274,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0
     },
     {
@@ -83285,7 +83285,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -83296,7 +83296,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L25",
+      "source_location": "L26",
       "weight": 1.0
     },
     {
@@ -83307,7 +83307,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L35",
+      "source_location": "L36",
       "weight": 1.0
     },
     {
@@ -112147,5 +112147,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5b121b67ea2da6ecff28554eae152c6cbdb4fcf6"
+  "built_at_commit": "c77e7cf3cbb91e3df1e11a6178d745112fc90f06"
 }
