@@ -10,6 +10,7 @@ import {
   type VisibleBoard,
 } from '@/data/db/boards'
 import { updateBoard, type BoardFilter } from '@/data/db/board'
+import { fetchBoardFilterOptions, type BoardFilterOptions } from '@/data/db/filterOptions'
 
 const inputStyle = { background: '#141926', border: '1px solid #2f3547', color: '#e8ecf4' } as const
 
@@ -44,12 +45,20 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
   const initialFilter = (board.filter ?? { conditions: [], logic: 'AND' }) as BoardFilter
   const [boardFilter, setBoardFilter] = useState<BoardFilter>(initialFilter)
   const [filterDirty, setFilterDirty] = useState(false)
+  const [filterOpts, setFilterOpts] = useState<BoardFilterOptions>({ assignee_id: [], sprint_id: [], epic_id: [] })
 
   useEffect(() => {
     let alive = true
     fetchBoardTeamOptions(board.tenant_id).then(rows => { if (alive) setOptions(rows) })
     return () => { alive = false }
   }, [board.tenant_id])
+
+  // Opções reais (Responsável/Sprint/Épico) do projeto do board para o Construtor de Filtros.
+  useEffect(() => {
+    let alive = true
+    fetchBoardFilterOptions(board.project_id).then(opts => { if (alive) setFilterOpts(opts) })
+    return () => { alive = false }
+  }, [board.project_id])
 
   function toggle(id: string) {
     setTeam(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]))
@@ -194,6 +203,7 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
             <FilterBuilder
               value={boardFilter}
               onChange={f => { setBoardFilter(f); setFilterDirty(true) }}
+              options={filterOpts}
               compact
             />
           </div>
