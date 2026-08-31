@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Avatar } from '../components/ds/Avatar'
 import { NewProjectModal, type NewProjectInput } from '../components/NewProjectModal'
 import { WorkItemDetail } from '../components/WorkItemDetail'
@@ -686,6 +686,22 @@ export default function ProjectsListPage({ onNav }: Props) {
     [rows, tasks, profiles, boards],
   )
 
+  /** Projetos agrupados por Cliente (Cliente → Projetos). "Sem cliente" vai por último. */
+  const projectsByClient = useMemo(() => {
+    const groups = new Map<string, Project[]>()
+    for (const p of projects) {
+      const key = p.client && p.client !== '—' ? p.client : 'Sem cliente'
+      const arr = groups.get(key) ?? []
+      arr.push(p)
+      groups.set(key, arr)
+    }
+    return [...groups.entries()]
+      .sort((a, b) =>
+        a[0] === 'Sem cliente' ? 1 : b[0] === 'Sem cliente' ? -1 : a[0].localeCompare(b[0]),
+      )
+      .map(([client, items]) => ({ client, items }))
+  }, [projects])
+
   // Keep the open modal in sync with reloaded data
   useEffect(() => {
     setEditing(prev => (prev ? projects.find(p => p.id === prev.id) ?? null : null))
@@ -789,15 +805,32 @@ export default function ProjectsListPage({ onNav }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {projects.map(p => (
-                  <ProjectListRow
-                    key={p.id}
-                    project={p}
-                    canManage={canManageProjects}
-                    onOpenProj={handleOpenProject}
-                    onOpenTask={handleOpenTask}
-                    onEdit={setEditing}
-                  />
+                {projectsByClient.map(group => (
+                  <Fragment key={group.client}>
+                    <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid #1c2c45' }}>
+                      <td colSpan={7} className="py-2 px-6">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#3B82F6' }} />
+                          <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#8aa0bd' }}>
+                            {group.client}
+                          </span>
+                          <span className="text-[10px]" style={{ color: '#546278' }}>
+                            · {group.items.length} {group.items.length === 1 ? 'projeto' : 'projetos'}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                    {group.items.map(p => (
+                      <ProjectListRow
+                        key={p.id}
+                        project={p}
+                        canManage={canManageProjects}
+                        onOpenProj={handleOpenProject}
+                        onOpenTask={handleOpenTask}
+                        onEdit={setEditing}
+                      />
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
