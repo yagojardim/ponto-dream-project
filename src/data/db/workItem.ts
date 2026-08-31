@@ -332,6 +332,24 @@ export async function removeAcceptanceCriterion(
 }
 
 /** Links two work items. `targetKey` accepts the human key (WEB-101) or an id. */
+/** Demandas reais do projeto disponíveis para vincular (exclui a própria e arquivadas). */
+export async function listLinkableItems(
+  projectId: string, excludeId?: string,
+): Promise<{ id: string; key: string; title: string }[]> {
+  const tid = DEFAULT_TENANT_ID
+  if (!projectId) return []
+  const { data, error } = await supabase
+    .from('work_items')
+    .select('id, key, title')
+    .eq('tenant_id', tid)
+    .eq('project_id', projectId)
+    .is('archived_at', null)
+    .order('key')
+  if (error) throw fail('work_items', error.message)
+  const rows = (data ?? []) as { id: string; key: string; title: string }[]
+  return excludeId ? rows.filter(r => r.id !== excludeId) : rows
+}
+
 export async function addDependency(
   sourceId: string, targetKeyOrId: string, relationType: string, actorName = 'Sistema',
 ): Promise<{ relation: DependencyRow; item: RelatedItemRow }> {
