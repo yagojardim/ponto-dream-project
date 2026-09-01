@@ -260,7 +260,8 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
   ],
 
   storage: [
-    { selector: '[data-tour="st-tenant"]', navigateTo: 'storage', placement: 'bottom', title: 'Consumo do tenant', body: 'Quanto do armazenamento contratado já foi usado, o plano atual e o botão de upgrade. Ao atingir o limite é preciso subir de plano.', optional: true },
+    { selector: '[data-tour="st-tenant"]', navigateTo: 'storage', placement: 'bottom', title: 'Consumo do tenant', body: 'Quanto do armazenamento contratado já foi usado — em MB/GB e em %, com o número de arquivos e a barra de uso.', optional: true },
+    { selector: '[data-tour="st-plan"]', placement: 'left', title: 'Plano e upgrade', body: 'A etiqueta mostra o plano de armazenamento atual do tenant (ex.: "free"). O botão "Fazer upgrade" abre os planos disponíveis para contratar mais espaço — necessário ao se aproximar do limite. (Aparece apenas para quem pode gerenciar o plano.)', optional: true },
     { selector: '[data-tour="st-buckets"]', placement: 'bottom', title: 'Por status', body: 'O consumo distribuído por situação dos projetos. Clique num card para filtrar a tabela abaixo.', optional: true },
     { selector: '[data-tour="st-table"]', placement: 'top', title: 'Consumo por projeto', body: 'A tabela lista cada projeto e seu consumo. Em "Arquivos" você vê os anexos; "Abrir" leva ao board do projeto.', optional: true },
   ],
