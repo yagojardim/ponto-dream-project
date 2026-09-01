@@ -53491,7 +53491,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2892",
+      "source_location": "L2901",
       "weight": 1.0
     },
     {
@@ -112511,5 +112511,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e98d00d7e7b3156efbacb59291d74252308b6b45"
+  "built_at_commit": "1c938100df2cb8d1bb36ff95b2425c58b49ccdf6"
 }
