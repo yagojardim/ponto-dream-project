@@ -2505,6 +2505,8 @@ interface ProjectPageProps {
 export default function ProjectPage({ boardId, projectId, onBackToBoards }: ProjectPageProps = {}) {
   const [tab, setTab]     = useState<Tab>('Board')
   const [quickCreate, setQuickCreate] = useState<{colStatus?:string; sprintId?:string}|null>(null)
+  // Demanda recém-criada pelo quadro: abre no drawer lateral direito.
+  const [createdItemId, setCreatedItemId] = useState<string|null>(null)
   const [completingSprint, setCompletingSprint] = useState<SprintDef|null>(null)
   const [startingSprint, setStartingSprint] = useState<SprintDef|null>(null)
   const [creatingSprint, setCreatingSprint] = useState(false)
@@ -2682,6 +2684,8 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
 
       await loadBoard()
       setToast(`Demanda ${created.key} criada`)
+      // Abre a demanda recém-criada no drawer lateral (padrão tradicional).
+      setCreatedItemId(created.id)
     } catch (err) {
       setToast(`Falha ao criar a demanda: ${err instanceof Error ? err.message : 'erro desconhecido'}`)
     }
@@ -2977,6 +2981,14 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
         sprints={dbSprints.map(s => ({ id: s.id, name: s.name, state: s.state }))}
         onCreate={data => { void handleCreateDemand(data) }}
 
+      />
+    )}
+    {createdItemId && (
+      <WorkItemDetail
+        itemId={createdItemId}
+        mode="drawer"
+        onUpdate={() => { void loadBoard() }}
+        onClose={() => { setCreatedItemId(null); void loadBoard() }}
       />
     )}
     {creatingSprint && (
