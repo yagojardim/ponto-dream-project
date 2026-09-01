@@ -446,6 +446,8 @@ function ShellWithRole({
       }, activeUser.name)
 
       setDemandToast(`Demanda ${created.key} criada`)
+      // Abre a demanda recém-criada para o usuário já revisar/ajustar.
+      navTo("issue", created.id)
     } catch (err) {
       setDemandToast(`Falha ao criar a demanda: ${err instanceof Error ? err.message : "erro desconhecido"}`)
     } finally {
