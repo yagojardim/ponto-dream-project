@@ -18011,7 +18011,7 @@
       "file_type": "code",
       "norm_label": "run()",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L67"
+      "source_location": "L68"
     },
     {
       "id": "src_components_boardsettingsmodal_boardsettingsmodal_toggle",
@@ -18022,7 +18022,7 @@
       "file_type": "code",
       "norm_label": "toggle()",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L63"
+      "source_location": "L64"
     },
     {
       "id": "src_components_boardsettingsmodal_isdefaultboard",
@@ -33595,7 +33595,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0
     },
     {
@@ -33607,7 +33607,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L59",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -33619,7 +33619,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L82",
+      "source_location": "L83",
       "weight": 1.0
     },
     {
@@ -33631,7 +33631,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L85",
+      "source_location": "L86",
       "weight": 1.0
     },
     {
@@ -33643,7 +33643,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L90",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -33655,7 +33655,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -56047,7 +56047,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L63",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
@@ -56059,7 +56059,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/BoardSettingsModal.tsx",
-      "source_location": "L67",
+      "source_location": "L68",
       "weight": 1.0
     },
     {
@@ -112487,5 +112487,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4066e7718f607fb1402fccc7a29d30513ef97d87"
+  "built_at_commit": "623d7541f41f17c664372956f89900c33bc7faba"
 }
