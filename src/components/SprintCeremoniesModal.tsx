@@ -64,6 +64,7 @@ export function SprintCeremoniesModal({
         <>
           <Button variant="ghost" size="sm" onClick={onClose} disabled={busy}>Cancelar</Button>
           <Button
+            data-tour="sc-generate"
             variant="primary"
             size="sm"
             loading={busy}
@@ -76,9 +77,10 @@ export function SprintCeremoniesModal({
       }
     >
       <div className="px-6 py-4 flex flex-col gap-3">
-        {slots.map(slot => (
+        {slots.map((slot, i) => (
           <div
             key={slot.id}
+            data-tour={i === 0 ? 'sc-slot' : undefined}
             className="rounded-xl p-3 flex flex-col gap-2.5"
             style={{
               border: `1px solid ${T.border}`,
