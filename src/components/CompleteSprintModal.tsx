@@ -122,7 +122,7 @@ export function CompleteSprintModal({ sprint, stats, remainingItems = [], nextSp
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div data-tour="cs-summary" style={{ display: 'flex', gap: 12 }}>
             {[
               { label: 'Concluídas', value: stats.done, color: T.success, bg: T.successDim },
               { label: 'Restantes', value: stats.remaining, color: T.warn, bg: T.warnDim },
@@ -154,7 +154,7 @@ export function CompleteSprintModal({ sprint, stats, remainingItems = [], nextSp
                 <p style={{ fontSize: 12, fontWeight: 600, color: T.text2 }}>
                   Destino de cada demanda restante ({remainingItems.length})
                 </p>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div data-tour="cs-bulk" style={{ display: 'flex', gap: 6 }}>
                   <button
                     onClick={() => setAll('next-sprint')}
                     disabled={!hasNext}
@@ -175,7 +175,7 @@ export function CompleteSprintModal({ sprint, stats, remainingItems = [], nextSp
                 </div>
               </div>
 
-              <div style={{
+              <div data-tour="cs-items" style={{
                 display: 'flex', flexDirection: 'column', gap: 6,
                 maxHeight: 260, overflowY: 'auto',
               }}>
@@ -310,6 +310,7 @@ export function CompleteSprintModal({ sprint, stats, remainingItems = [], nextSp
             }}
           >Cancelar</button>
           <button
+            data-tour="cs-confirm"
             onClick={handleConfirm}
             disabled={commentMissing}
             title={commentMissing ? 'Descreva o encerramento / motivo do transbordo' : undefined}
