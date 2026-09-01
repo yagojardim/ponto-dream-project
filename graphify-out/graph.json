@@ -17681,7 +17681,7 @@
       "file_type": "code",
       "norm_label": "handlecompletesprint()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2753"
+      "source_location": "L2756"
     },
     {
       "id": "src_pages_projectpage_projectpage_handlecreatedemand",
@@ -17692,7 +17692,7 @@
       "file_type": "code",
       "norm_label": "handlecreatedemand()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2634"
+      "source_location": "L2637"
     },
     {
       "id": "src_pages_projectpage_projectpage_handlecreatesprint",
@@ -17703,7 +17703,7 @@
       "file_type": "code",
       "norm_label": "handlecreatesprint()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2696"
+      "source_location": "L2699"
     },
     {
       "id": "src_pages_projectpage_projectpage_handleeditsprint",
@@ -17714,7 +17714,7 @@
       "file_type": "code",
       "norm_label": "handleeditsprint()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2777"
+      "source_location": "L2780"
     },
     {
       "id": "src_pages_projectpage_projectpage_handlegenerateceremonies",
@@ -17725,7 +17725,7 @@
       "file_type": "code",
       "norm_label": "handlegenerateceremonies()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2726"
+      "source_location": "L2729"
     },
     {
       "id": "src_pages_projectpage_projectpage_handlestartsprintdb",
@@ -17736,7 +17736,7 @@
       "file_type": "code",
       "norm_label": "handlestartsprintdb()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2796"
+      "source_location": "L2799"
     },
     {
       "id": "src_pages_projectpage_projectpage_movecard",
@@ -17747,7 +17747,7 @@
       "file_type": "code",
       "norm_label": "movecard()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2606"
+      "source_location": "L2609"
     },
     {
       "id": "src_pages_projectpage_projectpage_patchdbissue",
@@ -17758,7 +17758,7 @@
       "file_type": "code",
       "norm_label": "patchdbissue()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2602"
+      "source_location": "L2605"
     },
     {
       "id": "src_pages_projectpage_projectpage_quickcreatecard",
@@ -17769,7 +17769,7 @@
       "file_type": "code",
       "norm_label": "quickcreatecard()",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2616"
+      "source_location": "L2619"
     },
     {
       "id": "src_pages_projectpage_togglearrtop",
@@ -53371,7 +53371,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2529",
+      "source_location": "L2532",
       "weight": 1.0
     },
     {
@@ -53383,7 +53383,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2535",
+      "source_location": "L2538",
       "weight": 1.0
     },
     {
@@ -53395,7 +53395,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2557",
+      "source_location": "L2560",
       "weight": 1.0
     },
     {
@@ -53407,7 +53407,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2565",
+      "source_location": "L2568",
       "weight": 1.0
     },
     {
@@ -53419,7 +53419,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2572",
+      "source_location": "L2575",
       "weight": 1.0
     },
     {
@@ -53431,7 +53431,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2580",
+      "source_location": "L2583",
       "weight": 1.0
     },
     {
@@ -53443,7 +53443,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2584",
+      "source_location": "L2587",
       "weight": 1.0
     },
     {
@@ -53455,7 +53455,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2720",
+      "source_location": "L2723",
       "weight": 1.0
     },
     {
@@ -53467,7 +53467,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2721",
+      "source_location": "L2724",
       "weight": 1.0
     },
     {
@@ -53479,7 +53479,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2745",
+      "source_location": "L2748",
       "weight": 1.0
     },
     {
@@ -53491,7 +53491,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2902",
+      "source_location": "L2905",
       "weight": 1.0
     },
     {
@@ -53503,7 +53503,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2640",
+      "source_location": "L2643",
       "weight": 1.0
     },
     {
@@ -53515,7 +53515,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2661",
+      "source_location": "L2664",
       "weight": 1.0
     },
     {
@@ -53527,7 +53527,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2663",
+      "source_location": "L2666",
       "weight": 1.0
     },
     {
@@ -53539,7 +53539,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2670",
+      "source_location": "L2673",
       "weight": 1.0
     },
     {
@@ -53551,7 +53551,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2728",
+      "source_location": "L2731",
       "weight": 1.0
     },
     {
@@ -53563,7 +53563,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2609",
+      "source_location": "L2612",
       "weight": 1.0
     },
     {
@@ -53575,7 +53575,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2619",
+      "source_location": "L2622",
       "weight": 1.0
     },
     {
@@ -53587,7 +53587,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2629",
+      "source_location": "L2632",
       "weight": 1.0
     },
     {
@@ -57679,7 +57679,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2602",
+      "source_location": "L2605",
       "weight": 1.0
     },
     {
@@ -57691,7 +57691,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2634",
+      "source_location": "L2637",
       "weight": 1.0
     },
     {
@@ -57703,7 +57703,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2696",
+      "source_location": "L2699",
       "weight": 1.0
     },
     {
@@ -57715,7 +57715,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2726",
+      "source_location": "L2729",
       "weight": 1.0
     },
     {
@@ -57727,7 +57727,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2753",
+      "source_location": "L2756",
       "weight": 1.0
     },
     {
@@ -57739,7 +57739,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2777",
+      "source_location": "L2780",
       "weight": 1.0
     },
     {
@@ -57751,7 +57751,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2796",
+      "source_location": "L2799",
       "weight": 1.0
     },
     {
@@ -108410,7 +108410,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2606",
+      "source_location": "L2609",
       "weight": 1.0
     },
     {
@@ -108421,7 +108421,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2616",
+      "source_location": "L2619",
       "weight": 1.0
     },
     {
@@ -111786,7 +111786,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/pages/ProjectPage.tsx",
-      "source_location": "L2574",
+      "source_location": "L2577",
       "weight": 1.0
     },
     {
@@ -112511,5 +112511,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "41df8d622278d4f68e28d4df4865fd56b3384e43"
+  "built_at_commit": "41f5f83568575bab8ebffdea52c3d7775a29644b"
 }
