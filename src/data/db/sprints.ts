@@ -13,7 +13,7 @@ export type SprintState = 'planned' | 'active' | 'completed'
 
 export type SprintRow = Pick<
   Tables['sprints']['Row'],
-  'id' | 'project_id' | 'name' | 'goal' | 'state' | 'start_date' | 'end_date' | 'velocity' | 'completed_at' | 'metadata'
+  'id' | 'project_id' | 'board_id' | 'name' | 'goal' | 'state' | 'start_date' | 'end_date' | 'velocity' | 'completed_at' | 'metadata'
 >
 
 /** Outcome of each committed item at sprint closure. */
@@ -92,7 +92,7 @@ export type SprintItemRow = Pick<
   | 'story_points' | 'assignee_id' | 'epic_id' | 'is_blocked' | 'project_id'
 >
 
-const SPRINT_FIELDS = 'id, project_id, name, goal, state, start_date, end_date, velocity, completed_at, metadata'
+const SPRINT_FIELDS = 'id, project_id, board_id, name, goal, state, start_date, end_date, velocity, completed_at, metadata'
 const ITEM_FIELDS =
   'id, key, title, type, status, priority, sprint_id, story_points, assignee_id, epic_id, is_blocked, project_id'
 
@@ -131,7 +131,7 @@ export function sortSprintsByStartDate<T extends { start_date?: string | null; s
 }
 
 /** Lists the sprints of a project (planned / active / completed), oldest first. */
-export async function listSprints(projectId?: string): Promise<SprintRow[]> {
+export async function listSprints(projectId?: string, boardId?: string): Promise<SprintRow[]> {
   let query = supabase
     .from('sprints')
     .select(SPRINT_FIELDS)
@@ -140,6 +140,7 @@ export async function listSprints(projectId?: string): Promise<SprintRow[]> {
     .order('start_date', { ascending: true, nullsFirst: false })
 
   if (projectId) query = query.eq('project_id', projectId)
+  if (boardId) query = query.eq('board_id', boardId)
 
   const { data, error } = await query
   if (error) throw new Error(missingTableMessage('sprints', error.message))
@@ -205,6 +206,8 @@ async function writeScopeEvents(
 
 export interface CreateSprintInput {
   projectId: string
+  /** Board (frente) dono da sprint. Sprints agora são por board, não por projeto. */
+  boardId?: string | null
   name: string
   goal?: string | null
   startDate?: string | null
@@ -219,6 +222,7 @@ export async function createSprint(input: CreateSprintInput): Promise<SprintRow>
   const { data, error } = await supabase.from('sprints').insert({
     tenant_id: DEFAULT_TENANT_ID,
     project_id: input.projectId,
+    board_id: input.boardId ?? null,
     name: input.name,
     goal: input.goal || null,
     start_date: input.startDate || null,
