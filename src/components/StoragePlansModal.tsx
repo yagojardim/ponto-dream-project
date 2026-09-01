@@ -95,7 +95,7 @@ export function StoragePlansModal({
     >
       <div style={{ display: 'grid', gap: 16 }}>
         {/* Current plan */}
-        <div style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div data-tour="sp-current" style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 11, color: T.text3, fontWeight: 600 }}>Plano atual</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: T.text1, marginTop: 2 }}>{currentPlan}</div>
@@ -106,7 +106,7 @@ export function StoragePlansModal({
         </div>
 
         {/* Plans */}
-        <div>
+        <div data-tour="sp-plans">
           <div style={{ fontSize: 12, fontWeight: 700, color: T.text1, marginBottom: 8 }}>Planos</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
             {STORAGE_PLANS.map(p => (
@@ -127,7 +127,7 @@ export function StoragePlansModal({
         </div>
 
         {/* Billing toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div data-tour="sp-billing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: T.text1, marginRight: 4 }}>Add-ons de GB</span>
           {(['monthly', 'yearly'] as Billing[]).map(b => (
             <button key={b} onClick={() => setBilling(b)} style={{
@@ -139,7 +139,7 @@ export function StoragePlansModal({
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+        <div data-tour="sp-packs" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
           {STORAGE_PACKS.map(p => (
             <div key={p.pack} style={card}>
               <div style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>{p.pack}</div>
