@@ -74,13 +74,6 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       optional: true,
     },
     {
-      selector: '[data-tour="board-switcher"]',
-      placement: 'bottom',
-      title: 'Trocar de board',
-      body: 'Alterne entre os boards do projeto. O board padrão mostra todas as demandas.',
-      optional: true,
-    },
-    {
       selector: '[data-tour="board-tabs"]',
       placement: 'bottom',
       title: 'Board / Backlog / Sprints',
@@ -252,6 +245,34 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
     { selector: '[data-tour="ha-filters"]', navigateTo: 'hours-approval', placement: 'bottom', title: 'Fila de aprovação', body: 'Lançamentos agrupados por colaborador; filtre por status e por squad.', optional: true },
     { selector: '[data-tour="ha-actions"]', placement: 'left', title: 'Aprovar ou rejeitar', body: 'Aprove/rejeite item a item, ou use "Aprovar todos / Rejeitar todos" por colaborador.', optional: true },
     { selector: '[data-tour="ha-export"]', placement: 'left', title: 'Exportar CSV', body: 'Leve os dados de horas para relatórios externos.', optional: true },
+  ],
+
+  timeline: [
+    { selector: '[data-tour="tl-intro"]', navigateTo: 'timeline', placement: 'bottom', title: 'Roadmap / Timeline', body: 'A linha do tempo dos itens por período. Arraste as barras para reposicionar as datas — a alteração é salva automaticamente.', optional: true },
+    { selector: '[data-tour="tl-zoom"]', placement: 'bottom', title: 'Zoom', body: 'Ajuste a granularidade da linha do tempo: Semana, Mês ou Trimestre.', optional: true },
+    { selector: '[data-tour="tl-filters"]', placement: 'bottom', title: 'Agrupar e filtrar', body: 'Agrupe por projeto, épico ou sprint e filtre por status, tipo, responsável, sprint e épico para focar o roadmap.', optional: true },
+  ],
+
+  gantt: [
+    { selector: '[data-tour="gantt-projects"]', navigateTo: 'gantt', placement: 'bottom', title: 'Projetos e "Hoje"', body: 'Escolha quais projetos aparecem no cronograma. A marca tracejada "Hoje" indica a data atual.', optional: true },
+    { selector: '[data-tour="gantt-legend"]', placement: 'bottom', title: 'Legenda por projeto', body: 'Cada projeto tem uma cor — use a legenda para identificar as barras no cronograma.', optional: true },
+    { selector: '[data-tour="gantt-grid"]', placement: 'top', title: 'Cronograma', body: 'Cada barra é uma demanda posicionada pelas suas datas; as linhas ligam dependências entre itens. Role para navegar pelo período.', optional: true },
+  ],
+
+  storage: [
+    { selector: '[data-tour="st-tenant"]', navigateTo: 'storage', placement: 'bottom', title: 'Consumo do tenant', body: 'Quanto do armazenamento contratado já foi usado, o plano atual e o botão de upgrade. Ao atingir o limite é preciso subir de plano.', optional: true },
+    { selector: '[data-tour="st-buckets"]', placement: 'bottom', title: 'Por status', body: 'O consumo distribuído por situação dos projetos. Clique num card para filtrar a tabela abaixo.', optional: true },
+    { selector: '[data-tour="st-table"]', placement: 'top', title: 'Consumo por projeto', body: 'A tabela lista cada projeto e seu consumo. Em "Arquivos" você vê os anexos; "Abrir" leva ao board do projeto.', optional: true },
+  ],
+
+  profile: [
+    { selector: '[data-tour="pf-data"]', navigateTo: 'profile', placement: 'bottom', title: 'Seus dados', body: 'Nome, e-mail, papel e organização da sua conta. Alterações de cadastro são feitas pelo administrador do tenant.', optional: true },
+    { selector: '[data-tour="pf-security"]', placement: 'top', title: 'Segurança', body: 'Em "Trocar senha" enviamos um link seguro para você definir uma nova senha.', optional: true },
+  ],
+
+  preferences: [
+    { selector: '[data-tour="pr-theme"]', navigateTo: 'preferences', placement: 'bottom', title: 'Tema', body: 'Escolha entre tema Escuro (recomendado) e Claro. A preferência fica salva apenas neste navegador.', optional: true },
+    { selector: '[data-tour="pr-language"]', placement: 'bottom', title: 'Idioma', body: 'Idioma da interface. Outros idiomas estão em construção.', optional: true },
   ],
 }
 
