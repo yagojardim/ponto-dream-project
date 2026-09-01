@@ -2858,7 +2858,16 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ color: S.t3 }}>
             <path d="M3 2.5L5.5 4.5L3 6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
           </svg>
-          <span className="font-semibold" style={{ color: S.t1 }}>{boardData?.project?.name ?? '—'}</span>
+          <span style={{ color: S.t2 }}>{boardData?.project?.name ?? '—'}</span>
+          {boardData?.board?.name && (
+            <>
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ color: S.t3 }}>
+                <path d="M3 2.5L5.5 4.5L3 6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+              <span className="font-semibold" style={{ color: S.t1 }}>{boardData.board.name}</span>
+              <span className="text-[10px] font-semibold px-1.5 py-px rounded" style={{ background: DS.accentDim, color: DS.accent, marginLeft: 2 }}>board</span>
+            </>
+          )}
         </div>
 
         {/* Tabs */}
