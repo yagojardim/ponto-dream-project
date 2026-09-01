@@ -24,7 +24,7 @@ const ROLE_ALIASES: Record<string, RoleContext> = {
   qa: 'QA', quality: 'QA',
 }
 
-function normalizeRole(raw: string | null | undefined): RoleContext {
+export function normalizeRole(raw: string | null | undefined): RoleContext {
   if (!raw) return 'Dev'
   const key = raw.trim().toLowerCase().replace(/[\s-]+/g, '_')
   return ROLE_ALIASES[key] ?? ROLE_ALIASES[key.replace(/_/g, '')] ?? 'Dev'
