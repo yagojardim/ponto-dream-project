@@ -112,7 +112,7 @@ export default function StoragePage({ onNav }: Props) {
                 <span style={{ fontSize: 11, color: T.text2, background: `${T.accent}14`, border: `1px solid ${T.accent}33`, borderRadius: 6, padding: '4px 10px' }}>
                   Plano: <strong style={{ color: T.text1 }}>{tenant.plan}</strong>
                 </span>
-                {canView && <button onClick={() => setPlansOpen(true)} style={{
+                {canView && <button data-tour="st-upgrade" onClick={() => setPlansOpen(true)} style={{
                   fontSize: 12, color: T.accent, background: `${T.accent}12`, border: `1px solid ${T.accent}33`,
                   borderRadius: 6, padding: '6px 12px', cursor: 'pointer',
                 }}>Fazer upgrade</button>}
