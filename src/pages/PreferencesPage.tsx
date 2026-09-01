@@ -31,7 +31,7 @@ export default function PreferencesPage() {
         </p>
       </header>
 
-      <section className="rounded-2xl p-6" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+      <section data-tour="pr-theme" className="rounded-2xl p-6" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
         <h2 className="m-0 text-[14px] font-semibold" style={{ color: T.text1 }}>Tema</h2>
         <p className="mt-1 mb-4 text-[12px]" style={{ color: T.text2 }}>
           O Altech Project é otimizado para o tema escuro.
@@ -58,7 +58,7 @@ export default function PreferencesPage() {
         </div>
       </section>
 
-      <section className="mt-4 rounded-2xl p-6" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+      <section data-tour="pr-language" className="mt-4 rounded-2xl p-6" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
         <h2 className="m-0 text-[14px] font-semibold" style={{ color: T.text1 }}>Idioma</h2>
         <p className="mt-1 mb-4 text-[12px]" style={{ color: T.text2 }}>
           Idioma da interface. Outros idiomas estão em construção.
