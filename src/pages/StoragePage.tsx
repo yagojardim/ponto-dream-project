@@ -108,7 +108,7 @@ export default function StoragePage({ onNav }: Props) {
                 </div>
                 <div style={{ fontSize: 11, color: T.text3, marginTop: 4 }}>{tenant.fileCount} arquivo(s)</div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div data-tour="st-plan" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 11, color: T.text2, background: `${T.accent}14`, border: `1px solid ${T.accent}33`, borderRadius: 6, padding: '4px 10px' }}>
                   Plano: <strong style={{ color: T.text1 }}>{tenant.plan}</strong>
                 </span>
