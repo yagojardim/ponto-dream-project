@@ -795,14 +795,14 @@ export default function TimelinePage() {
     <div style={{ background: T.bgPage, height: '100%', display: 'flex', flexDirection: 'column', fontFamily: 'inherit', overflow: 'hidden' }}>
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: `1px solid ${T.border}`, background: T.bgSurface, flexShrink: 0 }}>
-        <span style={{ color: T.text1, fontWeight: 700, fontSize: 15 }}>Roadmap — {rangeLabel}</span>
+        <span data-tour="tl-intro" style={{ color: T.text1, fontWeight: 700, fontSize: 15 }}>Roadmap — {rangeLabel}</span>
         <span style={{ color: T.text3, fontSize: 12 }}>Arraste as barras para reposicionar</span>
         {saving.size > 0 && <span style={{ color: T.accent, fontSize: 11 }}>salvando…</span>}
         {saveError && <span style={{ color: T.crit, fontSize: 11 }}>Falha ao salvar: {saveError}</span>}
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
           {/* Zoom toggle */}
-          <div style={{ display: 'flex', border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
+          <div data-tour="tl-zoom" style={{ display: 'flex', border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
             {(['week', 'month', 'quarter'] as Zoom[]).map(z => (
               <button key={z} onClick={() => setZoom(z)}
                 style={{
@@ -822,7 +822,7 @@ export default function TimelinePage() {
       </div>
 
       {/* Filter bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderBottom: `1px solid ${T.border}`, background: T.bgSurface, flexShrink: 0, flexWrap: 'wrap' }}>
+      <div data-tour="tl-filters" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderBottom: `1px solid ${T.border}`, background: T.bgSurface, flexShrink: 0, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 11, color: T.text3, fontWeight: 700 }}>AGRUPAR POR</span>
         <select
           value={groupBy}
