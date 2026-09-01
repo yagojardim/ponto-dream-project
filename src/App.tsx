@@ -5,6 +5,7 @@ import FoundationsPage from "./pages/FoundationsPage"
 import DashboardPage from "./pages/DashboardPage"
 import ProjectPage from "./pages/ProjectPage"
 import IssueDetailPage from "./pages/IssueDetailPage"
+import { WorkItemDetail } from "./components/WorkItemDetail"
 import ClientPortalPage from "./pages/ClientPortalPage"
 import TaskDrawerPage from "./pages/TaskDrawerPage"
 import ProjectsListPage from "./pages/ProjectsListPage"
@@ -386,6 +387,8 @@ function ShellWithRole({
   const [selectedProjectId, setSelectedProjectId] =
     useState<string | undefined>()
   const [selectedIssueId, setSelectedIssueId] = useState<string | undefined>()
+  // Demanda recém-criada: abre no drawer lateral direito (não em tela cheia).
+  const [createdIssueId, setCreatedIssueId] = useState<string | undefined>()
   const [dashboardProjectId, setDashboardProjectId] = useState<string | undefined>()
   const [teamInitialTab, setTeamInitialTab] =
     useState<"membros" | "convites" | "permissoes" | "dashboards">("membros")
@@ -446,8 +449,8 @@ function ShellWithRole({
       }, activeUser.name)
 
       setDemandToast(`Demanda ${created.key} criada`)
-      // Abre a demanda recém-criada para o usuário já revisar/ajustar.
-      navTo("issue", created.id)
+      // Abre a demanda recém-criada no drawer lateral (padrão tradicional).
+      setCreatedIssueId(created.id)
     } catch (err) {
       setDemandToast(`Falha ao criar a demanda: ${err instanceof Error ? err.message : "erro desconhecido"}`)
     } finally {
@@ -494,6 +497,14 @@ function ShellWithRole({
           />
         )}
         {inviteOpen && <InviteMemberModal onClose={() => setInvite(false)} />}
+        {createdIssueId && (
+          <WorkItemDetail
+            itemId={createdIssueId}
+            mode="drawer"
+            onUpdate={() => {}}
+            onClose={() => setCreatedIssueId(undefined)}
+          />
+        )}
         {demandToast && (
           <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", zIndex: 80,
             background: T.bgSurface, border: `1px solid ${T.border}`, color: T.text1,
