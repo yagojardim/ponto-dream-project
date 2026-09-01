@@ -226,6 +226,7 @@ export function fetchBoardTeamOptions(tenantId: string): Promise<BoardTeamOption
 }
 
 export interface BoardSettingsInput {
+  name: string
   description: string
   teamIds: string[]
   periodStart: string
@@ -251,6 +252,7 @@ export async function saveBoardSettings(
       period_end: input.periodEnd || null,
     }
     const { error } = await tbl('boards').update({
+      name: input.name.trim() || board.name,
       description: input.description.trim() || null,
       metadata,
     }).eq('id', board.id).eq('tenant_id', board.tenant_id)
