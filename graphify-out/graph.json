@@ -2749,7 +2749,7 @@
       "file_type": "code",
       "norm_label": "calview",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L958"
+      "source_location": "L960"
     },
     {
       "id": "src_pages_calendarpage_composerprops",
@@ -2773,7 +2773,7 @@
       "file_type": "code",
       "norm_label": "dayviewprops",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L724"
+      "source_location": "L726"
     },
     {
       "id": "src_pages_calendarpage_integrationspanelprops",
@@ -2785,7 +2785,7 @@
       "file_type": "code",
       "norm_label": "integrationspanelprops",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L628"
+      "source_location": "L630"
     },
     {
       "id": "src_data_db_timeline_dependencyrow",
@@ -8705,7 +8705,7 @@
       "file_type": "code",
       "norm_label": "opencreate()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1108"
+      "source_location": "L1110"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_openedit",
@@ -8716,7 +8716,7 @@
       "file_type": "code",
       "norm_label": "openedit()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1114"
+      "source_location": "L1116"
     },
     {
       "id": "src_pages_calendarpage_eventcomposer",
@@ -13468,7 +13468,7 @@
       "file_type": "code",
       "norm_label": "integrationspanel()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L637"
+      "source_location": "L639"
     },
     {
       "id": "src_pages_calendarpage_issueduechip",
@@ -15030,7 +15030,7 @@
       "file_type": "code",
       "norm_label": "handlegenerateceremonies()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1064"
+      "source_location": "L1066"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_handlesave",
@@ -15041,7 +15041,7 @@
       "file_type": "code",
       "norm_label": "handlesave()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1126"
+      "source_location": "L1128"
     },
     {
       "id": "src_data_db_activationtokens_activationlink",
@@ -23797,7 +23797,7 @@
       "file_type": "code",
       "norm_label": "calendarpage()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L960"
+      "source_location": "L962"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_handledelete",
@@ -23808,7 +23808,7 @@
       "file_type": "code",
       "norm_label": "handledelete()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1118"
+      "source_location": "L1120"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_handlegoogledisconnect",
@@ -23819,7 +23819,7 @@
       "file_type": "code",
       "norm_label": "handlegoogledisconnect()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1025"
+      "source_location": "L1027"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_navnext",
@@ -23830,7 +23830,7 @@
       "file_type": "code",
       "norm_label": "navnext()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1100"
+      "source_location": "L1102"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_navprev",
@@ -23841,7 +23841,7 @@
       "file_type": "code",
       "norm_label": "navprev()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1093"
+      "source_location": "L1095"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_navtoday",
@@ -23852,7 +23852,7 @@
       "file_type": "code",
       "norm_label": "navtoday()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1092"
+      "source_location": "L1094"
     },
     {
       "id": "src_pages_calendarpage_calendarpage_refresh",
@@ -23863,7 +23863,7 @@
       "file_type": "code",
       "norm_label": "refresh()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1039"
+      "source_location": "L1041"
     },
     {
       "id": "src_pages_calendarpage_dayview",
@@ -23874,7 +23874,7 @@
       "file_type": "code",
       "norm_label": "dayview()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L732"
+      "source_location": "L734"
     },
     {
       "id": "src_pages_calendarpage_dayview_eventsathour",
@@ -23885,7 +23885,7 @@
       "file_type": "code",
       "norm_label": "eventsathour()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L758"
+      "source_location": "L760"
     },
     {
       "id": "src_pages_calendarpage_eventsforday",
@@ -24831,7 +24831,7 @@
       "file_type": "code",
       "norm_label": "handlegoogleconnect()",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1012"
+      "source_location": "L1014"
     },
     {
       "id": "src_pages_oauthgooglereturn_oauthgooglereturn",
@@ -29276,7 +29276,7 @@
       "file_type": "code",
       "norm_label": "all_hours",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L722"
+      "source_location": "L724"
     },
     {
       "id": "src_pages_calendarpage_deadlines",
@@ -47623,7 +47623,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1000",
+      "source_location": "L1002",
       "weight": 1.0
     },
     {
@@ -47635,7 +47635,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1001",
+      "source_location": "L1003",
       "weight": 1.0
     },
     {
@@ -47647,7 +47647,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1002",
+      "source_location": "L1004",
       "weight": 1.0
     },
     {
@@ -47659,7 +47659,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1049",
+      "source_location": "L1051",
       "weight": 1.0
     },
     {
@@ -47671,7 +47671,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1052",
+      "source_location": "L1054",
       "weight": 1.0
     },
     {
@@ -47683,7 +47683,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1085",
+      "source_location": "L1087",
       "weight": 1.0
     },
     {
@@ -47695,7 +47695,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1152",
+      "source_location": "L1154",
       "weight": 1.0
     },
     {
@@ -47707,7 +47707,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1156",
+      "source_location": "L1158",
       "weight": 1.0
     },
     {
@@ -47719,7 +47719,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1279",
+      "source_location": "L1283",
       "weight": 1.0
     },
     {
@@ -47731,7 +47731,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1280",
+      "source_location": "L1284",
       "weight": 1.0
     },
     {
@@ -47743,7 +47743,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1281",
+      "source_location": "L1285",
       "weight": 1.0
     },
     {
@@ -47755,7 +47755,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L970",
+      "source_location": "L972",
       "weight": 1.0
     },
     {
@@ -47767,7 +47767,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L972",
+      "source_location": "L974",
       "weight": 1.0
     },
     {
@@ -47779,7 +47779,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L973",
+      "source_location": "L975",
       "weight": 1.0
     },
     {
@@ -47791,7 +47791,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L980",
+      "source_location": "L982",
       "weight": 1.0
     },
     {
@@ -47803,7 +47803,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L991",
+      "source_location": "L993",
       "weight": 1.0
     },
     {
@@ -47815,7 +47815,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1120",
+      "source_location": "L1122",
       "weight": 1.0
     },
     {
@@ -47827,7 +47827,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1121",
+      "source_location": "L1123",
       "weight": 1.0
     },
     {
@@ -47839,7 +47839,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1066",
+      "source_location": "L1068",
       "weight": 1.0
     },
     {
@@ -47851,7 +47851,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1068",
+      "source_location": "L1070",
       "weight": 1.0
     },
     {
@@ -47863,7 +47863,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1015",
+      "source_location": "L1017",
       "weight": 1.0
     },
     {
@@ -47875,7 +47875,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1021",
+      "source_location": "L1023",
       "weight": 1.0
     },
     {
@@ -47887,7 +47887,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1028",
+      "source_location": "L1030",
       "weight": 1.0
     },
     {
@@ -47899,7 +47899,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1030",
+      "source_location": "L1032",
       "weight": 1.0
     },
     {
@@ -47911,7 +47911,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1127",
+      "source_location": "L1129",
       "weight": 1.0
     },
     {
@@ -47923,7 +47923,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1131",
+      "source_location": "L1133",
       "weight": 1.0
     },
     {
@@ -47935,7 +47935,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1132",
+      "source_location": "L1134",
       "weight": 1.0
     },
     {
@@ -47947,7 +47947,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1133",
+      "source_location": "L1135",
       "weight": 1.0
     },
     {
@@ -47959,7 +47959,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1135",
+      "source_location": "L1137",
       "weight": 1.0
     },
     {
@@ -47971,7 +47971,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1145",
+      "source_location": "L1147",
       "weight": 1.0
     },
     {
@@ -47983,7 +47983,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1109",
+      "source_location": "L1111",
       "weight": 1.0
     },
     {
@@ -47995,7 +47995,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1116",
+      "source_location": "L1118",
       "weight": 1.0
     },
     {
@@ -48007,7 +48007,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1116",
+      "source_location": "L1118",
       "weight": 1.0
     },
     {
@@ -48019,7 +48019,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L733",
+      "source_location": "L735",
       "weight": 1.0
     },
     {
@@ -48031,7 +48031,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L752",
+      "source_location": "L754",
       "weight": 1.0
     },
     {
@@ -48043,7 +48043,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L897",
+      "source_location": "L899",
       "weight": 1.0
     },
     {
@@ -56695,7 +56695,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1012",
+      "source_location": "L1014",
       "weight": 1.0
     },
     {
@@ -56707,7 +56707,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1025",
+      "source_location": "L1027",
       "weight": 1.0
     },
     {
@@ -56719,7 +56719,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1064",
+      "source_location": "L1066",
       "weight": 1.0
     },
     {
@@ -56731,7 +56731,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1108",
+      "source_location": "L1110",
       "weight": 1.0
     },
     {
@@ -56743,7 +56743,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1114",
+      "source_location": "L1116",
       "weight": 1.0
     },
     {
@@ -56755,7 +56755,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1118",
+      "source_location": "L1120",
       "weight": 1.0
     },
     {
@@ -56767,7 +56767,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L758",
+      "source_location": "L760",
       "weight": 1.0
     },
     {
@@ -59000,7 +59000,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L726",
+      "source_location": "L728",
       "weight": 1.0
     },
     {
@@ -59012,7 +59012,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L629",
+      "source_location": "L631",
       "weight": 1.0
     },
     {
@@ -102998,7 +102998,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L628",
+      "source_location": "L630",
       "weight": 1.0
     },
     {
@@ -103009,7 +103009,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L637",
+      "source_location": "L639",
       "weight": 1.0
     },
     {
@@ -103064,7 +103064,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L722",
+      "source_location": "L724",
       "weight": 1.0
     },
     {
@@ -103075,7 +103075,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L724",
+      "source_location": "L726",
       "weight": 1.0
     },
     {
@@ -103086,7 +103086,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L732",
+      "source_location": "L734",
       "weight": 1.0
     },
     {
@@ -103141,7 +103141,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L958",
+      "source_location": "L960",
       "weight": 1.0
     },
     {
@@ -103152,7 +103152,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L960",
+      "source_location": "L962",
       "weight": 1.0
     },
     {
@@ -103163,7 +103163,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1039",
+      "source_location": "L1041",
       "weight": 1.0
     },
     {
@@ -103174,7 +103174,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1092",
+      "source_location": "L1094",
       "weight": 1.0
     },
     {
@@ -103185,7 +103185,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1093",
+      "source_location": "L1095",
       "weight": 1.0
     },
     {
@@ -103196,7 +103196,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1100",
+      "source_location": "L1102",
       "weight": 1.0
     },
     {
@@ -103207,7 +103207,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1126",
+      "source_location": "L1128",
       "weight": 1.0
     },
     {
@@ -111642,7 +111642,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L981",
+      "source_location": "L983",
       "weight": 1.0
     },
     {
@@ -111654,7 +111654,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/pages/CalendarPage.tsx",
-      "source_location": "L1092",
+      "source_location": "L1094",
       "weight": 1.0
     },
     {
@@ -112511,5 +112511,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "adfcb4b24217c892e10edc91e92e03315b51b6ca"
+  "built_at_commit": "8eee99f1bda11af32f7c7bbc185dae067641b647"
 }
