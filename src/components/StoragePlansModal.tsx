@@ -98,7 +98,7 @@ export function StoragePlansModal({
         <div data-tour="sp-current" style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 11, color: T.text3, fontWeight: 600 }}>Plano atual</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: T.text1, marginTop: 2 }}>{currentPlan}</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.text1, marginTop: 2 }}>{currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}</div>
           </div>
           <div style={{ fontSize: 12, color: T.text2 }}>
             Cota efetiva: <strong style={{ color: T.text1 }}>{bytesToHuman(effectiveBytes)}</strong>
@@ -107,7 +107,7 @@ export function StoragePlansModal({
 
         {/* Plans */}
         <div data-tour="sp-plans">
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.text1, marginBottom: 8 }}>Planos</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: T.text1, marginBottom: 8 }}>Planos</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
             {STORAGE_PLANS.map(p => (
               <div key={p.id} style={card}>
@@ -128,7 +128,7 @@ export function StoragePlansModal({
 
         {/* Billing toggle */}
         <div data-tour="sp-billing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: T.text1, marginRight: 4 }}>Aumente seu armazenamento</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.text1, marginRight: 4 }}>Aumente seu armazenamento</span>
           {(['monthly', 'yearly'] as Billing[]).map(b => (
             <button key={b} onClick={() => setBilling(b)} style={{
               fontSize: 11, borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
