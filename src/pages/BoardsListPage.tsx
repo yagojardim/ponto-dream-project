@@ -312,10 +312,12 @@ export default function BoardsListPage({ onSelectBoard }: Props) {
       <NewBoardModal
         open={showNewModal}
         onClose={() => setShowNewModal(false)}
-        onCreated={() => {
+        onCreated={(boardId) => {
           reload()
           setToast('Board criado com sucesso')
           window.setTimeout(() => setToast(null), 2600)
+          // Abre o board recém-criado.
+          onSelectBoard(boardId)
         }}
         actorName={activeUser.name}
       />
