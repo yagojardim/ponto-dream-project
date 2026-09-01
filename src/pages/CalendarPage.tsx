@@ -430,13 +430,14 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
           {/* Title */}
           <input
             ref={titleRef}
+            data-tour="cc-title"
             value={title} onChange={e => setTitle(e.target.value)}
             placeholder="Título do evento *"
             style={{ ...inpS, fontSize: 15, fontWeight: 600, padding: '10px 12px' }}
           />
 
           {/* Event type */}
-          <div>
+          <div data-tour="cc-type">
             <div style={{ fontSize: 10, fontWeight: 700, color: T.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Tipo do evento</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {EVENT_TYPES.map(t => (
@@ -452,7 +453,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
           </div>
 
           {/* All-day toggle */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <label data-tour="cc-when" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <div
               onClick={() => setAllDay(a => !a)}
               style={{
@@ -480,7 +481,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
           )}
 
           {/* Guests */}
-          <div>
+          <div data-tour="cc-guests">
             <div style={{ position: 'relative' }}>
               <input
                 value={guestQ} onChange={e => setGuestQ(e.target.value)}
@@ -528,7 +529,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
           </div>
 
           {/* Video call */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div data-tour="cc-meet" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 14 }}>📹</span>
             <input
               value={meetLink}
@@ -545,7 +546,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
 
           {/* Expanded fields */}
           {!expanded && (
-            <button onClick={() => setExpanded(true)} style={{ fontSize: 12, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
+            <button data-tour="cc-more" onClick={() => setExpanded(true)} style={{ fontSize: 12, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
               ＋ Mais opções (local, descrição, cor, lembrete…)
             </button>
           )}
@@ -553,7 +554,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
           {expanded && (
             <>
               {/* Location */}
-              <input value={location} onChange={e => setLocation(e.target.value)}
+              <input data-tour="cc-extra" value={location} onChange={e => setLocation(e.target.value)}
                 placeholder="Local (opcional)" style={inpS} />
 
               {/* Description */}
@@ -610,6 +611,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
             background: 'transparent', color: T.text2, border: `1px solid ${T.border}`, cursor: 'pointer',
           }}>Cancelar</button>
           <button
+            data-tour="cc-save"
             onClick={handleSave}
             disabled={!title.trim()}
             style={{
@@ -669,7 +671,7 @@ function IntegrationsPanel({ status, busy, onClose, onConnect, onSync, onDisconn
         </div>
 
         {/* Google */}
-        <div style={{
+        <div data-tour="gi-google" style={{
           display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
           borderRadius: 10, border: `1px solid ${status.connected ? T.success + '44' : T.border}`,
           background: status.connected ? T.successDim : T.bgSurface2,
@@ -710,7 +712,7 @@ function IntegrationsPanel({ status, busy, onClose, onConnect, onSync, onDisconn
         {soon('Microsoft Teams', '🟦')}
         {soon('Outlook', '📨')}
 
-        <div style={{ fontSize: 11, color: T.text3, lineHeight: 1.5 }}>
+        <div data-tour="gi-note" style={{ fontSize: 11, color: T.text3, lineHeight: 1.5 }}>
           Eventos importados do Google aparecem com o selo <strong>G</strong> e são somente leitura aqui.
         </div>
       </div>
@@ -1200,7 +1202,7 @@ export default function CalendarPage() {
         {/* View toggle */}
         <div data-tour="cal-views" style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: `1px solid ${T.border}` }}>
           {(['month','week','day'] as CalView[]).map(v => (
-            <button key={v} onClick={() => setView(v)} style={{
+            <button key={v} data-tour={`cal-view-${v}`} onClick={() => setView(v)} style={{
               padding: '5px 14px', fontSize: 12, cursor: 'pointer',
               background: view===v ? T.accentDim : 'transparent',
               color:      view===v ? T.accent    : T.text2,
@@ -1219,6 +1221,8 @@ export default function CalendarPage() {
               data-tour="cal-sprint"
               value={sprintSel}
               onChange={e => setSprintSel(e.target.value)}
+              title="Sprint alvo — escolha de qual sprint as cerimônias serão geradas ao clicar em 'Gerar cerimônias da sprint'"
+              aria-label="Sprint alvo para gerar cerimônias"
               style={{ ...toolBtn, padding: '5px 8px', maxWidth: 180 }}
             >
               {sprintOpts.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
