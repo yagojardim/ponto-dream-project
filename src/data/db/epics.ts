@@ -18,7 +18,7 @@ export type EpicItemRow = Pick<
   'id' | 'key' | 'title' | 'type' | 'status' | 'priority' | 'epic_id' | 'feature_id' | 'project_id'
   | 'assignee_id' | 'story_points' | 'is_blocked'
 >
-export type EpicProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color'>
+export type EpicProfileRow = Pick<Tables['profiles']['Row'], 'id' | 'name' | 'avatar_initials' | 'avatar_color' | 'primary_role'>
 export type EpicProjectRow = Pick<Tables['projects']['Row'], 'id' | 'key' | 'name'>
 
 export interface EpicsData {
@@ -56,7 +56,7 @@ export async function listEpics(projectIds?: string[]): Promise<EpicsData> {
     epicsQ.order('key'),
     supabase.from('features').select('id, epic_id, name, description').eq('tenant_id', tid).is('archived_at', null),
     itemsQ.order('key'),
-    supabase.from('profiles').select('id, name, avatar_initials, avatar_color').eq('tenant_id', tid).is('archived_at', null),
+    supabase.from('profiles').select('id, name, avatar_initials, avatar_color, primary_role').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('projects').select('id, key, name').eq('tenant_id', tid).is('archived_at', null).order('name'),
   ])
 
@@ -226,4 +226,3 @@ export async function createFeature(input: {
   await writeAudit('feature', data.id, 'feature.created', input.actorName ?? 'Sistema', null, { name: data.name, epic_id: data.epic_id })
   return data as EpicFeatureRow
 }
-
