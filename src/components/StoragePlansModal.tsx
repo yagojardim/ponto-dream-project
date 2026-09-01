@@ -128,7 +128,7 @@ export function StoragePlansModal({
 
         {/* Billing toggle */}
         <div data-tour="sp-billing" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: T.text1, marginRight: 4 }}>Add-ons de GB</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: T.text1, marginRight: 4 }}>Pacotes de GB</span>
           {(['monthly', 'yearly'] as Billing[]).map(b => (
             <button key={b} onClick={() => setBilling(b)} style={{
               fontSize: 11, borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
