@@ -557,7 +557,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
             data-tour="cc-desc"
             value={desc} onChange={e => setDesc(e.target.value)}
             placeholder="Descrição (opcional)" rows={3}
-            style={{ ...inpS, resize: 'vertical', lineHeight: 1.5 }}
+            style={{ ...inpS, resize: 'vertical', lineHeight: 1.5, minHeight: 76, flexShrink: 0 }}
           />
 
           {/* Expanded fields */}
