@@ -34,6 +34,7 @@ function isDefaultBoard(board: VisibleBoard, allBoards?: VisibleBoard[]): boolea
 }
 
 export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props) {
+  const [name, setName] = useState(board.name)
   const [desc, setDesc] = useState(board.description)
   const [start, setStart] = useState(board.period_start)
   const [end, setEnd] = useState(board.period_end)
@@ -79,7 +80,7 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
 
   const save = () => run(
     async () => {
-      await saveBoardSettings(board, { description: desc, teamIds: team, periodStart: start, periodEnd: end }, actorName)
+      await saveBoardSettings(board, { name, description: desc, teamIds: team, periodStart: start, periodEnd: end }, actorName)
       // If filter changed, also save it
       if (filterDirty) {
         await updateBoard(board.id, { filter: boardFilter }, actorName)
@@ -137,6 +138,18 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Nome do board</span>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+              style={inputStyle}
+              placeholder="Nome do board"
+            />
+          </label>
+
           <label className="flex flex-col gap-1">
             <span className="text-[11px] font-medium" style={{ color: '#8a9ab8' }}>Descrição</span>
             <textarea
