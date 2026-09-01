@@ -62,6 +62,7 @@ export default function ProfilePage() {
       </header>
 
       <section
+        data-tour="pf-data"
         className="rounded-2xl p-6"
         style={{ background: T.bgSurface, border: `1px solid ${T.border}`, boxShadow: T.shadow1 }}
       >
@@ -87,6 +88,7 @@ export default function ProfilePage() {
       </section>
 
       <section
+        data-tour="pf-security"
         className="mt-4 rounded-2xl p-6"
         style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}
       >
