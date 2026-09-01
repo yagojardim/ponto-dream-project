@@ -96,7 +96,7 @@ export default function StoragePage({ onNav }: Props) {
       {!loading && !error && (
         <>
           {/* ── Tenant meter ─────────────────────────────────────── */}
-          <div style={{ ...cardStyle, marginBottom: 16 }}>
+          <div data-tour="st-tenant" style={{ ...cardStyle, marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 12 }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: T.text3, fontWeight: 600 }}>
@@ -122,7 +122,7 @@ export default function StoragePage({ onNav }: Props) {
           </div>
 
           {/* ── Status cards ─────────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 20 }}>
+          <div data-tour="st-buckets" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 20 }}>
             {(Object.keys(STORAGE_BUCKET_LABEL) as StorageBucketId[]).map(id => {
               const list = groups[id]
               const used = list.reduce((a, r) => a + r.usedBytes, 0)
@@ -145,7 +145,7 @@ export default function StoragePage({ onNav }: Props) {
           </div>
 
           {/* ── Table ────────────────────────────────────────────── */}
-          <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+          <div data-tour="st-table" style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.border}`, fontSize: 13, fontWeight: 600, color: T.text1 }}>
               {STORAGE_BUCKET_LABEL[bucket]} · {visible.length} projeto(s)
             </div>
