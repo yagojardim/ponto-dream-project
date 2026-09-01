@@ -5,14 +5,13 @@ import { listLinkableItems } from '@/data/db/workItem'
 
 interface LinkableIssue { key: string; title: string; projectName: string }
 
-const REL_TYPES = [
-  'bloqueia',
-  'é bloqueada por',
-  'duplica',
-  'é duplicada por',
-  'relacionada a',
-  'é pai de',
-  'é filho de',
+/** Valores aceitos pelo banco (check constraint dependencies_relation_type_check) + rótulo pt-BR. */
+const REL_TYPES: { value: string; label: string }[] = [
+  { value: 'blocks',        label: 'bloqueia' },
+  { value: 'is_blocked_by', label: 'é bloqueada por' },
+  { value: 'relates',       label: 'relacionada a' },
+  { value: 'duplicates',    label: 'duplica' },
+  { value: 'clones',        label: 'clona' },
 ]
 
 interface Props {
@@ -26,7 +25,7 @@ interface Props {
 }
 
 export function AddRelationModal({ currentIssueKey, projectId, excludeId, onClose, onAdd }: Props) {
-  const [relType, setRelType] = useState('bloqueia')
+  const [relType, setRelType] = useState('blocks')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [showList, setShowList] = useState(false)
@@ -122,7 +121,7 @@ export function AddRelationModal({ currentIssueKey, projectId, excludeId, onClos
               }}
             >
               {REL_TYPES.map(r => (
-                <option key={r} value={r} style={{ background: T.bgSurface2 }}>{r}</option>
+                <option key={r.value} value={r.value} style={{ background: T.bgSurface2 }}>{r.label}</option>
               ))}
             </select>
           </div>
@@ -222,7 +221,7 @@ export function AddRelationModal({ currentIssueKey, projectId, excludeId, onClos
                 fontSize: 10, fontWeight: 700, fontFamily: 'monospace',
                 padding: '2px 6px', borderRadius: 4, background: T.accentDim, color: T.accent,
               }}>{currentIssueKey}</span>
-              <span style={{ fontSize: 11, color: T.text3, fontStyle: 'italic' }}>{relType}</span>
+              <span style={{ fontSize: 11, color: T.text3, fontStyle: 'italic' }}>{REL_TYPES.find(r => r.value === relType)?.label ?? relType}</span>
               <span style={{
                 fontSize: 10, fontWeight: 700, fontFamily: 'monospace',
                 padding: '2px 6px', borderRadius: 4, background: T.accentDim, color: T.accent,
