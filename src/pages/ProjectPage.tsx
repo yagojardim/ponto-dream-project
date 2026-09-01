@@ -2515,6 +2515,9 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
 
   // ── Board (Kanban) — real data from Supabase ────────────────────────────
   const [boardData, setBoardData]   = useState<BoardData | null>(null)
+  // Kanban não usa sprint → a aba Sprints some para boards Kanban.
+  const isKanban = boardData?.board?.board_type === 'kanban'
+  useEffect(() => { if (isKanban && tab === 'Sprints') setTab('Board') }, [isKanban, tab])
   const [boardLoading, setBoardLoading] = useState(true)
   const [boardError, setBoardError] = useState<string|null>(null)
   const [dbIssues, setDbIssues]     = useState<Issue[]>([])
@@ -2873,7 +2876,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
 
         {/* Tabs */}
         <div data-tour="board-tabs" className="flex items-center gap-0.5 p-0.5 rounded-lg" style={{ background: S.bg, border: `1px solid ${S.border}` }}>
-          {(['Board', 'Backlog', 'Sprints'] as Tab[]).map(t => (
+          {((isKanban ? ['Board', 'Backlog'] : ['Board', 'Backlog', 'Sprints']) as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -2954,7 +2957,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
           filterAssignees={filterAssignees}
         />
       )}
-      {tab === 'Sprints' && (
+      {tab === 'Sprints' && !isKanban && (
         <SprintsTab
           issues={dbIssues}
           sprints={dbSprints}
