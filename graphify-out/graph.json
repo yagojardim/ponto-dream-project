@@ -21179,7 +21179,7 @@
       "file_type": "code",
       "norm_label": "field()",
       "source_file": "src/pages/ProfilePage.tsx",
-      "source_location": "L122"
+      "source_location": "L124"
     },
     {
       "id": "src_pages_profilepage_profilepage",
@@ -107797,7 +107797,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ProfilePage.tsx",
-      "source_location": "L122",
+      "source_location": "L124",
       "weight": 1.0
     },
     {
@@ -112547,5 +112547,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ae960b7156565cc45a3839339991a327e45c8a80"
+  "built_at_commit": "2a55d15b1a13283b271eab43a333e15eee1149b3"
 }
