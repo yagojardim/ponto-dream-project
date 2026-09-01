@@ -1188,10 +1188,11 @@ export function WorkItemDetail({ data: dataProp, itemId: itemIdProp, onUpdate, o
     const parent = dbRef.current?.item
     if (!itemId || !parent) { setToast('Item ainda não carregado.'); return }
     try {
-      await addSubtask(parent, sub.title, activeUser.name, { assigneeId: sub.assigneeId, storyPoints: sub.storyPoints, description: sub.description, priority: sub.priority, type: sub.type })
-      const fresh = await getWorkItem(itemId)
-      applyDetail(fresh)
+      const child = await addSubtask(parent, sub.title, activeUser.name, { assigneeId: sub.assigneeId, storyPoints: sub.storyPoints, description: sub.description, priority: sub.priority, type: sub.type })
       setToast(sub.type === 'bug' ? 'Bug criado' : 'Subtarefa criada')
+      // Abre o item recém-criado (com botão de voltar para o pai via navStack).
+      if (child?.id) openChild(child.id)
+      else { const fresh = await getWorkItem(itemId); applyDetail(fresh) }
     } catch (err) {
       setToast(err instanceof Error ? err.message : 'Falha ao criar subtarefa')
     }
