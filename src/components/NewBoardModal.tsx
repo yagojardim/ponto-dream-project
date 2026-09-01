@@ -84,7 +84,7 @@ function ColumnChipsInput({ values, onChange, placeholder }: {
 interface Props {
   open: boolean
   onClose: () => void
-  onCreated: () => void
+  onCreated: (boardId: string) => void
   /** If provided, pre-selects this project and hides the selector. */
   fixedProjectId?: string
   actorName?: string
@@ -139,13 +139,13 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
     setBusy(true)
     setError(null)
     try {
-      await createBoard(projectId, {
+      const created = await createBoard(projectId, {
         name: name.trim(),
         boardType,
         filter,
         ...(colMode === 'custom' ? { columns: buildCustomColumns(customCols) } : {}),
       }, actorName)
-      onCreated()
+      onCreated(created.id)
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Falha ao criar o board.')
