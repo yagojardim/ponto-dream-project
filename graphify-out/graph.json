@@ -4321,7 +4321,7 @@
       "file_type": "code",
       "norm_label": "createboardinput",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L330"
+      "source_location": "L331"
     },
     {
       "id": "src_data_db_board_createworkiteminput",
@@ -4333,7 +4333,7 @@
       "file_type": "code",
       "norm_label": "createworkiteminput",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L261"
+      "source_location": "L262"
     },
     {
       "id": "src_data_db_board_tables",
@@ -6001,7 +6001,7 @@
       "file_type": "code",
       "norm_label": "updateboardinput",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L401"
+      "source_location": "L402"
     },
     {
       "id": "src_data_db_filtertranslator_boardfilter",
@@ -17153,7 +17153,7 @@
       "file_type": "code",
       "norm_label": "archiveboard()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L433"
+      "source_location": "L434"
     },
     {
       "id": "src_data_db_board_boardstbl",
@@ -17197,7 +17197,7 @@
       "file_type": "code",
       "norm_label": "nextitemkey()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L277"
+      "source_location": "L278"
     },
     {
       "id": "src_data_db_board_reorderworkitems",
@@ -17208,7 +17208,7 @@
       "file_type": "code",
       "norm_label": "reorderworkitems()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L248"
+      "source_location": "L249"
     },
     {
       "id": "src_data_db_board_updateboard",
@@ -17219,7 +17219,7 @@
       "file_type": "code",
       "norm_label": "updateboard()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L407"
+      "source_location": "L408"
     },
     {
       "id": "src_data_db_moduletrials_daysremaining",
@@ -17560,7 +17560,7 @@
       "file_type": "code",
       "norm_label": "createworkitem()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L292"
+      "source_location": "L293"
     },
     {
       "id": "src_data_db_board_fetchboarddata",
@@ -17582,7 +17582,7 @@
       "file_type": "code",
       "norm_label": "moveworkitemtocolumn()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L219"
+      "source_location": "L220"
     },
     {
       "id": "src_data_db_board_parseboardfilter",
@@ -17604,7 +17604,7 @@
       "file_type": "code",
       "norm_label": "writeaudit()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L200"
+      "source_location": "L201"
     },
     {
       "id": "src_data_db_projects_listprojects",
@@ -25513,7 +25513,7 @@
       "file_type": "code",
       "norm_label": "createboard()",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L339"
+      "source_location": "L340"
     },
     {
       "id": "src_data_db_filteroptions_fetchboardfilteroptions",
@@ -39703,7 +39703,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L445",
+      "source_location": "L446",
       "weight": 1.0
     },
     {
@@ -39715,7 +39715,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L348",
+      "source_location": "L349",
       "weight": 1.0
     },
     {
@@ -39727,7 +39727,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L359",
+      "source_location": "L360",
       "weight": 1.0
     },
     {
@@ -39739,7 +39739,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L297",
+      "source_location": "L298",
       "weight": 1.0
     },
     {
@@ -39751,7 +39751,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L323",
+      "source_location": "L324",
       "weight": 1.0
     },
     {
@@ -39823,7 +39823,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L236",
+      "source_location": "L237",
       "weight": 1.0
     },
     {
@@ -39835,7 +39835,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L417",
+      "source_location": "L418",
       "weight": 1.0
     },
     {
@@ -39847,7 +39847,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L421",
+      "source_location": "L422",
       "weight": 1.0
     },
     {
@@ -58724,7 +58724,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L333",
+      "source_location": "L334",
       "weight": 1.0
     },
     {
@@ -58736,7 +58736,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L335",
+      "source_location": "L336",
       "weight": 1.0
     },
     {
@@ -58748,7 +58748,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L403",
+      "source_location": "L404",
       "weight": 1.0
     },
     {
@@ -91624,7 +91624,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L200",
+      "source_location": "L201",
       "weight": 1.0
     },
     {
@@ -91635,7 +91635,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L219",
+      "source_location": "L220",
       "weight": 1.0
     },
     {
@@ -91646,7 +91646,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L248",
+      "source_location": "L249",
       "weight": 1.0
     },
     {
@@ -91657,7 +91657,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L261",
+      "source_location": "L262",
       "weight": 1.0
     },
     {
@@ -91668,7 +91668,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L277",
+      "source_location": "L278",
       "weight": 1.0
     },
     {
@@ -91701,7 +91701,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L292",
+      "source_location": "L293",
       "weight": 1.0
     },
     {
@@ -91723,7 +91723,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L330",
+      "source_location": "L331",
       "weight": 1.0
     },
     {
@@ -91734,7 +91734,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L339",
+      "source_location": "L340",
       "weight": 1.0
     },
     {
@@ -91756,7 +91756,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L401",
+      "source_location": "L402",
       "weight": 1.0
     },
     {
@@ -91767,7 +91767,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L407",
+      "source_location": "L408",
       "weight": 1.0
     },
     {
@@ -91778,7 +91778,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/board.ts",
-      "source_location": "L433",
+      "source_location": "L434",
       "weight": 1.0
     },
     {
@@ -111450,7 +111450,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/data/db/board.ts",
-      "source_location": "L193",
+      "source_location": "L194",
       "weight": 1.0
     },
     {
@@ -112511,5 +112511,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "96b3ac1a4b4a10b38651dba0520ace36f6e894ab"
+  "built_at_commit": "41df8d622278d4f68e28d4df4865fd56b3384e43"
 }
