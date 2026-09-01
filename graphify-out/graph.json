@@ -20959,7 +20959,7 @@
       "file_type": "code",
       "norm_label": "extratoursfor()",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L427"
+      "source_location": "L448"
     },
     {
       "id": "src_pages_feedbackpage_articleheader",
@@ -21520,7 +21520,7 @@
       "file_type": "code",
       "norm_label": "byrole()",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L322"
+      "source_location": "L343"
     },
     {
       "id": "src_data_toursteps_hastour",
@@ -21531,7 +21531,7 @@
       "file_type": "code",
       "norm_label": "hastour()",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L336"
+      "source_location": "L357"
     },
     {
       "id": "src_data_toursteps_touridfor",
@@ -21542,7 +21542,7 @@
       "file_type": "code",
       "norm_label": "touridfor()",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L341"
+      "source_location": "L362"
     },
     {
       "id": "src_data_toursteps_tourstepsfor",
@@ -21553,7 +21553,7 @@
       "file_type": "code",
       "norm_label": "tourstepsfor()",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L331"
+      "source_location": "L352"
     },
     {
       "id": "src_hooks_useprojecttour_useprojecttourstate",
@@ -31956,7 +31956,7 @@
       "file_type": "code",
       "norm_label": "all_roles",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L317"
+      "source_location": "L338"
     },
     {
       "id": "src_data_toursteps_dash_tour",
@@ -31966,7 +31966,7 @@
       "file_type": "code",
       "norm_label": "dash_tour",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L295"
+      "source_location": "L316"
     },
     {
       "id": "src_data_toursteps_extra_tours",
@@ -31976,7 +31976,7 @@
       "file_type": "code",
       "norm_label": "extra_tours",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L346"
+      "source_location": "L367"
     },
     {
       "id": "src_data_toursteps_home_tour",
@@ -31986,7 +31986,7 @@
       "file_type": "code",
       "norm_label": "home_tour",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L260"
+      "source_location": "L281"
     },
     {
       "id": "src_data_toursteps_tour_steps",
@@ -32006,7 +32006,7 @@
       "file_type": "code",
       "norm_label": "tour_steps_by_role",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L326"
+      "source_location": "L347"
     },
     {
       "id": "src_data_db_notifications",
@@ -47191,7 +47191,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L337",
+      "source_location": "L358",
       "weight": 1.0
     },
     {
@@ -101428,7 +101428,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L260",
+      "source_location": "L281",
       "weight": 1.0
     },
     {
@@ -101439,7 +101439,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L295",
+      "source_location": "L316",
       "weight": 1.0
     },
     {
@@ -101450,7 +101450,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L317",
+      "source_location": "L338",
       "weight": 1.0
     },
     {
@@ -101461,7 +101461,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L322",
+      "source_location": "L343",
       "weight": 1.0
     },
     {
@@ -101472,7 +101472,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L326",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
@@ -101483,7 +101483,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L331",
+      "source_location": "L352",
       "weight": 1.0
     },
     {
@@ -101494,7 +101494,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L336",
+      "source_location": "L357",
       "weight": 1.0
     },
     {
@@ -101505,7 +101505,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L341",
+      "source_location": "L362",
       "weight": 1.0
     },
     {
@@ -101516,7 +101516,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L346",
+      "source_location": "L367",
       "weight": 1.0
     },
     {
@@ -101527,7 +101527,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/tourSteps.ts",
-      "source_location": "L427",
+      "source_location": "L448",
       "weight": 1.0
     },
     {
@@ -112547,5 +112547,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2f4e03662e97d7de7c84f4f77bebe42010c98ccc"
+  "built_at_commit": "45025dbff2ad963dea762a492102bc27ab5651cb"
 }
