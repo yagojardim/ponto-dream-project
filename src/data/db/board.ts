@@ -153,8 +153,9 @@ export async function fetchBoardData(projectId?: string, boardId?: string, board
       .eq('tenant_id', tid).eq('board_id', board.id).order('position'),
     supabase.from('board_column_statuses').select('board_column_id, status_key').eq('tenant_id', tid),
     itemsQuery.order('position'),
-    supabase.from('sprints').select('id, project_id, name, goal, state, start_date, end_date, velocity, metadata')
-      .eq('tenant_id', tid).eq('project_id', board.project_id).is('archived_at', null)
+    // Sprints são por BOARD (frente): cada board vê apenas as suas sprints.
+    supabase.from('sprints').select('id, project_id, board_id, name, goal, state, start_date, end_date, velocity, metadata')
+      .eq('tenant_id', tid).eq('project_id', board.project_id).eq('board_id', board.id).is('archived_at', null)
       .order('start_date', { ascending: true, nullsFirst: false }),
     supabase.from('epics').select('id, project_id, key, name, color')
       .eq('tenant_id', tid).eq('project_id', board.project_id).is('archived_at', null),
