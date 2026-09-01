@@ -455,7 +455,7 @@ export default function GanttPage() {
         style={{ borderBottom: '1px solid #162032' }}
       >
         {/* Left: legend */}
-        <div className="flex items-center gap-4 flex-wrap">
+        <div data-tour="gantt-legend" className="flex items-center gap-4 flex-wrap">
           {visibleProjects.map(p => (
             <div key={p.id} className="flex items-center gap-1.5 text-[11px]" style={{ color: '#546278' }}>
               <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: p.color }} />
@@ -465,7 +465,7 @@ export default function GanttPage() {
         </div>
 
         {/* Right: controls */}
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div data-tour="gantt-projects" className="flex items-center gap-4 flex-shrink-0">
           {projects.length > 0 && (
             <ProjectDropdown
               projects={projects}
@@ -481,7 +481,7 @@ export default function GanttPage() {
       </div>
 
       {/* Scrollable gantt body */}
-      <div className="flex-1 overflow-auto">
+      <div data-tour="gantt-grid" className="flex-1 overflow-auto">
         <div style={{ minWidth: 200 + totalW }}>
           {/* Quarter + month headers */}
           <div className="sticky top-0 z-10" style={{ background: '#0a1525', borderBottom: '1px solid #162032' }}>
@@ -619,4 +619,3 @@ export default function GanttPage() {
     </div>
   )
 }
-
