@@ -18055,7 +18055,7 @@
       "file_type": "code",
       "norm_label": "archiveboard()",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L286"
+      "source_location": "L288"
     },
     {
       "id": "src_data_db_boards_currentmetadata",
@@ -18066,7 +18066,7 @@
       "file_type": "code",
       "norm_label": "currentmetadata()",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L235"
+      "source_location": "L236"
     },
     {
       "id": "src_data_db_boards_fetchboardteamoptions",
@@ -18099,7 +18099,7 @@
       "file_type": "code",
       "norm_label": "finalizeboard()",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L270"
+      "source_location": "L272"
     },
     {
       "id": "src_data_db_boards_hastenantwideaccess",
@@ -18154,7 +18154,7 @@
       "file_type": "code",
       "norm_label": "saveboardsettings()",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L241"
+      "source_location": "L242"
     },
     {
       "id": "src_data_db_boards_tbl",
@@ -39859,7 +39859,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L289",
+      "source_location": "L291",
       "weight": 1.0
     },
     {
@@ -39871,7 +39871,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L293",
+      "source_location": "L295",
       "weight": 1.0
     },
     {
@@ -39883,7 +39883,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L236",
+      "source_location": "L237",
       "weight": 1.0
     },
     {
@@ -39895,7 +39895,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L237",
+      "source_location": "L238",
       "weight": 1.0
     },
     {
@@ -39991,7 +39991,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L272",
+      "source_location": "L274",
       "weight": 1.0
     },
     {
@@ -40003,7 +40003,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L276",
+      "source_location": "L278",
       "weight": 1.0
     },
     {
@@ -40027,7 +40027,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L248",
+      "source_location": "L249",
       "weight": 1.0
     },
     {
@@ -40039,7 +40039,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L253",
+      "source_location": "L254",
       "weight": 1.0
     },
     {
@@ -40051,7 +40051,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L258",
+      "source_location": "L260",
       "weight": 1.0
     },
     {
@@ -91996,7 +91996,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L235",
+      "source_location": "L236",
       "weight": 1.0
     },
     {
@@ -92007,7 +92007,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L241",
+      "source_location": "L242",
       "weight": 1.0
     },
     {
@@ -92018,7 +92018,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L270",
+      "source_location": "L272",
       "weight": 1.0
     },
     {
@@ -92029,7 +92029,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/boards.ts",
-      "source_location": "L286",
+      "source_location": "L288",
       "weight": 1.0
     },
     {
@@ -112487,5 +112487,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "623d7541f41f17c664372956f89900c33bc7faba"
+  "built_at_commit": "f391e9a1660ff0b210d23bbdbb6be8a4d9880d4c"
 }
