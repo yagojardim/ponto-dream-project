@@ -28,6 +28,15 @@ export interface WIMember       { id: string; name: string; initials: string }
 export interface WISprint       { id: string; name: string }
 export interface WIHistoryEntry { authorInitials: string; authorName: string; field: string; from: string; to: string; time: string }
 
+/** Rótulos pt-BR para os códigos de relação (dependencies.relation_type). */
+const REL_LABEL: Record<string, string> = {
+  blocks: 'bloqueia',
+  is_blocked_by: 'é bloqueada por',
+  relates: 'relacionada a',
+  duplicates: 'duplica',
+  clones: 'clona',
+}
+
 export interface WorkItemData {
   key:               string
   type:              string
@@ -1431,7 +1440,7 @@ export function WorkItemDetail({ data: dataProp, itemId: itemIdProp, onUpdate, o
                   ) : (
                     Object.entries(linkedByType).map(([relType, items]) => (
                       <div key={relType} style={{ marginBottom:10 }}>
-                        <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', color:T.text3, display:'block', marginBottom:4 }}>{relType}</span>
+                        <span style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', color:T.text3, display:'block', marginBottom:4 }}>{REL_LABEL[relType] ?? relType}</span>
                         {items.map(li => (
                           <div key={li.key} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', borderRadius:8 }}
                             onMouseEnter={e=>{(e.currentTarget as HTMLDivElement).style.background=T.bgSurface2}}
