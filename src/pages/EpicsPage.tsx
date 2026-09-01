@@ -8,7 +8,8 @@ import {
 import { listProjects, projectUsesFeatures } from '../data/db/projects'
 import { DB_STATUS_CFG } from '../data/db/timeline'
 import { getActiveUser } from '../data/session'
-import { can } from '../data/permissions'
+import { can, derivePermissions } from '../data/permissions'
+import { normalizeRole } from '../data/db/authProfile'
 
 const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done'] as const
 
@@ -326,7 +327,9 @@ function NewEpicModal({
             <label style={labelStyle}>Owner</label>
             <select value={ownerId} onChange={e => setOwnerId(e.target.value)} style={fieldStyle}>
               <option value="">Sem owner</option>
-              {profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {profiles
+                .filter(p => can(derivePermissions(normalizeRole(p.primary_role)), 'create:epic'))
+                .map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
           <div style={{ width: 130 }}>
