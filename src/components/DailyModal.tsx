@@ -152,12 +152,12 @@ export function DailyModal({
             }}>
             {fmt(seconds)}
           </span>
-          <button onClick={nextMember}
+          <button data-tour="daily-next" onClick={nextMember}
             className="h-7 px-3 rounded-lg text-[11px] font-medium"
             style={{ background: DS.accentDim, border: `1px solid ${DS.accent}60`, color: DS.accent }}>
             Próximo ✓
           </button>
-          <button onClick={() => setSummary({ spoke, total: totalSeconds })}
+          <button data-tour="daily-end" onClick={() => setSummary({ spoke, total: totalSeconds })}
             className="h-7 px-3 rounded-lg text-[11px] font-medium"
             style={{ background: DS.critDim, border: `1px solid ${DS.crit}60`, color: DS.crit }}>
             Encerrar reunião
@@ -167,7 +167,7 @@ export function DailyModal({
 
       <div className="flex flex-1 min-h-0">
         {/* Members panel */}
-        <aside className="w-60 flex-shrink-0 flex flex-col overflow-y-auto"
+        <aside data-tour="daily-members" className="w-60 flex-shrink-0 flex flex-col overflow-y-auto"
           style={{ background: S.surface, borderRight: `1px solid ${S.border}` }}>
           <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: S.t3 }}>
             Time ({spoke}/{members.length})
@@ -203,7 +203,7 @@ export function DailyModal({
         </aside>
 
         {/* Board replica */}
-        <div className="flex-1 min-h-0 overflow-auto p-4">
+        <div data-tour="daily-board" className="flex-1 min-h-0 overflow-auto p-4">
           <div className="flex gap-3 items-start">
             {columns.map(col => {
               const colIssues = shown.filter(i => i.colId === col.id)
