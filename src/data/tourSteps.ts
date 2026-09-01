@@ -377,12 +377,47 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
   ],
   calendar: [
     {
-      id: 'calendar-ceremonies',
-      label: 'Gerador de cerimônias da sprint',
+      id: 'calendar-create',
+      label: 'Criar um evento (campo a campo)',
       steps: [
-        { selector: '[data-tour="cal-sprint"]', navigateTo: 'calendar', placement: 'bottom', title: 'Escolha a sprint', body: 'Selecione a sprint cujas cerimônias você quer gerar.', optional: true },
-        { selector: '[data-tour="cal-ceremonies"]', placement: 'bottom', title: 'Gerar cerimônias', body: 'Cria automaticamente Daily, Planning, Review e Retro dessa sprint, já posicionadas no calendário.' },
-        { selector: '[data-tour="cal-grid"]', placement: 'top', title: 'Onde aparecem', body: 'As cerimônias entram no calendário coloridas por tipo. Clique em uma para ver detalhes ou editar.', optional: true },
+        { selector: '[data-tour="cal-create"]', navigateTo: 'calendar', placement: 'bottom', title: 'Criar um evento', body: 'Clique aqui para abrir o formulário de novo evento. (O tour abre para você.)', clickOnNext: '[data-tour="cal-create"]' },
+        { selector: '[data-tour="cc-title"]', placement: 'right', title: 'Título', body: 'O nome do evento — único campo obrigatório. É o que aparece no calendário.', optional: true },
+        { selector: '[data-tour="cc-type"]', placement: 'right', title: 'Tipo do evento', body: 'Reunião, Daily, Planning, Review, Retro… O tipo escolhido já define a cor do evento no calendário.', optional: true },
+        { selector: '[data-tour="cc-when"]', placement: 'right', title: 'Quando acontece', body: 'Defina o período do evento:', fields: [{ label: 'Dia inteiro', hint: 'ative para eventos sem horário fixo (ocupam o dia todo).' }, { label: 'Data', hint: 'o dia do evento.' }, { label: 'Início e Fim', hint: 'o horário — aparece logo abaixo quando "Dia inteiro" está desligado.' }], optional: true },
+        { selector: '[data-tour="cc-guests"]', placement: 'right', title: 'Convidados', body: 'Busque pessoas por nome ou e-mail e adicione como participantes. Some quantas quiser.', optional: true },
+        { selector: '[data-tour="cc-meet"]', placement: 'right', title: 'Videochamada', body: 'Cole o link da reunião (Meet, Zoom…). Ele fica acessível no detalhe do evento, com botão de copiar.', optional: true },
+        { selector: '[data-tour="cc-more"]', placement: 'right', title: 'Mais opções', body: 'Clique para abrir os campos avançados. (O tour abre para você.)', clickOnNext: '[data-tour="cc-more"]', optional: true },
+        { selector: '[data-tour="cc-extra"]', placement: 'right', title: 'Campos avançados', body: 'Detalhes opcionais do evento:', fields: [{ label: 'Local', hint: 'onde acontece (sala, endereço).' }, { label: 'Descrição', hint: 'pauta ou observações.' }, { label: 'Cor', hint: 'sobrescreve a cor do tipo, se quiser.' }, { label: 'Work item', hint: 'vincula a uma demanda (ex.: ALT-139).' }, { label: 'Lembrete', hint: 'aviso antes do evento (5 min a 1 dia).' }], optional: true },
+        { selector: '[data-tour="cc-save"]', placement: 'top', title: 'Salvar', body: 'Revise e clique em Salvar para criar o evento. (O tour não salva por você.)', optional: true },
+      ],
+    },
+    {
+      id: 'calendar-views',
+      label: 'Ver por Mês, Semana e Dia',
+      steps: [
+        { selector: '[data-tour="cal-views"]', navigateTo: 'calendar', placement: 'bottom', title: 'Três formas de ver', body: 'O calendário tem três visões. Vamos passar por cada uma — a tela vai mudar a cada "Próximo".', clickOnNext: '[data-tour="cal-view-month"]' },
+        { selector: '[data-tour="cal-view-month"]', placement: 'bottom', title: 'Mês', body: 'Panorama do mês inteiro: cada dia é uma célula com os eventos e prazos resumidos. Bom para enxergar o todo.', clickOnNext: '[data-tour="cal-view-week"]' },
+        { selector: '[data-tour="cal-view-week"]', placement: 'bottom', title: 'Semana', body: 'Os 7 dias lado a lado numa grade de horários (08h–20h). O dia atual fica destacado e cada evento aparece no seu horário.', clickOnNext: '[data-tour="cal-view-day"]' },
+        { selector: '[data-tour="cal-view-day"]', placement: 'bottom', title: 'Dia', body: 'Agenda detalhada de um único dia, hora a hora, com uma linha marcando o horário atual. Clique num horário livre para criar um evento ali.' },
+      ],
+    },
+    {
+      id: 'calendar-ceremonies',
+      label: 'Gerar as cerimônias da sprint',
+      steps: [
+        { selector: '[data-tour="cal-sprint"]', navigateTo: 'calendar', placement: 'bottom', title: 'Escolha a sprint', body: 'Este seletor define de qual sprint as cerimônias serão geradas. É o alvo do botão ao lado.', optional: true },
+        { selector: '[data-tour="cal-ceremonies"]', placement: 'bottom', title: 'Abrir o gerador', body: 'Clique para abrir o gerador de cerimônias da sprint escolhida. (O tour abre para você.)', clickOnNext: '[data-tour="cal-ceremonies"]', optional: true },
+        { selector: '[data-tour="sc-slot"]', placement: 'bottom', title: 'Configurar cada cerimônia', body: 'Uma linha por cerimônia (Daily, Planning, Review, Retro…). Em cada uma você define:', fields: [{ label: 'Ativar', hint: 'a caixa liga/desliga a cerimônia na geração.' }, { label: 'Dias', hint: 'em quais dias da semana ela ocorre.' }, { label: 'Ocorrência', hint: 'todas as ocorrências, só a primeira ou só a última da sprint.' }, { label: 'Horário', hint: 'hora de início e fim.' }], optional: true },
+        { selector: '[data-tour="sc-generate"]', placement: 'top', title: 'Gerar', body: 'Cria os eventos das cerimônias marcadas, já posicionados no calendário. A geração não duplica cerimônias já existentes. (O tour não gera por você.)', optional: true },
+      ],
+    },
+    {
+      id: 'calendar-integrate',
+      label: 'Integrar a agenda do Google',
+      steps: [
+        { selector: '[data-tour="cal-integrate"]', navigateTo: 'calendar', placement: 'left', title: 'Integrar agenda', body: 'Clique para abrir o painel de integrações. (O tour abre para você.)', clickOnNext: '[data-tour="cal-integrate"]' },
+        { selector: '[data-tour="gi-google"]', placement: 'bottom', title: 'Google Agenda', body: 'Clique em "Conectar" para abrir o login do Google e autorizar o acesso. Ao conectar, a sincronização roda automaticamente e surgem os botões "Sincronizar agora" e "Desconectar".', optional: true },
+        { selector: '[data-tour="gi-note"]', placement: 'top', title: 'Como os eventos aparecem', body: 'Os eventos vindos do Google entram no calendário com o selo "G" e são somente leitura aqui. Teams e Outlook estão em construção.', optional: true },
       ],
     },
   ],
