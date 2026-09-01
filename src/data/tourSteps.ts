@@ -344,6 +344,29 @@ export function tourIdFor(view: string, role?: RoleContext | null): string {
 
 // ── Tours extras (sob demanda) — não entram em hasTour nem no auto-início ──
 export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: TourStep[] }[]> = {
+  'boards-list': [
+    {
+      id: 'board-views',
+      label: 'Trocar a visão: Board, Backlog e Sprints',
+      steps: [
+        { selector: '[data-tour="board-tabs"]', navigateTo: 'project', placement: 'bottom', title: 'As três visões do board', body: 'Alterne entre Board (a sprint atual em colunas), Backlog (demandas do projeto ainda sem sprint) e Sprints (planejar e acompanhar as sprints deste board).' },
+      ],
+    },
+    {
+      id: 'board-daily',
+      label: 'Conduzir a Daily',
+      steps: [
+        { selector: '[data-tour="board-start-daily"]', navigateTo: 'project', placement: 'bottom', title: 'Iniciar a Daily', body: 'Abre o modo Daily: percorre item a item da sprint para o time atualizar o andamento rapidamente, sem perder o foco.' },
+      ],
+    },
+    {
+      id: 'board-close-sprint',
+      label: 'Encerrar a sprint',
+      steps: [
+        { selector: '[data-tour="board-end-sprint"]', navigateTo: 'project', placement: 'bottom', title: 'Encerrar sprint', body: 'Fecha a sprint atual: calcula a velocity pelas demandas concluídas e move as não-concluídas para a próxima sprint ou de volta ao backlog. Você revisa antes de confirmar.' },
+      ],
+    },
+  ],
   calendar: [
     {
       id: 'calendar-ceremonies',
