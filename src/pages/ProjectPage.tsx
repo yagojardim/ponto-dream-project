@@ -2700,6 +2700,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
     try {
       const sprint = await dbCreateSprint({
         projectId,
+        boardId: boardData?.board?.id ?? null,
         name: input.name,
         goal: input.goal || null,
         startDate: input.startDate || null,
