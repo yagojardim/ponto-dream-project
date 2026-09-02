@@ -1,6 +1,7 @@
 // Timeline data access layer — reads real data from the connected Supabase project.
 // Never cross-tenant: every read is filtered by tenant_id and every write records it.
 import { supabase } from '../../integrations/supabase/client'
+import { getActiveTenantId } from '@/data/session'
 import type { Database } from '../../integrations/supabase/types'
 import { T } from '../../components/ds/tokens'
 import { sortSprintsByStartDate } from './sprints'
@@ -70,7 +71,7 @@ function missingTableMessage(table: string, message: string): string {
 }
 
 export async function fetchTimelineData(): Promise<TimelineData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   const [projects, epics, sprints, workItems, features, dependencies, profiles] = await Promise.all([
     supabase.from('projects').select('id, name, period_start, period_end, status, metadata, created_at')
@@ -116,12 +117,12 @@ export async function updateWorkItemDates(
     .from('work_items')
     .update({ start_date: startDate, due_date: dueDate })
     .eq('id', item.id)
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
 
   if (error) throw new Error(error.message)
 
   await supabase.from('audit_logs').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     entity_type: 'work_item',
     entity_id: item.id,
     action: 'work_item.dates_updated',
