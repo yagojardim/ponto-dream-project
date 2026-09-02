@@ -9,7 +9,7 @@ import {
   type CeremonySlot,
   EVENT_TYPES, EVENT_TYPE_LABEL, EVENT_TYPE_COLOR, EVENT_TYPE_ICON,
   upsertExternalEvents, setExternalId, GOOGLE_PROVIDER,
-  DEFAULT_TENANT_ID, type CalendarEventType, type DbCalendarEvent, type CalendarEventInput,
+  type CalendarEventType, type DbCalendarEvent, type CalendarEventInput,
 } from '@/data/db/calendarEvents'
 import {
   getGoogleStatus, connectGoogle, disconnectGoogle, fetchGoogleEvents, pushEventToGoogle,
@@ -18,7 +18,7 @@ import {
 import { listSprints, normalizeState } from '@/data/db/sprints'
 import { useSession } from '@/data/SessionContext'
 import { can } from '@/data/permissions'
-import { MOCK_TENANT } from '@/data/session'
+import { MOCK_TENANT, getActiveTenantId } from '@/data/session'
 import { getMembers, type MemberRow } from '@/data/db/members'
 
 /** Maps a persisted calendar_events row into the shape the calendar views render. */
@@ -990,7 +990,7 @@ export default function CalendarPage() {
   const events: CalendarEvent[] = dbEvents
 
   const reload = useCallback(async () => {
-    const rows = await listCalendarEvents(DEFAULT_TENANT_ID)
+    const rows = await listCalendarEvents(getActiveTenantId())
     setDbEvents(rows.map(toViewEvent))
   }, [])
 
@@ -1011,7 +1011,7 @@ export default function CalendarPage() {
       const from = new Date(); from.setMonth(from.getMonth() - 1)
       const to = new Date(); to.setMonth(to.getMonth() + 3)
       const remote = await fetchGoogleEvents(from.toISOString(), to.toISOString())
-      const res = await upsertExternalEvents(remote, DEFAULT_TENANT_ID)
+      const res = await upsertExternalEvents(remote, getActiveTenantId())
       if (res.error) { toast(res.error); return }
       await reload()
       toast(`Google Agenda sincronizada · ${res.imported} novo(s), ${res.updated} atualizado(s).`)
@@ -1081,7 +1081,7 @@ export default function CalendarPage() {
     const res = await generateSprintCeremonies({
       id: sprint.id, name: sprint.name, projectId: sprint.projectId,
       startDate: sprint.start, endDate: sprint.end,
-    }, DEFAULT_TENANT_ID, activeUser.user_id, slots)
+    }, getActiveTenantId(), activeUser.user_id, slots)
     setGenerating(false)
     setCeremonyDialog(false)
     if (res.error) { toast(res.error); return }
@@ -1131,7 +1131,7 @@ export default function CalendarPage() {
   async function handleDelete(ev: CalendarEvent) {
     setDetailEv(null)
     if (ev.source === 'google') { toast('Eventos do Google não são removidos aqui.'); return }
-    const ok = await deleteCalendarEvent(ev.id, DEFAULT_TENANT_ID)
+    const ok = await deleteCalendarEvent(ev.id, getActiveTenantId())
     if (!ok) { toast('Falha ao remover o evento.'); return }
     await reload()
     toast('Evento removido.')
@@ -1141,8 +1141,8 @@ export default function CalendarPage() {
     const editing = composer?.editEvent
     setComposer(null)
     const saved = editing
-      ? await updateCalendarEvent(editing.id, input, DEFAULT_TENANT_ID)
-      : await createCalendarEvent({ ...input, createdBy: activeUser.user_id }, DEFAULT_TENANT_ID)
+      ? await updateCalendarEvent(editing.id, input, getActiveTenantId())
+      : await createCalendarEvent({ ...input, createdBy: activeUser.user_id }, getActiveTenantId())
     if (!saved) { toast('Falha ao salvar o evento.'); return }
     if (gStatus.connected) {
       const externalId = await pushEventToGoogle({
@@ -1155,7 +1155,7 @@ export default function CalendarPage() {
         location: input.location,
         guests: input.guests,
       })
-      if (externalId) await setExternalId(saved.id, externalId, DEFAULT_TENANT_ID)
+      if (externalId) await setExternalId(saved.id, externalId, getActiveTenantId())
     }
     await reload()
     toast(editing ? 'Evento atualizado.' : 'Evento criado.')
