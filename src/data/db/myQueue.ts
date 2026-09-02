@@ -2,6 +2,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 
 export { DEFAULT_TENANT_ID }
 
@@ -51,7 +52,7 @@ function missingTableMessage(table: string, message: string): string {
 /** Resolves the profile of the active session user by name (auth comes later). */
 export async function resolveProfileIdByName(name: string): Promise<string | null> {
   const { data, error } = await supabase.from('profiles')
-    .select('id, name').eq('tenant_id', DEFAULT_TENANT_ID).eq('name', name).limit(1)
+    .select('id, name').eq('tenant_id', getActiveTenantId()).eq('name', name).limit(1)
   if (error) throw new Error(missingTableMessage('profiles', error.message))
   return data?.[0]?.id ?? null
 }
@@ -68,10 +69,10 @@ export async function listMyQueue(userName: string): Promise<QueueData> {
   const [items, projects, epics, sprints] = await Promise.all([
     supabase.from('work_items')
       .select('id, key, title, type, status, priority, due_date, start_date, project_id, epic_id, sprint_id, assignee_id, story_points, is_blocked, blocked_reason, progress, updated_at')
-      .eq('tenant_id', DEFAULT_TENANT_ID).eq('assignee_id', profileId).is('archived_at', null),
-    supabase.from('projects').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID),
-    supabase.from('epics').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID),
-    supabase.from('sprints').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID),
+      .eq('tenant_id', getActiveTenantId()).eq('assignee_id', profileId).is('archived_at', null),
+    supabase.from('projects').select('id, name').eq('tenant_id', getActiveTenantId()),
+    supabase.from('epics').select('id, name').eq('tenant_id', getActiveTenantId()),
+    supabase.from('sprints').select('id, name').eq('tenant_id', getActiveTenantId()),
   ])
 
   const failed = [
