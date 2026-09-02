@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import { HelpHint } from '@/components/ds/HelpHint'
 import { useSession } from '@/data/SessionContext'
-import { DEFAULT_TENANT_ID } from '@/data/db/timeline'
+import { getActiveTenantId } from '@/data/session'
 import {
   fetchTenantStorage, fetchProjectStorageRows, bytesToHuman, bucketOf, usagePct,
   STORAGE_BUCKET_LABEL, EMPTY_TENANT_STORAGE, canViewStorage,
@@ -34,7 +34,7 @@ const cardStyle: React.CSSProperties = {
 
 export default function StoragePage({ onNav }: Props) {
   const { activeUser } = useSession()
-  const tenantId = DEFAULT_TENANT_ID
+  const tenantId = getActiveTenantId()
 
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
