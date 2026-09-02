@@ -177,6 +177,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
             Cancelar
           </button>
           <button
+            data-tour="nb-save"
             disabled={!valid || busy}
             onClick={handleCreate}
             className="h-9 px-4 rounded-lg text-xs font-semibold text-white"
@@ -207,7 +208,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
         )}
 
         {/* Name */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1" data-tour="nb-name">
           <label className="text-[11px] font-semibold" style={{ color: T.text3 }}>Nome do board</label>
           <input
             value={name}
@@ -219,7 +220,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
         </div>
 
         {/* Board columns */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" data-tour="nb-columns">
           <label className="text-[11px] font-semibold" style={{ color: T.text3 }}>Base de colunas</label>
 
           {/* Mode toggle */}
@@ -274,7 +275,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
 
 
         {/* Filter */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" data-tour="nb-filter">
           <label className="text-[11px] font-semibold" style={{ color: T.text3 }}>Filtro do board (opcional)</label>
           <p className="text-[11px]" style={{ color: T.text3 }}>Define quais itens do projeto aparecem neste board.</p>
           <FilterBuilder value={filter} onChange={setFilter} options={filterOptions} compact />
