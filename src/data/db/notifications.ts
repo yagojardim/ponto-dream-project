@@ -5,6 +5,7 @@
 // real portal activity.
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '../../utils/logger'
 
 export { DEFAULT_TENANT_ID }
@@ -35,7 +36,7 @@ async function writeAudit(
 ): Promise<void> {
   try {
     await supabase.from('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: 'notification',
       entity_id: entityId,
       action,
@@ -50,7 +51,7 @@ async function writeAudit(
 /** Resolves the profile uuid of a session user by display name (auth comes later). */
 async function resolveProfileId__raw(name: string): Promise<string | null> {
   const { data, error } = await supabase.from('profiles')
-    .select('id').eq('tenant_id', DEFAULT_TENANT_ID).eq('name', name).limit(1)
+    .select('id').eq('tenant_id', getActiveTenantId()).eq('name', name).limit(1)
   if (error) throw notifError('profiles', error.message)
   return data?.[0]?.id ?? null
 }
@@ -63,7 +64,7 @@ export function resolveProfileId(name: string): Promise<string | null> {
 async function mirrorClientSignals__raw(profileId: string): Promise<number> {
   const { data: signals, error } = await tbl('client_signals')
     .select('id, type, item_id, item_title, body, author, created_at, read_by_po')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .eq('tenant_id', getActiveTenantId()).is('archived_at', null)
     .order('created_at', { ascending: false }).limit(50)
   if (error) throw notifError('client_signals', error.message)
 
@@ -72,7 +73,7 @@ async function mirrorClientSignals__raw(profileId: string): Promise<number> {
 
   const { data: existing, error: exErr } = await tbl('notifications')
     .select('entity_id')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId)
+    .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId)
     .eq('entity_type', 'client_signal')
   if (exErr) throw notifError('notifications', exErr.message)
 
@@ -81,7 +82,7 @@ async function mirrorClientSignals__raw(profileId: string): Promise<number> {
   if (missing.length === 0) return 0
 
   const payload = missing.map(s => ({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     user_id: profileId,
     type: s.type === 'approval' ? 'approval' : 'comment',
     entity_type: 'client_signal',
@@ -104,7 +105,7 @@ export function mirrorClientSignals(profileId: string): Promise<number> {
 // ─── Reads ────────────────────────────────────────────────────────────────────
 async function list__raw(profileId: string, limit = 50): Promise<NotificationRow[]> {
   const { data, error } = await tbl('notifications').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId)
+    .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId)
     .is('archived_at', null)
     .order('read', { ascending: true })
     .order('created_at', { ascending: false })
@@ -120,7 +121,7 @@ export function list(profileId: string, limit = 50): Promise<NotificationRow[]> 
 async function unreadCount__raw(profileId: string): Promise<number> {
   const { count, error } = await tbl('notifications')
     .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId)
+    .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId)
     .eq('read', false).is('archived_at', null)
   if (error) throw notifError('notifications', error.message)
   return count ?? 0
@@ -133,7 +134,7 @@ export function unreadCount(profileId: string): Promise<number> {
 // ─── Writes ───────────────────────────────────────────────────────────────────
 async function markRead__raw(id: string): Promise<boolean> {
   const { error } = await tbl('notifications').update({ read: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', id)
+    .eq('tenant_id', getActiveTenantId()).eq('id', id)
   if (error) throw notifError('notifications', error.message)
   await writeAudit(id, 'notification.read', { read: true })
   return true
@@ -145,7 +146,7 @@ export function markRead(id: string): Promise<boolean> {
 
 async function markAllRead__raw(profileId: string): Promise<boolean> {
   const { error } = await tbl('notifications').update({ read: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId).eq('read', false)
+    .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId).eq('read', false)
   if (error) throw notifError('notifications', error.message)
   await writeAudit(profileId, 'notification.read_all', { read: true })
   return true
@@ -164,7 +165,7 @@ async function create__raw(input: {
   entityId?: string | null
 }): Promise<string | null> {
   const { data, error } = await tbl('notifications').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     user_id: input.profileId,
     type: input.type ?? 'info',
     title: input.title,
