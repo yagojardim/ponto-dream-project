@@ -66,7 +66,13 @@ export default function SignupPage({ onGoToLogin }: Props) {
     setBusy(true)
     setError(null)
     const res = await signUpTenant({ name, email, password, orgName })
-    if (res.ok) return // SessionContext detecta o login e o app libera sozinho.
+    if (res.ok) {
+      // A sessão já foi persistida no login (signIn). Recarregamos para o app
+      // reabrir no estado autenticado e cair no onboarding pós-login. Mais
+      // confiável do que depender do evento de auth em memória no build publicado.
+      window.location.assign('/')
+      return
+    }
     setBusy(false)
     if (res.reason === 'email_exists') {
       onGoToLogin(email.trim().toLowerCase()) // já tem conta → Login com e-mail preenchido
