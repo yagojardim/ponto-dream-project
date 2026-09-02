@@ -5,7 +5,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import { safeCall, logger } from '../../utils/logger'
 import { writeAudit as writeMilestone } from './audit'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 
 function tbl(name: string): any {
   return (supabase as unknown as { from: (t: string) => any }).from(name)
@@ -44,7 +44,7 @@ async function sha256Hex(raw: string): Promise<string> {
 async function audit(action: string, profileId: string, after: Record<string, unknown>): Promise<void> {
   try {
     await tbl('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: 'activation_token',
       entity_id: profileId,
       action,
@@ -68,7 +68,7 @@ export function issueToken(
     const expires_at = new Date(Date.now() + ttlHours * 3600_000).toISOString()
 
     const { error } = await tbl('activation_tokens').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       profile_id: profileId,
       purpose,
       token_hash,
@@ -125,7 +125,7 @@ export function setPasswordMustChange(profileId: string, value: boolean): Promis
     const { error } = await tbl('profiles')
       .update({ password_must_change: value })
       .eq('id', profileId)
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
     if (error) throw error
     return true
   }, false)
@@ -136,12 +136,12 @@ export function markPasswordChanged(profileId: string): Promise<boolean> {
   return safeCall<boolean>('activationTokens.markPasswordChanged', async () => {
     const patch: Record<string, unknown> = { password_must_change: false }
     const { data: cur } = await tbl('profiles')
-      .select('first_access_at').eq('id', profileId).eq('tenant_id', DEFAULT_TENANT_ID).limit(1)
+      .select('first_access_at').eq('id', profileId).eq('tenant_id', getActiveTenantId()).limit(1)
     if (!(cur ?? [])[0]?.first_access_at) patch.first_access_at = new Date().toISOString()
     const { error } = await tbl('profiles')
       .update(patch)
       .eq('id', profileId)
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
     if (error) throw error
     await audit('password_changed', profileId, { via: 'create_password_page' })
     return true
