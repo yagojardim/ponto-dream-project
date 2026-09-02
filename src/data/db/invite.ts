@@ -4,7 +4,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import { safeCall, logger } from '../../utils/logger'
 import { writeAudit as writeMilestone } from './audit'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { DEFAULT_DASHBOARD_BY_ROLE, type DashboardType, type RoleContext } from '../session'
 
 function tbl(name: string): any {
@@ -24,13 +24,13 @@ export interface InviteOptions {
 export function fetchInviteOptions(): Promise<InviteOptions> {
   return safeCall<InviteOptions>('invite.fetchOptions', async () => {
     const [projRes, squadRes, modRes, tmRes] = await Promise.all([
-      tbl('projects').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID)
+      tbl('projects').select('id, name').eq('tenant_id', getActiveTenantId())
         .is('archived_at', null).order('name', { ascending: true }),
-      tbl('squads').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID)
+      tbl('squads').select('id, name').eq('tenant_id', getActiveTenantId())
         .is('archived_at', null).order('name', { ascending: true }),
       tbl('modules').select('id, key, name').is('archived_at', null)
         .order('display_order', { ascending: true }),
-      tbl('tenant_modules').select('module_id, status').eq('tenant_id', DEFAULT_TENANT_ID)
+      tbl('tenant_modules').select('module_id, status').eq('tenant_id', getActiveTenantId())
         .is('archived_at', null),
     ])
 
@@ -67,7 +67,7 @@ export function checkMemberIdentity(name: string, email: string): Promise<Identi
     const nm = name.trim()
     const { data } = await tbl('profiles')
       .select('id, name, email')
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
       .is('archived_at', null)
     const rows = (data ?? []) as any[]
     const emailTaken = rows.some(r => String(r.email ?? '').trim().toLowerCase() === mail)
@@ -124,7 +124,7 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
     const homeRoles = [...new Set([input.role, ...input.homeRoles])]
 
     const { data: created, error } = await tbl('profiles').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       name: input.name,
       email: input.email.toLowerCase(),
       phone: input.phone || null,
@@ -154,7 +154,7 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
     if (input.projectIds.length) {
       const { error: pmErr } = await tbl('project_members').insert(
         input.projectIds.map(project_id => ({
-          tenant_id: DEFAULT_TENANT_ID, project_id, profile_id: profileId, project_role: 'member',
+          tenant_id: getActiveTenantId(), project_id, profile_id: profileId, project_role: 'member',
         })),
       )
       if (pmErr) logger.error('invite.projectMembers', pmErr, { profileId })
@@ -164,7 +164,7 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
     if (input.squadIds.length) {
       const { error: smErr } = await tbl('squad_members').insert(
         input.squadIds.map(squad_id => ({
-          tenant_id: DEFAULT_TENANT_ID, squad_id, profile_id: profileId,
+          tenant_id: getActiveTenantId(), squad_id, profile_id: profileId,
         })),
       )
       if (smErr) logger.error('invite.squadMembers', smErr, { profileId })
@@ -182,7 +182,7 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
         .map((rc, i) => {
           const roleId = byKey.get(ROLE_KEYS[rc])
           return roleId
-            ? { tenant_id: DEFAULT_TENANT_ID, profile_id: profileId, role_id: roleId, is_primary: i === 0 }
+            ? { tenant_id: getActiveTenantId(), profile_id: profileId, role_id: roleId, is_primary: i === 0 }
             : null
         })
         .filter(Boolean)
@@ -201,7 +201,7 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
           const id = byDash.get(normKey(d))
           return id
             ? {
-                tenant_id: DEFAULT_TENANT_ID, profile_id: profileId, dashboard_id: id,
+                tenant_id: getActiveTenantId(), profile_id: profileId, dashboard_id: id,
                 is_default: d === input.defaultDashboard, status: 'active',
               }
             : null
@@ -214,7 +214,7 @@ export function createMember(input: CreateMemberInput): Promise<string | null> {
 
     try {
       await tbl('audit_logs').insert({
-        tenant_id: DEFAULT_TENANT_ID,
+        tenant_id: getActiveTenantId(),
         entity_type: 'profile',
         entity_id: profileId,
         action: 'profile.invited',
