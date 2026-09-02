@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../integrations/supabase/client'
 import { writeAudit as writeMilestone } from '@/data/db/audit'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall } from '../../utils/logger'
 import type { RoleContext } from '../session'
 
@@ -57,7 +57,7 @@ export function fetchReportsGovernance(force = false): Promise<ReportsGovernance
   inflight = safeCall<ReportsGovernance>('reportsGovernance.fetch', async () => {
     const { data, error } = await (supabase as any)
       .from('tenant_settings').select('metadata')
-      .eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle()
+      .eq('tenant_id', getActiveTenantId()).maybeSingle()
     if (error) throw error
     return parse(data?.metadata)
   }, EMPTY).then(g => { emit(g); inflight = null; return g })
@@ -73,13 +73,13 @@ export function saveReportsGovernance(patch: Partial<ReportsGovernance>): Promis
     }
     const { data } = await (supabase as any)
       .from('tenant_settings').select('metadata')
-      .eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle()
+      .eq('tenant_id', getActiveTenantId()).maybeSingle()
     const metadata = { ...(data?.metadata ?? {}) } as Record<string, unknown>
     metadata.reports_access_roles = next.accessRoles
     metadata.released_report_cards = next.releasedCards
     const { error } = await (supabase as any)
       .from('tenant_settings')
-      .upsert({ tenant_id: DEFAULT_TENANT_ID, metadata }, { onConflict: 'tenant_id' })
+      .upsert({ tenant_id: getActiveTenantId(), metadata }, { onConflict: 'tenant_id' })
     if (error) throw error
     emit(next)
     return true
@@ -98,7 +98,7 @@ export function fetchProfileReportsAccess(profileId: string): Promise<boolean> {
   return safeCall<boolean>('reportsGovernance.fetchProfileAccess', async () => {
     const { data, error } = await (supabase as any)
       .from('profiles').select('reports_access')
-      .eq('id', profileId).eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle()
+      .eq('id', profileId).eq('tenant_id', getActiveTenantId()).maybeSingle()
     if (error) throw error
     const val = !!data?.reports_access
     accessCache.set(profileId, val)
@@ -111,7 +111,7 @@ export function saveProfileReportsAccess(profileId: string, value: boolean): Pro
   return safeCall<boolean>('reportsGovernance.saveProfileAccess', async () => {
     const { error } = await (supabase as any)
       .from('profiles').update({ reports_access: value })
-      .eq('id', profileId).eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('id', profileId).eq('tenant_id', getActiveTenantId())
     if (error) throw error
     accessCache.set(profileId, value)
     await writeMilestone('user.updated', profileId, { reports_access: value })
@@ -124,7 +124,7 @@ export function saveProfileReportsAccessByEmail(email: string, value: boolean): 
   return safeCall<boolean>('reportsGovernance.saveProfileAccessByEmail', async () => {
     const { error } = await (supabase as any)
       .from('profiles').update({ reports_access: value })
-      .eq('tenant_id', DEFAULT_TENANT_ID).ilike('email', email)
+      .eq('tenant_id', getActiveTenantId()).ilike('email', email)
     if (error) throw error
     return true
   }, false)
