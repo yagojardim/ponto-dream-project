@@ -4,7 +4,7 @@
 // Padrão do projeto: tenant scope, safeCall degradando para valores seguros,
 // writes registrados em audit_logs (coluna `action`) e avisos em notifications.
 import { supabase } from '../../integrations/supabase/client'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '../../utils/logger'
 import { issueToken, activationLink } from './activationTokens'
 import { create as createNotification } from './notifications'
@@ -37,7 +37,7 @@ const EMPTY_STATE: AdminMasterState = {
 async function writeAudit(action: string, entityId: string | null, after: Record<string, unknown>) {
   try {
     await tbl('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: 'admin_master',
       entity_id: entityId,
       action,
@@ -55,13 +55,13 @@ function daysBetween(from: Date, to: Date): number {
 
 async function loadSettings(): Promise<any | null> {
   const { data, error } = await tbl('tenant_settings')
-    .select('*').eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle()
+    .select('*').eq('tenant_id', getActiveTenantId()).maybeSingle()
   if (error) throw error
   return data ?? null
 }
 
 async function tenantCreatedAt(): Promise<string | null> {
-  const { data } = await tbl('tenants').select('created_at').eq('id', DEFAULT_TENANT_ID).maybeSingle()
+  const { data } = await tbl('tenants').select('created_at').eq('id', getActiveTenantId()).maybeSingle()
   return data?.created_at ?? null
 }
 
@@ -101,15 +101,15 @@ async function promote(profileId: string, method: AdminMasterMethod): Promise<vo
   // Garante um único owner por tenant (índice único parcial no banco).
   await tbl('profiles')
     .update({ tenant_owner: false })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('tenant_owner', true).neq('id', profileId)
+    .eq('tenant_id', getActiveTenantId()).eq('tenant_owner', true).neq('id', profileId)
 
   const { error } = await tbl('profiles')
     .update({ tenant_owner: true, primary_role: 'ADMIN_MASTER' })
-    .eq('id', profileId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('id', profileId).eq('tenant_id', getActiveTenantId())
   if (error) throw error
 
   const { error: sErr } = await tbl('tenant_settings').upsert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     admin_master_status: 'defined',
     admin_master_defined_method: method,
     admin_master_defined_at: new Date().toISOString(),
@@ -148,12 +148,12 @@ export function inviteAsAdminMaster(
     }
 
     const { data: found } = await tbl('profiles')
-      .select('id').eq('tenant_id', DEFAULT_TENANT_ID).ilike('email', mail).limit(1)
+      .select('id').eq('tenant_id', getActiveTenantId()).ilike('email', mail).limit(1)
     let profileId: string | null = found?.[0]?.id ?? null
 
     if (!profileId) {
       const { data: created, error } = await tbl('profiles').insert({
-        tenant_id: DEFAULT_TENANT_ID,
+        tenant_id: getActiveTenantId(),
         name: name.trim() || mail,
         email: mail,
         status: 'active',
@@ -165,7 +165,7 @@ export function inviteAsAdminMaster(
       await tbl('profiles').update({
         name: name.trim() || undefined,
         password_must_change: true,
-      }).eq('id', profileId).eq('tenant_id', DEFAULT_TENANT_ID)
+      }).eq('id', profileId).eq('tenant_id', getActiveTenantId())
     }
 
     await promote(profileId!, 'invited_other')
@@ -202,7 +202,7 @@ export function reconcileAdminMaster(): Promise<AdminMasterState> {
     let target = state.registrantProfileId
     if (!target) {
       const { data } = await tbl('profiles')
-        .select('id').eq('tenant_id', DEFAULT_TENANT_ID).eq('status', 'active')
+        .select('id').eq('tenant_id', getActiveTenantId()).eq('status', 'active')
         .order('created_at', { ascending: true }).limit(1)
       target = data?.[0]?.id ?? null
     }
