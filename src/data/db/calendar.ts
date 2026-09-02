@@ -3,6 +3,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 
 export { DEFAULT_TENANT_ID }
 
@@ -36,7 +37,7 @@ function missingTableMessage(table: string, message: string): string {
 
 /** Every work item of the tenant that has a real deadline. */
 export async function listDeadlines(projectIds?: string[]): Promise<DeadlineItem[]> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   let query = supabase.from('work_items')
     .select('id, key, title, type, status, priority, due_date, project_id, assignee_id, is_blocked')
     .eq('tenant_id', tid).is('archived_at', null).not('due_date', 'is', null)
