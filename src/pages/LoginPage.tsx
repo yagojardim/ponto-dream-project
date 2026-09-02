@@ -9,7 +9,13 @@ import { requestPasswordReset } from '../lib/passwordReset'
 type LoginState = 'idle' | 'loading' | 'error' | 'success'
 
 /** `role` só é enviado no atalho Inspection (dev). Login real chama sem role. */
-interface Props { onSuccess: (role?: string) => void }
+interface Props {
+  onSuccess: (role?: string) => void
+  /** Abre a tela de auto-cadastro (Criar conta). */
+  onCreateAccount?: () => void
+  /** Pré-preenche o e-mail (ex.: vindo do cadastro quando o e-mail já existe). */
+  initialEmail?: string
+}
 
 
 const ROLES = ['PMO', 'PM', 'P.O', 'SM', 'TechLead', 'Dev', 'UX/UI', 'QA']
@@ -75,9 +81,9 @@ function CheckCircle() {
   )
 }
 
-export default function LoginPage({ onSuccess }: Props) {
+export default function LoginPage({ onSuccess, onCreateAccount, initialEmail }: Props) {
   const [loginState, setLoginState] = useState<LoginState>('idle')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(initialEmail ?? '')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [remember, setRemember] = useState(false)
@@ -381,6 +387,19 @@ export default function LoginPage({ onSuccess }: Props) {
                 >
                   {isLoading ? <><Spinner /> Entrando…</> : 'Entrar'}
                 </button>
+
+                {onCreateAccount && (
+                  <p style={{ fontSize: 12, color: T.text3, textAlign: 'center', margin: '4px 0 0' }}>
+                    Não tem conta?{' '}
+                    <a
+                      href="#"
+                      style={{ color: T.accent, textDecoration: 'none' }}
+                      onClick={e => { e.preventDefault(); onCreateAccount() }}
+                    >
+                      Criar conta
+                    </a>
+                  </p>
+                )}
               </div>
             </form>
           ) : (
