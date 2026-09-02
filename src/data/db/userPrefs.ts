@@ -3,6 +3,7 @@
 // Nunca usar localStorage: as escolhas seguem o usuário em qualquer navegador.
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall } from '../../utils/logger'
 
 export { DEFAULT_TENANT_ID }
@@ -14,7 +15,7 @@ function tbl(name: string): any {
 async function getUserPref__raw<T>(userId: string, key: string): Promise<T | null> {
   const { data, error } = await tbl('user_prefs')
     .select('value')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
     .eq('user_id', userId)
     .eq('pref_key', key)
     .maybeSingle()
@@ -28,7 +29,7 @@ export function getUserPref<T>(userId: string, key: string): Promise<T | null> {
 
 async function saveUserPref__raw(userId: string, key: string, value: unknown): Promise<boolean> {
   const { error } = await tbl('user_prefs').upsert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     user_id: userId,
     pref_key: key,
     value,
