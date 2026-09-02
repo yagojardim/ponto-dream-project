@@ -2,6 +2,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { epicColor, PRIORITY_FROM_DB, PRIORITY_TO_DB } from './board'
 import { sortSprintsByStartDate } from './sprints'
 import { STATUS_TO_DB, uiStatusFromDb } from './workItem'
@@ -56,7 +57,7 @@ function missingTableMessage(table: string, message: string): string {
 const sel = (s: string): string => s
 
 export async function listWorkItems(filters: ListFilters = {}): Promise<ListData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   let query = supabase
     .from('work_items')
