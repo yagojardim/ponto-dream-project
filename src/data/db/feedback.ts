@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Feedback & Suporte — texto puro, amarrado ao tenant/usuário.
 import { supabase } from '../../integrations/supabase/client'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall } from '../../utils/logger'
 
 export type FeedbackType = 'feedback' | 'problema' | 'sugestao'
@@ -39,7 +39,7 @@ async function createFeedback__raw(
   const message = input.message.trim()
   if (!message) throw new Error('[feedback] mensagem obrigatória')
   const { error } = await tbl('feedback').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     profile_id: author.userId || null,
     author_name: author.name || null,
     type: input.type,
@@ -64,7 +64,7 @@ export function createFeedback(
 async function listFeedback__raw(): Promise<FeedbackRow[]> {
   const { data, error } = await tbl('feedback')
     .select('id, tenant_id, profile_id, author_name, type, rating, message, screen_url, screen_label, status, created_at')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
     .order('created_at', { ascending: false })
   if (error) throw new Error(`[feedback] ${error.message}`)
   return (data ?? []) as FeedbackRow[]
