@@ -6,11 +6,22 @@
 // access goes through a small untyped shim while the rows stay strongly typed here.
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { readPortalSession } from '@/lib/portalSession'
 import { sortSprintsByStartDate } from './sprints'
 import { safeCall, logger } from '../../utils/logger'
 import { writeAudit as writeMilestone } from '@/data/db/audit'
 
 export { DEFAULT_TENANT_ID }
+
+/**
+ * Tenant do Portal do Cliente = o tenant da sessão do portal (retornado pela
+ * Edge Function client-portal-login). O portal tem autenticação própria e NÃO
+ * usa o tenant do app principal (getActiveTenantId). Fallback DEFAULT_TENANT_ID
+ * para dev/single-tenant quando não há sessão de portal.
+ */
+function portalTenantId(): string {
+  return readPortalSession()?.tenantId ?? DEFAULT_TENANT_ID
+}
 
 type PortalTable =
   | 'client_portal_users'
@@ -145,7 +156,7 @@ function tenantError(table: string, message: string): Error {
 async function listPortalProjects__raw(): Promise<PortalProject[]> {
   const { data, error } = await supabase.from('projects')
     .select('id, name, status, period_start, period_end')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null).order('name')
+    .eq('tenant_id', portalTenantId()).is('archived_at', null).order('name')
   if (error) throw tenantError('projects', error.message)
   return (data ?? []) as PortalProject[]
 }
@@ -156,7 +167,7 @@ async function listPortalProjects__raw(): Promise<PortalProject[]> {
  * are returned — raw internal work items, PRs and infra never leave the tenant.
  */
 async function getClientPortal__raw(projectId: string): Promise<ClientPortalScope> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = portalTenantId()
   const [projectRes, sprintsRes, sharedRes, epicsRes, itemsRes] = await Promise.all([
     supabase.from('projects').select('id, name, status, period_start, period_end')
       .eq('tenant_id', tid).eq('id', projectId).maybeSingle(),
@@ -226,7 +237,7 @@ async function writeAudit(
 ): Promise<void> {
   try {
     await supabase.from('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: portalTenantId(),
       entity_type: entityType,
       entity_id: entityId,
       action,
@@ -242,7 +253,7 @@ async function writeAudit(
 // ─── Signals ──────────────────────────────────────────────────────────────────
 async function listClientSignals__raw(projectId?: string): Promise<ClientSignalRow[]> {
   let q = tbl('client_signals').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .eq('tenant_id', portalTenantId()).is('archived_at', null)
   if (projectId) q = q.eq('project_id', projectId)
   const { data, error } = await q.order('created_at', { ascending: true })
   if (error) throw tenantError('client_signals', error.message)
@@ -251,7 +262,7 @@ async function listClientSignals__raw(projectId?: string): Promise<ClientSignalR
 
 async function listClientSignalsForPo__raw(poId: string): Promise<ClientSignalRow[]> {
   const { data, error } = await tbl('client_signals').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('responsible_po', poId)
+    .eq('tenant_id', portalTenantId()).eq('responsible_po', poId)
     .is('archived_at', null).order('created_at', { ascending: false })
   if (error) throw tenantError('client_signals', error.message)
   return (data ?? []) as ClientSignalRow[]
@@ -273,7 +284,7 @@ export interface AddCommentInput {
 async function addClientComment__raw(input: AddCommentInput): Promise<ClientSignalRow> {
   const isMgmt = input.source === 'management'
   const { data, error } = await tbl('client_signals').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: portalTenantId(),
     project_id: input.projectId,
     type: 'comment',
     item_id: input.itemId ?? null,
@@ -308,7 +319,7 @@ export interface AddApprovalInput {
 async function addClientApproval__raw(input: AddApprovalInput): Promise<ClientSignalRow> {
   if (input.workItemId) {
     const { data: appr, error: apprErr } = await tbl('client_approvals').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: portalTenantId(),
       project_id: input.projectId,
       work_item_id: input.workItemId,
       client_user_id: input.clientUserId ?? null,
@@ -322,7 +333,7 @@ async function addClientApproval__raw(input: AddApprovalInput): Promise<ClientSi
   }
 
   const { data, error } = await tbl('client_signals').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: portalTenantId(),
     project_id: input.projectId,
     type: 'approval',
     item_id: input.workItemId ?? null,
@@ -346,7 +357,7 @@ async function addPoReply__raw(signalId: string, reply: string, poName: string):
       reply_read_by_client: false,
       metadata: { po_reply_by: poName },
     })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', signalId)
+    .eq('tenant_id', portalTenantId()).eq('id', signalId)
     .select('id, project_id').single()
   if (error) throw tenantError('client_signals', error.message)
   const row = data as { id: string; project_id: string }
@@ -356,28 +367,28 @@ async function addPoReply__raw(signalId: string, reply: string, poName: string):
 
 async function markSignalReadByPo__raw(signalId: string): Promise<void> {
   await tbl('client_signals').update({ read_by_po: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', signalId)
+    .eq('tenant_id', portalTenantId()).eq('id', signalId)
 }
 
 async function markProjectReadByPo__raw(projectId: string): Promise<void> {
   await tbl('client_signals').update({ read_by_po: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('project_id', projectId).eq('read_by_po', false)
+    .eq('tenant_id', portalTenantId()).eq('project_id', projectId).eq('read_by_po', false)
 }
 
 async function markReplyReadByClient__raw(signalId: string): Promise<void> {
   await tbl('client_signals').update({ reply_read_by_client: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', signalId)
+    .eq('tenant_id', portalTenantId()).eq('id', signalId)
 }
 
 async function markAllRepliesReadByClient__raw(author: string): Promise<void> {
   await tbl('client_signals').update({ reply_read_by_client: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('author', author).eq('reply_read_by_client', false)
+    .eq('tenant_id', portalTenantId()).eq('author', author).eq('reply_read_by_client', false)
 }
 
 // ─── Portal users / permissions ───────────────────────────────────────────────
 async function listClientPortalUsers__raw(projectId?: string): Promise<ClientPortalUserRow[]> {
   let q = tbl('client_portal_users').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .eq('tenant_id', portalTenantId()).is('archived_at', null)
   if (projectId) q = q.eq('project_id', projectId)
   const { data, error } = await q.order('created_at', { ascending: false })
   if (error) throw tenantError('client_portal_users', error.message)
@@ -401,7 +412,7 @@ async function createClientPortalUsers__raw(
   input: CreatePortalUserInput,
 ): Promise<ClientPortalUserRow[]> {
   const rows = input.projectIds.map(pid => ({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: portalTenantId(),
     project_id: pid,
     name: input.name,
     email: input.email,
@@ -440,7 +451,7 @@ async function getClientPermissions__raw(
   email: string, projectId?: string,
 ): Promise<ClientPermissions> {
   let q = tbl('client_portal_users').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).ilike('email', email)
+    .eq('tenant_id', portalTenantId()).ilike('email', email)
   if (projectId) q = q.eq('project_id', projectId)
   const { data, error } = await q
   if (error) throw tenantError('client_portal_users', error.message)
@@ -458,7 +469,7 @@ async function getClientPermissions__raw(
 
 async function setPortalPasswordChanged__raw(userId: string): Promise<void> {
   await tbl('client_portal_users').update({ password_must_change: false, status: 'active' })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', userId)
+    .eq('tenant_id', portalTenantId()).eq('id', userId)
 }
 
 
@@ -566,7 +577,7 @@ export interface ResponsibleCandidate {
 async function listProjectResponsibleCandidates__raw(projectId: string): Promise<ResponsibleCandidate[]> {
   const { data: members, error: mErr } = await tbl('project_members')
     .select('profile_id')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .eq('project_id', projectId)
   if (mErr) throw tenantError('project_members', mErr.message)
   const ids = [...new Set((members ?? []).map((m: any) => m.profile_id).filter(Boolean))]
@@ -574,7 +585,7 @@ async function listProjectResponsibleCandidates__raw(projectId: string): Promise
 
   const { data, error } = await tbl('profiles')
     .select('id, name, email, avatar_initials, avatar_color, primary_role')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .in('id', ids)
     .is('archived_at', null)
     .eq('can_handle_client_messages', true)
@@ -602,7 +613,7 @@ export interface MentionProfile { id: string; name: string }
 async function listProjectResponsibles__raw(projectId: string): Promise<string[]> {
   const { data, error } = await tbl('project_client_responsibles')
     .select('profile_id')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .eq('project_id', projectId)
   if (error) throw tenantError('project_client_responsibles', error.message)
   return (data ?? []).map((r: any) => r.profile_id).filter(Boolean)
@@ -612,7 +623,7 @@ async function listProjectResponsibles__raw(projectId: string): Promise<string[]
 async function listResponsibleProjectIds__raw(profileId: string): Promise<string[]> {
   const { data, error } = await tbl('project_client_responsibles')
     .select('project_id')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .eq('profile_id', profileId)
   if (error) throw tenantError('project_client_responsibles', error.message)
   return (data ?? []).map((r: any) => r.project_id).filter(Boolean)
@@ -628,7 +639,7 @@ async function setProjectResponsibles__raw(
   if (toRemove.length) {
     const { error } = await tbl('project_client_responsibles')
       .delete()
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', portalTenantId())
       .eq('project_id', projectId)
       .in('profile_id', toRemove)
     if (error) throw tenantError('project_client_responsibles', error.message)
@@ -637,7 +648,7 @@ async function setProjectResponsibles__raw(
   const toAdd = next.filter(id => !before.includes(id))
   if (toAdd.length) {
     const { error } = await tbl('project_client_responsibles').insert(
-      toAdd.map(profile_id => ({ tenant_id: DEFAULT_TENANT_ID, project_id: projectId, profile_id })),
+      toAdd.map(profile_id => ({ tenant_id: portalTenantId(), project_id: projectId, profile_id })),
     )
     if (error) throw tenantError('project_client_responsibles', error.message)
   }
@@ -661,7 +672,7 @@ async function listProjectResponsibleProfiles__raw(projectId: string): Promise<M
   if (!ids.length) return []
   const { data, error } = await tbl('profiles')
     .select('id, name, email')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .in('id', ids)
     .is('archived_at', null)
     .order('name')
@@ -701,7 +712,7 @@ export interface ProjectSignalSummary {
 async function listResponsibleProjects__raw(
   profileId: string, isSupervisor: boolean,
 ): Promise<ProjectSignalSummary[]> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = portalTenantId()
   let projectIds: string[] = []
 
   if (isSupervisor) {
@@ -761,7 +772,7 @@ function signalSource(row: ClientSignalRow): 'client' | 'management' {
 async function listProjectsWithClientSignals__raw(): Promise<ProjectSignalSummary[]> {
   const { data, error } = await tbl('client_signals')
     .select('id, project_id, type, author, body, item_title, read_by_po, metadata, created_at')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .eq('tenant_id', portalTenantId()).is('archived_at', null)
     .order('created_at', { ascending: true })
   if (error) throw tenantError('client_signals', error.message)
   const rows = (data ?? []) as ClientSignalRow[]
@@ -770,7 +781,7 @@ async function listProjectsWithClientSignals__raw(): Promise<ProjectSignalSummar
   const ids = [...new Set(rows.map(r => r.project_id).filter(Boolean))]
   const { data: projects } = await supabase.from('projects')
     .select('id, name, client_name')
-    .eq('tenant_id', DEFAULT_TENANT_ID).in('id', ids)
+    .eq('tenant_id', portalTenantId()).in('id', ids)
   const byId = new Map((projects ?? []).map((p: any) => [p.id, p]))
 
   const map = new Map<string, ProjectSignalSummary>()
@@ -863,7 +874,7 @@ async function listProjectThreads__raw(projectId: string): Promise<ProjectThread
 
 async function listThreadMessages__raw(projectId: string, itemId: string): Promise<ClientChatMessage[]> {
   const { data, error } = await tbl('client_signals').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('project_id', projectId).eq('item_id', itemId)
+    .eq('tenant_id', portalTenantId()).eq('project_id', projectId).eq('item_id', itemId)
     .is('archived_at', null).order('created_at', { ascending: true })
   if (error) throw tenantError('client_signals', error.message)
   return ((data ?? []) as ClientSignalRow[]).map(toChatMessage)
@@ -875,7 +886,7 @@ export interface ProjectWorkItemOption { id: string; title: string }
 async function listProjectWorkItems__raw(projectId: string): Promise<ProjectWorkItemOption[]> {
   const { data, error } = await supabase.from('work_items')
     .select('id, title')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('project_id', projectId)
+    .eq('tenant_id', portalTenantId()).eq('project_id', projectId)
     .is('archived_at', null)
     .order('created_at', { ascending: false })
     .limit(200)
@@ -895,7 +906,7 @@ export interface AddClientMessageInput {
 
 async function markProjectSignalsReadByPo__raw(projectId: string): Promise<void> {
   const { error } = await tbl('client_signals').update({ read_by_po: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('project_id', projectId)
+    .eq('tenant_id', portalTenantId()).eq('project_id', projectId)
     .eq('read_by_po', false).eq('metadata->>source', 'client')
   if (error) throw tenantError('client_signals', error.message)
 }
@@ -966,7 +977,7 @@ async function getClientPortalContext__raw(
   ident?: { id?: string | null; email?: string | null } | null,
 ): Promise<ClientPortalContext | null> {
   const base = () => tbl('client_portal_users').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .eq('tenant_id', portalTenantId()).is('archived_at', null)
 
   if (ident?.email) {
     const { data, error } = await base().ilike('email', ident.email)
@@ -1007,7 +1018,7 @@ async function listClientUnreadReplies__raw(
 ): Promise<ClientReplyNotice[]> {
   if (!ctx || ctx.projectIds.length === 0) return []
   const { data, error } = await tbl('client_signals').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .in('project_id', ctx.projectIds)
     .eq('reply_read_by_client', false)
     .not('po_reply', 'is', null)
@@ -1033,7 +1044,7 @@ async function listClientUnreadReplies__raw(
 async function countClientUnreadReplies__raw(ctx: ClientPortalContext | null): Promise<number> {
   if (!ctx || ctx.projectIds.length === 0) return 0
   const { count, error } = await tbl('client_signals').select('id', { count: 'exact', head: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .in('project_id', ctx.projectIds)
     .eq('reply_read_by_client', false)
     .not('po_reply', 'is', null)
@@ -1045,7 +1056,7 @@ async function countClientUnreadReplies__raw(ctx: ClientPortalContext | null): P
 async function markClientRepliesRead__raw(ctx: ClientPortalContext | null): Promise<void> {
   if (!ctx || ctx.projectIds.length === 0) return
   await tbl('client_signals').update({ reply_read_by_client: true })
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', portalTenantId())
     .in('project_id', ctx.projectIds)
     .eq('reply_read_by_client', false)
 }
