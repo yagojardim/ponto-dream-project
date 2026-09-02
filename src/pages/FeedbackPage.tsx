@@ -159,29 +159,96 @@ function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => voi
   )
 }
 
+// Ícone por tela (Central de Ajuda). Fallback: 📄.
+const HELP_VIEW_ICONS: Record<string, string> = {
+  home: '🏠', 'my-tasks': '✅', calendar: '📅',
+  'projects-list': '📁', 'boards-list': '🗂️', list: '📋', gantt: '📊', timeline: '🗓️', dashboard: '📈', storage: '💾',
+  epics: '🎯', releases: '🚀', filters: '🔎', navigator: '🧭',
+  config: '⚙️', 'tenant-settings': '🏢', modules: '🧩', automations: '⚡', team: '👥', 'client-access': '🤝', client: '🤝', 'client-messages': '💬', reports: '📊',
+  profile: '👤', preferences: '🎛️', login: '🔑', 'client-login': '🔑',
+}
+
+/** Subtítulo curto (1 frase) derivado do primeiro trecho do guia da tela. */
+function helpCardSubtitle(view: string): string {
+  const tip = ONBOARDING_TIPS[view]
+  if (!tip) return ''
+  const raw = (tip.guide?.length ? tip.guide[0].text : (tip.steps[0] ?? '')).replace(/\*\*/g, '')
+  const first = raw.split(/(?<=[.!?])\s/)[0].trim()
+  return first.length > 96 ? `${first.slice(0, 93).trimEnd()}…` : first
+}
+
+function HelpOverviewCard({ view, label, onPick }: { view: string; label: string; onPick: (v: string) => void }) {
+  const [hovered, setHovered] = useState(false)
+  const icon = HELP_VIEW_ICONS[view] ?? '📄'
+  const subtitle = helpCardSubtitle(view)
+  return (
+    <button
+      onClick={() => onPick(view)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="text-left rounded-xl p-3 flex items-start gap-3"
+      style={{
+        background: hovered ? `${T.accent}0A` : T.bgSurface,
+        border: `1px solid ${hovered ? T.accent + '55' : T.border}`,
+        transition: 'all 0.15s', cursor: 'pointer',
+      }}
+    >
+      <span style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: T.bgPage, border: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17 }}>{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="m-0 text-[13px] font-semibold" style={{ color: T.text1 }}>{label}</p>
+        {subtitle && <p className="m-0 text-[12px]" style={{ color: T.text3, lineHeight: 1.45, marginTop: 2 }}>{subtitle}</p>}
+      </div>
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 3, opacity: hovered ? 1 : 0.3, transition: 'opacity 0.15s' }}>
+        <path d="M5 3l4 4-4 4" stroke={T.accent} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
+}
+
 function HelpOverview({ groups, onPick }: {
   groups: { section: string; items: { view: string; label: string }[] }[]
   onPick: (v: string) => void
 }) {
+  const howto = [
+    { n: '1', t: 'Escolha uma tela', d: 'Cada card abre o guia daquela área.' },
+    { n: '2', t: 'Veja o passo a passo', d: 'Explicações com capturas de tela reais.' },
+    { n: '3', t: 'Inicie o tour guiado', d: 'Alguns guias abrem um tour na própria tela.' },
+  ]
   return (
-    <article className="flex flex-col" style={{ gap: 40 }}>
-      <ArticleHeader
-        section="Central de Ajuda"
-        title="Central de Ajuda"
-        subtitle="Escolha uma tela na navegação ao lado para ver o guia completo, com passos e capturas de tela."
-      />
-      <div className="flex flex-col" style={{ gap: 28 }}>
+    <article className="flex flex-col" style={{ gap: 32 }}>
+      {/* Card de orientação */}
+      <div className="rounded-2xl p-6" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
+        <div className="flex items-start gap-4">
+          <div style={{ width: 48, height: 48, borderRadius: 12, flexShrink: 0, background: T.accentDim, border: `1px solid ${T.accentBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>📘</div>
+          <div className="flex flex-col gap-1">
+            <p className="m-0 text-[11px] uppercase tracking-wider" style={{ color: T.text3 }}>Ajuda &amp; Suporte</p>
+            <h1 className="m-0 font-bold" style={{ color: T.text1, fontSize: 26, letterSpacing: '-0.02em' }}>Central de Ajuda</h1>
+            <p className="m-0 text-[14px]" style={{ color: T.text2, lineHeight: 1.6 }}>
+              Guias passo a passo de cada tela, com capturas reais. Escolha uma tela abaixo (ou na navegação ao lado) para abrir o guia completo.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-3 mt-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+          {howto.map(s => (
+            <div key={s.n} className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: T.bgPage, border: `1px solid ${T.border}` }}>
+              <span style={{ width: 22, height: 22, borderRadius: 99, flexShrink: 0, background: T.accent, color: '#fff', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.n}</span>
+              <div>
+                <p className="m-0 text-[13px] font-semibold" style={{ color: T.text1 }}>{s.t}</p>
+                <p className="m-0 text-[12px]" style={{ color: T.text3, lineHeight: 1.5 }}>{s.d}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Telas por seção */}
+      <div className="flex flex-col" style={{ gap: 24 }}>
         {groups.map(g => (
           <section key={g.section} className="flex flex-col gap-3">
-            <h3 className="m-0 font-semibold" style={{ color: T.text1, fontSize: 18 }}>{g.section}</h3>
-            <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+            <h3 className="m-0 font-semibold" style={{ color: T.text1, fontSize: 16 }}>{g.section}</h3>
+            <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
               {g.items.map(it => (
-                <button
-                  key={it.view}
-                  onClick={() => onPick(it.view)}
-                  className="text-left px-3 py-2.5 rounded-xl text-[13px]"
-                  style={{ background: T.bgSurface, color: T.text2, border: `1px solid ${T.border}` }}
-                >{it.label}</button>
+                <HelpOverviewCard key={it.view} view={it.view} label={it.label} onPick={onPick} />
               ))}
             </div>
           </section>
