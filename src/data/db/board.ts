@@ -4,6 +4,7 @@ import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID, epicColor } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { sortSprintsByStartDate } from './sprints'
 import { writeAudit as writeMilestone } from './audit'
 import { SCRUM_COLUMNS, KANBAN_COLUMNS, type BoardColumnDef as BaseColumnDef } from './boardColumnDefs'
@@ -115,7 +116,7 @@ function parseBoardFilter(raw: unknown): BoardFilter | null {
  * active board of the tenant is used.
  */
 export async function fetchBoardData(projectId?: string, boardId?: string, boardName?: string): Promise<BoardData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   let boardsQuery = boardsTbl()
     .select('id, project_id, name, board_type, status, filter')
@@ -206,7 +207,7 @@ async function writeAudit(
   after: Record<string, string | number | boolean | null>,
 ) {
   await supabase.from('audit_logs').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     entity_type: 'work_item',
     entity_id: entityId,
     action,
@@ -230,7 +231,7 @@ export async function moveWorkItemToColumn(
     .from('work_items')
     .update({ board_column_id: column.id, status: nextStatus })
     .eq('id', item.id)
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
 
   if (error) throw new Error(error.message)
 
@@ -254,7 +255,7 @@ export async function reorderWorkItems(
       .from('work_items')
       .update({ position: row.position })
       .eq('id', row.id)
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
     if (error) throw new Error(error.message)
   }
 }
@@ -277,8 +278,8 @@ export interface CreateWorkItemInput {
 /** Generates the next key for the project (e.g. WEB-118). */
 async function nextItemKey(projectId: string): Promise<string> {
   const [projectRes, itemsRes] = await Promise.all([
-    supabase.from('projects').select('key').eq('id', projectId).eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle(),
-    supabase.from('work_items').select('key').eq('project_id', projectId).eq('tenant_id', DEFAULT_TENANT_ID),
+    supabase.from('projects').select('key').eq('id', projectId).eq('tenant_id', getActiveTenantId()).maybeSingle(),
+    supabase.from('work_items').select('key').eq('project_id', projectId).eq('tenant_id', getActiveTenantId()),
   ])
   const prefix = projectRes.data?.key ?? 'ITEM'
   let max = 100
@@ -300,7 +301,7 @@ export async function createWorkItem(
   const { data, error } = await supabase
     .from('work_items')
     .insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       project_id: input.projectId,
       board_id: input.boardId,
       board_column_id: input.column.id,
@@ -342,7 +343,7 @@ export async function createBoard(
   input: CreateBoardInput,
   actorName = 'Sistema',
 ): Promise<BoardRow> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const boardType = input.boardType
   const filter = input.filter ?? {}
 
@@ -418,7 +419,7 @@ export async function updateBoard(
   const { error } = await boardsTbl()
     .update(payload)
     .eq('id', boardId)
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
   if (error) throw fail('boards', error.message)
 
   await writeMilestone('board.updated', boardId, {
@@ -435,7 +436,7 @@ export async function archiveBoard(
   boardId: string,
   actorName = 'Sistema',
 ): Promise<void> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   // Load the target board
   const { data: target, error: targetErr } = await supabase.from('boards')
