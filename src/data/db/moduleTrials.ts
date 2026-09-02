@@ -4,6 +4,7 @@
 // No billing / checkout here — contracting lives in Altech Control.
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '../../utils/logger'
 
 export { DEFAULT_TENANT_ID }
@@ -45,7 +46,7 @@ async function writeAudit(
 ): Promise<void> {
   try {
     await supabase.from('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: 'module',
       entity_id: entityId,
       action,
@@ -67,14 +68,14 @@ export function daysRemaining(trial: { expires_at: string } | null | undefined):
 
 async function setTenantModuleStatus(moduleId: string, contract_status: string): Promise<void> {
   const { data: existing } = await tbl('tenant_modules').select('id')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('module_id', moduleId)
+    .eq('tenant_id', getActiveTenantId()).eq('module_id', moduleId)
     .is('archived_at', null).maybeSingle()
 
   if (existing?.id) {
     await tbl('tenant_modules').update({ contract_status }).eq('id', existing.id)
   } else {
     await tbl('tenant_modules').insert({
-      tenant_id: DEFAULT_TENANT_ID, module_id: moduleId, contract_status,
+      tenant_id: getActiveTenantId(), module_id: moduleId, contract_status,
     })
   }
 }
@@ -82,7 +83,7 @@ async function setTenantModuleStatus(moduleId: string, contract_status: string):
 // ─── Reads ────────────────────────────────────────────────────────────────────
 async function listTrials__raw(): Promise<ModuleTrialRow[]> {
   const { data, error } = await tbl('module_trials').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(`[module_trials] ${error.message}`)
   return (data ?? []) as ModuleTrialRow[]
 }
@@ -99,7 +100,7 @@ export async function getActiveTrial(moduleId: string): Promise<ModuleTrialRow |
 
 async function listEntitlements__raw(): Promise<ModuleEntitlementRow[]> {
   const { data, error } = await tbl('module_entitlements').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(`[module_entitlements] ${error.message}`)
   return (data ?? []) as ModuleEntitlementRow[]
 }
@@ -142,7 +143,7 @@ async function startTrial__raw(moduleId: string, actor?: { id?: string | null; n
   const expires = new Date(Date.now() + days * 86_400_000).toISOString()
 
   const { data: trial, error: trialErr } = await tbl('module_trials').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     module_id: moduleId,
     expires_at: expires,
     status: 'active',
@@ -152,7 +153,7 @@ async function startTrial__raw(moduleId: string, actor?: { id?: string | null; n
   const row = trial as ModuleTrialRow
 
   const { error: entErr } = await tbl('module_entitlements').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     module_id: moduleId,
     source: 'trial',
     status: 'active',
