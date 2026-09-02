@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
-import { WelcomeModal } from './onboarding/WelcomeModal'
 import { GuidedTour } from './onboarding/GuidedTour'
 import { useProjectTourState, startTour } from '../hooks/useProjectTour'
 import { useOnboarding } from '../hooks/useOnboarding'
@@ -84,7 +83,6 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
           onOpenClientMessages={onOpenClientMessages}
         />
         <main className="flex-1 min-w-0 overflow-x-hidden" style={{ overflowY: 'auto' }}>
-          <WelcomeModal onNav={handleNav} />
           {children}
         </main>
 
