@@ -26,7 +26,11 @@ import { CatalogProvider } from "./data/CatalogContext"
 import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
 import { SignupOnboarding } from "./components/SignupOnboarding"
+import { TourOfferModal } from "./components/TourOfferModal"
 import { SIGNUP_ONBOARDING_KEY } from "./data/db/signup"
+import { startTour } from "./hooks/useProjectTour"
+import { useOnboarding } from "./hooks/useOnboarding"
+import { tourStepsFor, tourIdFor } from "./data/tourSteps"
 import ClientAccessPage from "./pages/ClientAccessPage"
 import ClientLoginPage from "./pages/ClientLoginPage"
 import { clearPortalSession } from "./lib/portalSession"
@@ -167,6 +171,8 @@ function AppInner() {
   const [onboardingPending, setOnboardingPending] = useState(() => {
     try { return localStorage.getItem(SIGNUP_ONBOARDING_KEY) === "1" } catch { return false }
   })
+  const [tourOfferPending, setTourOfferPending] = useState(false)
+  const { markTourDone } = useOnboarding()
   const [clientMustChangePwd, setClientMustChangePwd] = useState(false)
   const [activateToken, setActivateToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null
@@ -389,10 +395,25 @@ function AppInner() {
         {onboardingPending && (
           <ErrorBoundary scope="SignupOnboarding" fallback={null}>
             <SignupOnboarding
-              onDone={() => setOnboardingPending(false)}
-              onGoToTeam={() => { setOnboardingPending(false); setView("team") }}
+              onDone={() => { setOnboardingPending(false); setTourOfferPending(true) }}
+              onGoToTeam={() => { setOnboardingPending(false); setView("team"); setTourOfferPending(true) }}
             />
           </ErrorBoundary>
+        )}
+        {tourOfferPending && (
+          <TourOfferModal
+            onStart={() => {
+              try { localStorage.removeItem(SIGNUP_ONBOARDING_KEY) } catch { /* noop */ }
+              setTourOfferPending(false)
+              setView("home")
+              startTour(tourStepsFor("home", activeUser?.role_context ?? null))
+            }}
+            onSkip={() => {
+              try { localStorage.removeItem(SIGNUP_ONBOARDING_KEY) } catch { /* noop */ }
+              markTourDone(tourIdFor("home", activeUser?.role_context ?? null))
+              setTourOfferPending(false)
+            }}
+          />
         )}
         <ShellWithRole view={view} setView={setView} />
       </CatalogProvider>
