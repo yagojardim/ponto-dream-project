@@ -25,6 +25,8 @@ import { CreateIssueModal } from "./components/CreateIssueModal"
 import { CatalogProvider } from "./data/CatalogContext"
 import LoginPage from "./pages/LoginPage"
 import SignupPage from "./pages/SignupPage"
+import { SignupOnboarding } from "./components/SignupOnboarding"
+import { SIGNUP_ONBOARDING_KEY } from "./data/db/signup"
 import ClientAccessPage from "./pages/ClientAccessPage"
 import ClientLoginPage from "./pages/ClientLoginPage"
 import { clearPortalSession } from "./lib/portalSession"
@@ -162,6 +164,9 @@ function AppInner() {
   const [view, setView] = useState<View>("home")
   const [showSignup, setShowSignup] = useState(false)
   const [loginEmail, setLoginEmail] = useState("")
+  const [onboardingPending, setOnboardingPending] = useState(() => {
+    try { return localStorage.getItem(SIGNUP_ONBOARDING_KEY) === "1" } catch { return false }
+  })
   const [clientMustChangePwd, setClientMustChangePwd] = useState(false)
   const [activateToken, setActivateToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null
@@ -381,6 +386,14 @@ function AppInner() {
         <ErrorBoundary scope="AdminMasterOverlay" fallback={null}>
           <AdminMasterOverlay />
         </ErrorBoundary>
+        {onboardingPending && (
+          <ErrorBoundary scope="SignupOnboarding" fallback={null}>
+            <SignupOnboarding
+              onDone={() => setOnboardingPending(false)}
+              onGoToTeam={() => { setOnboardingPending(false); setView("team") }}
+            />
+          </ErrorBoundary>
+        )}
         <ShellWithRole view={view} setView={setView} />
       </CatalogProvider>
     </ErrorBoundary>
