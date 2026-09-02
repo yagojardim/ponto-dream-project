@@ -19,7 +19,7 @@ const SLIDES: Slide[] = [
   { img: '/help/05-lista.png', title: 'Lista de Demandas', cap: 'Filtre, agrupe e exporte as demandas do jeito que precisar.' },
 ]
 
-type Phase = 'browse' | 'offer' | 'declined'
+type Phase = 'browse' | 'declined'
 
 export function TourOfferModal({ onStart, onSkip }: Props) {
   const [i, setI] = useState(0)
@@ -47,7 +47,7 @@ export function TourOfferModal({ onStart, onSkip }: Props) {
             <span style={{ fontSize: 13, fontWeight: 600, color: T.text1 }}>Altech <span style={{ color: T.accent }}>Project</span></span>
           </div>
           {phase === 'browse' && (
-            <button onClick={onSkip} style={{ background: 'transparent', border: 'none', color: T.text3, fontSize: 12, cursor: 'pointer' }}>Pular</button>
+            <button onClick={() => setPhase('declined')} style={{ background: 'transparent', border: 'none', color: T.text3, fontSize: 12, cursor: 'pointer' }}>Pular</button>
           )}
         </div>
 
@@ -85,29 +85,11 @@ export function TourOfferModal({ onStart, onSkip }: Props) {
               </div>
 
               <button
-                onClick={() => (last ? setPhase('offer') : setI(v => Math.min(SLIDES.length - 1, v + 1)))}
-                style={{ minWidth: 34, height: 34, padding: last ? '0 14px' : 0, borderRadius: 8, background: T.accent, border: 'none', color: '#fff', cursor: 'pointer', fontSize: last ? 13 : 16, fontWeight: last ? 600 : 400 }}
-              >{last ? 'Continuar' : '›'}</button>
+                onClick={() => (last ? onStart() : setI(v => Math.min(SLIDES.length - 1, v + 1)))}
+                style={{ minWidth: 34, height: 34, padding: last ? '0 16px' : 0, borderRadius: 8, background: T.accent, border: 'none', color: '#fff', cursor: 'pointer', fontSize: last ? 13 : 16, fontWeight: last ? 600 : 400 }}
+              >{last ? 'Iniciar tour guiado' : '›'}</button>
             </div>
           </>
-        )}
-
-        {phase === 'offer' && (
-          <div style={{ padding: '28px 24px 22px', textAlign: 'center' }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: T.accentDim, border: `1px solid ${T.accentBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5z" />
-              </svg>
-            </div>
-            <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: T.text1 }}>Deseja iniciar o tour guiado pela plataforma?</h3>
-            <p style={{ margin: 0, fontSize: 13, color: T.text2, lineHeight: 1.5 }}>
-              O tour interativo aponta os recursos direto na tela, passo a passo — mostrando só as telas liberadas para o seu perfil.
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 22 }}>
-              <button onClick={() => setPhase('declined')} style={{ height: 40, padding: '0 18px', borderRadius: 8, fontSize: 13, background: 'transparent', color: T.text2, border: `1px solid ${T.border}`, cursor: 'pointer' }}>Agora não</button>
-              <button onClick={onStart} style={{ height: 40, padding: '0 24px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer' }}>Sim, iniciar tour</button>
-            </div>
-          </div>
         )}
 
         {phase === 'declined' && (
