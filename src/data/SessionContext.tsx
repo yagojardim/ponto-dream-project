@@ -3,6 +3,8 @@ import {
   MOCK_USERS, type MockUser,
   ACTIVE_USER_ID,
   setActiveUser as _setActiveUser,
+  setActiveTenantId,
+  MOCK_TENANT,
   hydratePersonas,
   applyRoleChoice, availableRoleChoices,
   type RoleChoice,
@@ -104,6 +106,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setUserId(id)        // trigger React re-render
     setPersonaOverride(id) // Inspection: persona escolhida vence o profile autenticado
     setRoleOverride(null)  // nova persona volta ao papel principal
+    const persona = MOCK_USERS.find(u => u.user_id === id)
+    if (persona) setActiveTenantId(persona.tenant_id) // tenant acompanha a persona (Inspection)
   }
 
   useEffect(() => {
@@ -138,6 +142,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!alive || !profile) return
 
       setDbUser(profile)
+      setActiveTenantId(profile.tenant_id)   // fonte única do tenant no cliente
       setMustChange(!!profile.password_must_change)
       void safeCall(
         'SessionContext.touchAccess',
@@ -200,6 +205,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setUserId(ACTIVE_USER_ID)
     setPersonaOverride(null)
     setRoleOverride(null)
+    setActiveTenantId(MOCK_TENANT.tenant_id)   // volta ao tenant padrão ao sair
     setStatus('anonymous')
   }
 
