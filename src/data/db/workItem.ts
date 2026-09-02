@@ -3,6 +3,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID, PRIORITY_FROM_DB, PRIORITY_TO_DB, epicColor } from './board'
+import { getActiveTenantId } from '@/data/session'
 import { sortSprintsByStartDate } from './sprints'
 import { safeCall } from '../../utils/logger'
 
@@ -85,7 +86,7 @@ function fail(table: string, message: string): Error {
 
 /** Loads a work item with every relation the detail panel renders. */
 export async function getWorkItem(id: string): Promise<WorkItemDetailData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   const itemRes = await supabase
     .from('work_items').select('*').eq('id', id).eq('tenant_id', tid).maybeSingle()
@@ -186,7 +187,7 @@ async function writeAudit(
   actorId?: string | null,
 ) {
   await supabase.from('audit_logs').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     entity_type: 'work_item',
     entity_id: entityId,
     action,
@@ -222,7 +223,7 @@ export async function updateWorkItemField(
   previous: AuditValue,
   ctx: FieldUpdateContext = {},
 ): Promise<void> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const actorName = ctx.actorName ?? 'Sistema'
 
   // `fix_version` is not a column: it maps to release_id via the release version.
@@ -280,7 +281,7 @@ export async function addComment(
   const { data, error } = await supabase
     .from('comments')
     .insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       work_item_id: itemId,
       author_id: opts.authorId ?? null,
       author_kind: opts.authorKind ?? 'internal',
@@ -303,7 +304,7 @@ export async function toggleAcceptanceCriterion(
     .from('acceptance_criteria')
     .update({ is_done: isDone })
     .eq('id', criterionId)
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
   if (error) throw fail('acceptance_criteria', error.message)
   await writeAudit(itemId, 'work_item.acceptance_toggled', actorName, { is_done: !isDone }, { is_done: isDone })
 }
@@ -314,7 +315,7 @@ export async function addAcceptanceCriterion(
 ): Promise<AcceptanceRow> {
   const { data, error } = await supabase
     .from('acceptance_criteria')
-    .insert({ tenant_id: DEFAULT_TENANT_ID, work_item_id: itemId, text, position, is_done: false })
+    .insert({ tenant_id: getActiveTenantId(), work_item_id: itemId, text, position, is_done: false })
     .select('id, work_item_id, text, is_done, position')
     .single()
   if (error) throw fail('acceptance_criteria', error.message)
@@ -326,7 +327,7 @@ export async function removeAcceptanceCriterion(
   criterionId: string, itemId: string, actorName = 'Sistema',
 ): Promise<void> {
   const { error } = await supabase
-    .from('acceptance_criteria').delete().eq('id', criterionId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .from('acceptance_criteria').delete().eq('id', criterionId).eq('tenant_id', getActiveTenantId())
   if (error) throw fail('acceptance_criteria', error.message)
   await writeAudit(itemId, 'work_item.acceptance_removed', actorName, { id: criterionId }, {})
 }
@@ -341,7 +342,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export async function listLinkableItems(
   currentProjectId?: string | null, excludeId?: string,
 ): Promise<{ id: string; key: string; title: string; projectName: string }[]> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const [itemsRes, projsRes] = await Promise.all([
     supabase.from('work_items').select('id, key, title, project_id')
       .eq('tenant_id', tid).is('archived_at', null).order('key'),
@@ -362,7 +363,7 @@ export async function listLinkableItems(
 export async function addDependency(
   sourceId: string, targetKeyOrId: string, relationType: string, actorName = 'Sistema',
 ): Promise<{ relation: DependencyRow; item: RelatedItemRow }> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const base = supabase.from('work_items').select(RELATED_COLS).eq('tenant_id', tid)
   // Nunca comparar uma key (ex.: "PZERO-116") contra a coluna uuid `id` — quebra o cast.
   const targetRes = await (UUID_RE.test(targetKeyOrId)
@@ -391,7 +392,7 @@ export async function addSubtask(
   actorName = 'Sistema',
   opts?: { assigneeId?: string | null; storyPoints?: number | null; description?: string | null; priority?: 'critical'|'high'|'medium'|'low'; type?: 'subtask'|'bug' },
 ): Promise<RelatedItemRow> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   const [projectRes, itemsRes] = await Promise.all([
     supabase.from('projects').select('key').eq('id', parent.project_id).eq('tenant_id', tid).maybeSingle(),
@@ -435,7 +436,7 @@ export async function addSubtask(
 export async function setWorkItemLabels(
   itemId: string, names: string[], actorName = 'Sistema',
 ): Promise<void> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const wanted = names.map(n => n.trim()).filter(Boolean)
 
   const existingRes = await supabase.from('labels').select('id, name').eq('tenant_id', tid)
@@ -623,7 +624,7 @@ function auditDetail(before: unknown, after: unknown): string | undefined {
  */
 export async function listItemHistory(workItemId: string, epicId?: string | null): Promise<UnifiedHistoryEntry[]> {
   return safeCall('workItem.listItemHistory', async () => {
-    const tid = DEFAULT_TENANT_ID
+    const tid = getActiveTenantId()
     const [statusRes, itemAuditRes, epicAuditRes, profilesRes, sprintsRes, epicsRes] = await Promise.all([
       supabase.from('item_status_history')
         .select('id, field, from_value, to_value, actor_id, created_at')
