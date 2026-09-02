@@ -245,3 +245,41 @@ export function homeRolesFromMetadata(metadata: unknown): RoleContext[] {
   const valid = new Set(Object.keys(ROLE_KEYS))
   return raw.filter((r): r is RoleContext => typeof r === 'string' && valid.has(r))
 }
+
+/**
+ * Adiciona o papel operacional (dia-a-dia) ao Admin Master recém-criado no
+ * auto-cadastro (Tela 2 do onboarding). O ADMIN_MASTER segue como papel
+ * principal; este entra como secundário em `user_roles` e é registrado em
+ * `profiles.metadata.home_roles` para o painel de Início.
+ */
+export async function assignOperationalRole(profileId: string, role: RoleContext): Promise<boolean> {
+  return safeCall<boolean>('invite.assignOperationalRole', async () => {
+    const tenantId = getActiveTenantId()
+
+    const { data: roleRows } = await tbl('roles').select('id, key, label')
+    const byKey = new Map<string, string>()
+    for (const r of (roleRows ?? []) as any[]) {
+      byKey.set(normKey(r.key), r.id)
+      byKey.set(normKey(r.label), r.id)
+    }
+    const roleId = byKey.get(ROLE_KEYS[role])
+    if (!roleId) throw new Error(`Papel não encontrado no catálogo: ${role}`)
+
+    const { data: existing } = await tbl('user_roles')
+      .select('id').eq('tenant_id', tenantId).eq('profile_id', profileId).eq('role_id', roleId).maybeSingle()
+    if (!existing) {
+      const { error } = await tbl('user_roles')
+        .insert({ tenant_id: tenantId, profile_id: profileId, role_id: roleId, is_primary: false })
+      if (error) throw error
+    }
+
+    const { data: prof } = await tbl('profiles')
+      .select('metadata').eq('id', profileId).eq('tenant_id', tenantId).maybeSingle()
+    const meta = (prof?.metadata ?? {}) as Record<string, unknown>
+    const current = Array.isArray(meta.home_roles) ? (meta.home_roles as string[]) : []
+    const home = [...new Set([...current, role])]
+    await tbl('profiles').update({ metadata: { ...meta, home_roles: home } }).eq('id', profileId).eq('tenant_id', tenantId)
+
+    return true
+  }, false)
+}
