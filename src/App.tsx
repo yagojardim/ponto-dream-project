@@ -24,6 +24,7 @@ import ConfigPage from "./pages/ConfigPage"
 import { CreateIssueModal } from "./components/CreateIssueModal"
 import { CatalogProvider } from "./data/CatalogContext"
 import LoginPage from "./pages/LoginPage"
+import SignupPage from "./pages/SignupPage"
 import ClientAccessPage from "./pages/ClientAccessPage"
 import ClientLoginPage from "./pages/ClientLoginPage"
 import { clearPortalSession } from "./lib/portalSession"
@@ -159,6 +160,8 @@ function AppInner() {
   const { setActiveUser, status, enterInspection, mustChangePassword, activeUser } =
     useSession()
   const [view, setView] = useState<View>("home")
+  const [showSignup, setShowSignup] = useState(false)
+  const [loginEmail, setLoginEmail] = useState("")
   const [clientMustChangePwd, setClientMustChangePwd] = useState(false)
   const [activateToken, setActivateToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null
@@ -290,9 +293,22 @@ function AppInner() {
     )
   }
 
-  // Sem sessão real e sem Inspection Mode → login obrigatório.
+  // Sem sessão real e sem Inspection Mode → login obrigatório (ou auto-cadastro).
   if (status === "anonymous" || view === "login") {
-    return <LoginPage onSuccess={handleLoginSuccess} />
+    if (showSignup) {
+      return (
+        <SignupPage
+          onGoToLogin={(em) => { if (em) setLoginEmail(em); setShowSignup(false) }}
+        />
+      )
+    }
+    return (
+      <LoginPage
+        onSuccess={handleLoginSuccess}
+        onCreateAccount={() => setShowSignup(true)}
+        initialEmail={loginEmail}
+      />
+    )
   }
 
   // Gate de troca de senha obrigatória — bloqueia toda a navegação.
