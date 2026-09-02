@@ -4,6 +4,7 @@ import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 
 export { DEFAULT_TENANT_ID }
 
@@ -189,7 +190,7 @@ function statusAt(item: ItemRow, history: HistoryRow[], at: Date): string | null
 }
 
 export async function fetchReportsData(projectIds?: string[]): Promise<ReportsData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const scoped = projectIds && projectIds.length > 0 ? projectIds : null
 
   let itemsQ = supabase.from('work_items')
