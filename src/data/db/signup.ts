@@ -5,6 +5,9 @@ import { supabase } from '@/integrations/supabase/client'
 import { signIn } from '@/lib/auth'
 import { logger } from '@/utils/logger'
 
+/** Flag (localStorage) que sinaliza um cadastro novo → dispara o onboarding pós-login. */
+export const SIGNUP_ONBOARDING_KEY = 'altech.onboarding.pending'
+
 export interface SignupInput {
   name: string
   email: string
@@ -44,6 +47,8 @@ export async function signUpTenant(input: SignupInput): Promise<SignupResult> {
     if (!signedIn.ok) {
       return { ok: false, reason: 'error', message: 'Conta criada, mas não foi possível entrar. Faça login.' }
     }
+    // Marca que este é um cadastro novo → o app mostra o onboarding pós-login (Telas 2 e 3) uma vez.
+    try { localStorage.setItem(SIGNUP_ONBOARDING_KEY, '1') } catch { /* storage indisponível */ }
     return { ok: true }
   } catch (err) {
     logger.error('signup.signUpTenant', err, { email })
