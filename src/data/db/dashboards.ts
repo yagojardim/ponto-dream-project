@@ -5,6 +5,7 @@ import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { PRIORITY_FROM_DB } from './board'
 import type { WorkItem, WorkStatus, RagStatus } from '../../components/ds/DashboardKit'
 
@@ -224,7 +225,7 @@ export async function fetchScopedProjectIds(profileId?: string | null): Promise<
   if (!profileId) return null
   const { data, error } = await supabase
     .from('project_members').select('project_id')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('profile_id', profileId)
+    .eq('tenant_id', getActiveTenantId()).eq('profile_id', profileId)
   if (error) return null
   const ids = (data ?? []).map(r => r.project_id)
   return ids.length > 0 ? ids : null
@@ -270,7 +271,7 @@ export function toWorkItem(
  * `projectIds` narrows the read to the selected/allowed projects.
  */
 export async function fetchDashboardAggregates(projectIds?: string[]): Promise<DashboardAggregates> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const scoped = projectIds && projectIds.length > 0 ? projectIds : null
 
   let projectsQ = supabase.from('projects')
@@ -535,7 +536,7 @@ export async function fetchDashboardAggregates(projectIds?: string[]): Promise<D
 export async function listDashboardProjects(): Promise<DashboardProjectOption[]> {
   const { data, error } = await supabase.from('projects')
     .select('id, name, status, metadata')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null).order('name')
+    .eq('tenant_id', getActiveTenantId()).is('archived_at', null).order('name')
   if (error) throw new Error(missingTableMessage('projects', error.message))
   return (data ?? []).map((p, i) => ({
     id: p.id, name: p.name, color: dashProjectColor(p, i),
@@ -557,7 +558,7 @@ const ACTIVE_MODULE_STATUSES = ['operational', 'implemented', 'preview', 'trial'
 
 /** Real per-tenant counts for the Admin Master dashboard. Never cross-tenant. */
 export async function fetchAdminKpis(projectIds?: string[]): Promise<AdminKpis> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const ids = projectIds && projectIds.length > 0 ? projectIds : null
 
   let projectsQ = supabase.from('projects').select('id, status').eq('tenant_id', tid).is('archived_at', null)
@@ -647,10 +648,10 @@ export async function fetchPoCardMetrics(projectIds: string[]): Promise<PoCardMe
   try {
     let itemsQ = supabase.from('work_items')
       .select('id, status, created_at, completed_at, project_id, release_id')
-      .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+      .eq('tenant_id', getActiveTenantId()).is('archived_at', null)
     let relQ = supabase.from('releases')
       .select('id, project_id, version, state, release_date')
-      .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+      .eq('tenant_id', getActiveTenantId()).is('archived_at', null)
     if (projectIds.length > 0) {
       itemsQ = itemsQ.in('project_id', projectIds)
       relQ = relQ.in('project_id', projectIds)
