@@ -4,6 +4,7 @@
 // "Atribuir"). Tenant scoped, degrades to empty via safeCall, writes audit_logs.
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '../../utils/logger'
 
 export { DEFAULT_TENANT_ID }
@@ -51,7 +52,7 @@ async function writeAudit(
 ): Promise<void> {
   try {
     await supabase.from('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: 'dashboard_assignment',
       entity_id: entityId,
       action,
@@ -74,7 +75,7 @@ function toCard(row: AssignmentRow): AssignedCard {
 // ─── Reads ────────────────────────────────────────────────────────────────────
 async function getAssignedCards__raw(profileId: string, dashboard?: string): Promise<AssignedCard[]> {
   let q = tbl('dashboard_assignments').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId)
+    .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId)
     .is('archived_at', null)
     .order('position', { ascending: true })
   if (dashboard) q = q.in('dashboard_key', [dashboard, `${dashboard}#grid`])
@@ -99,7 +100,7 @@ async function assign__raw(input: {
 }): Promise<boolean> {
   const dashboard_key = encodeKey(input.dashboard, input.slot ?? 'mural')
   const { error } = await tbl('dashboard_assignments').upsert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     user_id: input.profileId,
     dashboard_key,
     card_id: input.cardId,
@@ -121,7 +122,7 @@ async function remove__raw(
 ): Promise<boolean> {
   const dashboard_key = encodeKey(dashboard, slot)
   const { error } = await tbl('dashboard_assignments').delete()
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId)
+    .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId)
     .eq('dashboard_key', dashboard_key).eq('card_id', cardId)
   if (error) throw daError(error.message)
   await writeAudit(cardId, 'dashboard_assignment.remove', { dashboard_key, card_id: cardId })
@@ -141,7 +142,7 @@ async function reorder__raw(
   const dashboard_key = encodeKey(dashboard, slot)
   for (let i = 0; i < cardIds.length; i++) {
     const { error } = await tbl('dashboard_assignments').update({ position: i })
-      .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId)
+      .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId)
       .eq('dashboard_key', dashboard_key).eq('card_id', cardIds[i])
     if (error) throw daError(error.message)
   }
