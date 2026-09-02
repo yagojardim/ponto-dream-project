@@ -5,7 +5,7 @@
  * mostra o que foi realmente registrado em `audit_logs`.
  */
 import { supabase } from '@/integrations/supabase/client'
-import { DEFAULT_TENANT_ID } from '@/data/db/timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '@/utils/logger'
 
 export type AuditValue = string | number | boolean | null
@@ -35,7 +35,7 @@ export async function writeAudit(
 ): Promise<void> {
   try {
     const { error } = await table('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: opts.entityType ?? entityTypeFor(action),
       entity_id: entityId,
       action,
@@ -62,7 +62,7 @@ export async function writeAuditOnce(
   try {
     let q = table('audit_logs')
       .select('id')
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
       .eq('action', action)
       .limit(1)
     q = entityId === null ? q.is('entity_id', null) : q.eq('entity_id', entityId)
@@ -166,7 +166,7 @@ export function fetchMilestones(
     let q = supabase
       .from('audit_logs')
       .select('id, action, entity_id, actor_name, after, created_at')
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
       .in('action', MILESTONE_ACTIONS)
 
     if (windowDays != null && windowDays > 0) {
