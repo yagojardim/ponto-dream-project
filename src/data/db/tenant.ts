@@ -4,6 +4,7 @@
 // Nunca expõe CPF/CNPJ (documento) na UI, URL ou log.
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '../../utils/logger'
 
 export { DEFAULT_TENANT_ID }
@@ -37,7 +38,7 @@ export type SlugCheck = 'available' | 'unavailable' | 'invalid' | 'reserved'
 
 const EMPTY_SETTINGS: TenantSettings = {
   id: null,
-  tenant_id: DEFAULT_TENANT_ID,
+  tenant_id: getActiveTenantId(),
   display_name: '',
   timezone: 'America/Sao_Paulo',
   locale: 'pt-BR',
@@ -48,9 +49,9 @@ const EMPTY_SETTINGS: TenantSettings = {
 async function writeAudit(action: string, after: Record<string, unknown>, actorName?: string) {
   try {
     await tbl('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: 'tenant',
-      entity_id: DEFAULT_TENANT_ID,
+      entity_id: getActiveTenantId(),
       action,
       actor_name: actorName ?? null,
       before: null,
@@ -65,7 +66,7 @@ async function writeAudit(action: string, after: Record<string, unknown>, actorN
 export function getTenantSettings(): Promise<TenantSettings> {
   return safeCall('tenant.getTenantSettings', async () => {
     const { data, error } = await tbl('tenant_settings')
-      .select('*').eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null).maybeSingle()
+      .select('*').eq('tenant_id', getActiveTenantId()).is('archived_at', null).maybeSingle()
     if (error) throw error
     if (!data) return EMPTY_SETTINGS
     return {
@@ -84,7 +85,7 @@ export function getTenantIdentity(): Promise<TenantIdentity | null> {
   return safeCall('tenant.getTenantIdentity', async () => {
     const { data, error } = await tbl('tenants')
       .select('name, slug, slug_status, status, type, document_verification_status')
-      .eq('id', DEFAULT_TENANT_ID).maybeSingle()
+      .eq('id', getActiveTenantId()).maybeSingle()
     if (error) throw error
     if (!data) return null
     // Dados de documento só são liberados a admins do tenant (RPC SECURITY DEFINER).
@@ -102,7 +103,7 @@ export function getTenantIdentity(): Promise<TenantIdentity | null> {
 export function getTenantName(): Promise<string> {
   return safeCall('tenant.getTenantName', async () => {
     const { data, error } = await tbl('tenants')
-      .select('name').eq('id', DEFAULT_TENANT_ID).maybeSingle()
+      .select('name').eq('id', getActiveTenantId()).maybeSingle()
     if (error) throw error
     return (data?.name as string | null) ?? ''
   }, '')
@@ -115,7 +116,7 @@ export function updateTenantSettings(
 ): Promise<boolean> {
   return safeCall('tenant.updateTenantSettings', async () => {
     const { error } = await tbl('tenant_settings')
-      .upsert({ tenant_id: DEFAULT_TENANT_ID, ...patch }, { onConflict: 'tenant_id' })
+      .upsert({ tenant_id: getActiveTenantId(), ...patch }, { onConflict: 'tenant_id' })
     if (error) throw error
     await writeAudit('tenant settings updated', patch as Record<string, unknown>, actorName)
     return true
@@ -140,7 +141,7 @@ export function changeSlug(slug: string, actorName?: string): Promise<ChangeSlug
     if (status !== 'available') return { ok: false, reason: status }
     const normalized = slug.trim().toLowerCase()
     const { error } = await tbl('tenants')
-      .update({ slug: normalized, slug_status: 'active' }).eq('id', DEFAULT_TENANT_ID)
+      .update({ slug: normalized, slug_status: 'active' }).eq('id', getActiveTenantId())
     if (error) throw error
     await writeAudit('tenant slug changed', { slug: normalized }, actorName)
     return { ok: true }
