@@ -1,7 +1,7 @@
 // Admin activity feed — lê os registros reais de audit_logs do tenant atual.
 // Somente leitura; nunca cross-tenant.
 import { supabase } from '../../integrations/supabase/client'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall } from '../../utils/logger'
 
 export interface AdminActivityRow {
@@ -30,7 +30,7 @@ export function fetchRecentAdminActivity(
     let q = supabase
       .from('audit_logs')
       .select('id, action, entity_type, entity_id, actor_name, created_at')
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
     if (opts.actorName) q = q.eq('actor_name', opts.actorName)
     const { data, error } = await q
       .order('created_at', { ascending: false })
