@@ -266,6 +266,22 @@ export function setActiveUser(user_id: string) {
   ACTIVE_USER_ID = user_id
 }
 
+// ─── Tenant ativo (fonte única no cliente) ───────────────────────────────────
+// Em produção espelha o tenant do profile autenticado; em Inspection/dev usa o
+// MOCK_TENANT (tenant #1). O enforcement real é o RLS (app.current_tenant_id());
+// este valor apenas garante que o cliente leia/escreva no tenant correto.
+export let ACTIVE_TENANT_ID = MOCK_TENANT.tenant_id
+
+/** Fonte única do tenant no cliente. Deve casar com o tenant do profile logado. */
+export function getActiveTenantId(): string {
+  return ACTIVE_TENANT_ID
+}
+
+/** Sincroniza o tenant ativo (chamado no login e ao trocar de persona). */
+export function setActiveTenantId(tenantId: string): void {
+  if (tenantId) ACTIVE_TENANT_ID = tenantId
+}
+
 
 // ─── Scope model ──────────────────────────────────────────────────────────────
 export interface UserScope {
