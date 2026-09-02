@@ -2,6 +2,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { updateWorkItemField, addComment } from './workItem'
 import * as notifications from './notifications'
 import { logger } from '../../utils/logger'
@@ -37,7 +38,7 @@ function missingTableMessage(table: string, message: string): string {
 }
 
 export async function listReleases(): Promise<ReleasesData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   const [releases, items, profiles, projects] = await Promise.all([
     supabase.from('releases')
@@ -85,7 +86,7 @@ async function writeAudit(
 ): Promise<void> {
   try {
     const { error } = await supabase.from('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: 'release',
       entity_id: entityId,
       action,
@@ -113,7 +114,7 @@ export interface CreateReleaseInput {
 /** Creates a release and links the selected work items to it. */
 export async function createRelease(input: CreateReleaseInput): Promise<ReleaseRow> {
   const { data, error } = await supabase.from('releases').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     project_id: input.projectId,
     version: input.version,
     name: input.name,
@@ -157,7 +158,7 @@ export async function updateRelease(
   if (Object.keys(payload).length === 0) return
 
   const { error } = await supabase.from('releases')
-    .update(payload).eq('id', release.id).eq('tenant_id', DEFAULT_TENANT_ID)
+    .update(payload).eq('id', release.id).eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(missingTableMessage('releases', error.message))
 
   await writeAudit(release.id, 'release.updated', actorName, {
@@ -174,7 +175,7 @@ export async function linkItemsToRelease(
 ): Promise<void> {
   if (itemIds.length === 0) return
   const { error } = await supabase.from('work_items')
-    .update({ release_id: releaseId }).in('id', itemIds).eq('tenant_id', DEFAULT_TENANT_ID)
+    .update({ release_id: releaseId }).in('id', itemIds).eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(missingTableMessage('work_items', error.message))
   await writeAudit(releaseId, 'release.items_linked', actorName, null, { items: itemIds.length })
 }
@@ -186,7 +187,7 @@ export async function unlinkItemFromRelease(
   actorName = 'Sistema',
 ): Promise<void> {
   const { error } = await supabase.from('work_items')
-    .update({ release_id: null }).eq('id', itemId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .update({ release_id: null }).eq('id', itemId).eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(missingTableMessage('work_items', error.message))
   await writeAudit(releaseId, 'release.item_unlinked', actorName, { item_id: itemId }, null)
 }
@@ -243,7 +244,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
     state: 'released',
     release_date: release.release_date ?? nowIso.slice(0, 10),
     metadata: metadata as Tables['releases']['Update']['metadata'],
-  }).eq('id', release.id).eq('tenant_id', DEFAULT_TENANT_ID)
+  }).eq('id', release.id).eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(missingTableMessage('releases', error.message))
 
   await writeMilestone('release.finalized', release.id, {
@@ -254,7 +255,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
   const loadItems = async (ids: string[]) => ids.length > 0
     ? (await supabase.from('work_items')
         .select('id, key, status, assignee_id, metadata')
-        .in('id', ids).eq('tenant_id', DEFAULT_TENANT_ID)).data ?? []
+        .in('id', ids).eq('tenant_id', getActiveTenantId())).data ?? []
     : []
 
   // Deferred items go to the next release (or fall back to backlog).
@@ -262,7 +263,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
   let nextReleaseLabel: string | null = null
   if (nextReleaseId) {
     const { data } = await supabase.from('releases')
-      .select('version, name').eq('id', nextReleaseId).eq('tenant_id', DEFAULT_TENANT_ID).maybeSingle()
+      .select('version, name').eq('id', nextReleaseId).eq('tenant_id', getActiveTenantId()).maybeSingle()
     nextReleaseLabel = data ? `${data.version}${data.name ? ` · ${data.name}` : ''}` : null
   }
 
@@ -276,7 +277,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
           ...asRecord(item.metadata),
           moved_from_release: { version: release.version, at: nowIso },
         } as Tables['work_items']['Update']['metadata'],
-      }).eq('id', item.id).eq('tenant_id', DEFAULT_TENANT_ID)
+      }).eq('id', item.id).eq('tenant_id', getActiveTenantId())
       try {
         await addComment(
           item.id,
@@ -305,7 +306,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
           ...asRecord(item.metadata),
           returned_from_release: { version: release.version, at: nowIso, note: itemNote },
         } as Tables['work_items']['Update']['metadata'],
-      }).eq('id', item.id).eq('tenant_id', DEFAULT_TENANT_ID)
+      }).eq('id', item.id).eq('tenant_id', getActiveTenantId())
     } catch (err) {
       logger.error('releases.closeRelease.returnItem', err, { itemId: item.id })
     }
@@ -364,7 +365,7 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
   }
 
   const leads = (await supabase.from('profiles')
-    .select('id, primary_role').eq('tenant_id', DEFAULT_TENANT_ID)
+    .select('id, primary_role').eq('tenant_id', getActiveTenantId())
     .in('primary_role', ['ProductOwner', 'ScrumMaster'])).data ?? []
   for (const lead of leads) {
     await notify(
@@ -383,4 +384,3 @@ export async function closeRelease(input: CloseReleaseInput): Promise<void> {
     shipped: shippedCount, returned: returnedItems.length,
   }, { actorName })
 }
-
