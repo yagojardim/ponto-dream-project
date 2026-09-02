@@ -6,6 +6,7 @@
 // access goes through a small untyped shim while rows stay strongly typed here.
 import { supabase } from '../../integrations/supabase/client'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '../../utils/logger'
 
 export { DEFAULT_TENANT_ID }
@@ -90,7 +91,7 @@ async function writeAudit(
 ): Promise<void> {
   try {
     await supabase.from('audit_logs').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       entity_type: entityType,
       entity_id: entityId,
       action,
@@ -108,14 +109,14 @@ interface ProfileLite { id: string; name: string; avatar_initials: string | null
 
 async function loadProfiles(): Promise<Map<string, ProfileLite>> {
   const { data, error } = await supabase.from('profiles')
-    .select('id, name, avatar_initials').eq('tenant_id', DEFAULT_TENANT_ID)
+    .select('id, name, avatar_initials').eq('tenant_id', getActiveTenantId())
   if (error) throw tenantError('profiles', error.message)
   return new Map((data ?? []).map(p => [p.id, p as ProfileLite]))
 }
 
 async function loadProjects(): Promise<Map<string, string>> {
   const { data, error } = await supabase.from('projects')
-    .select('id, name').eq('tenant_id', DEFAULT_TENANT_ID)
+    .select('id, name').eq('tenant_id', getActiveTenantId())
   if (error) throw tenantError('projects', error.message)
   return new Map((data ?? []).map(p => [p.id, p.name]))
 }
@@ -123,7 +124,7 @@ async function loadProjects(): Promise<Map<string, string>> {
 async function loadWorkItems(ids: string[]): Promise<Map<string, { key: string; title: string }>> {
   if (ids.length === 0) return new Map()
   const { data, error } = await supabase.from('work_items')
-    .select('id, key, title').eq('tenant_id', DEFAULT_TENANT_ID).in('id', ids)
+    .select('id, key, title').eq('tenant_id', getActiveTenantId()).in('id', ids)
   if (error) throw tenantError('work_items', error.message)
   return new Map((data ?? []).map(w => [w.id, { key: w.key, title: w.title }]))
 }
@@ -134,8 +135,8 @@ async function loadSquadByProfile(): Promise<{
   squads: Map<string, string>
 }> {
   const [members, squads] = await Promise.all([
-    supabase.from('squad_members').select('profile_id, squad_id').eq('tenant_id', DEFAULT_TENANT_ID),
-    supabase.from('squads').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null),
+    supabase.from('squad_members').select('profile_id, squad_id').eq('tenant_id', getActiveTenantId()),
+    supabase.from('squads').select('id, name').eq('tenant_id', getActiveTenantId()).is('archived_at', null),
   ])
   if (members.error) throw tenantError('squad_members', members.error.message)
   if (squads.error) throw tenantError('squads', squads.error.message)
@@ -151,7 +152,7 @@ async function loadDecisions(timesheetIds: string[]): Promise<Map<string, { deci
   if (timesheetIds.length === 0) return new Map()
   const { data, error } = await tbl('timesheet_approvals')
     .select('timesheet_id, decision, reason, created_at')
-    .eq('tenant_id', DEFAULT_TENANT_ID).in('timesheet_id', timesheetIds)
+    .eq('tenant_id', getActiveTenantId()).in('timesheet_id', timesheetIds)
     .order('created_at', { ascending: true })
   if (error) throw tenantError('timesheet_approvals', error.message)
   const out = new Map<string, { decision: string; reason: string | null }>()
@@ -191,7 +192,7 @@ async function enrich(rows: TimesheetRow[]): Promise<TimesheetEntry[]> {
 /** Resolves the profile of the active session user by name (auth comes later). */
 async function resolveProfileIdByName__raw(name: string): Promise<string | null> {
   const { data, error } = await supabase.from('profiles')
-    .select('id').eq('tenant_id', DEFAULT_TENANT_ID).eq('name', name).limit(1)
+    .select('id').eq('tenant_id', getActiveTenantId()).eq('name', name).limit(1)
   if (error) throw tenantError('profiles', error.message)
   return data?.[0]?.id ?? null
 }
@@ -201,11 +202,11 @@ async function searchDemands__raw(query: string, limit = 12): Promise<DemandOpti
   const [items, projects, epics, features] = await Promise.all([
     supabase.from('work_items')
       .select('id, key, title, project_id, epic_id, feature_id')
-      .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+      .eq('tenant_id', getActiveTenantId()).is('archived_at', null)
       .order('updated_at', { ascending: false }).limit(400),
-    supabase.from('projects').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID),
-    supabase.from('epics').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID),
-    supabase.from('features').select('id, name').eq('tenant_id', DEFAULT_TENANT_ID),
+    supabase.from('projects').select('id, name').eq('tenant_id', getActiveTenantId()),
+    supabase.from('epics').select('id, name').eq('tenant_id', getActiveTenantId()),
+    supabase.from('features').select('id, name').eq('tenant_id', getActiveTenantId()),
   ])
   if (items.error) throw tenantError('work_items', items.error.message)
   if (projects.error) throw tenantError('projects', projects.error.message)
@@ -236,7 +237,7 @@ async function searchDemands__raw(query: string, limit = 12): Promise<DemandOpti
 // ─── TimesheetPage: entries ───────────────────────────────────────────────────
 async function listMyEntries__raw(profileId: string, month?: string): Promise<TimesheetEntry[]> {
   let q = tbl('timesheets').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('user_id', profileId).is('archived_at', null)
+    .eq('tenant_id', getActiveTenantId()).eq('user_id', profileId).is('archived_at', null)
   if (month && month !== 'all') q = q.eq('month', month)
   const { data, error } = await q.order('date', { ascending: false })
   if (error) throw tenantError('timesheets', error.message)
@@ -255,7 +256,7 @@ export interface CreateEntryInput {
 
 async function createEntry__raw(input: CreateEntryInput): Promise<TimesheetRow | null> {
   const { data, error } = await tbl('timesheets').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     user_id: input.profileId,
     project_id: input.projectId,
     work_item_id: input.workItemId,
@@ -284,7 +285,7 @@ export interface UpdateEntryInput {
 /** Editable only while the entry has not been approved. */
 async function updateEntry__raw(id: string, patch: UpdateEntryInput, actorName: string): Promise<boolean> {
   const { data: current, error: readErr } = await tbl('timesheets')
-    .select('*').eq('tenant_id', DEFAULT_TENANT_ID).eq('id', id).single()
+    .select('*').eq('tenant_id', getActiveTenantId()).eq('id', id).single()
   if (readErr) throw tenantError('timesheets', readErr.message)
   const before = current as TimesheetRow
   if (before.status === 'approved') return false
@@ -297,7 +298,7 @@ async function updateEntry__raw(id: string, patch: UpdateEntryInput, actorName: 
   if (patch.workItemId !== undefined) payload.work_item_id = patch.workItemId
 
   const { error } = await tbl('timesheets').update(payload)
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', id)
+    .eq('tenant_id', getActiveTenantId()).eq('id', id)
   if (error) throw tenantError('timesheets', error.message)
   await writeAudit('timesheet', id, 'hours.updated', actorName,
     { date: before.date, hours: Number(before.hours), description: before.description ?? null },
@@ -308,13 +309,13 @@ async function updateEntry__raw(id: string, patch: UpdateEntryInput, actorName: 
 /** Deletable only while the entry has not been approved. */
 async function deleteEntry__raw(id: string, actorName: string): Promise<boolean> {
   const { data: current, error: readErr } = await tbl('timesheets')
-    .select('*').eq('tenant_id', DEFAULT_TENANT_ID).eq('id', id).single()
+    .select('*').eq('tenant_id', getActiveTenantId()).eq('id', id).single()
   if (readErr) throw tenantError('timesheets', readErr.message)
   const before = current as TimesheetRow
   if (before.status === 'approved') return false
 
   const { error } = await tbl('timesheets').delete()
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', id)
+    .eq('tenant_id', getActiveTenantId()).eq('id', id)
   if (error) throw tenantError('timesheets', error.message)
   await writeAudit('timesheet', id, 'hours.deleted', actorName,
     { date: before.date, hours: Number(before.hours), project_id: before.project_id }, null)
@@ -328,7 +329,7 @@ async function submitForApproval__raw(
   if (ids.length === 0) return 0
   const { data, error } = await tbl('timesheets')
     .update({ status: 'submitted', approver_id: approverId })
-    .eq('tenant_id', DEFAULT_TENANT_ID).in('id', ids).in('status', ['draft', 'rejected'])
+    .eq('tenant_id', getActiveTenantId()).in('id', ids).in('status', ['draft', 'rejected'])
     .select('id')
   if (error) throw tenantError('timesheets', error.message)
   const updated = (data ?? []) as { id: string }[]
@@ -344,13 +345,13 @@ async function listApprovers__raw(): Promise<ApproverOption[]> {
   const profiles = await loadProfiles()
 
   const { data: confRows, error: confErr } = await tbl('approver_squads')
-    .select('approver_id').eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .select('approver_id').eq('tenant_id', getActiveTenantId()).is('archived_at', null)
   if (confErr) throw tenantError('approver_squads', confErr.message)
   const ids = new Set<string>(((confRows ?? []) as any[]).map(r => r.approver_id))
 
   if (ids.size === 0) {
     const [userRoles, roles] = await Promise.all([
-      anyTbl('user_roles').select('profile_id, role_id').eq('tenant_id', DEFAULT_TENANT_ID),
+      anyTbl('user_roles').select('profile_id, role_id').eq('tenant_id', getActiveTenantId()),
       anyTbl('roles').select('id, key, tier'),
     ])
     const approverRoleIds = new Set(
@@ -373,14 +374,14 @@ async function listApprovers__raw(): Promise<ApproverOption[]> {
 // ─── HoursApprovalPage ────────────────────────────────────────────────────────
 async function listSquads__raw(): Promise<SquadOption[]> {
   const { data, error } = await supabase.from('squads')
-    .select('id, name').eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null).order('name')
+    .select('id, name').eq('tenant_id', getActiveTenantId()).is('archived_at', null).order('name')
   if (error) throw tenantError('squads', error.message)
   return (data ?? []).map(s => ({ id: s.id, name: s.name }))
 }
 
 async function getApproverSquads__raw(approverId: string): Promise<string[]> {
   const { data, error } = await tbl('approver_squads')
-    .select('squad_id').eq('tenant_id', DEFAULT_TENANT_ID)
+    .select('squad_id').eq('tenant_id', getActiveTenantId())
     .eq('approver_id', approverId).is('archived_at', null)
   if (error) throw tenantError('approver_squads', error.message)
   return ((data ?? []) as any[]).map(r => r.squad_id as string)
@@ -390,12 +391,12 @@ async function setApproverSquads__raw(
   approverId: string, squadIds: string[], actorName: string,
 ): Promise<string[]> {
   const { error: delErr } = await tbl('approver_squads').delete()
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('approver_id', approverId)
+    .eq('tenant_id', getActiveTenantId()).eq('approver_id', approverId)
   if (delErr) throw tenantError('approver_squads', delErr.message)
 
   if (squadIds.length > 0) {
     const { error } = await tbl('approver_squads').insert(
-      squadIds.map(sid => ({ tenant_id: DEFAULT_TENANT_ID, approver_id: approverId, squad_id: sid })),
+      squadIds.map(sid => ({ tenant_id: getActiveTenantId(), approver_id: approverId, squad_id: sid })),
     )
     if (error) throw tenantError('approver_squads', error.message)
   }
@@ -420,13 +421,13 @@ async function listPendingForApprover__raw(approverId: string): Promise<Approval
   let memberIds: string[] = []
   if (squadIds.length > 0) {
     const { data, error } = await supabase.from('squad_members')
-      .select('profile_id').eq('tenant_id', DEFAULT_TENANT_ID).in('squad_id', squadIds)
+      .select('profile_id').eq('tenant_id', getActiveTenantId()).in('squad_id', squadIds)
     if (error) throw tenantError('squad_members', error.message)
     memberIds = (data ?? []).map(m => m.profile_id)
   }
 
   const { data, error } = await tbl('timesheets').select('*')
-    .eq('tenant_id', DEFAULT_TENANT_ID).is('archived_at', null)
+    .eq('tenant_id', getActiveTenantId()).is('archived_at', null)
     .neq('status', 'draft')
     .order('date', { ascending: false })
   if (error) throw tenantError('timesheets', error.message)
@@ -449,7 +450,7 @@ async function decideEntries__raw(
 
   const { data, error } = await tbl('timesheets')
     .update({ status: decision, approver_id: approverId })
-    .eq('tenant_id', DEFAULT_TENANT_ID).in('id', ids).eq('status', 'submitted')
+    .eq('tenant_id', getActiveTenantId()).in('id', ids).eq('status', 'submitted')
     .select('id')
   if (error) throw tenantError('timesheets', error.message)
   const updated = ((data ?? []) as { id: string }[]).map(r => r.id)
@@ -457,7 +458,7 @@ async function decideEntries__raw(
 
   const { error: apprErr } = await tbl('timesheet_approvals').insert(
     updated.map(tid => ({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       timesheet_id: tid,
       approver_id: approverId,
       decision,
