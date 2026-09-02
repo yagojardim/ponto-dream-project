@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, createContext, useContext, type ReactNode
 import { useSession } from '../data/SessionContext'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import { fetchTenantStorage, usagePct, bytesToHuman, type TenantStorage } from '@/data/db/storage'
-import { DEFAULT_TENANT_ID } from '@/data/db/timeline'
+import { getActiveTenantId } from '@/data/session'
 import { UsageBar } from '@/pages/StoragePage'
 import { T } from '../components/ds/tokens'
 import { useClientPortal } from '../data/clientPortalStore'
@@ -2020,7 +2020,7 @@ function TenantStorageCard({ show, onNav }: { show: boolean; onNav: (v: string, 
   useEffect(() => {
     if (!show) return
     let alive = true
-    fetchTenantStorage(DEFAULT_TENANT_ID).then(d => { if (alive) setData(d) })
+    fetchTenantStorage(getActiveTenantId()).then(d => { if (alive) setData(d) })
     return () => { alive = false }
   }, [show])
 
