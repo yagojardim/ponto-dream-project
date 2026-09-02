@@ -4,6 +4,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 
 export { DEFAULT_TENANT_ID }
 
@@ -135,7 +136,7 @@ export async function listSprints(projectId?: string, boardId?: string): Promise
   let query = supabase
     .from('sprints')
     .select(SPRINT_FIELDS)
-    .eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('tenant_id', getActiveTenantId())
     .is('archived_at', null)
     .order('start_date', { ascending: true, nullsFirst: false })
 
@@ -150,9 +151,9 @@ export async function listSprints(projectId?: string, boardId?: string): Promise
 /** Work items of a sprint, resolved through sprint_items (falling back to work_items.sprint_id). */
 export async function getSprintItems(sprintId: string): Promise<SprintItemRow[]> {
   const [linkRes, directRes] = await Promise.all([
-    supabase.from('sprint_items').select('work_item_id').eq('tenant_id', DEFAULT_TENANT_ID).eq('sprint_id', sprintId),
+    supabase.from('sprint_items').select('work_item_id').eq('tenant_id', getActiveTenantId()).eq('sprint_id', sprintId),
     supabase.from('work_items').select(ITEM_FIELDS)
-      .eq('tenant_id', DEFAULT_TENANT_ID).eq('sprint_id', sprintId).is('archived_at', null),
+      .eq('tenant_id', getActiveTenantId()).eq('sprint_id', sprintId).is('archived_at', null),
   ])
   if (linkRes.error) throw new Error(missingTableMessage('sprint_items', linkRes.error.message))
   if (directRes.error) throw new Error(missingTableMessage('work_items', directRes.error.message))
@@ -163,7 +164,7 @@ export async function getSprintItems(sprintId: string): Promise<SprintItemRow[]>
   if (missing.length === 0) return direct
 
   const extraRes = await supabase.from('work_items').select(ITEM_FIELDS)
-    .eq('tenant_id', DEFAULT_TENANT_ID).in('id', missing).is('archived_at', null)
+    .eq('tenant_id', getActiveTenantId()).in('id', missing).is('archived_at', null)
   if (extraRes.error) throw new Error(missingTableMessage('work_items', extraRes.error.message))
   return [...direct, ...((extraRes.data ?? []) as SprintItemRow[])]
 }
@@ -178,7 +179,7 @@ async function writeSprintAudit(
   after: AuditPayload,
 ) {
   await supabase.from('audit_logs').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     entity_type: 'sprint',
     entity_id: sprintId,
     action,
@@ -195,7 +196,7 @@ async function writeScopeEvents(
   if (rows.length === 0) return
   await supabase.from('sprint_scope_events').insert(
     rows.map(r => ({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       sprint_id: r.sprintId,
       work_item_id: r.workItemId,
       event: r.event,
@@ -220,7 +221,7 @@ export interface CreateSprintInput {
 export async function createSprint(input: CreateSprintInput): Promise<SprintRow> {
   const state = input.state ?? 'planned'
   const { data, error } = await supabase.from('sprints').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     project_id: input.projectId,
     board_id: input.boardId ?? null,
     name: input.name,
@@ -252,7 +253,7 @@ export async function startSprint(
   actorName = 'Sistema',
 ): Promise<SprintRow> {
   const beforeRes = await supabase.from('sprints').select(SPRINT_FIELDS)
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', sprintId).maybeSingle()
+    .eq('tenant_id', getActiveTenantId()).eq('id', sprintId).maybeSingle()
   if (beforeRes.error) throw new Error(missingTableMessage('sprints', beforeRes.error.message))
   const before = beforeRes.data as SprintRow | null
   if (!before) throw new Error('Sprint não encontrada')
@@ -264,7 +265,7 @@ export async function startSprint(
   if (input.endDate) patch.end_date = input.endDate
 
   const { data, error } = await supabase.from('sprints').update(patch)
-    .eq('id', sprintId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('id', sprintId).eq('tenant_id', getActiveTenantId())
     .select(SPRINT_FIELDS).single()
   if (error) throw new Error(error.message)
 
@@ -289,7 +290,7 @@ export async function updateSprint(
   actorName = 'Sistema',
 ): Promise<SprintRow> {
   const beforeRes = await supabase.from('sprints').select(SPRINT_FIELDS)
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', sprintId).maybeSingle()
+    .eq('tenant_id', getActiveTenantId()).eq('id', sprintId).maybeSingle()
   if (beforeRes.error) throw new Error(missingTableMessage('sprints', beforeRes.error.message))
   const before = beforeRes.data as SprintRow | null
   if (!before) throw new Error('Sprint não encontrada')
@@ -305,7 +306,7 @@ export async function updateSprint(
   if (Object.keys(update).length === 0) return before
 
   const { data, error } = await supabase.from('sprints').update(update)
-    .eq('id', sprintId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('id', sprintId).eq('tenant_id', getActiveTenantId())
     .select(SPRINT_FIELDS).single()
   if (error) throw new Error(error.message)
 
@@ -348,7 +349,7 @@ export async function completeSprint(
 
 ): Promise<CompleteSprintResult> {
   const sprintRes = await supabase.from('sprints').select(SPRINT_FIELDS)
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', sprintId).maybeSingle()
+    .eq('tenant_id', getActiveTenantId()).eq('id', sprintId).maybeSingle()
   if (sprintRes.error) throw new Error(missingTableMessage('sprints', sprintRes.error.message))
   const sprint = sprintRes.data as SprintRow | null
   if (!sprint) throw new Error('Sprint não encontrada')
@@ -386,23 +387,23 @@ export async function completeSprint(
 
     if (toBacklog.length > 0) {
       const res = await supabase.from('work_items').update({ sprint_id: null })
-        .in('id', toBacklog.map(i => i.id)).eq('tenant_id', DEFAULT_TENANT_ID)
+        .in('id', toBacklog.map(i => i.id)).eq('tenant_id', getActiveTenantId())
       if (res.error) throw new Error(res.error.message)
     }
     if (target && toNext.length > 0) {
       const res = await supabase.from('work_items').update({ sprint_id: target.id })
-        .in('id', toNext.map(i => i.id)).eq('tenant_id', DEFAULT_TENANT_ID)
+        .in('id', toNext.map(i => i.id)).eq('tenant_id', getActiveTenantId())
       if (res.error) throw new Error(res.error.message)
     }
 
     // Keep sprint_items in sync with the moves.
     const delRes = await supabase.from('sprint_items').delete()
-      .eq('tenant_id', DEFAULT_TENANT_ID).eq('sprint_id', sprintId).in('work_item_id', ids)
+      .eq('tenant_id', getActiveTenantId()).eq('sprint_id', sprintId).in('work_item_id', ids)
     if (delRes.error) throw new Error(delRes.error.message)
 
     if (target && toNext.length > 0) {
       const insRes = await supabase.from('sprint_items').insert(
-        toNext.map(i => ({ tenant_id: DEFAULT_TENANT_ID, sprint_id: target.id, work_item_id: i.id })),
+        toNext.map(i => ({ tenant_id: getActiveTenantId(), sprint_id: target.id, work_item_id: i.id })),
       )
       if (insRes.error) throw new Error(insRes.error.message)
     }
@@ -456,7 +457,7 @@ export async function completeSprint(
       completed_at: completedAt,
       metadata: { ...existingMeta, closure } as unknown as Tables['sprints']['Update']['metadata'],
     })
-    .eq('id', sprintId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('id', sprintId).eq('tenant_id', getActiveTenantId())
   if (closeRes.error) throw new Error(closeRes.error.message)
 
   await writeSprintAudit(sprintId, 'sprint.completed', actorName,
@@ -498,18 +499,18 @@ export async function addItemToSprint(
   actorName = 'Sistema',
 ): Promise<void> {
   const itemRes = await supabase.from('work_items').select(ITEM_FIELDS)
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', workItemId).maybeSingle()
+    .eq('tenant_id', getActiveTenantId()).eq('id', workItemId).maybeSingle()
   if (itemRes.error) throw new Error(missingTableMessage('work_items', itemRes.error.message))
   const item = itemRes.data as SprintItemRow | null
   if (!item) throw new Error('Item não encontrado')
 
   const updateRes = await supabase.from('work_items').update({ sprint_id: sprintId })
-    .eq('id', workItemId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('id', workItemId).eq('tenant_id', getActiveTenantId())
   if (updateRes.error) throw new Error(updateRes.error.message)
 
   if (item.sprint_id && item.sprint_id !== sprintId) {
     await supabase.from('sprint_items').delete()
-      .eq('tenant_id', DEFAULT_TENANT_ID).eq('sprint_id', item.sprint_id).eq('work_item_id', workItemId)
+      .eq('tenant_id', getActiveTenantId()).eq('sprint_id', item.sprint_id).eq('work_item_id', workItemId)
     await writeScopeEvents([{
       sprintId: item.sprint_id, workItemId, event: 'removed',
       pointsDelta: item.story_points == null ? null : -Number(item.story_points),
@@ -517,7 +518,7 @@ export async function addItemToSprint(
   }
 
   const insRes = await supabase.from('sprint_items')
-    .insert({ tenant_id: DEFAULT_TENANT_ID, sprint_id: sprintId, work_item_id: workItemId })
+    .insert({ tenant_id: getActiveTenantId(), sprint_id: sprintId, work_item_id: workItemId })
   if (insRes.error && !/duplicate key/i.test(insRes.error.message)) throw new Error(insRes.error.message)
 
   await writeScopeEvents([{
@@ -537,17 +538,17 @@ export async function removeItemFromSprint(
   actorName = 'Sistema',
 ): Promise<void> {
   const itemRes = await supabase.from('work_items').select(ITEM_FIELDS)
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('id', workItemId).maybeSingle()
+    .eq('tenant_id', getActiveTenantId()).eq('id', workItemId).maybeSingle()
   if (itemRes.error) throw new Error(missingTableMessage('work_items', itemRes.error.message))
   const item = itemRes.data as SprintItemRow | null
   if (!item) throw new Error('Item não encontrado')
 
   const updateRes = await supabase.from('work_items').update({ sprint_id: null })
-    .eq('id', workItemId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .eq('id', workItemId).eq('tenant_id', getActiveTenantId())
   if (updateRes.error) throw new Error(updateRes.error.message)
 
   const delRes = await supabase.from('sprint_items').delete()
-    .eq('tenant_id', DEFAULT_TENANT_ID).eq('sprint_id', sprintId).eq('work_item_id', workItemId)
+    .eq('tenant_id', getActiveTenantId()).eq('sprint_id', sprintId).eq('work_item_id', workItemId)
   if (delRes.error) throw new Error(delRes.error.message)
 
   await writeScopeEvents([{
