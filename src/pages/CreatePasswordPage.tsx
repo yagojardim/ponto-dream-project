@@ -22,6 +22,24 @@ function strengthOf(v: string): number {
   return RULES.filter(r => r.test(v)).length
 }
 
+/** Traduz as mensagens de erro do Supabase Auth (que vêm em inglês) para PT-BR. */
+function translateAuthError(msg: string): string {
+  const m = (msg || '').toLowerCase()
+  if (m.includes('different from the old') || m.includes('should be different') || m.includes('same as')) {
+    return 'A nova senha deve ser diferente da senha anterior. Escolha outra.'
+  }
+  if (m.includes('at least') || m.includes('too short') || m.includes('minimum')) {
+    return 'A senha é muito curta. Use pelo menos 12 caracteres.'
+  }
+  if (m.includes('weak') || m.includes('pwned') || m.includes('easy to guess') || m.includes('compromised') || m.includes('leaked')) {
+    return 'Essa senha é considerada fraca ou já vazada em outros sites. Escolha uma mais forte.'
+  }
+  if (m.includes('session') || m.includes('token')) {
+    return 'Sua sessão expirou. Faça login novamente para trocar a senha.'
+  }
+  return 'Não foi possível atualizar a senha. Tente uma senha diferente.'
+}
+
 export default function CreatePasswordPage({ rawToken, onDone }: Props) {
   const { activeUser, clearMustChangePassword } = useSession()
   const [pwd, setPwd] = useState('')
@@ -43,7 +61,7 @@ export default function CreatePasswordPage({ rawToken, onDone }: Props) {
     setBusy(true); setError(null)
     try {
       const { error: upErr } = await supabase.auth.updateUser({ password: pwd })
-      if (upErr) { setError(upErr.message); setBusy(false); return }
+      if (upErr) { setError(translateAuthError(upErr.message)); setBusy(false); return }
 
       await markPasswordChanged(activeUser.user_id)
       if (rawToken) await consumeToken(rawToken)
