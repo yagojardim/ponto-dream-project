@@ -3,6 +3,7 @@
 import { supabase } from '@/integrations/supabase/client'
 import type { Database, Json } from '@/integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from '@/data/db/timeline'
+import { getActiveTenantId } from '@/data/session'
 import { safeCall, logger } from '@/utils/logger'
 
 export { DEFAULT_TENANT_ID }
@@ -165,7 +166,7 @@ function toMetadata(input: Pick<CalendarEventInput, 'color' | 'meetLink' | 'work
 
 /** Lists the tenant events, optionally bounded by an ISO range. Degrades to []. */
 export async function listCalendarEvents(
-  tenantId: string = DEFAULT_TENANT_ID,
+  tenantId: string = getActiveTenantId(),
   fromISO?: string,
   toISO?: string,
 ): Promise<DbCalendarEvent[]> {
@@ -186,7 +187,7 @@ export async function listCalendarEvents(
 /** Creates one event. Returns null if the write failed. */
 export async function createCalendarEvent(
   input: CalendarEventInput,
-  tenantId: string = DEFAULT_TENANT_ID,
+  tenantId: string = getActiveTenantId(),
 ): Promise<DbCalendarEvent | null> {
   return safeCall('calendarEvents.create', async () => {
     const payload: Tables['calendar_events']['Insert'] = {
@@ -217,7 +218,7 @@ export async function createCalendarEvent(
 export async function updateCalendarEvent(
   id: string,
   patch: Partial<CalendarEventInput>,
-  tenantId: string = DEFAULT_TENANT_ID,
+  tenantId: string = getActiveTenantId(),
 ): Promise<DbCalendarEvent | null> {
   return safeCall('calendarEvents.update', async () => {
     const update: Tables['calendar_events']['Update'] = {}
@@ -249,7 +250,7 @@ export async function updateCalendarEvent(
 /** Soft delete via archived_at. */
 export async function deleteCalendarEvent(
   id: string,
-  tenantId: string = DEFAULT_TENANT_ID,
+  tenantId: string = getActiveTenantId(),
 ): Promise<boolean> {
   return safeCall('calendarEvents.delete', async () => {
     const { error } = await supabase.from('calendar_events')
@@ -394,7 +395,7 @@ export function planSprintCeremonies(
  */
 export async function generateSprintCeremonies(
   sprint: SprintCeremonyInput,
-  tenantId: string = DEFAULT_TENANT_ID,
+  tenantId: string = getActiveTenantId(),
   createdBy: string | null = null,
   slots: CeremonySlot[] = DEFAULT_CEREMONY_SLOTS,
 ): Promise<CeremonyResult> {
@@ -485,7 +486,7 @@ export interface ExternalImportResult {
  */
 export async function upsertExternalEvents(
   events: ExternalEventInput[],
-  tenantId: string = DEFAULT_TENANT_ID,
+  tenantId: string = getActiveTenantId(),
   provider: string = GOOGLE_PROVIDER,
 ): Promise<ExternalImportResult> {
   if (events.length === 0) return { imported: 0, updated: 0 }
@@ -538,7 +539,7 @@ export async function upsertExternalEvents(
 export async function setExternalId(
   id: string,
   externalId: string,
-  tenantId: string = DEFAULT_TENANT_ID,
+  tenantId: string = getActiveTenantId(),
   provider: string = GOOGLE_PROVIDER,
 ): Promise<void> {
   await updateCalendarEvent(id, { externalProvider: provider, externalId }, tenantId)
