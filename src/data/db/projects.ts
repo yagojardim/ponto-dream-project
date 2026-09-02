@@ -3,6 +3,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID, projectColor } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { writeAudit as writeMilestone } from './audit'
 import { safeCall } from '@/utils/logger'
 import { can } from '@/data/permissions'
@@ -52,7 +53,7 @@ export function projectProgress(tasks: ProjectTaskRow[]): number {
 }
 
 export async function listProjects(): Promise<ProjectsData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   const [projects, tasks, profiles, members, boards] = await Promise.all([
     supabase.from('projects')
@@ -94,7 +95,7 @@ async function writeAudit(
   after: AuditPayload | null,
 ): Promise<void> {
   await supabase.from('audit_logs').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     entity_type: 'project',
     entity_id: entityId,
     action,
@@ -124,7 +125,7 @@ export function projectUsesFeatures(p: { metadata?: unknown } | null | undefined
 
 /** Creates a project plus its default board, columns and lead membership. */
 export async function createProject(input: CreateProjectInput): Promise<ProjectRow> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const boardType = input.boardType ?? 'scrum'
   const actorName = input.actorName ?? 'Sistema'
 
@@ -223,7 +224,7 @@ export async function updateProject(
   if (Object.keys(payload).length === 0) return
 
   const { error } = await supabase.from('projects')
-    .update(payload).eq('id', project.id).eq('tenant_id', DEFAULT_TENANT_ID)
+    .update(payload).eq('id', project.id).eq('tenant_id', getActiveTenantId())
   if (error) throw fail('projects', error.message)
 
   // Marcos: arquivar e finalizar têm chave própria no feed de auditoria.
