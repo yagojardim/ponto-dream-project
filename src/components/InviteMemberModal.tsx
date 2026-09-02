@@ -6,7 +6,7 @@ import {
   fetchInviteOptions, createMember, checkMemberIdentity, ROLE_BY_DASHBOARD,
   type OptionRow, type ModuleOption,
 } from '../data/db/invite'
-import { DEFAULT_TENANT_ID } from '../data/db/timeline'
+import { getActiveTenantId } from '@/data/session'
 import {
   derivePermissions, getCompatibleDashboards, DEFAULT_DASHBOARD,
   capabilityVisibility, STEP4_CAPABILITIES, type Capability,
@@ -252,7 +252,7 @@ export default function InviteMemberModal({ onClose, onSuccess }: Props) {
     const hasApproveHours = capabilityVisibility(role, 'approve:hours') === 'on' || optIns.has('approve:hours' as Capability)
     const user: MockUser = {
       user_id: profileId,
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       name: fullName.trim(),
       email: email.trim().toLowerCase(),
       avatar_initials: initials(fullName),
