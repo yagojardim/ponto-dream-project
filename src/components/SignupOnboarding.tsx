@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { T } from './ds/tokens'
 import { useSession } from '@/data/SessionContext'
 import { assignOperationalRole } from '@/data/db/invite'
-import { SIGNUP_ONBOARDING_KEY } from '@/data/db/signup'
 import type { RoleContext } from '@/data/session'
 
 interface Props {
@@ -24,10 +23,6 @@ const OPERATIONAL_ROLES: { role: RoleContext; label: string; desc: string }[] = 
   { role: 'UX', label: 'UX / UI', desc: 'Design, validação e handoffs' },
 ]
 
-function clearFlag() {
-  try { localStorage.removeItem(SIGNUP_ONBOARDING_KEY) } catch { /* storage indisponível */ }
-}
-
 export function SignupOnboarding({ onDone, onGoToTeam }: Props) {
   const { activeUser } = useSession()
   const [step, setStep] = useState<2 | 3>(2)
@@ -45,8 +40,8 @@ export function SignupOnboarding({ onDone, onGoToTeam }: Props) {
     setStep(3)
   }
 
-  function finish() { clearFlag(); onDone() }
-  function goTeam() { clearFlag(); onGoToTeam() }
+  function finish() { onDone() }
+  function goTeam() { onGoToTeam() }
 
   const overlay: React.CSSProperties = {
     position: 'fixed', inset: 0, zIndex: 1000,
