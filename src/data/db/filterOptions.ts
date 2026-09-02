@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client'
 import { safeCall } from '@/utils/logger'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 
 export interface FilterOption { value: string; label: string }
 
@@ -22,7 +22,7 @@ interface IdName { id: string; name: string | null }
 export function fetchBoardFilterOptions(projectId: string): Promise<BoardFilterOptions> {
   return safeCall<BoardFilterOptions>('board.filterOptions', async () => {
     if (!projectId) return EMPTY
-    const tid = DEFAULT_TENANT_ID
+    const tid = getActiveTenantId()
     const [profilesRes, sprintsRes, epicsRes] = await Promise.all([
       supabase.from('profiles').select('id, name').eq('tenant_id', tid).is('archived_at', null),
       supabase.from('sprints').select('id, name').eq('tenant_id', tid).eq('project_id', projectId).is('archived_at', null),
