@@ -3,6 +3,7 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID, epicColor } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 
 export { DEFAULT_TENANT_ID, epicColor }
 
@@ -38,7 +39,7 @@ function missingTableMessage(table: string, message: string): string {
 
 /** Lists every epic of the tenant (optionally scoped to a set of projects). */
 export async function listEpics(projectIds?: string[]): Promise<EpicsData> {
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
   const scoped = projectIds && projectIds.length > 0 ? projectIds : null
 
   let epicsQ = supabase.from('epics')
@@ -87,7 +88,7 @@ async function writeAudit(
   after: AuditPayload | null,
 ): Promise<void> {
   await supabase.from('audit_logs').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     entity_type: entityType,
     entity_id: entityId,
     action,
@@ -100,10 +101,10 @@ async function writeAudit(
 /** Next sequential key (PROJ-123) for a project. */
 async function nextItemKey(projectId: string): Promise<string> {
   const { data: project } = await supabase.from('projects')
-    .select('key').eq('id', projectId).eq('tenant_id', DEFAULT_TENANT_ID).single()
+    .select('key').eq('id', projectId).eq('tenant_id', getActiveTenantId()).single()
   const prefix = project?.key ?? 'ITEM'
   const { data: rows } = await supabase.from('work_items')
-    .select('key').eq('project_id', projectId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .select('key').eq('project_id', projectId).eq('tenant_id', getActiveTenantId())
   const max = (rows ?? []).reduce((acc, r) => {
     const n = parseInt((r.key ?? '').split('-').pop() ?? '', 10)
     return Number.isFinite(n) && n > acc ? n : acc
@@ -128,7 +129,7 @@ export async function createEpicIssue(input: CreateEpicIssueInput): Promise<Epic
   const key = await nextItemKey(input.projectId)
 
   const { data, error } = await supabase.from('work_items').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     project_id: input.projectId,
     epic_id: input.epicId,
     key,
@@ -154,7 +155,7 @@ export async function createEpicIssue(input: CreateEpicIssueInput): Promise<Epic
 /** Links an existing work item to an epic. */
 export async function linkItemToEpic(itemId: string, epicId: string, actorName = 'Sistema'): Promise<void> {
   const { error } = await supabase.from('work_items')
-    .update({ epic_id: epicId }).eq('id', itemId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .update({ epic_id: epicId }).eq('id', itemId).eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(missingTableMessage('work_items', error.message))
   await writeAudit('work_item', itemId, 'work_item.epic_linked', actorName, null, { epic_id: epicId })
 }
@@ -173,7 +174,7 @@ export interface CreateEpicInput {
 /** Next sequential epic key (EP-01, EP-02, …) for a project. */
 export async function nextEpicKey(projectId: string): Promise<string> {
   const { data, error } = await supabase.from('epics')
-    .select('key').eq('project_id', projectId).eq('tenant_id', DEFAULT_TENANT_ID)
+    .select('key').eq('project_id', projectId).eq('tenant_id', getActiveTenantId())
   if (error) throw new Error(missingTableMessage('epics', error.message))
   const max = (data ?? []).reduce((acc, r) => {
     const n = parseInt((r.key ?? '').split('-').pop() ?? '', 10)
@@ -188,7 +189,7 @@ export async function createEpic(input: CreateEpicInput): Promise<EpicRow> {
     const key = input.key?.trim() || (await nextEpicKey(input.projectId))
 
     const { data, error } = await supabase.from('epics').insert({
-      tenant_id: DEFAULT_TENANT_ID,
+      tenant_id: getActiveTenantId(),
       project_id: input.projectId,
       key,
       name: input.name,
@@ -217,7 +218,7 @@ export async function createFeature(input: {
   epicId: string; name: string; description?: string | null; actorName?: string
 }): Promise<EpicFeatureRow> {
   const { data, error } = await supabase.from('features').insert({
-    tenant_id: DEFAULT_TENANT_ID,
+    tenant_id: getActiveTenantId(),
     epic_id: input.epicId,
     name: input.name,
     description: input.description ?? null,
