@@ -22,7 +22,8 @@ import {
   type SprintClosure,
 } from '../data/db/sprints'
 import { StoryIcon, EpicIcon } from '../components/ds/AltechIcons'
-import { generateSprintCeremonies, DEFAULT_TENANT_ID, type CeremonySlot } from '@/data/db/calendarEvents'
+import { generateSprintCeremonies, type CeremonySlot } from '@/data/db/calendarEvents'
+import { getActiveTenantId } from '@/data/session'
 import { epicColor } from '@/data/db/timeline'
 import { listProjects, projectUsesFeatures } from '@/data/db/projects'
 import { SprintCeremoniesModal } from '@/components/SprintCeremoniesModal'
@@ -2734,7 +2735,7 @@ export default function ProjectPage({ boardId, projectId, onBackToBoards }: Proj
       projectId: sprint.projectId ?? null,
       startDate: sprint.startDate ?? null,
       endDate: sprint.endDate ?? null,
-    }, DEFAULT_TENANT_ID, activeUser.user_id, slots)
+    }, getActiveTenantId(), activeUser.user_id, slots)
     setCeremonySprintId(null)
     setCeremonyTarget(null)
     setToast(res.error
