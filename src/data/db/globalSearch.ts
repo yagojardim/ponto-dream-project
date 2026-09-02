@@ -1,6 +1,6 @@
 import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
-import { DEFAULT_TENANT_ID } from './timeline'
+import { getActiveTenantId } from '@/data/session'
 import { VIEW_LABELS } from '../../App'
 
 export interface SearchResult {
@@ -22,7 +22,7 @@ export async function searchGlobal(q: string): Promise<SearchResult[]> {
   if (term.length < 2) return []
 
   const like = `%${term}%`
-  const tid = DEFAULT_TENANT_ID
+  const tid = getActiveTenantId()
 
   try {
     const [projects, workItems, profiles] = await Promise.all([
