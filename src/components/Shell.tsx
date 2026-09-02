@@ -6,6 +6,12 @@ import { useProjectTourState, startTour } from '../hooks/useProjectTour'
 import { useOnboarding } from '../hooks/useOnboarding'
 import { useSession } from '@/data/SessionContext'
 import { hasTour, tourStepsFor, tourIdFor } from '@/data/tourSteps'
+import { SIGNUP_ONBOARDING_KEY } from '@/data/db/signup'
+
+/** Onboarding de auto-cadastro em andamento → não auto-iniciar o tour (evita sobreposição). */
+function signupOnboardingActive(): boolean {
+  try { return localStorage.getItem(SIGNUP_ONBOARDING_KEY) === '1' } catch { return false }
+}
 
 
 export type View =
@@ -44,7 +50,7 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
 
   // Auto-start tour on first visit to a view
   useEffect(() => {
-    if (!loaded || guideDisabled || tourActive) return
+    if (!loaded || guideDisabled || tourActive || signupOnboardingActive()) return
     const role = activeUser?.role_context ?? null
     const id = tourIdFor(currentView, role)
     // Avoid re-triggering for the same id in this render cycle
