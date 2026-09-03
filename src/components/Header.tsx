@@ -84,9 +84,10 @@ interface NotifItem {
   entityId?: string | null
 }
 
+// Sem notificações mock: elas não têm tenant e vazavam entre contas.
+// A central de notificações usa apenas os registros reais do banco (por tenant + usuário).
 const STATIC_NOTIFICATIONS: NotifItem[] = [
-  { id: 'n1', icon: '🔴', text: 'PM-142 bloqueado — aguardando você', time: '2h',  read: false },
-  { id: 'n2', icon: '⚡', text: 'Sprint 14 termina em 3 dias',         time: '1d',  read: false },
+  // (intencionalmente vazio — ver notas acima)
 ]
 
 const NOTIF_ICON: Record<string, string> = { comment: '💬', approval: '✅', info: '🔔' }
@@ -403,9 +404,9 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
 
           {/* Help */}
           <button
-            onClick={() => onViewChange('feedback')}
-            title="Como usar esta tela"
-            aria-label="Como usar esta tela"
+            onClick={() => onViewChange('feedback', 'ajuda')}
+            title="Central de Ajuda"
+            aria-label="Central de Ajuda"
             className="w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-semibold transition-colors"
             style={{ color: T.text3, background: T.bgSurface2, border: `1px solid ${T.border}` }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = T.text1 }}
