@@ -137,8 +137,9 @@ export function BurndownChart({ variant = 'full', data: explicit }: ChartProps) 
       emptyText="Nenhuma sprint ativa com pontos estimados.">
       {() => {
         const b = bd!
-        const W = 520; const H = 180
-        const PAD = { top: 12, right: 16, bottom: th ? 8 : 30, left: th ? 8 : 36 }
+        // Thumbnail usa um viewBox menor para os rótulos dos eixos ficarem legíveis no card.
+        const W = th ? 220 : 520; const H = th ? 96 : 180
+        const PAD = th ? { top: 8, right: 8, bottom: 16, left: 20 } : { top: 12, right: 16, bottom: 30, left: 36 }
         const cw = W - PAD.left - PAD.right
         const ch = H - PAD.top - PAD.bottom
         const n = b.days.length
@@ -151,17 +152,25 @@ export function BurndownChart({ variant = 'full', data: explicit }: ChartProps) 
         real.forEach(([i, v], idx) => {
           stepPath += idx === 0 ? `M ${toX(i)} ${toY(v)}` : ` H ${toX(i)} V ${toY(v)}`
         })
+        const lastReal = real.length ? real[real.length - 1] : null
+        const areaPath = stepPath && lastReal
+          ? `${stepPath} L ${toX(lastReal[0])} ${toY(0)} L ${toX(real[0][0])} ${toY(0)} Z`
+          : ''
         const tickStep = Math.max(1, Math.ceil(maxPts / 4))
         const ticks = Array.from({ length: 5 }, (_, i) => i * tickStep).filter(t => t <= maxPts * 1.01)
+        // Eixo X: no thumbnail só início/meio/fim; no full, a cada ~1/7.
+        const dayIdxs = th
+          ? [...new Set([0, Math.floor((n - 1) / 2), n - 1])].filter(i => i >= 0)
+          : b.days.map((_, i) => i).filter(i => i % Math.ceil(n / 7) === 0)
         return (
           <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
             {ticks.map(t => <line key={t} x1={PAD.left} y1={toY(t)} x2={W - PAD.right} y2={toY(t)} stroke={T.border} strokeWidth={0.5} />)}
-            {!th && ticks.map(t => <text key={t} x={PAD.left - 6} y={toY(t) + 4} textAnchor="end" fontSize={9} fill={T.text3}>{t}</text>)}
-            {!th && b.days.map((d, i) => (i % Math.ceil(n / 7) === 0
-              ? <text key={d + i} x={toX(i)} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={9} fill={T.text3}>{d}</text>
-              : null))}
-            <path d={idealPath} stroke={T.accent} strokeWidth={th ? 2 : 1.5} strokeDasharray="5,3" fill="none" />
-            {stepPath && <path d={stepPath} stroke={T.text1} strokeWidth={th ? 2.5 : 2} fill="none" />}
+            {ticks.map(t => <text key={'t' + t} x={PAD.left - (th ? 4 : 6)} y={toY(t) + (th ? 3 : 4)} textAnchor="end" fontSize={th ? 7 : 9} fill={T.text3}>{t}</text>)}
+            {dayIdxs.map(i => <text key={'d' + i} x={toX(i)} y={H - PAD.bottom + (th ? 11 : 14)} textAnchor="middle" fontSize={th ? 7 : 9} fill={T.text3}>{b.days[i]}</text>)}
+            {areaPath && <path d={areaPath} fill={T.text1} fillOpacity={0.07} />}
+            <path d={idealPath} stroke={T.accent} strokeWidth={th ? 1.6 : 1.5} strokeDasharray="5,3" fill="none" />
+            {stepPath && <path d={stepPath} stroke={T.text1} strokeWidth={th ? 2 : 2} fill="none" />}
+            {th && lastReal && <circle cx={toX(lastReal[0])} cy={toY(lastReal[1])} r={2.6} fill={T.text1} />}
             {!th && (
               <g transform={`translate(${W - PAD.right - 130}, ${PAD.top})`}>
                 <line x1={0} y1={5} x2={18} y2={5} stroke={T.accent} strokeWidth={1.5} strokeDasharray="5,3" />
