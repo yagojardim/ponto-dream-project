@@ -218,24 +218,24 @@ export function NewReleaseModal({ onClose, onSaved, projects, items, release }: 
         </div>
 
         <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
-          <div>
+          <div data-tour="nr-project">
             <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Projeto *</label>
             <select value={projectId} onChange={e=>{ setProjectId(e.target.value); setSelected([]) }} disabled={isEdit} style={inputStyle}>
               {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
 
-          <div>
+          <div data-tour="nr-version">
             <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Versão *</label>
             <input value={version} onChange={e=>setVersion(e.target.value)} placeholder="v1.3.0" style={inputStyle} />
           </div>
 
-          <div>
+          <div data-tour="nr-name">
             <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Nome da release *</label>
             <input value={name} onChange={e=>setName(e.target.value)} placeholder="Ex: Pesquisa & SEO" style={inputStyle} />
           </div>
 
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
+          <div data-tour="nr-when" style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
             <div>
               <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Data planejada</label>
               <input type="date" value={date ?? ''} onChange={e=>setDate(e.target.value)} style={inputStyle} />
@@ -251,7 +251,7 @@ export function NewReleaseModal({ onClose, onSaved, projects, items, release }: 
           </div>
 
           {/* Issues vinculadas */}
-          <div>
+          <div data-tour="nr-issues">
             <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:8,display:'flex',alignItems:'center',gap:6,textTransform:'uppercase',letterSpacing:'.04em' }}>
               Issues vinculadas
               {selected.length > 0 && (
@@ -291,7 +291,7 @@ export function NewReleaseModal({ onClose, onSaved, projects, items, release }: 
             </div>
           </div>
 
-          <div>
+          <div data-tour="nr-notes">
             <label style={{ fontSize:11,fontWeight:600,color:T.text3,marginBottom:5,display:'block',textTransform:'uppercase',letterSpacing:'.04em' }}>Notas de release</label>
             <textarea value={notes ?? ''} onChange={e=>setNotes(e.target.value)} rows={3} placeholder="O que muda nesta release…" style={{ ...inputStyle,resize:'vertical',fontFamily:'inherit' }} />
           </div>
@@ -301,7 +301,7 @@ export function NewReleaseModal({ onClose, onSaved, projects, items, release }: 
 
         <div style={{ display:'flex',justifyContent:'flex-end',gap:10,marginTop:24,paddingTop:20,borderTop:`1px solid ${T.border}` }}>
           <button onClick={onClose} style={{ padding:'8px 18px',borderRadius:8,background:'transparent',color:T.text2,border:`1px solid ${T.border}`,fontSize:13,cursor:'pointer' }}>Cancelar</button>
-          <button onClick={()=>void handleSave()} disabled={!canSubmit || saving} style={{ padding:'8px 20px',borderRadius:8,background:canSubmit?T.accent:T.border,color:canSubmit?'#fff':T.text3,border:'none',fontSize:13,fontWeight:600,cursor:canSubmit?'pointer':'not-allowed',opacity:canSubmit&&!saving?1:.55 }}>
+          <button data-tour="nr-save" onClick={()=>void handleSave()} disabled={!canSubmit || saving} style={{ padding:'8px 20px',borderRadius:8,background:canSubmit?T.accent:T.border,color:canSubmit?'#fff':T.text3,border:'none',fontSize:13,fontWeight:600,cursor:canSubmit?'pointer':'not-allowed',opacity:canSubmit&&!saving?1:.55 }}>
             {saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Criar release'}
           </button>
         </div>
