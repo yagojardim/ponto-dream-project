@@ -1156,6 +1156,9 @@ function ProjectBurndownCard({ b, single }: { b: SprintBurndown; single: boolean
   let stepPath = ''
   real.forEach(([i, v], idx) => { stepPath += idx === 0 ? `M ${toX(i)} ${toY(v)}` : ` L ${toX(i)} ${toY(v)}` })
   const lastReal = real.length ? real[real.length - 1] : null
+  const areaPath = stepPath && lastReal
+    ? `${stepPath} L ${toX(lastReal[0])} ${toY(0)} L ${toX(real[0][0])} ${toY(0)} Z`
+    : ''
   const tickStep = Math.max(1, Math.ceil(maxPts / 4))
   const ticks = Array.from({ length: 5 }, (_, i) => i * tickStep).filter(t => t <= maxPts * 1.01)
   const labelIdxs = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i && v >= 0)
@@ -1186,9 +1189,16 @@ function ProjectBurndownCard({ b, single }: { b: SprintBurndown; single: boolean
           {ticks.map(t => <line key={t} x1={PAD.left} y1={toY(t)} x2={W - PAD.right} y2={toY(t)} stroke={T.border} strokeWidth={0.5} />)}
           {ticks.map(t => <text key={'t' + t} x={PAD.left - 5} y={toY(t) + 3} textAnchor="end" fontSize={8} fill={T.text3}>{t}</text>)}
           {labelIdxs.map(i => <text key={'d' + i} x={toX(i)} y={H - PAD.bottom + 15} textAnchor="middle" fontSize={8} fill={T.text3}>{b.days[i]}</text>)}
-          <path d={idealPath} stroke={T.accent} strokeWidth={1.5} strokeDasharray="5,3" fill="none" />
-          {stepPath && <path d={stepPath} stroke={lvl.color} strokeWidth={2} fill="none" />}
-          {lastReal && <circle cx={toX(lastReal[0])} cy={toY(lastReal[1])} r={3.5} fill={lvl.color} stroke={T.bgSurface} strokeWidth={1} />}
+          {b.todayIndex >= 0 && (
+            <>
+              <line x1={toX(b.todayIndex)} y1={PAD.top} x2={toX(b.todayIndex)} y2={toY(0)} stroke={T.text3} strokeWidth={1} strokeDasharray="2,3" opacity={0.6} />
+              <text x={toX(b.todayIndex)} y={PAD.top - 3} textAnchor="middle" fontSize={7.5} fill={T.text3}>hoje</text>
+            </>
+          )}
+          {areaPath && <path d={areaPath} fill={lvl.color} fillOpacity={0.12} />}
+          <path d={idealPath} stroke={T.accent} strokeWidth={1.6} strokeDasharray="6,4" fill="none" />
+          {stepPath && <path d={stepPath} stroke={lvl.color} strokeWidth={2.4} fill="none" strokeLinejoin="round" />}
+          {lastReal && <circle cx={toX(lastReal[0])} cy={toY(lastReal[1])} r={4.2} fill={lvl.color} stroke={T.bgSurface} strokeWidth={1.5} />}
           <g transform={`translate(${PAD.left}, ${H - 8})`}>
             <line x1={0} y1={-2} x2={14} y2={-2} stroke={T.accent} strokeWidth={1.5} strokeDasharray="5,3" />
             <text x={18} y={1} fontSize={8} fill={T.text3}>Ideal</text>
