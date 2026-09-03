@@ -542,7 +542,10 @@ export default function EpicsPage() {
         <StateBox><span style={{ color: T.crit }}>Erro ao carregar épicos: {error}</span></StateBox>
       )}
       {!loading && !error && projects.length === 0 && (
-        <StateBox>Nenhum projeto cadastrado neste tenant.</StateBox>
+        <StateBox>
+          Nenhum projeto neste tenant ainda. Os épicos são criados <strong style={{ color: T.text1 }}>dentro de um projeto</strong> —
+          crie um projeto primeiro em <strong style={{ color: T.text1 }}>Projetos &amp; Tarefas</strong> e o botão “Novo épico” aparece para cada projeto.
+        </StateBox>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
