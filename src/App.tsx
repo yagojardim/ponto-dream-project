@@ -30,7 +30,7 @@ import { TourOfferModal } from "./components/TourOfferModal"
 import { SIGNUP_ONBOARDING_KEY } from "./data/db/signup"
 import { startTour } from "./hooks/useProjectTour"
 import { useOnboarding } from "./hooks/useOnboarding"
-import { tourStepsFor, tourIdFor } from "./data/tourSteps"
+import { tourStepsFor } from "./data/tourSteps"
 import ClientAccessPage from "./pages/ClientAccessPage"
 import ClientLoginPage from "./pages/ClientLoginPage"
 import { clearPortalSession } from "./lib/portalSession"
@@ -171,8 +171,8 @@ function AppInner() {
   const [onboardingPending, setOnboardingPending] = useState(() => {
     try { return localStorage.getItem(SIGNUP_ONBOARDING_KEY) === "1" } catch { return false }
   })
-  const [tourOfferPending, setTourOfferPending] = useState(false)
-  const { markTourDone } = useOnboarding()
+  const { loaded: onboardingLoaded, welcomeDone, markWelcomeDone, disableGuide } = useOnboarding()
+  const clearSignupFlag = () => { try { localStorage.removeItem(SIGNUP_ONBOARDING_KEY) } catch { /* noop */ } }
   const [clientMustChangePwd, setClientMustChangePwd] = useState(false)
   const [activateToken, setActivateToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null
@@ -395,23 +395,24 @@ function AppInner() {
         {onboardingPending && (
           <ErrorBoundary scope="SignupOnboarding" fallback={null}>
             <SignupOnboarding
-              onDone={() => { setOnboardingPending(false); setTourOfferPending(true) }}
-              onGoToTeam={() => { setOnboardingPending(false); setView("team"); setTourOfferPending(true) }}
+              onDone={() => setOnboardingPending(false)}
+              onGoToTeam={() => { setOnboardingPending(false); setView("team") }}
             />
           </ErrorBoundary>
         )}
-        {tourOfferPending && (
+        {/* Carrossel de boas-vindas: 1º acesso de QUALQUER usuário (criador ou convidado). */}
+        {onboardingLoaded && !welcomeDone && !onboardingPending && (
           <TourOfferModal
             onStart={() => {
-              try { localStorage.removeItem(SIGNUP_ONBOARDING_KEY) } catch { /* noop */ }
-              setTourOfferPending(false)
+              clearSignupFlag()
+              markWelcomeDone()
               setView("home")
               startTour(tourStepsFor("home", activeUser?.role_context ?? null))
             }}
             onSkip={() => {
-              try { localStorage.removeItem(SIGNUP_ONBOARDING_KEY) } catch { /* noop */ }
-              markTourDone(tourIdFor("home", activeUser?.role_context ?? null))
-              setTourOfferPending(false)
+              clearSignupFlag()
+              markWelcomeDone()
+              disableGuide()   // recusou → desativa TODO o auto-tour
             }}
           />
         )}
