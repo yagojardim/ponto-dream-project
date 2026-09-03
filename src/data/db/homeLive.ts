@@ -6,26 +6,38 @@ import {
   fetchDashboardAggregates,
   type DashboardAggregates, type DashboardProjectOption,
 } from './dashboards'
+import { getActiveTenantId } from '@/data/session'
 import type { WorkItem } from '../../components/ds/DashboardKit'
 
 let LIVE: DashboardAggregates | null = null
 let LOADING = false
 let ERROR: string | null = null
 let inflight: Promise<void> | null = null
+// Tenant para o qual o cache atual foi carregado. Evita vazar dados de outro
+// tenant quando o tenant ativo muda (login, troca de persona).
+let LOADED_TENANT: string | null = null
 
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach(l => l())
 
 function load(force = false): Promise<void> {
-  if (inflight && !force) return inflight
+  const tid = getActiveTenantId()
+  if (inflight && !force && LOADED_TENANT === tid) return inflight
   LOADING = true
   ERROR = null
   emit()
   inflight = fetchDashboardAggregates()
-    .then(d => { LIVE = d; ERROR = null })
+    .then(d => { LIVE = d; LOADED_TENANT = tid; ERROR = null })
     .catch((e: Error) => { ERROR = e.message })
     .finally(() => { LOADING = false; inflight = null; emit() })
   return inflight
+}
+
+/** Recarrega os agregados quando o tenant ativo mudou (login, troca de persona). */
+export function reloadLiveDashboardForTenant(): void {
+  if (LOADED_TENANT === getActiveTenantId()) return
+  LIVE = null
+  void load(true)
 }
 
 export interface LiveDashboardState {
@@ -41,7 +53,7 @@ export function useLiveDashboard(): LiveDashboardState {
   useEffect(() => {
     const l = () => setTick(t => t + 1)
     listeners.add(l)
-    if (!LIVE && !LOADING) void load()
+    if ((!LIVE || LOADED_TENANT !== getActiveTenantId()) && !LOADING) void load()
     return () => { listeners.delete(l) }
   }, [])
   return { data: LIVE, loading: LOADING, error: ERROR, reload: () => void load(true) }
