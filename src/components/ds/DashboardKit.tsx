@@ -333,6 +333,7 @@ export function KpiCard({ value, label, sub, miniViz, disclaimer, color, alert, 
   const [hovered, setHovered] = useState(false)
   const clickable  = !!onClick
   const hasMiniViz = !!miniViz
+  const borderColor = alert ? T.crit : hovered && clickable ? T.accent : T.border
   return (
     <div
       onClick={onClick}
@@ -340,44 +341,42 @@ export function KpiCard({ value, label, sub, miniViz, disclaimer, color, alert, 
       onMouseLeave={() => setHovered(false)}
       style={{
         background:   hovered && clickable ? T.bgSurface2 : T.bgSurface,
-        borderTop:    `1px solid ${alert ? T.crit : hovered && clickable ? T.accent : T.border}`,
-        borderRight:  `1px solid ${alert ? T.crit : hovered && clickable ? T.accent : T.border}`,
-        borderBottom: `1px solid ${alert ? T.crit : hovered && clickable ? T.accent : T.border}`,
-        borderLeft:   alert ? `3px solid ${T.crit}` : `1px solid ${hovered && clickable ? T.accent : T.border}`,
-        borderRadius: 10, padding: '14px 16px',
+        borderTop:    `1px solid ${borderColor}`,
+        borderRight:  `1px solid ${borderColor}`,
+        borderBottom: `1px solid ${borderColor}`,
+        borderLeft:   alert ? `3px solid ${T.crit}` : `1px solid ${borderColor}`,
+        borderRadius: 12, padding: '13px 15px',
         cursor: clickable ? 'pointer' : 'default',
-        transition: 'all 0.15s', userSelect: 'none',
-        display: 'flex', flexDirection: hasMiniViz ? 'row' : 'column',
-        gap: hasMiniViz ? 10 : 0,
-        minWidth: 0,
+        transition: 'background 0.15s, border-color 0.15s', userSelect: 'none',
+        display: 'flex', flexDirection: 'column', gap: 6,
+        height: '100%', minWidth: 0, minHeight: 0, boxSizing: 'border-box', overflow: 'hidden',
       }}
     >
-      {/* Left: text content */}
-      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: hasMiniViz ? '0 0 42%' : 1 }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: color ?? T.text1, lineHeight: 1 }}>{value}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: T.text2, marginTop: 4 }}>
-          {label}
-          {help && <span onClick={e => e.stopPropagation()}><HelpHint text={help} title={helpTitle} label={`Ajuda sobre ${label}`} /></span>}
-        </div>
-        {sub && <div style={{ fontSize: 10, color: T.text3, marginTop: 2, fontWeight: 500 }}>{sub}</div>}
-        {disclaimer && hasMiniViz && (
-          <div style={{
-            marginTop: 'auto', paddingTop: 7,
-            fontSize: 9, color: T.text3,
-            whiteSpace: 'normal', wordBreak: 'break-word',
-            borderTop: `1px solid ${T.border}`,
-            fontStyle: 'italic', letterSpacing: '0.01em', lineHeight: 1.4,
-          }}>{disclaimer}</div>
-        )}
-        {clickable && (
-          <div style={{ fontSize: 10, color: T.accent, marginTop: 4, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>
-            Ver lista →
-          </div>
-        )}
+      {/* Cabeçalho: rótulo em caixa-alta + ajuda + sinal (alerta / navegação) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <span style={{
+          fontSize: 10.5, fontWeight: 600, color: T.text2,
+          textTransform: 'uppercase', letterSpacing: '0.07em',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
+        }}>{label}</span>
+        {help && <span onClick={e => e.stopPropagation()}><HelpHint text={help} title={helpTitle} label={`Ajuda sobre ${label}`} /></span>}
+        <span style={{ flex: 1 }} />
+        {alert
+          ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.crit, flexShrink: 0 }} />
+          : (clickable && <span style={{ fontSize: 12, color: T.accent, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>↗</span>)}
       </div>
-      {/* Right: mini visualization */}
+
+      {/* Número principal */}
+      <div style={{ fontSize: 29, fontWeight: 750, color: color ?? T.text1, lineHeight: 1, letterSpacing: '-0.02em' }}>{value}</div>
+
+      {/* Contexto */}
+      {(sub || disclaimer) && (
+        <div style={{ fontSize: 11, color: T.text3, lineHeight: 1.35, overflow: 'hidden' }}>{sub ?? disclaimer}</div>
+      )}
+
+      {/* Mini-visualização — preenche o espaço restante, ancorada na base */}
       {hasMiniViz && (
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'stretch' }}>
+        <div style={{ flex: '1 1 auto', minHeight: 0, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingTop: 4 }}>
           {miniViz}
         </div>
       )}
