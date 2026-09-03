@@ -112,8 +112,13 @@ function WidgetCard({ entry, active, onSelect }: { entry: Entry; active: boolean
         borderRadius: 12, padding: 10, cursor: 'pointer', transition: 'all 0.15s',
       }}
     >
-      <span style={{ width: 72, height: 46, flexShrink: 0, background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <span style={{ position: 'relative', width: 72, height: 46, flexShrink: 0, background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         <WidgetThumb viz={entry.viz} />
+        {active && (
+          <span style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: T.success, border: `2px solid ${T.bgPage}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5" /></svg>
+          </span>
+        )}
       </span>
       <span style={{ minWidth: 0 }}>
         <span style={{ display: 'block', fontSize: 12.5, fontWeight: 600, color: T.text1, lineHeight: 1.25 }}>{entry.w.title}</span>
@@ -127,7 +132,8 @@ function WidgetCard({ entry, active, onSelect }: { entry: Entry; active: boolean
 
 export function AddWidgetModal({ onClose, onAdd }: Props) {
   const [q, setQ] = useState('')
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const toggleSel = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   const [format, setFormat] = useState<WidgetFormat>('vertical')
   const [activeCat, setActiveCat] = useState<string>('Todos')
 
@@ -206,7 +212,7 @@ export function AddWidgetModal({ onClose, onAdd }: Props) {
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.text3, margin: '10px 4px 8px' }}>{cat}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
                   {list.map(e => (
-                    <WidgetCard key={e.w.id} entry={e} active={selected === e.w.id} onSelect={() => setSelected(e.w.id)} />
+                    <WidgetCard key={e.w.id} entry={e} active={selectedIds.includes(e.w.id)} onSelect={() => toggleSel(e.w.id)} />
                   ))}
                 </div>
               </div>
@@ -234,15 +240,15 @@ export function AddWidgetModal({ onClose, onAdd }: Props) {
           <div style={{ flex: 1 }} />
           <button onClick={onClose} style={{ fontSize: 12, color: T.text2, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '6px 14px', cursor: 'pointer' }}>Cancelar</button>
           <button
-            disabled={!selected}
-            onClick={() => { if (selected) { onAdd(selected, format); onClose() } }}
+            disabled={selectedIds.length === 0}
+            onClick={() => { if (selectedIds.length) { selectedIds.forEach(id => onAdd(id, format)); onClose() } }}
             style={{
-              fontSize: 12, fontWeight: 600, color: selected ? '#fff' : T.text3,
-              background: selected ? T.accent : T.bgSurface2,
+              fontSize: 12, fontWeight: 600, color: selectedIds.length ? '#fff' : T.text3,
+              background: selectedIds.length ? T.accent : T.bgSurface2,
               border: 'none', borderRadius: 6, padding: '6px 16px',
-              cursor: selected ? 'pointer' : 'not-allowed',
+              cursor: selectedIds.length ? 'pointer' : 'not-allowed',
             }}
-          >Adicionar</button>
+          >{selectedIds.length ? `Adicionar (${selectedIds.length})` : 'Adicionar'}</button>
         </div>
       </div>
     </>
