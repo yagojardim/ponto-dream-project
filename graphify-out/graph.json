@@ -11751,7 +11751,7 @@
       "file_type": "code",
       "norm_label": "editabletitle()",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L402"
+      "source_location": "L406"
     },
     {
       "id": "src_components_home_homewidgetgrid_filterkey",
@@ -11828,7 +11828,7 @@
       "file_type": "code",
       "norm_label": "removebutton()",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L447"
+      "source_location": "L451"
     },
     {
       "id": "src_components_home_homewidgetgrid_storagekey",
@@ -11850,7 +11850,7 @@
       "file_type": "code",
       "norm_label": "widgetshell()",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L475"
+      "source_location": "L479"
     },
     {
       "id": "src_components_home_nativewidgets_setwidgetscope",
@@ -35303,6 +35303,18 @@
     },
     {
       "source": "src_components_home_homewidgetgrid_homewidgetgrid",
+      "target": "src_data_homewidgets_getwidget",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/components/home/HomeWidgetGrid.tsx",
+      "source_location": "L244",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_home_homewidgetgrid_homewidgetgrid",
       "target": "src_components_home_homewidgetgrid_heightfor",
       "relation": "calls",
       "_origin": "ast",
@@ -35310,7 +35322,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L246",
+      "source_location": "L250",
       "weight": 1.0
     },
     {
@@ -35322,19 +35334,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L246",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_home_homewidgetgrid_homewidgetgrid",
-      "target": "src_data_homewidgets_getwidget",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L366",
+      "source_location": "L250",
       "weight": 1.0
     },
     {
@@ -90995,7 +90995,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L402",
+      "source_location": "L406",
       "weight": 1.0
     },
     {
@@ -91006,7 +91006,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L447",
+      "source_location": "L451",
       "weight": 1.0
     },
     {
@@ -91028,7 +91028,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L475",
+      "source_location": "L479",
       "weight": 1.0
     },
     {
@@ -118350,5 +118350,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8650c6e92c49ad264517a77d4593c415f8822c0a"
+  "built_at_commit": "010b217ae63f8cec5a048c754599ccfb72253d7a"
 }
