@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import { useSession } from '@/data/SessionContext'
 import { createFeedback, type FeedbackType } from '@/data/db/feedback'
@@ -294,10 +294,17 @@ function HelpOverview({ groups, onPick }: {
   )
 }
 
-export default function FeedbackPage({ onNav }: { onNav?: (view: string) => void }) {
+export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: string) => void; initialTab?: FeedbackTab }) {
   const { activeUser } = useSession()
-  const [tab, setTab] = useState<FeedbackTab>('feedback')
+  const [tab, setTab] = useState<FeedbackTab>(initialTab ?? 'feedback')
   const [helpView, setHelpView] = useState<string | null>(null)
+
+  // O ícone "?" do topo abre direto a Central de Ajuda (aba 'ajuda').
+  useEffect(() => {
+    if (!initialTab) return
+    setTab(initialTab)
+    if (initialTab === 'ajuda') setHelpView(null)
+  }, [initialTab])
   const [helpExpanded, setHelpExpanded] = useState(true)
   const [query, setQuery] = useState('')
 
