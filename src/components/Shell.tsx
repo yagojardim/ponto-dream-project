@@ -85,7 +85,7 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header
           currentView={currentView}
-          onViewChange={v => { onViewChange(v as View); setActiveNav(v) }}
+          onViewChange={(v, targetId) => { onViewChange(v as View, targetId); setActiveNav(v) }}
           onCreateIssue={onCreateIssue}
           onOpenClientMessages={onOpenClientMessages}
         />
