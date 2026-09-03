@@ -1513,7 +1513,7 @@
       "file_type": "code",
       "norm_label": "entry",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L17"
+      "source_location": "L19"
     },
     {
       "id": "src_components_home_addwidgetmodal_props",
@@ -11872,7 +11872,7 @@
       "file_type": "code",
       "norm_label": "addwidgetmodal()",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L133"
+      "source_location": "L141"
     },
     {
       "id": "src_components_home_addwidgetmodal_vizcolor",
@@ -11883,7 +11883,7 @@
       "file_type": "code",
       "norm_label": "vizcolor()",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L20"
+      "source_location": "L22"
     },
     {
       "id": "src_components_home_addwidgetmodal_widgetcard",
@@ -11894,7 +11894,7 @@
       "file_type": "code",
       "norm_label": "widgetcard()",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L100"
+      "source_location": "L102"
     },
     {
       "id": "src_components_home_addwidgetmodal_widgetthumb",
@@ -11905,7 +11905,7 @@
       "file_type": "code",
       "norm_label": "widgetthumb()",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L26"
+      "source_location": "L28"
     },
     {
       "id": "src_components_home_homewidgetgrid_builddefault",
@@ -11927,7 +11927,7 @@
       "file_type": "code",
       "norm_label": "editabletitle()",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L406"
+      "source_location": "L420"
     },
     {
       "id": "src_components_home_homewidgetgrid_filterkey",
@@ -12004,7 +12004,7 @@
       "file_type": "code",
       "norm_label": "removebutton()",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L451"
+      "source_location": "L465"
     },
     {
       "id": "src_components_home_homewidgetgrid_storagekey",
@@ -12026,7 +12026,7 @@
       "file_type": "code",
       "norm_label": "widgetshell()",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L479"
+      "source_location": "L493"
     },
     {
       "id": "src_components_home_nativewidgets_setwidgetscope",
@@ -35139,7 +35139,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L145",
+      "source_location": "L154",
       "weight": 1.0
     },
     {
@@ -35151,7 +35151,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L27",
+      "source_location": "L29",
       "weight": 1.0
     },
     {
@@ -35295,7 +35295,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L187",
+      "source_location": "L195",
       "weight": 1.0
     },
     {
@@ -35307,7 +35307,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L208",
+      "source_location": "L216",
       "weight": 1.0
     },
     {
@@ -35319,7 +35319,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L242",
+      "source_location": "L255",
       "weight": 1.0
     },
     {
@@ -35331,7 +35331,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L244",
+      "source_location": "L257",
       "weight": 1.0
     },
     {
@@ -35343,7 +35343,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L250",
+      "source_location": "L263",
       "weight": 1.0
     },
     {
@@ -35355,7 +35355,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L250",
+      "source_location": "L263",
       "weight": 1.0
     },
     {
@@ -62404,7 +62404,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -62416,7 +62416,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -90908,7 +90908,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L100",
+      "source_location": "L102",
       "weight": 1.0
     },
     {
@@ -90930,7 +90930,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L133",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -90941,7 +90941,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L17",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -90952,7 +90952,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0
     },
     {
@@ -90963,7 +90963,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L26",
+      "source_location": "L28",
       "weight": 1.0
     },
     {
@@ -91040,7 +91040,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L406",
+      "source_location": "L420",
       "weight": 1.0
     },
     {
@@ -91051,7 +91051,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L451",
+      "source_location": "L465",
       "weight": 1.0
     },
     {
@@ -91067,17 +91067,6 @@
     },
     {
       "source": "src_components_home_homewidgetgrid",
-      "target": "src_components_home_homewidgetgrid_widgetshell",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/components/home/HomeWidgetGrid.tsx",
-      "source_location": "L479",
-      "weight": 1.0
-    },
-    {
-      "source": "src_components_home_homewidgetgrid",
       "target": "src_components_home_homewidgetgrid_filterkey",
       "relation": "contains",
       "_origin": "ast",
@@ -91085,6 +91074,17 @@
       "confidence_score": 1.0,
       "source_file": "src/components/home/HomeWidgetGrid.tsx",
       "source_location": "L48",
+      "weight": 1.0
+    },
+    {
+      "source": "src_components_home_homewidgetgrid",
+      "target": "src_components_home_homewidgetgrid_widgetshell",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/components/home/HomeWidgetGrid.tsx",
+      "source_location": "L493",
       "weight": 1.0
     },
     {
@@ -118406,5 +118406,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "fcb6cb17ca14b7ced404ad7f86723e293249f0c7"
+  "built_at_commit": "3a057063a41e9e98dfb709eab94511baf61a2664"
 }
