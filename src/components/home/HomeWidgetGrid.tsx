@@ -241,8 +241,12 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const addWidget = (widgetId: string, format: WidgetFormat) => {
     const inst: WidgetInstance = { i: newId(), widgetId, format }
     const maxY = state.layout.reduce((m, l) => Math.max(m, l.y + l.h), 0)
+    const def = getWidget(widgetId)
+    // KPIs entram sempre com a mesma largura/altura-padrão (uniformes no board);
+    // cards de corpo respeitam o formato escolhido.
+    const w = def?.kind === 'kpi' ? (def.defaultW ?? 3) : (format === 'horizontal' ? 12 : 6)
     const item: Layout = {
-      i: inst.i, x: 0, y: maxY, w: format === 'horizontal' ? 12 : 6,
+      i: inst.i, x: 0, y: maxY, w,
       h: heightFor(widgetId), ...minSizeFor(widgetId),
     }
     persist({ instances: [...state.instances, inst], layout: [...state.layout, item] })
