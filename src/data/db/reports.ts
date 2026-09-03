@@ -131,7 +131,13 @@ export interface ReportsData {
   }
   workload: { name: string; fullName: string; pts: number }[]
   aging: { id: string; itemId: string; projectId: string; days: number; tag: string | null; color: string }[]
-  leadCycle: { leadAvg: number; cycleAvg: number; buckets: { label: string; value: number }[] }
+  leadCycle: {
+    leadAvg: number
+    cycleAvg: number
+    buckets: { label: string; value: number }[]
+    /** Distribuição do lead por projeto (mesmas faixas de `buckets`). */
+    byProject: { projectId: string; buckets: number[] }[]
+  }
   health: { axes: { label: string; val: number }[]; score: number }
   epicBurndown: {
     weeks: string[]
@@ -513,10 +519,16 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     { label: '10-14d', test: d => d > 9 && d <= 14 },
     { label: '15+d', test: d => d > 14 },
   ]
+  const leadProjectIds = [...new Set(measures.map(m => m.projectId))]
   const leadCycle = {
     leadAvg: avg(leadValues),
     cycleAvg: avg(cycleValues),
     buckets: bucketDefs.map(b => ({ label: b.label, value: leadValues.filter(b.test).length })),
+    // Distribuição por projeto (mesmas faixas) — alimenta o gráfico agrupado multiseleção.
+    byProject: leadProjectIds.map(pid => ({
+      projectId: pid,
+      buckets: bucketDefs.map(b => measures.filter(m => m.projectId === pid && b.test(m.lead)).length),
+    })),
   }
 
   // ── Project health radar ───────────────────────────────────────────────────
