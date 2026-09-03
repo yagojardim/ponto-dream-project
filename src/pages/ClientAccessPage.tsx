@@ -391,7 +391,7 @@ export default function ClientAccessPage({ onBack }: Props) {
                   }}>
                   Próximo →
                 </button>
-                <button style={{ background: 'none', border: 'none', color: T.text3, fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
+                <button onClick={onBack} style={{ background: 'none', border: 'none', color: T.text3, fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>
                   Cancelar
                 </button>
               </div>
