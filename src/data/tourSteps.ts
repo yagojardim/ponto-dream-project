@@ -370,11 +370,14 @@ export function tourIdFor(view: string, role?: RoleContext | null): string {
 }
 
 // ── Tours extras (sob demanda) — não entram em hasTour nem no auto-início ──
-export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: TourStep[] }[]> = {
+export interface ExtraTour { id: string; label: string; desc?: string; steps: TourStep[] }
+
+export const EXTRA_TOURS: Record<string, ExtraTour[]> = {
   'boards-list': [
     {
       id: 'board-views',
       label: 'Trocar a visão: Board, Backlog e Sprints',
+      desc: 'Mostra como alternar entre o Kanban, o Backlog e a lista de Sprints.',
       steps: [
         { selector: '[data-tour="board-tabs"]', navigateTo: 'project', placement: 'bottom', title: 'As três visões do board', body: 'Alterne entre Board (a sprint atual em colunas), Backlog (demandas do projeto ainda sem sprint) e Sprints (planejar e acompanhar as sprints deste board).' },
       ],
@@ -382,6 +385,7 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
     {
       id: 'board-daily',
       label: 'Conduzir a Daily',
+      desc: 'Abre o modo Daily ao vivo e explica como percorrer o time.',
       steps: [
         { selector: '[data-tour="board-start-daily"]', navigateTo: 'project', placement: 'bottom', title: 'Iniciar a Daily', body: 'Clique aqui para abrir o modo Daily ao vivo. (O tour abre para você.) Requer a permissão Gerenciar Sprint.', clickOnNext: '[data-tour="board-start-daily"]' },
         { selector: '[data-tour="daily-members"]', placement: 'right', title: 'A fila do time', body: 'A daily percorre pessoa a pessoa. Quem está falando fica destacado e o cronômetro do topo mede o tempo de cada um — use "Limite por dev" para não estourar.', optional: true },
@@ -393,6 +397,7 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
     {
       id: 'board-close-sprint',
       label: 'Encerrar a sprint',
+      desc: 'Fecha a sprint, decide o transbordo das demandas e registra a velocity.',
       steps: [
         { selector: '[data-tour="board-end-sprint"]', navigateTo: 'project', placement: 'bottom', title: 'Encerrar sprint', body: 'Clique aqui para abrir o encerramento da sprint. (O tour abre para você.) O botão só fica ativo com uma sprint ativa selecionada.', clickOnNext: '[data-tour="board-end-sprint"]' },
         { selector: '[data-tour="cs-summary"]', placement: 'bottom', title: 'Resumo da sprint', body: 'Concluídas, Restantes e Total das demandas — a base da velocity, calculada pelas concluídas.', optional: true },
@@ -406,6 +411,7 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
     {
       id: 'calendar-create',
       label: 'Criar um evento (campo a campo)',
+      desc: 'Abre o formulário e explica cada campo até salvar.',
       steps: [
         { selector: '[data-tour="cal-create"]', navigateTo: 'calendar', placement: 'bottom', title: 'Criar um evento', body: 'Clique aqui para abrir o formulário de novo evento. (O tour abre para você.)', clickOnNext: '[data-tour="cal-create"]' },
         { selector: '[data-tour="cc-title"]', placement: 'right', title: 'Título', body: 'O nome do evento — único campo obrigatório. É o que aparece no calendário.', optional: true },
@@ -422,6 +428,7 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
     {
       id: 'calendar-views',
       label: 'Ver por Mês, Semana e Dia',
+      desc: 'Mostra as três visões do calendário e como alternar entre elas.',
       steps: [
         { selector: '[data-tour="cal-views"]', navigateTo: 'calendar', placement: 'bottom', title: 'Três formas de ver', body: 'O calendário tem três visões. Vamos passar por cada uma — a tela vai mudar a cada "Próximo".', clickOnNext: '[data-tour="cal-view-month"]' },
         { selector: '[data-tour="cal-view-month"]', placement: 'bottom', title: 'Mês', body: 'Panorama do mês inteiro: cada dia é uma célula com os eventos e prazos resumidos. Bom para enxergar o todo.', clickOnNext: '[data-tour="cal-view-week"]' },
@@ -432,6 +439,7 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
     {
       id: 'calendar-ceremonies',
       label: 'Gerar as cerimônias da sprint',
+      desc: 'Cria Daily, Planning, Review e Retro da sprint escolhida.',
       steps: [
         { selector: '[data-tour="cal-sprint"]', navigateTo: 'calendar', placement: 'bottom', title: 'Escolha a sprint', body: 'Este seletor define de qual sprint as cerimônias serão geradas. É o alvo do botão ao lado.', optional: true },
         { selector: '[data-tour="cal-ceremonies"]', placement: 'bottom', title: 'Abrir o gerador', body: 'Clique para abrir o gerador de cerimônias da sprint escolhida. (O tour abre para você.)', clickOnNext: '[data-tour="cal-ceremonies"]', optional: true },
@@ -442,6 +450,7 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
     {
       id: 'calendar-integrate',
       label: 'Integrar a agenda do Google',
+      desc: 'Conecta sua agenda Google para sincronizar os eventos.',
       steps: [
         { selector: '[data-tour="cal-integrate"]', navigateTo: 'calendar', placement: 'left', title: 'Integrar agenda', body: 'Clique para abrir o painel de integrações. (O tour abre para você.)', clickOnNext: '[data-tour="cal-integrate"]' },
         { selector: '[data-tour="gi-google"]', placement: 'bottom', title: 'Google Agenda', body: 'Clique em "Conectar" para abrir o login do Google e autorizar o acesso. Ao conectar, a sincronização roda automaticamente e surgem os botões "Sincronizar agora" e "Desconectar".', optional: true },
@@ -451,6 +460,6 @@ export const EXTRA_TOURS: Record<string, { id: string; label: string; steps: Tou
   ],
 }
 
-export function extraToursFor(view: string): { id: string; label: string; steps: TourStep[] }[] {
+export function extraToursFor(view: string): ExtraTour[] {
   return EXTRA_TOURS[view] ?? []
 }
