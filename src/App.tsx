@@ -443,6 +443,8 @@ function ShellWithRole({
   const [dashboardProjectId, setDashboardProjectId] = useState<string | undefined>()
   const [teamInitialTab, setTeamInitialTab] =
     useState<"membros" | "convites" | "permissoes" | "dashboards">("membros")
+  const [feedbackInitialTab, setFeedbackInitialTab] =
+    useState<"feedback" | "suporte" | "ajuda">("feedback")
 
   async function handleGlobalCreateDemand(data: Record<string, unknown>) {
     try {
@@ -533,6 +535,9 @@ function ShellWithRole({
     }
     if (v === "issue" && targetId) {
       setSelectedIssueId(targetId)
+    }
+    if (v === "feedback") {
+      setFeedbackInitialTab(targetId === "ajuda" || targetId === "suporte" ? targetId : "feedback")
     }
     if (ALL_VIEWS.includes(v as View)) setView(v as View)
   }
@@ -736,7 +741,7 @@ function ShellWithRole({
             )}
             {view === "feedback" && (
               <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
-                <FeedbackPage onNav={navTo} />
+                <FeedbackPage onNav={navTo} initialTab={feedbackInitialTab} />
               </div>
             )}
             {view === "modules" && (
