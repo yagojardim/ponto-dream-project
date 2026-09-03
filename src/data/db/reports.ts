@@ -24,6 +24,82 @@ type ProjectAnchorRow = Pick<Tables['projects']['Row'], 'id' | 'period_start' | 
 
 export interface SeriesPoint { label: string; value: number }
 
+/** Burndown gerencial de uma sprint ativa, com datas REAIS do projeto. */
+export interface SprintBurndown {
+  projectId: string
+  sprintName: string
+  /** ISO das datas reais da sprint (início → fim). */
+  startDate: string
+  endDate: string
+  /** Rótulos dd/mm do eixo X (datas reais da sprint). */
+  days: string[]
+  /** Story points totais da sprint (topo do eixo Y). */
+  total: number
+  ideal: number[]
+  /** Realizado; NaN nos dias futuros. */
+  actual: number[]
+  /** SP restantes hoje (último ponto conhecido). */
+  remaining: number
+  /** Índice do "hoje" dentro de days (-1 se fora do intervalo). */
+  todayIndex: number
+  daysLeft: number
+  plannedPerDay: number
+  requiredPerDay: number
+  /** Nível calculado: ritmo necessário vs. planejado / linha ideal. */
+  level: 'on-track' | 'at-risk' | 'critical'
+  /** Microcopy do "porquê" quando 🟡/🔴 (null quando saudável). */
+  reason: string | null
+}
+
+export interface SprintProgress {
+  sprints: SprintBurndown[]
+  summary: {
+    avgPct: number
+    daysLeftMin: number | null
+    onTrack: number
+    atRisk: number
+    totalSprints: number
+  }
+}
+
+/** Quebra de lead/execução/espera por projeto. */
+export interface ProjectLead {
+  projectId: string
+  lead: number
+  cycle: number
+  wait: number
+  count: number
+}
+
+/** Sinais gerenciais de lead/cycle time — base do modal e do Assistente. */
+export interface LeadCycleMgmt {
+  /** Itens concluídos efetivamente medidos. */
+  sampleSize: number
+  leadAvg: number
+  cycleAvg: number
+  /** Espera em fila = Lead − Execução (subconjunto com ambos). */
+  waitAvg: number
+  /** % do lead consumido por espera. */
+  waitPct: number
+  /** Percentil 85 do lead (previsibilidade). */
+  p85: number
+  /** Meta de lead em dias (referência da barra "% dentro da meta"). */
+  target: number
+  withinTargetPct: number
+  /** Média do lead nas 3 janelas recentes (antiga → recente). */
+  trend: number[]
+  trendDir: 'up' | 'down' | 'flat'
+  /** Maior aging (dias no status atual) entre itens em andamento. */
+  agingMax: number
+  wipNow: number
+  reviewWip: number
+  throughputPerWeek: number
+  reworkCount: number
+  byType: { bug: number; story: number }
+  byPriority: { highCrit: number; normal: number }
+  byProject: ProjectLead[]
+}
+
 export interface ReportsData {
   empty: boolean
   /** Projects the aggregates were computed for (null ⇒ todo o tenant). */
@@ -54,7 +130,7 @@ export interface ReportsData {
     byProject: { projectId: string; created: number[]; resolved: number[] }[]
   }
   workload: { name: string; fullName: string; pts: number }[]
-  aging: { id: string; itemId: string; days: number; tag: string | null; color: string }[]
+  aging: { id: string; itemId: string; projectId: string; days: number; tag: string | null; color: string }[]
   leadCycle: { leadAvg: number; cycleAvg: number; buckets: { label: string; value: number }[] }
   health: { axes: { label: string; val: number }[]; score: number }
   epicBurndown: {
@@ -65,6 +141,10 @@ export interface ReportsData {
     epics: { label: string; color: string; data: number[] }[]
     max: number
   }
+  /** Burndown gerencial por projeto (1/N) da(s) sprint(s) ativa(s). */
+  sprintProgress: SprintProgress
+  /** Sinais gerenciais de lead/cycle time + base do Assistente de gestão. */
+  management: LeadCycleMgmt
   totals: { issues: number; velocity: number; leadAvg: number; bugRate: number }
 }
 
@@ -73,6 +153,30 @@ interface Axis {
   labels: string[]
   titles: string[]
   ranges: { from: Date; to: Date }[]
+}
+
+/** Medida por item concluído (lead/execução/espera) para os cálculos gerenciais. */
+interface DoneMeasure {
+  projectId: string
+  type: string
+  priority: string
+  lead: number
+  cycle: number | null
+  wait: number | null
+  doneTs: number
+}
+
+const HIGH_PRIORITY_KEYS = ['critica', 'crítica', 'critical', 'alta', 'high', 'bloqueante']
+/** Ordem de estágio do board para detectar regressão (rework). */
+const STAGE_ORDER: Record<string, number> = {
+  backlog: 0, todo: 1, ready: 2, in_progress: 3, in_review: 4, testing: 4, done: 5, cancelled: 5,
+}
+const fmt1 = (n: number): number => Math.round(n * 10) / 10
+function percentile(values: number[], q: number): number {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil(q * sorted.length) - 1))
+  return sorted[idx]
 }
 
 const MONTH_ABBR_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -376,7 +480,7 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     const tag = i.is_blocked ? 'Bloqueado'
       : i.due_date && new Date(i.due_date) < now ? 'Atrasado' : null
     return {
-      id: i.key, itemId: i.id, days, tag,
+      id: i.key, itemId: i.id, projectId: i.project_id, days, tag,
       color: i.is_blocked ? T.crit : tag ? T.warn : days > 7 ? T.warn : T.success,
     }
   }).sort((a, b) => b.days - a.days).slice(0, 8)
@@ -384,14 +488,22 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
   // ── Lead & cycle time ──────────────────────────────────────────────────────
   const leadValues: number[] = []
   const cycleValues: number[] = []
+  const measures: DoneMeasure[] = []
   for (const i of itemRows) {
     const dn = doneAt(i)
     if (!dn || !i.created_at) continue
-    leadValues.push(Math.max(0, (dn.getTime() - new Date(i.created_at).getTime()) / DAY))
+    const lead = Math.max(0, (dn.getTime() - new Date(i.created_at).getTime()) / DAY)
+    leadValues.push(lead)
     const starts = (historyByItem.get(i.id) ?? []).filter(h => h.field === 'status' && h.to_value === 'in_progress')
+    let cycle: number | null = null
+    let wait: number | null = null
     if (starts.length > 0 && starts[0].created_at) {
-      cycleValues.push(Math.max(0, (dn.getTime() - new Date(starts[0].created_at).getTime()) / DAY))
+      const inProg = new Date(starts[0].created_at).getTime()
+      cycle = Math.max(0, (dn.getTime() - inProg) / DAY)
+      wait = Math.max(0, (inProg - new Date(i.created_at).getTime()) / DAY)
+      cycleValues.push(cycle)
     }
+    measures.push({ projectId: i.project_id, type: i.type, priority: (i.priority ?? '').toLowerCase(), lead, cycle, wait, doneTs: dn.getTime() })
   }
   const avg = (arr: number[]) => arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : 0
   const bucketDefs: { label: string; test: (d: number) => boolean }[] = [
@@ -439,6 +551,149 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     .map(({ label, color, data }) => ({ label, color, data }))
   const epicMax = Math.max(1, ...epicSeries.flatMap(e => e.data)) * 1.15
 
+  // ── Progresso da sprint — burndown gerencial por projeto (datas reais) ─────
+  const activeSprints = sprintRows.filter(s => s.state === 'active' && s.start_date && s.end_date)
+  const sprintBurndowns = activeSprints.map<SprintBurndown>(s => {
+    const start = new Date(s.start_date as string)
+    const end = new Date(s.end_date as string)
+    const nDays = Math.max(2, daysDiff(start, end) + 1)
+    const sprintItems = itemRows.filter(i => i.sprint_id === s.id)
+    const total = sprintItems.reduce((a, i) => a + pts(i), 0)
+    const days: string[] = []
+    const ideal: number[] = []
+    const actual: number[] = []
+    let todayIndex = -1
+    for (let d = 0; d < nDays; d++) {
+      const day = addDays(start, d)
+      days.push(shortDay(day))
+      ideal.push(Math.max(0, total - (total * d) / (nDays - 1)))
+      if (dayKey(day) === dayKey(now)) todayIndex = d
+      if (day > now) { actual.push(NaN); continue }
+      const burned = sprintItems.reduce((a, i) => {
+        const dn = doneAt(i)
+        return dn && dn <= addDays(day, 1) ? a + pts(i) : a
+      }, 0)
+      actual.push(Math.max(0, total - burned))
+    }
+    const known = actual.filter(v => !Number.isNaN(v))
+    const remaining = known.length ? known[known.length - 1] : total
+    const daysLeft = Math.max(0, daysDiff(now, end))
+    const plannedPerDay = fmt1(total / Math.max(1, nDays - 1))
+    const requiredPerDay = fmt1(daysLeft > 0 ? remaining / daysLeft : remaining)
+    const idealToday = todayIndex >= 0 ? ideal[todayIndex] : (daysLeft <= 0 ? 0 : remaining)
+    const behind = remaining - idealToday
+    let level: SprintBurndown['level'] = 'on-track'
+    let reason: string | null = null
+    if (daysLeft <= 0 && remaining > 0) {
+      level = 'critical'
+      reason = `Sprint encerrada com ${fmt1(remaining)} pts em aberto.`
+    } else if (total > 0 && (behind > total * 0.25 || requiredPerDay > plannedPerDay * 1.5)) {
+      level = 'critical'
+      reason = `Ritmo atual exige ${requiredPerDay} pts/dia; o planejado era ${plannedPerDay} pts/dia.`
+    } else if (total > 0 && (behind > total * 0.1 || requiredPerDay > plannedPerDay * 1.2)) {
+      level = 'at-risk'
+      reason = `${fmt1(Math.max(0, behind))} pts acima da linha ideal para hoje.`
+    }
+    return {
+      projectId: s.project_id, sprintName: s.name,
+      startDate: s.start_date as string, endDate: s.end_date as string,
+      days, total, ideal, actual, remaining, todayIndex, daysLeft,
+      plannedPerDay, requiredPerDay, level, reason,
+    }
+  })
+  const sprintsWithPts = sprintBurndowns.filter(b => b.total > 0)
+  const sprintProgress: SprintProgress = {
+    sprints: sprintBurndowns,
+    summary: {
+      avgPct: sprintsWithPts.length
+        ? Math.round((sprintsWithPts.reduce((a, b) => a + (1 - b.remaining / b.total), 0) / sprintsWithPts.length) * 100)
+        : 0,
+      daysLeftMin: sprintBurndowns.length ? Math.min(...sprintBurndowns.map(b => b.daysLeft)) : null,
+      onTrack: sprintBurndowns.filter(b => b.level === 'on-track').length,
+      atRisk: sprintBurndowns.filter(b => b.level !== 'on-track').length,
+      totalSprints: sprintBurndowns.length,
+    },
+  }
+
+  // ── Sinais gerenciais de lead/cycle time (base do Assistente) ──────────────
+  const withCycle = measures.filter(m => m.cycle != null && m.wait != null)
+  const waitAvg = withCycle.length ? avg(withCycle.map(m => m.wait as number)) : 0
+  const leadDecomp = withCycle.length ? avg(withCycle.map(m => m.lead)) : leadCycle.leadAvg
+  const waitPct = leadDecomp > 0 ? Math.round((waitAvg / leadDecomp) * 100) : 0
+  const TARGET_LEAD = 14
+  const withinTargetPct = leadValues.length
+    ? Math.round((leadValues.filter(v => v <= TARGET_LEAD).length / leadValues.length) * 100)
+    : 0
+  const WIN = 14 * DAY
+  const trend = [2, 1, 0].map(back => {
+    const to = now.getTime() - back * WIN
+    const from = to - WIN
+    const inWin = measures.filter(m => m.doneTs > from && m.doneTs <= to)
+    return inWin.length ? fmt1(avg(inWin.map(m => m.lead))) : 0
+  })
+  let trendDir: LeadCycleMgmt['trendDir'] = 'flat'
+  if (trend[0] > 0 && trend[2] > 0) {
+    if (trend[2] > trend[0] * 1.1) trendDir = 'up'
+    else if (trend[2] < trend[0] * 0.9) trendDir = 'down'
+  }
+  const leadOf = (rows: DoneMeasure[]) => (rows.length ? fmt1(avg(rows.map(m => m.lead))) : 0)
+  const highCritRows = measures.filter(m => HIGH_PRIORITY_KEYS.includes(m.priority))
+  const byProjectIds = [...new Set(measures.map(m => m.projectId))]
+  const byProject: ProjectLead[] = byProjectIds.map(pid => {
+    const rows = measures.filter(m => m.projectId === pid)
+    const cyc = rows.filter(m => m.cycle != null)
+    return {
+      projectId: pid,
+      lead: leadOf(rows),
+      cycle: cyc.length ? fmt1(avg(cyc.map(m => m.cycle as number))) : 0,
+      wait: cyc.length ? fmt1(avg(cyc.map(m => m.wait as number))) : 0,
+      count: rows.length,
+    }
+  }).sort((a, b) => b.lead - a.lead)
+
+  let reworkCount = 0
+  for (const [, hs] of historyByItem) {
+    const statuses = hs
+      .filter(h => h.field === 'status')
+      .sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''))
+    let maxSeen = -1
+    for (const h of statuses) {
+      if (h.to_value === 'blocked') continue
+      const stage = STAGE_ORDER[h.to_value ?? ''] ?? -1
+      if (stage < 0) continue
+      if (stage < maxSeen) { reworkCount++; break }
+      if (stage > maxSeen) maxSeen = stage
+    }
+  }
+
+  const recentDone = measures.filter(m => m.doneTs > now.getTime() - 28 * DAY).length
+  const management: LeadCycleMgmt = {
+    sampleSize: leadValues.length,
+    leadAvg: leadCycle.leadAvg,
+    cycleAvg: leadCycle.cycleAvg,
+    waitAvg: fmt1(waitAvg),
+    waitPct,
+    p85: fmt1(percentile(leadValues, 0.85)),
+    target: TARGET_LEAD,
+    withinTargetPct,
+    trend,
+    trendDir,
+    agingMax: aging.length ? aging[0].days : 0,
+    wipNow: itemRows.filter(i => ['in_progress', 'in_review', 'testing', 'blocked'].includes(i.status) || i.is_blocked).length,
+    reviewWip: itemRows.filter(i => ['in_review', 'testing'].includes(i.status)).length,
+    throughputPerWeek: fmt1(recentDone / 4),
+    reworkCount,
+    byType: {
+      bug: leadOf(measures.filter(m => m.type === 'bug')),
+      story: leadOf(measures.filter(m => m.type === 'story')),
+    },
+    byPriority: {
+      highCrit: leadOf(highCritRows),
+      normal: leadOf(measures.filter(m => !HIGH_PRIORITY_KEYS.includes(m.priority))),
+    },
+    byProject,
+  }
+
   return {
     empty: totalItems === 0,
     scopeProjectIds: scoped,
@@ -460,6 +715,8 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
       axisStart: anchor ? anchor.toISOString() : null,
       epics: epicSeries, max: epicMax,
     },
+    sprintProgress,
+    management,
     totals: {
       issues: totalItems,
       velocity: velocitySeries.length ? velocitySeries[velocitySeries.length - 1].value : 0,
