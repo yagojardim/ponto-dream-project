@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { takeListPrefilter } from '@/data/listPrefilter'
 import { takeReportNav } from '@/lib/reportNav'
 import { T } from '../components/ds/tokens'
 import { WorkItemDetail } from '../components/WorkItemDetail'
@@ -154,6 +155,14 @@ export default function ListPage() {
   const [fSprint, setFSprint] = useState('')
   const [fEpic, setFEpic] = useState('')
   const [fFeature, setFFeature] = useState('')
+
+  // Pré-filtro vindo de atalhos (ex.: KPI "Entregues" da Início): projeto + status.
+  useEffect(() => {
+    const pf = takeListPrefilter()
+    if (!pf) return
+    if (pf.projectId) setFProject(pf.projectId)
+    if (pf.status) setFStatus(pf.status)
+  }, [])
   // Deep link from a report/KPI card: open the list already filtered.
   useEffect(() => {
     const intent = takeReportNav('list')
