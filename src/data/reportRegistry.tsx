@@ -538,6 +538,118 @@ export function AgingChart({ variant = 'full', data: explicit, onOpenItem }: Cha
   )
 }
 
+// ─── Distribuição do Lead — agrupado por projeto, multiseleção, faixas ────────
+// Eixo X em 2 camadas: dias exatos + categorias Rápidas (≤6d) / Médias (7-14d) /
+// Longas (15d+). Reusado no card do board e no modal. Cada projeto = uma cor.
+const LEAD_ZONES: { label: string; from: number; to: number; color: string }[] = [
+  { label: 'Rápidas', from: 0, to: 1, color: T.success },
+  { label: 'Médias', from: 2, to: 3, color: T.warn },
+  { label: 'Longas', from: 4, to: 4, color: T.crit },
+]
+
+export function LeadDistChart({ data, compact = false }: { data: ReportsData; compact?: boolean }) {
+  const lc = data.leadCycle
+  const labels = lc.buckets.map(b => b.label)
+  const info = new Map(liveProjects().map(p => [p.id, p]))
+  const projs = lc.byProject.length > 0
+    ? lc.byProject.map(bp => ({
+        id: bp.projectId,
+        name: info.get(bp.projectId)?.name ?? 'Projeto',
+        color: info.get(bp.projectId)?.color ?? T.accent,
+        buckets: bp.buckets,
+      }))
+    : [{ id: '__all__', name: 'Todos', color: T.accent, buckets: lc.buckets.map(b => b.value) }]
+  const idsKey = projs.map(p => p.id).join(',')
+  const [sel, setSel] = useState<Set<string>>(() => new Set(projs.map(p => p.id)))
+  // Reseta a seleção quando o conjunto de projetos muda (troca de escopo).
+  useEffect(() => { setSel(new Set(idsKey ? idsKey.split(',') : [])) }, [idsKey])
+  const shown = projs.filter(p => sel.has(p.id))
+  const chartProjs = shown.length > 0 ? shown : projs
+
+  const W = 380; const H = 210
+  const PAD = { top: 16, right: 12, bottom: 52, left: 40 }
+  const cw = W - PAD.left - PAD.right; const ch = H - PAD.top - PAD.bottom
+  const slot = cw / labels.length
+  const rawMax = Math.max(1, ...chartProjs.flatMap(p => p.buckets))
+  const maxV = rawMax * 1.25
+  const xSlot = (i: number) => PAD.left + i * slot
+  const toY = (v: number) => PAD.top + ch - (v / maxV) * ch
+  const n = Math.max(1, chartProjs.length)
+  const group = slot * 0.74; const bw = group / n
+  const ticks = [...new Set([0, Math.round(rawMax / 2), rawMax])]
+  const axisY = PAD.top + ch
+  const bandY = axisY + 18; const bandH = 14
+
+  function toggle(id: string) {
+    setSel(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) { if (next.size > 1) next.delete(id) } else next.add(id)
+      return next
+    })
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', minHeight: 0 }}>
+      {projs.length > 1 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {projs.map(p => {
+            const on = sel.has(p.id)
+            return (
+              <button
+                key={p.id}
+                className="no-drag"
+                onClick={e => { e.stopPropagation(); toggle(p.id) }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, cursor: 'pointer',
+                  color: on ? T.text1 : T.text3, background: on ? T.bgSurface2 : 'transparent',
+                  border: `1px solid ${on ? T.border2 : T.border}`, borderRadius: 999, padding: '3px 9px',
+                }}
+              >
+                <span style={{ width: 9, height: 9, borderRadius: 3, background: on ? p.color : 'transparent', border: `1.5px solid ${p.color}`, flexShrink: 0 }} />
+                {p.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      <div style={{ flex: '1 1 auto', minHeight: 0 }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+          {ticks.map(t => (
+            <g key={t}>
+              <line x1={PAD.left} x2={W - PAD.right} y1={toY(t)} y2={toY(t)} stroke={T.border} strokeWidth={0.5} />
+              <text x={PAD.left - 6} y={toY(t) + 3} textAnchor="end" fontSize={9} fill={T.text3}>{t}</text>
+            </g>
+          ))}
+          <text x={12} y={PAD.top + ch / 2} fontSize={8.5} fill={T.text2} transform={`rotate(-90 12 ${PAD.top + ch / 2})`} textAnchor="middle">demandas concluídas</text>
+          {labels.map((_, i) => chartProjs.map((p, j) => {
+            const v = p.buckets[i]
+            const bx = xSlot(i) + (slot - group) / 2 + j * bw
+            return (
+              <g key={`${i}-${p.id}`}>
+                <rect x={bx} y={toY(v)} width={Math.max(1, bw - 1.5)} height={axisY - toY(v)} rx={1.5} fill={p.color} opacity={0.85}>
+                  <title>{`${p.name} · ${labels[i]}: ${v} demanda(s)`}</title>
+                </rect>
+                {!compact && v > 0 && <text x={bx + (bw - 1.5) / 2} y={toY(v) - 3} textAnchor="middle" fontSize={8} fill={T.text2}>{v}</text>}
+              </g>
+            )
+          }))}
+          <line x1={PAD.left} x2={W - PAD.right} y1={axisY} y2={axisY} stroke={T.border2} strokeWidth={0.8} />
+          {labels.map((b, i) => <text key={'d' + i} x={xSlot(i) + slot / 2} y={axisY + 12} textAnchor="middle" fontSize={8.5} fill={T.text3}>{b}</text>)}
+          {LEAD_ZONES.map(z => {
+            const x0 = xSlot(z.from) + 2; const x1 = xSlot(z.to + 1) - 2
+            return (
+              <g key={z.label}>
+                <rect x={x0} y={bandY} width={x1 - x0} height={bandH} rx={4} fill={z.color} fillOpacity={0.16} stroke={z.color} strokeOpacity={0.4} strokeWidth={0.8} />
+                <text x={(x0 + x1) / 2} y={bandY + bandH - 3.5} textAnchor="middle" fontSize={9} fontWeight={600} fill={z.color}>{z.label}</text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 export function LeadCycleChart({ variant = 'full', data: explicit }: ChartProps) {
   const { data, loading, error } = useChartState(explicit)
   const th = variant === 'thumbnail'
@@ -581,18 +693,21 @@ export function LeadCycleChart({ variant = 'full', data: explicit }: ChartProps)
         )
         if (th) return histogram
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: px(12), height: '100%', minHeight: 0 }}>
-            {[
-              { label: 'Lead Time médio', value: `${l.leadAvg} dias`, color: T.accent },
-              { label: 'Cycle Time médio', value: `${l.cycleAvg} dias`, color: T.success },
-            ].map((s, i) => (
-              <div key={i} style={{ flex: '0 0 auto', background: T.bgSurface2, borderRadius: px(8), padding: `${px(10)} ${px(14)}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: T.text2, fontSize: px(12) }}>{s.label}</span>
-                <span style={{ color: s.color, fontSize: px(18), fontWeight: 700 }}>{s.value}</span>
-              </div>
-            ))}
-            <div style={{ flex: '0 0 auto', color: T.text3, fontSize: px(11), marginTop: px(4) }}>Distribuição Lead Time</div>
-            <div style={{ flex: '1 1 auto', minHeight: px(70) }}>{histogram}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: px(10), height: '100%', minHeight: 0 }}>
+            <div style={{ display: 'flex', gap: px(8), flex: '0 0 auto' }}>
+              {[
+                { label: 'Lead médio', value: `${l.leadAvg}d`, color: T.accent },
+                { label: 'Cycle médio', value: `${l.cycleAvg}d`, color: T.success },
+              ].map((s, i) => (
+                <div key={i} style={{ flex: 1, background: T.bgSurface2, borderRadius: px(8), padding: `${px(8)} ${px(12)}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: T.text2, fontSize: px(11) }}>{s.label}</span>
+                  <span style={{ color: s.color, fontSize: px(17), fontWeight: 700 }}>{s.value}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ flex: '1 1 auto', minHeight: px(120) }}>
+              <LeadDistChart data={data!} />
+            </div>
           </div>
         )
       }}
@@ -1346,8 +1461,8 @@ function LeadCycleView({ data, onNav, onClose }: {
       </Section>
 
       {/* (4) Distribuição do Lead */}
-      <Section title="Distribuição do Lead Time" hint="cauda ≥ 15d em vermelho">
-        <LeadDistribution buckets={data.leadCycle.buckets} />
+      <Section title="Distribuição do Lead Time" hint="por projeto · Rápidas · Médias · Longas">
+        <div style={{ height: 240 }}><LeadDistChart data={data} /></div>
       </Section>
 
       {/* (5) Aging >15d */}
@@ -1439,40 +1554,6 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
       </div>
       {children}
     </div>
-  )
-}
-
-function LeadDistribution({ buckets }: { buckets: { label: string; value: number }[] }) {
-  const W = 520; const H = 130
-  const PAD = { top: 14, right: 10, bottom: 22, left: 26 }
-  const cw = W - PAD.left - PAD.right
-  const ch = H - PAD.top - PAD.bottom
-  const rawMax = Math.max(1, ...buckets.map(b => b.value))
-  const maxV = rawMax * 1.2
-  const bw = (cw / buckets.length) * 0.66
-  const toX = (i: number) => PAD.left + (i / buckets.length) * cw + (cw / buckets.length) * 0.17
-  const toY = (v: number) => PAD.top + ch - (v / maxV) * ch
-  const ticks = [0, 0.5, 1].map(f => Math.round(rawMax * f)).filter((v, i, a) => a.indexOf(v) === i)
-  return (
-    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
-      {ticks.map(v => (
-        <g key={v}>
-          <line x1={PAD.left} x2={W - PAD.right} y1={toY(v)} y2={toY(v)} stroke={T.border} strokeWidth={0.5} />
-          <text x={PAD.left - 4} y={toY(v) + 3} textAnchor="end" fontSize={8} fill={T.text3}>{v}</text>
-        </g>
-      ))}
-      {buckets.map((b, i) => {
-        const isTail = i === buckets.length - 1
-        return (
-          <g key={b.label}>
-            <rect x={toX(i)} y={toY(b.value)} width={bw} height={ch - (toY(b.value) - PAD.top)} rx={3}
-              fill={isTail ? T.crit : T.accent} opacity={isTail ? 0.85 : 0.7} />
-            {b.value > 0 && <text x={toX(i) + bw / 2} y={toY(b.value) - 4} textAnchor="middle" fontSize={9} fontWeight={600} fill={T.text2}>{b.value}</text>}
-            <text x={toX(i) + bw / 2} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={9} fill={isTail ? T.crit : T.text3}>{b.label}</text>
-          </g>
-        )
-      })}
-    </svg>
   )
 }
 
