@@ -174,6 +174,14 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     try { localStorage.setItem(storageKey(userId, role), JSON.stringify(next)) } catch { /* storage indisponível */ }
   }, [userId, role])
 
+  // Sincroniza estado → localStorage a cada mudança fora do modo edição
+  // (add, remover, renomear, reposicionar). Garante que os cards ativados
+  // permaneçam após atualizar a tela, sem depender de cada handler persistir.
+  useEffect(() => {
+    if (editing) return
+    try { localStorage.setItem(storageKey(userId, role), JSON.stringify(state)) } catch { /* storage indisponível */ }
+  }, [state, editing, userId, role])
+
   // Filtro de projetos: restaura a seleção salva do usuário assim que os
   // projetos permitidos chegam do banco.
   const allowedKey = allowedProjects.map(p => p.id).join(',')
@@ -238,25 +246,31 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     })
   }, [userId, role, editing])
 
+  // Atualização funcional: ao adicionar vários cards de uma vez (o modal envia
+  // em lote), cada add enxerga o estado já acumulado — antes o closure lia o
+  // mesmo `state` e só o último sobrevivia. A persistência é feita pelo efeito
+  // de sincronização abaixo.
   const addWidget = (widgetId: string, format: WidgetFormat) => {
-    const inst: WidgetInstance = { i: newId(), widgetId, format }
-    const maxY = state.layout.reduce((m, l) => Math.max(m, l.y + l.h), 0)
-    const def = getWidget(widgetId)
-    // KPIs entram sempre com a mesma largura/altura-padrão (uniformes no board);
-    // cards de corpo respeitam o formato escolhido.
-    const w = def?.kind === 'kpi' ? (def.defaultW ?? 3) : (format === 'horizontal' ? 12 : 6)
-    const item: Layout = {
-      i: inst.i, x: 0, y: maxY, w,
-      h: heightFor(widgetId), ...minSizeFor(widgetId),
-    }
-    persist({ instances: [...state.instances, inst], layout: [...state.layout, item] })
+    setState(prev => {
+      const inst: WidgetInstance = { i: newId(), widgetId, format }
+      const maxY = prev.layout.reduce((m, l) => Math.max(m, l.y + l.h), 0)
+      const def = getWidget(widgetId)
+      // KPIs entram sempre com a mesma largura/altura-padrão (uniformes no board);
+      // cards de corpo respeitam o formato escolhido.
+      const w = def?.kind === 'kpi' ? (def.defaultW ?? 3) : (format === 'horizontal' ? 12 : 6)
+      const item: Layout = {
+        i: inst.i, x: 0, y: maxY, w,
+        h: heightFor(widgetId), ...minSizeFor(widgetId),
+      }
+      return { instances: [...prev.instances, inst], layout: [...prev.layout, item] }
+    })
   }
 
   const removeWidget = (i: string) => {
-    persist({
-      instances: state.instances.filter(inst => inst.i !== i),
-      layout: state.layout.filter(l => l.i !== i),
-    })
+    setState(prev => ({
+      instances: prev.instances.filter(inst => inst.i !== i),
+      layout: prev.layout.filter(l => l.i !== i),
+    }))
   }
 
   const restoreDefault = () => {
@@ -389,7 +403,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         </div>
       )}
 
-      {addOpen && <AddWidgetModal onClose={() => setAddOpen(false)} onAdd={addWidget} />}
+      {addOpen && <AddWidgetModal onClose={() => setAddOpen(false)} onAdd={addWidget} activeIds={state.instances.map(inst => inst.widgetId)} />}
       {chartId && (
         <ReportsDataProvider projectIds={scope.size > 0 ? [...scope] : undefined}>
           <ReportChartModal reportId={chartId} onClose={() => setChartId(null)} onNav={onNav} />
