@@ -7,9 +7,10 @@
 import type { ReactElement, ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { T } from '../components/ds/tokens'
-import { fetchReportsData, type ReportsData } from './db/reports'
+import { fetchReportsData, type ReportsData, type SprintBurndown } from './db/reports'
 import { setReportNav, type ReportNavIntent } from '@/lib/reportNav'
 import { liveProjects } from '@/data/db/homeLive'
+import { buildAssistantInsights, type AssistantInsight, type InsightSeverity, type InsightNav } from '@/data/managementInsights'
 
 const px = (n: number) => `${n}px`
 
@@ -1019,14 +1020,477 @@ export function ReportKpiPreview({ entry, compact = false }: { entry: ReportEntr
 
 
 
+// ─── Assistente de gestão (bloco reutilizável — topo dos modais) ──────────────
+// Atenção passiva: OBSERVA + SUGERE, nunca decide/executa. Cada insight só
+// explica o "porquê" e navega (o clique é do usuário). Card saudável = silêncio.
+
+const SEVERITY_STYLE: Record<InsightSeverity, { dot: string; color: string; dim: string }> = {
+  crit: { dot: '🔴', color: T.crit, dim: T.critDim },
+  warn: { dot: '🟡', color: T.warn, dim: T.warnDim },
+  info: { dot: '🔵', color: T.accent, dim: T.accentDim },
+}
+
+function AssistantPanel({ data, onNav, onClose }: {
+  data: ReportsData
+  onNav?: (view: string, targetId?: string) => void
+  onClose: () => void
+}) {
+  const report = buildAssistantInsights(data)
+  const hasAttention = report.insights.length > 0
+
+  function go(nav?: InsightNav) {
+    if (!onNav || !nav) return
+    setReportNav({ view: nav.view, itemType: nav.itemType, itemStatus: nav.status })
+    onClose()
+    onNav(nav.view, nav.targetId)
+  }
+
+  return (
+    <div style={{
+      border: `1px solid ${T.border2}`, borderRadius: 12, overflow: 'hidden',
+      background: T.bgSurface2, marginBottom: px(16),
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: px(10), padding: `${px(12)} ${px(14)}`,
+        background: `linear-gradient(90deg, ${T.accentDim}, ${T.indigoDim})`,
+        borderBottom: hasAttention ? `1px solid ${T.border}` : 'none',
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 15, color: '#fff',
+          background: `linear-gradient(135deg, ${T.accent}, ${T.indigo})`,
+        }}>✦</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.text1 }}>Assistente de gestão</div>
+          <div style={{ fontSize: 11, color: T.text2 }}>
+            Analisou {report.analyzed} demanda{report.analyzed !== 1 ? 's' : ''}
+            {hasAttention
+              ? ` · ${report.insights.length} ponto${report.insights.length !== 1 ? 's' : ''} merece${report.insights.length === 1 ? '' : 'm'} seu olhar`
+              : ' · nenhum ponto de atenção'}
+          </div>
+        </div>
+      </div>
+
+      {hasAttention ? (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {report.insights.map(ins => {
+            const s = SEVERITY_STYLE[ins.severity]
+            const clickable = !!(onNav && ins.nav)
+            return (
+              <InsightRow key={ins.id} ins={ins} style={s} clickable={clickable} onClick={() => go(ins.nav)} />
+            )
+          })}
+          <div style={{ padding: `${px(8)} ${px(14)}`, fontSize: 10, color: T.text3, borderTop: `1px solid ${T.border}` }}>
+            {report.passed} outra{report.passed !== 1 ? 's' : ''} verificaç{report.passed !== 1 ? 'ões' : 'ão'} passaram sem alertas.
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: `${px(14)} ${px(16)}`, display: 'flex', alignItems: 'center', gap: px(8) }}>
+          <span style={{ fontSize: 15 }}>🟢</span>
+          <span style={{ fontSize: 12, color: T.text2 }}>
+            Nada exige atenção agora — as {report.totalChecks} verificações passaram. Fluxo saudável.
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function InsightRow({ ins, style, clickable, onClick }: {
+  ins: AssistantInsight
+  style: { dot: string; color: string; dim: string }
+  clickable: boolean
+  onClick: () => void
+}) {
+  const [hover, setHover] = useState(false)
+  return (
+    <div
+      onClick={clickable ? onClick : undefined}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', gap: px(10), padding: `${px(11)} ${px(14)}`,
+        borderTop: `1px solid ${T.border}`, borderLeft: `3px solid ${style.color}`,
+        cursor: clickable ? 'pointer' : 'default',
+        background: clickable && hover ? style.dim : 'transparent',
+        transition: 'background 0.12s',
+      }}
+    >
+      <span style={{ fontSize: 12, lineHeight: '18px', flexShrink: 0 }}>{style.dot}</span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text1 }}>{ins.title}</div>
+        <div style={{ fontSize: 11.5, color: T.text2, marginTop: 2, lineHeight: 1.45 }}>{ins.detail}</div>
+      </div>
+      {clickable && (
+        <span style={{ fontSize: 11, color: style.color, whiteSpace: 'nowrap', alignSelf: 'center', fontWeight: 600 }}>
+          ver no board →
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ─── Modal 1 — Progresso da sprint (burndown gerencial 1/N) ───────────────────
+
+const LEVEL_STYLE: Record<SprintBurndown['level'], { color: string; label: string }> = {
+  'on-track': { color: T.success, label: 'No prazo' },
+  'at-risk': { color: T.warn, label: 'Em risco' },
+  'critical': { color: T.crit, label: 'Crítico' },
+}
+
+function ProjectBurndownCard({ b, single }: { b: SprintBurndown; single: boolean }) {
+  const name = liveProjects().find(p => p.id === b.projectId)?.name ?? 'Projeto'
+  const lvl = LEVEL_STYLE[b.level]
+  const W = single ? 640 : 340
+  const H = single ? 220 : 150
+  const PAD = { top: 12, right: 16, bottom: 26, left: 32 }
+  const cw = W - PAD.left - PAD.right
+  const ch = H - PAD.top - PAD.bottom
+  const n = b.days.length
+  const maxPts = Math.max(1, b.total)
+  const toX = (d: number) => PAD.left + (d / Math.max(1, n - 1)) * cw
+  const toY = (p: number) => PAD.top + ch - (p / maxPts) * ch
+  const idealPath = `M ${toX(0)} ${toY(b.ideal[0])} L ${toX(n - 1)} ${toY(b.ideal[n - 1])}`
+  const real = b.actual.map((v, i) => [i, v] as [number, number]).filter(([, v]) => !Number.isNaN(v))
+  let stepPath = ''
+  real.forEach(([i, v], idx) => { stepPath += idx === 0 ? `M ${toX(i)} ${toY(v)}` : ` L ${toX(i)} ${toY(v)}` })
+  const lastReal = real.length ? real[real.length - 1] : null
+  const tickStep = Math.max(1, Math.ceil(maxPts / 4))
+  const ticks = Array.from({ length: 5 }, (_, i) => i * tickStep).filter(t => t <= maxPts * 1.01)
+  const labelIdxs = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i && v >= 0)
+  const donePct = b.total > 0 ? Math.round((1 - b.remaining / b.total) * 100) : 0
+
+  return (
+    <div style={{
+      border: `1px solid ${T.border}`, borderRadius: 12, overflow: 'hidden',
+      borderLeft: `3px solid ${lvl.color}`, background: T.bgSurface,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: px(8), padding: `${px(10)} ${px(12)} ${px(4)}` }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+          <div style={{ fontSize: 11, color: T.text3 }}>{b.sprintName} · {b.days[0]}–{b.days[n - 1]}</div>
+        </div>
+        <div style={{
+          fontSize: 10, fontWeight: 700, color: lvl.color, background: `${lvl.color}18`,
+          border: `1px solid ${lvl.color}40`, borderRadius: 5, padding: '2px 7px', whiteSpace: 'nowrap',
+        }}>{lvl.label}</div>
+      </div>
+      <div style={{ display: 'flex', gap: px(14), padding: `0 ${px(12)} ${px(4)}`, fontSize: 11, color: T.text2 }}>
+        <span><strong style={{ color: T.text1 }}>{donePct}%</strong> concluído</span>
+        <span><strong style={{ color: T.text1 }}>{numFmt(b.remaining)}</strong>/{numFmt(b.total)} pts</span>
+        <span><strong style={{ color: b.daysLeft <= 2 ? T.warn : T.text1 }}>{b.daysLeft}</strong>d restantes</span>
+      </div>
+      <div style={{ padding: `${px(4)} ${px(8)} ${px(6)}` }}>
+        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+          {ticks.map(t => <line key={t} x1={PAD.left} y1={toY(t)} x2={W - PAD.right} y2={toY(t)} stroke={T.border} strokeWidth={0.5} />)}
+          {ticks.map(t => <text key={'t' + t} x={PAD.left - 5} y={toY(t) + 3} textAnchor="end" fontSize={8} fill={T.text3}>{t}</text>)}
+          {labelIdxs.map(i => <text key={'d' + i} x={toX(i)} y={H - PAD.bottom + 15} textAnchor="middle" fontSize={8} fill={T.text3}>{b.days[i]}</text>)}
+          <path d={idealPath} stroke={T.accent} strokeWidth={1.5} strokeDasharray="5,3" fill="none" />
+          {stepPath && <path d={stepPath} stroke={lvl.color} strokeWidth={2} fill="none" />}
+          {lastReal && <circle cx={toX(lastReal[0])} cy={toY(lastReal[1])} r={3.5} fill={lvl.color} stroke={T.bgSurface} strokeWidth={1} />}
+          <g transform={`translate(${PAD.left}, ${H - 8})`}>
+            <line x1={0} y1={-2} x2={14} y2={-2} stroke={T.accent} strokeWidth={1.5} strokeDasharray="5,3" />
+            <text x={18} y={1} fontSize={8} fill={T.text3}>Ideal</text>
+            <line x1={54} y1={-2} x2={68} y2={-2} stroke={lvl.color} strokeWidth={2} />
+            <text x={72} y={1} fontSize={8} fill={T.text3}>Realizado</text>
+          </g>
+        </svg>
+      </div>
+      {b.reason && (
+        <div style={{ padding: `${px(6)} ${px(12)} ${px(10)}`, fontSize: 11, color: lvl.color, display: 'flex', gap: px(6) }}>
+          <span>⚠</span><span style={{ color: T.text2 }}>{b.reason}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SprintProgressView({ data, onNav, onClose }: {
+  data: ReportsData
+  onNav?: (view: string, targetId?: string) => void
+  onClose: () => void
+}) {
+  const sp = data.sprintProgress
+  const sprints = sp.sprints
+  const single = sprints.length === 1
+
+  if (sprints.length === 0) {
+    return (
+      <>
+        <AssistantPanel data={data} onNav={onNav} onClose={onClose} />
+        <div style={{
+          fontSize: 12, color: T.text3, border: `1px dashed ${T.border}`,
+          borderRadius: 10, padding: '24px 16px', textAlign: 'center',
+        }}>Nenhuma sprint ativa com pontos estimados no escopo selecionado.</div>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <AssistantPanel data={data} onNav={onNav} onClose={onClose} />
+
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: px(14), marginBottom: px(16),
+        padding: `${px(12)} ${px(14)}`, background: T.bgSurface2, borderRadius: 10, border: `1px solid ${T.border}`,
+      }}>
+        <SummaryStat label="Conclusão média" value={`${sp.summary.avgPct}%`} />
+        <SummaryStat label="Menor prazo" value={sp.summary.daysLeftMin != null ? `${sp.summary.daysLeftMin}d` : '—'} />
+        <SummaryStat label="No prazo" value={String(sp.summary.onTrack)} color={T.success} />
+        <SummaryStat label="Em risco" value={String(sp.summary.atRisk)} color={sp.summary.atRisk > 0 ? T.warn : T.text1} />
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: single ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
+        gap: px(14),
+      }}>
+        {sprints.map(b => <ProjectBurndownCard key={b.projectId + b.sprintName} b={b} single={single} />)}
+      </div>
+    </>
+  )
+}
+
+function SummaryStat({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{ minWidth: 88 }}>
+      <div style={{ fontSize: 20, fontWeight: 700, color: color ?? T.text1, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 10, color: T.text3, marginTop: 2 }}>{label}</div>
+    </div>
+  )
+}
+
+// ─── Modal 2 — Lead Time & Cycle Time (gerencial) ─────────────────────────────
+
+function LeadCycleView({ data, onNav, onClose }: {
+  data: ReportsData
+  onNav?: (view: string, targetId?: string) => void
+  onClose: () => void
+}) {
+  const m = data.management
+  const trendArrow = m.trendDir === 'up' ? '▲' : m.trendDir === 'down' ? '▼' : '→'
+  const trendColor = m.trendDir === 'up' ? T.crit : m.trendDir === 'down' ? T.success : T.text3
+  const wait = Math.round(m.leadAvg * (m.waitPct / 100) * 10) / 10
+  const exec = Math.round((m.leadAvg - wait) * 10) / 10
+  const waitFlex = m.leadAvg > 0 ? Math.max(4, m.waitPct) : 50
+  const execFlex = m.leadAvg > 0 ? Math.max(4, 100 - m.waitPct) : 50
+
+  if (m.sampleSize === 0) {
+    return (
+      <>
+        <AssistantPanel data={data} onNav={onNav} onClose={onClose} />
+        <div style={{
+          fontSize: 12, color: T.text3, border: `1px dashed ${T.border}`,
+          borderRadius: 10, padding: '24px 16px', textAlign: 'center',
+        }}>Nenhum item concluído ainda para medir lead/cycle time no escopo selecionado.</div>
+      </>
+    )
+  }
+
+  const aged = data.aging.filter(a => a.days >= 15)
+  const names = new Map(liveProjects().map(p => [p.id, p.name]))
+  // Legenda dos prefixos das chaves (ex.: RAU → Rautaki) presentes no Aging.
+  const agedLegend = [...new Map(
+    aged.map(a => [a.id.split('-')[0], names.get(a.projectId) ?? a.id.split('-')[0]] as const),
+  ).entries()]
+
+  return (
+    <>
+      <AssistantPanel data={data} onNav={onNav} onClose={onClose} />
+
+      {/* (2) Métricas */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: px(10), marginBottom: px(16) }}>
+        <MetricTile label="Lead médio" value={`${numFmt(m.leadAvg)}d`} sub={`meta ${m.target}d`}
+          badge={<span style={{ color: trendColor, fontSize: 12, fontWeight: 700 }}>{trendArrow}</span>} />
+        <MetricTile label="Execução (cycle)" value={`${numFmt(m.cycleAvg)}d`} sub="em andamento → concluído" />
+        <MetricTile label="Previsibilidade (P85)" value={`${numFmt(m.p85)}d`} sub="85% entregam até" />
+        <MetricTile label="Dentro da meta" value={`${m.withinTargetPct}%`} sub={`≤ ${m.target}d`}
+          valueColor={m.withinTargetPct >= 70 ? T.success : m.withinTargetPct >= 40 ? T.warn : T.crit} />
+      </div>
+
+      {/* (3) Lead = Espera + Execução */}
+      <Section title="Lead = Espera (fila) + Execução (cycle)" hint="onde o tempo se perde">
+        <div style={{ display: 'flex', height: 30, borderRadius: 8, overflow: 'hidden', border: `1px solid ${T.border}` }}>
+          <div style={{ flex: waitFlex, background: T.warn, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#000', whiteSpace: 'nowrap', padding: '0 4px', overflow: 'hidden' }}>Espera {numFmt(wait)}d</span>
+          </div>
+          <div style={{ flex: execFlex, background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', padding: '0 4px', overflow: 'hidden' }}>Execução {numFmt(exec)}d</span>
+          </div>
+        </div>
+        <div style={{ fontSize: 11.5, color: T.text2, marginTop: px(8) }}>
+          {m.waitPct > 50
+            ? `A maior parte do lead (${m.waitPct}%) é espera em fila — o ganho está em priorização e redução de WIP, não em codar mais rápido.`
+            : `O tempo se concentra na execução (${100 - m.waitPct}%) — a fila está saudável; foco em destravar o trabalho em andamento.`}
+        </div>
+      </Section>
+
+      {/* (4) Distribuição do Lead */}
+      <Section title="Distribuição do Lead Time" hint="cauda ≥ 15d em vermelho">
+        <LeadDistribution buckets={data.leadCycle.buckets} />
+      </Section>
+
+      {/* (5) Aging >15d */}
+      <Section title={`Aging — itens parados há 15+ dias (${aged.length})`}>
+        {aged.length === 0 ? (
+          <div style={{ fontSize: 11.5, color: T.text3 }}>Nenhum item com mais de 15 dias parado no status atual. 🟢</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: px(6) }}>
+            {aged.slice(0, 6).map(a => (
+              <div key={a.itemId} style={{ display: 'flex', alignItems: 'center', gap: px(8) }}>
+                <span style={{ width: 58, fontSize: 11, fontFamily: 'monospace', color: T.text2, flexShrink: 0 }}>{a.id}</span>
+                <div style={{ flex: 1, height: 12, background: T.bgSurface2, borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, (a.days / Math.max(...aged.map(x => x.days))) * 100)}%`, height: '100%', background: a.color, opacity: 0.75 }} />
+                </div>
+                <span style={{ width: 40, fontSize: 11, fontWeight: 600, color: a.color, textAlign: 'right', flexShrink: 0 }}>{a.days}d</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {agedLegend.length > 0 && (
+          <div style={{
+            marginTop: px(10), paddingTop: px(8), borderTop: `1px solid ${T.border}`,
+            display: 'flex', flexWrap: 'wrap', gap: px(4) + ' ' + px(12), fontSize: 10.5, color: T.text3,
+          }}>
+            <span style={{ color: T.text3 }}>Legenda:</span>
+            {agedLegend.map(([prefix, name]) => (
+              <span key={prefix}>
+                <strong style={{ color: T.text2, fontFamily: 'monospace', fontWeight: 600 }}>{prefix}</strong> — {name}
+              </span>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* (6) Quebra por projeto */}
+      {m.byProject.length > 0 && (
+        <Section title="Quebra por projeto">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5, minWidth: 380 }}>
+              <thead>
+                <tr style={{ color: T.text3, textAlign: 'left' }}>
+                  <th style={{ padding: '4px 8px', fontWeight: 500 }}>Projeto</th>
+                  <th style={{ padding: '4px 8px', fontWeight: 500, textAlign: 'right' }}>Lead</th>
+                  <th style={{ padding: '4px 8px', fontWeight: 500, textAlign: 'right' }}>Execução</th>
+                  <th style={{ padding: '4px 8px', fontWeight: 500, textAlign: 'right' }}>Espera</th>
+                  <th style={{ padding: '4px 8px', fontWeight: 500, textAlign: 'right' }}>Itens</th>
+                </tr>
+              </thead>
+              <tbody>
+                {m.byProject.map(p => (
+                  <tr key={p.projectId} style={{ borderTop: `1px solid ${T.border}` }}>
+                    <td style={{ padding: '6px 8px', color: T.text1, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{names.get(p.projectId) ?? '—'}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', color: p.lead > m.leadAvg * 1.5 ? T.warn : T.text1, fontWeight: 600 }}>{numFmt(p.lead)}d</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', color: T.text2 }}>{numFmt(p.cycle)}d</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', color: T.text2 }}>{numFmt(p.wait)}d</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'right', color: T.text3 }}>{p.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+      )}
+    </>
+  )
+}
+
+function MetricTile({ label, value, sub, badge, valueColor }: {
+  label: string; value: string; sub?: string; badge?: ReactNode; valueColor?: string
+}) {
+  return (
+    <div style={{ background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 10, padding: `${px(10)} ${px(12)}` }}>
+      <div style={{ fontSize: 10.5, color: T.text3, marginBottom: 3 }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: px(6) }}>
+        <span style={{ fontSize: 22, fontWeight: 700, color: valueColor ?? T.text1, lineHeight: 1 }}>{value}</span>
+        {badge}
+      </div>
+      {sub && <div style={{ fontSize: 10, color: T.text3, marginTop: 3 }}>{sub}</div>}
+    </div>
+  )
+}
+
+function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: px(16) }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: px(8), marginBottom: px(8) }}>
+        <span style={{ fontSize: 12.5, fontWeight: 600, color: T.text1 }}>{title}</span>
+        {hint && <span style={{ fontSize: 10.5, color: T.text3 }}>· {hint}</span>}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function LeadDistribution({ buckets }: { buckets: { label: string; value: number }[] }) {
+  const W = 520; const H = 130
+  const PAD = { top: 14, right: 10, bottom: 22, left: 26 }
+  const cw = W - PAD.left - PAD.right
+  const ch = H - PAD.top - PAD.bottom
+  const rawMax = Math.max(1, ...buckets.map(b => b.value))
+  const maxV = rawMax * 1.2
+  const bw = (cw / buckets.length) * 0.66
+  const toX = (i: number) => PAD.left + (i / buckets.length) * cw + (cw / buckets.length) * 0.17
+  const toY = (v: number) => PAD.top + ch - (v / maxV) * ch
+  const ticks = [0, 0.5, 1].map(f => Math.round(rawMax * f)).filter((v, i, a) => a.indexOf(v) === i)
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+      {ticks.map(v => (
+        <g key={v}>
+          <line x1={PAD.left} x2={W - PAD.right} y1={toY(v)} y2={toY(v)} stroke={T.border} strokeWidth={0.5} />
+          <text x={PAD.left - 4} y={toY(v) + 3} textAnchor="end" fontSize={8} fill={T.text3}>{v}</text>
+        </g>
+      ))}
+      {buckets.map((b, i) => {
+        const isTail = i === buckets.length - 1
+        return (
+          <g key={b.label}>
+            <rect x={toX(i)} y={toY(b.value)} width={bw} height={ch - (toY(b.value) - PAD.top)} rx={3}
+              fill={isTail ? T.crit : T.accent} opacity={isTail ? 0.85 : 0.7} />
+            {b.value > 0 && <text x={toX(i) + bw / 2} y={toY(b.value) - 4} textAnchor="middle" fontSize={9} fontWeight={600} fill={T.text2}>{b.value}</text>}
+            <text x={toX(i) + bw / 2} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={9} fill={isTail ? T.crit : T.text3}>{b.label}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
 // ─── Chart Modal ──────────────────────────────────────────────────────────────
 
-export function ReportChartModal({ reportId, onClose }: { reportId: string; onClose: () => void }) {
+/** Título/subtítulo próprios das visões gerenciais (sobrepõem o entry do registry). */
+const MGMT_HEADERS: Record<string, { title: string; subtitle: string }> = {
+  burndown: { title: 'Progresso da sprint', subtitle: 'Burndown por projeto · datas reais da sprint' },
+  leadtime: { title: 'Lead Time & Cycle Time', subtitle: 'Onde o tempo se perde, da criação à entrega' },
+}
+
+export function ReportChartModal({ reportId, onClose, onNav }: {
+  reportId: string
+  onClose: () => void
+  onNav?: (view: string, targetId?: string) => void
+}) {
   const entry = REPORT_REGISTRY[reportId]
-  const { data } = useReportsData()
+  const { data, loading, error } = useReportsData()
   if (!entry) return null
   const Chart = entry.Component
   const scoped = data?.scopeProjectIds ?? null
+  const mgmt = MGMT_HEADERS[reportId]
+  const isMgmt = !!mgmt
+  const header = mgmt ?? { title: entry.title, subtitle: entry.subtitle }
+
+  let body: ReactElement
+  if (isMgmt && loading && !data) {
+    body = <ChartMessage kind="loading" text="" height={200} />
+  } else if (isMgmt && error) {
+    body = <ChartMessage kind="error" text={error} height={120} />
+  } else if (isMgmt && data && reportId === 'burndown') {
+    body = <SprintProgressView data={data} onNav={onNav} onClose={onClose} />
+  } else if (isMgmt && data && reportId === 'leadtime') {
+    body = <LeadCycleView data={data} onNav={onNav} onClose={onClose} />
+  } else {
+    body = <Chart />
+  }
 
   return (
     <>
@@ -1036,15 +1500,15 @@ export function ReportChartModal({ reportId, onClose }: { reportId: string; onCl
       />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-        zIndex: 1301, width: 'min(760px, 95vw)', maxHeight: '85vh',
+        zIndex: 1301, width: isMgmt ? 'min(1040px, 96vw)' : 'min(760px, 95vw)', maxHeight: isMgmt ? '90vh' : '85vh',
         background: T.bgSurface, border: `1px solid ${T.border2}`,
         borderRadius: 16, boxShadow: T.shadowModal,
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
         <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>{entry.title}</div>
-            <div style={{ fontSize: 12, color: T.text3, marginTop: 3 }}>{entry.subtitle}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: T.text1 }}>{header.title}</div>
+            <div style={{ fontSize: 12, color: T.text3, marginTop: 3 }}>{header.subtitle}</div>
             {scoped && (
               <div style={{
                 display: 'inline-block', marginTop: 6, fontSize: 10, fontWeight: 600,
@@ -1062,7 +1526,7 @@ export function ReportChartModal({ reportId, onClose }: { reportId: string; onCl
           >×</button>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-          <Chart />
+          {body}
         </div>
         <div style={{ padding: '10px 20px', borderTop: `1px solid ${T.border}`, display: 'flex', justifyContent: 'flex-end' }}>
           <button
@@ -1078,8 +1542,8 @@ export function ReportChartModal({ reportId, onClose }: { reportId: string; onCl
 }
 
 // ─── Hook: open a chart modal from any panel ──────────────────────────────────
-export function useChartModal() {
+export function useChartModal(onNav?: (view: string, targetId?: string) => void) {
   const [openId, setOpenId] = useState<string | null>(null)
-  const modal = openId ? <ReportChartModal reportId={openId} onClose={() => setOpenId(null)} /> : null
+  const modal = openId ? <ReportChartModal reportId={openId} onClose={() => setOpenId(null)} onNav={onNav} /> : null
   return { openChart: setOpenId, chartModal: modal }
 }
