@@ -529,7 +529,7 @@ function BatchMatrixModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
         </div>
 
         {/* Matrix */}
-        <div style={{ flex: 1, overflowX: 'auto', overflowY: 'auto' }}>
+        <div data-tour="ra-matrix" style={{ flex: 1, overflowX: 'auto', overflowY: 'auto' }}>
           <table style={{ borderCollapse: 'collapse', minWidth: labelW + filteredTargets.length * colW }}>
             {/* Column headers */}
             <thead>
@@ -592,7 +592,7 @@ function BatchMatrixModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
             padding: '8px 20px', borderRadius: 8, fontSize: 13,
             background: 'transparent', color: T.text2, border: `1px solid ${T.border}`, cursor: 'pointer',
           }}>Cancelar</button>
-          <button onClick={saveAll} style={{
+          <button data-tour="ra-save" onClick={saveAll} style={{
             padding: '8px 24px', borderRadius: 8, fontSize: 13, fontWeight: 700,
             background: T.accent, color: '#fff', border: 'none', cursor: 'pointer',
           }}>Salvar todas as atribuições</button>
