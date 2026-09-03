@@ -46,6 +46,13 @@ function doNav(ctx: WidgetCtx, view: string, targetId?: string) {
   if (!ctx.interactive) return
   ctx.onNav(view, targetId)
 }
+/** Abre a Lista com o escopo da Início (1 projeto → filtra o projeto) e um status opcional. */
+function doOpenScopedList(ctx: WidgetCtx, status?: string) {
+  if (!ctx.interactive) return
+  const ids = [...ctx.projectIds]
+  setListPrefilter(ids.length === 1 ? { projectId: ids[0], status } : { status })
+  ctx.onNav('list')
+}
 function doOpenBoard(ctx: WidgetCtx) {
   if (!ctx.interactive) return
   ctx.openBoard()
@@ -262,7 +269,7 @@ export function KpiBlockedWidget(props: WidgetCtx) {
       sub={n > 0 ? 'Precisam de desbloqueio' : 'Nenhum impedimento'}
       color={n > 0 ? T.crit : T.success} alert={n > 0}
       miniViz={ratioViz(n, total, n > 0 ? T.crit : T.success)}
-      onClick={() => doOpenBoard(ctx)}
+      onClick={() => doOpenScopedList(ctx, 'blocked')}
     />
   )
 }
@@ -710,7 +717,7 @@ export function KpiImpedimentsWidget(props: WidgetCtx) {
       disclaimer="impedimentos formais sem resolução registrada"
       color={T.crit} alert={blocked.length > 0}
       miniViz={ratioViz(blocked.length, scopedItems(liveItems()).length, T.crit)}
-      onClick={() => doNav(ctx, 'list')}
+      onClick={() => doOpenScopedList(ctx, 'blocked')}
     />
   )
 }
