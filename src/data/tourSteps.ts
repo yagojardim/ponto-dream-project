@@ -184,7 +184,14 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
 
   releases: [
     { selector: '[data-tour="releases-card"]', navigateTo: 'releases', placement: 'bottom', title: 'Releases por versão', body: 'Cada release traz versão, estado, progresso e as issues vinculadas. Em "Editar" você ajusta e fecha a release.', optional: true },
-    { selector: '[data-tour="releases-new"]', placement: 'left', title: 'Nova release', body: 'Crie uma versão e vincule as demandas que entram na entrega.', optional: true, clickOnNext: '[data-tour="releases-new"]' },
+    { selector: '[data-tour="releases-new"]', placement: 'left', title: 'Nova release', body: 'Vamos criar uma versão. Clique para abrir o formulário. (O tour abre para você.)', clickOnNext: '[data-tour="releases-new"]' },
+    { selector: '[data-tour="nr-project"]', placement: 'right', title: 'Projeto', body: 'A que projeto esta versão pertence — define quais demandas ficam disponíveis para vincular.' },
+    { selector: '[data-tour="nr-version"]', placement: 'right', title: 'Versão', body: 'O identificador da versão (ex.: v1.3.0). Obrigatório — é como a release é referenciada.', optional: true },
+    { selector: '[data-tour="nr-name"]', placement: 'right', title: 'Nome da release', body: 'Um nome curto e descritivo do pacote de entrega (ex.: "Pesquisa & SEO"). Obrigatório.', optional: true },
+    { selector: '[data-tour="nr-when"]', placement: 'right', title: 'Data e status', body: 'Quando e em que estágio está a release:', fields: [{ label: 'Data planejada', hint: 'a data-alvo de lançamento (opcional).' }, { label: 'Status', hint: 'Planejada, Em andamento ou Lançada.' }], optional: true },
+    { selector: '[data-tour="nr-issues"]', placement: 'right', title: 'Issues vinculadas', body: 'Busque e marque as demandas que entram nesta versão — elas passam a compor o escopo e o progresso da release.', optional: true },
+    { selector: '[data-tour="nr-notes"]', placement: 'right', title: 'Notas de release', body: 'O changelog: o que muda nesta versão. Opcional, mas ajuda o time e o cliente a entenderem a entrega.', optional: true },
+    { selector: '[data-tour="nr-save"]', placement: 'top', title: 'Criar release', body: 'Revise e clique em "Criar release". (O tour não cria por você.)', optional: true },
   ],
 
   filters: [
@@ -455,6 +462,49 @@ export const EXTRA_TOURS: Record<string, ExtraTour[]> = {
         { selector: '[data-tour="cal-integrate"]', navigateTo: 'calendar', placement: 'left', title: 'Integrar agenda', body: 'Clique para abrir o painel de integrações. (O tour abre para você.)', clickOnNext: '[data-tour="cal-integrate"]' },
         { selector: '[data-tour="gi-google"]', placement: 'bottom', title: 'Google Agenda', body: 'Clique em "Conectar" para abrir o login do Google e autorizar o acesso. Ao conectar, a sincronização roda automaticamente e surgem os botões "Sincronizar agora" e "Desconectar".', optional: true },
         { selector: '[data-tour="gi-note"]', placement: 'top', title: 'Como os eventos aparecem', body: 'Os eventos vindos do Google entram no calendário com o selo "G" e são somente leitura aqui. Teams e Outlook estão em construção.', optional: true },
+      ],
+    },
+  ],
+  timesheet: [
+    {
+      id: 'timesheet-create',
+      label: 'Novo lançamento (campo a campo)',
+      desc: 'Abre o formulário e explica cada campo do lançamento de horas.',
+      steps: [
+        { selector: '[data-tour="ts-new"]', navigateTo: 'timesheet', placement: 'bottom', title: 'Abrir o formulário', body: 'Clique para abrir o formulário de novo lançamento. (O tour abre para você.)', clickOnNext: '[data-tour="ts-new"]' },
+        { selector: '[data-tour="ts-form"]', placement: 'bottom', title: 'Preencha o lançamento', body: 'Informe as horas trabalhadas em uma demanda:', fields: [{ label: 'Data', hint: 'o dia em que o trabalho foi feito.' }, { label: 'Demanda', hint: 'busque por nome, chave ou épico e selecione a demanda.' }, { label: 'Horas', hint: 'quantidade de horas (0,5 em 0,5).' }, { label: 'Descrição', hint: 'o que foi feito (opcional).' }] },
+        { selector: '[data-tour="ts-ok"]', placement: 'top', title: 'Salvar', body: 'Clique em "OK" para registrar. O lançamento fica como Rascunho até você enviá-lo para aprovação. (O tour não salva por você.)', optional: true },
+      ],
+    },
+  ],
+  'hours-approval': [
+    {
+      id: 'ha-approve',
+      label: 'Aprovar horas (individual e coletiva)',
+      desc: 'Como aprovar ou rejeitar item a item, ou tudo de um colaborador de uma vez.',
+      steps: [
+        { selector: '[data-tour="ha-filters"]', navigateTo: 'hours-approval', placement: 'bottom', title: 'Fila de aprovação', body: 'Os lançamentos chegam agrupados por colaborador. Filtre por status e por squad para focar o que precisa aprovar.' },
+        { selector: '[data-tour="ha-actions"]', placement: 'left', title: 'Individual e coletiva', body: 'Aprove ou rejeite item a item, ou use "Aprovar todos / Rejeitar todos" para tratar de uma vez todos os lançamentos daquele colaborador.', optional: true },
+      ],
+    },
+    {
+      id: 'ha-export-csv',
+      label: 'Exportar horas em CSV',
+      desc: 'Leva as horas filtradas para um arquivo CSV.',
+      steps: [
+        { selector: '[data-tour="ha-export"]', navigateTo: 'hours-approval', placement: 'left', title: 'Exportar CSV', body: 'Gera um arquivo CSV com as horas conforme os filtros atuais, para relatórios ou fechamento externo.' },
+      ],
+    },
+  ],
+  reports: [
+    {
+      id: 'reports-assign',
+      label: 'Gerenciar atribuições de cards',
+      desc: 'Como atribuir cada indicador aos dashboards e como isso chega aos usuários.',
+      steps: [
+        { selector: '[data-tour="reports-assign"]', navigateTo: 'reports', placement: 'left', title: 'Abrir atribuições', body: 'Clique em "Gerenciar atribuições" para abrir a matriz. (O tour abre para você.)', clickOnNext: '[data-tour="reports-assign"]' },
+        { selector: '[data-tour="ra-matrix"]', placement: 'top', title: 'Matriz Card × Dashboard', body: 'Cada linha é um indicador (Burndown, Velocity, CFD…) e cada coluna é um dashboard de papel (Admin, PMO, Dev…). Marque uma célula para publicar aquele card no dashboard daquele papel. Use o filtro para achar dashboards.', optional: true },
+        { selector: '[data-tour="ra-save"]', placement: 'top', title: 'Salvar e refletir aos usuários', body: 'Ao salvar, cada usuário passa a ver — no dashboard do seu papel — exatamente os cards marcados aqui. É assim que você controla quais indicadores cada perfil enxerga. (O tour não salva por você.)', optional: true },
       ],
     },
   ],
