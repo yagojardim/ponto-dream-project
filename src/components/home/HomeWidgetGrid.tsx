@@ -388,7 +388,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
       {addOpen && <AddWidgetModal onClose={() => setAddOpen(false)} onAdd={addWidget} />}
       {chartId && (
         <ReportsDataProvider projectIds={scope.size > 0 ? [...scope] : undefined}>
-          <ReportChartModal reportId={chartId} onClose={() => setChartId(null)} />
+          <ReportChartModal reportId={chartId} onClose={() => setChartId(null)} onNav={onNav} />
         </ReportsDataProvider>
       )}
       {drawerItem && (
