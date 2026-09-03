@@ -12,7 +12,7 @@ import {
   MiniBarChart, MiniSparkline,
   type WorkItem,
 } from '@/components/ds/DashboardKit'
-import { BurndownChart, ReportMiniViz } from '@/data/reportRegistry'
+import { BurndownChart } from '@/data/reportRegistry'
 import {
   liveItems, liveProjects, liveAggregates, liveCurrentSprintName,
   getBlockedItems, getSprintItems, getReadyItems, getTestingItems, getBacklogWithAlerts,
@@ -101,9 +101,20 @@ function Scroll({ children }: { children: React.ReactNode }) {
   return <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</div>
 }
 
-/** Donut thumbnail (mesma "tumbler" usada nos murais originais). */
+/**
+ * Medidor horizontal de proporção — substitui o donut antigo.
+ * Ocupa a largura do card e ancora na base; o rótulo % dá leitura imediata.
+ */
 function ratioViz(part: number, total: number, color: string) {
-  return <ReportMiniViz viz={{ kind: 'donut', values: [], ratio: total > 0 ? (part / total) * 100 : 0, color }} />
+  const pct = total > 0 ? Math.round((part / total) * 100) : 0
+  return (
+    <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, height: 7, borderRadius: 6, background: T.bgSurface2, overflow: 'hidden' }}>
+        <div style={{ width: `${Math.min(100, Math.max(0, pct))}%`, height: '100%', background: color, borderRadius: 6, transition: 'width 0.4s ease' }} />
+      </div>
+      <span style={{ fontSize: 11, fontWeight: 600, color: T.text2, minWidth: 30, textAlign: 'right' }}>{pct}%</span>
+    </div>
+  )
 }
 
 // ─── Queues ───────────────────────────────────────────────────────────────────
@@ -749,6 +760,24 @@ function deliveryMetrics() {
   return computeDeliveryMetrics(scopedDelivery(liveAggregates()?.deliveryRows ?? []))
 }
 
+/** Série de demandas concluídas por semana (últimas 6 semanas) para o card Vazão. */
+function weeklyThroughput(): { label: string; value: number; current?: boolean }[] {
+  const rows = scopedDelivery(liveAggregates()?.deliveryRows ?? [])
+  const WEEK = 7 * 86400000
+  const now = Date.now()
+  const labels = ['S-5', 'S-4', 'S-3', 'S-2', 'S-1', 'Atual']
+  return [5, 4, 3, 2, 1, 0].map((back, i) => {
+    const end = now - back * WEEK
+    const start = end - WEEK
+    const value = rows.filter(r => {
+      if (r.status !== 'done' || !r.completedAt) return false
+      const t = new Date(r.completedAt).getTime()
+      return !Number.isNaN(t) && t > start && t <= end
+    }).length
+    return { label: labels[i], value, ...(back === 0 ? { current: true } : {}) }
+  })
+}
+
 export function KpiCriticalBugsWidget(props: WidgetCtx) {
   const { openBoard } = props
   const ctx = props
@@ -788,9 +817,9 @@ export function KpiThroughputWidget(props: WidgetCtx) {
   return (
     <KpiCard
       value={dm.vazaoSemana != null ? `${nf(dm.vazaoSemana)}/sem` : '—'} label="Vazão"
-      sub="concluídas por semana" disclaimer="demandas concluídas por semana no escopo"
+      sub="Concluídos por semana" disclaimer="demandas concluídas por semana no escopo"
       alert={dm.vazaoSemana != null && dm.vazaoSemana < 1}
-      miniViz={ratioViz(Math.min(dm.vazaoSemana ?? 0, 10), 10, T.accent)}
+      miniViz={<MiniBarChart data={weeklyThroughput()} />}
       onClick={() => doOpenDetail(ctx, 'velocity')}
     />
   )
