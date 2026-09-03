@@ -22,6 +22,7 @@ import {
   type AdminKpis, type PoCardMetrics,
 } from '@/data/db/dashboards'
 import { logger } from '@/utils/logger'
+import { setListPrefilter } from '@/data/listPrefilter'
 
 export interface WidgetCtx {
   /** Navigates to another screen of the app (optionally focusing an entity). */
@@ -318,18 +319,23 @@ export function KpiProjectsWidget(props: WidgetCtx) {
 }
 
 export function KpiDeliveredWidget(props: WidgetCtx) {
-  const { openDetail } = props
   const ctx = props
   const agg = liveAggregates()
   const all = scopedItems(liveItems())
   const done = all.filter(w => w.status === 'done').length
+  // Abre a Lista filtrada pelos projetos do escopo da Início + status Concluído.
+  function openDeliveredList() {
+    const ids = [...ctx.projectIds]
+    setListPrefilter(ids.length === 1 ? { projectId: ids[0], status: 'done' } : { status: 'done' })
+    doNav(ctx, 'list')
+  }
   return (
     <KpiCard
       value={String(done)} label="Entregues"
       sub={agg ? 'Total no escopo atual' : 'Sem dados'}
       color={T.success}
       miniViz={ratioViz(done, all.length, T.success)}
-      onClick={() => doOpenDetail(ctx, 'velocity')}
+      onClick={openDeliveredList}
     />
   )
 }
