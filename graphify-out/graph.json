@@ -26632,7 +26632,7 @@
       "file_type": "code",
       "norm_label": "endtour()",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L67"
+      "source_location": "L68"
     },
     {
       "id": "src_components_shell_shell_handlenav",
@@ -26643,7 +26643,7 @@
       "file_type": "code",
       "norm_label": "handlenav()",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L76"
+      "source_location": "L77"
     },
     {
       "id": "src_components_shell_signuponboardingactive",
@@ -37779,7 +37779,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L53",
+      "source_location": "L54",
       "weight": 1.0
     },
     {
@@ -37791,7 +37791,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L55",
+      "source_location": "L56",
       "weight": 1.0
     },
     {
@@ -37803,7 +37803,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L58",
+      "source_location": "L59",
       "weight": 1.0
     },
     {
@@ -37815,7 +37815,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L60",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -37827,7 +37827,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L61",
+      "source_location": "L62",
       "weight": 1.0
     },
     {
@@ -37839,7 +37839,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L69",
+      "source_location": "L70",
       "weight": 1.0
     },
     {
@@ -59367,7 +59367,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L76",
+      "source_location": "L77",
       "weight": 1.0
     },
     {
@@ -91717,7 +91717,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L67",
+      "source_location": "L68",
       "weight": 1.0
     },
     {
@@ -116817,5 +116817,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e41976739be351016ca74da3cc1f02de3c622382"
+  "built_at_commit": "c3edb07a452f0fdf32a2a90f6946bb8a6047b66b"
 }
