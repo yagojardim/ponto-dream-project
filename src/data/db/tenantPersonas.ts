@@ -2,8 +2,7 @@
 // user_id da persona === profiles.id, para não quebrar RBAC/assignee/escopo.
 import { supabase } from '../../integrations/supabase/client'
 import { safeCall } from '../../utils/logger'
-import { DEFAULT_TENANT_ID } from './timeline'
-import { buildPersona, type MockUser, type RoleContext } from '../session'
+import { buildPersona, getActiveTenantId, type MockUser, type RoleContext } from '../session'
 import { homeRolesFromMetadata } from './invite'
 
 interface ProfileLite {
@@ -57,7 +56,7 @@ export function fetchTenantPersonas(): Promise<MockUser[]> {
     const { data: profileRows, error } = await supabase
       .from('profiles')
       .select('id, name, email, status, primary_role, tenant_owner, can_create_projects, can_handle_client_messages, metadata')
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
       .is('archived_at', null)
     if (error) throw error
 
@@ -70,7 +69,7 @@ export function fetchTenantPersonas(): Promise<MockUser[]> {
     const { data: urRows } = await supabase
       .from('user_roles')
       .select('profile_id, role_id')
-      .eq('tenant_id', DEFAULT_TENANT_ID)
+      .eq('tenant_id', getActiveTenantId())
     const userRoles = (urRows ?? []) as unknown as UserRoleLite[]
     const roleIds = [...new Set(userRoles.map(r => r.role_id).filter((v): v is string => !!v))]
     if (roleIds.length) {
