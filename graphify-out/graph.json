@@ -1285,7 +1285,7 @@
       "file_type": "code",
       "norm_label": "reportentry",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L788"
+      "source_location": "L797"
     },
     {
       "id": "src_data_reportregistry_reportsctxvalue",
@@ -1333,7 +1333,7 @@
       "file_type": "code",
       "norm_label": "reportkpi",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L717"
+      "source_location": "L726"
     },
     {
       "id": "src_data_reportregistry_vizkind",
@@ -1345,7 +1345,7 @@
       "file_type": "code",
       "norm_label": "vizkind",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L703"
+      "source_location": "L712"
     },
     {
       "id": "src_data_reportregistry_vizseries",
@@ -1357,7 +1357,7 @@
       "file_type": "code",
       "norm_label": "vizseries",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L705"
+      "source_location": "L714"
     },
     {
       "id": "src_components_home_addwidgetmodal_entry",
@@ -11113,7 +11113,7 @@
       "file_type": "code",
       "norm_label": "assistantpanel()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1033"
+      "source_location": "L1042"
     },
     {
       "id": "src_data_reportregistry_assistantpanel_go",
@@ -11124,7 +11124,7 @@
       "file_type": "code",
       "norm_label": "go()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1041"
+      "source_location": "L1050"
     },
     {
       "id": "src_data_reportregistry_navigatetoreport",
@@ -11135,7 +11135,7 @@
       "file_type": "code",
       "norm_label": "navigatetoreport()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L980"
+      "source_location": "L989"
     },
     {
       "id": "src_lib_reportnav_setreportnav",
@@ -11355,7 +11355,7 @@
       "file_type": "code",
       "norm_label": "agingchart()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L480"
+      "source_location": "L489"
     },
     {
       "id": "src_data_reportregistry_bugsdonut",
@@ -11366,7 +11366,7 @@
       "file_type": "code",
       "norm_label": "bugsdonut()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L274"
+      "source_location": "L283"
     },
     {
       "id": "src_data_reportregistry_burndownchart",
@@ -11388,7 +11388,7 @@
       "file_type": "code",
       "norm_label": "cfdchart()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L218"
+      "source_location": "L227"
     },
     {
       "id": "src_data_reportregistry_chartfillprovider",
@@ -11432,7 +11432,7 @@
       "file_type": "code",
       "norm_label": "createdvsresolved()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L363"
+      "source_location": "L372"
     },
     {
       "id": "src_data_reportregistry_epicburndown",
@@ -11443,7 +11443,7 @@
       "file_type": "code",
       "norm_label": "epicburndown()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L646"
+      "source_location": "L655"
     },
     {
       "id": "src_data_reportregistry_insightrow",
@@ -11454,7 +11454,7 @@
       "file_type": "code",
       "norm_label": "insightrow()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1100"
+      "source_location": "L1109"
     },
     {
       "id": "src_data_reportregistry_leadcyclechart",
@@ -11465,7 +11465,7 @@
       "file_type": "code",
       "norm_label": "leadcyclechart()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L532"
+      "source_location": "L541"
     },
     {
       "id": "src_data_reportregistry_leadcycleview",
@@ -11476,7 +11476,7 @@
       "file_type": "code",
       "norm_label": "leadcycleview()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1276"
+      "source_location": "L1285"
     },
     {
       "id": "src_data_reportregistry_leaddistribution",
@@ -11487,7 +11487,7 @@
       "file_type": "code",
       "norm_label": "leaddistribution()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1436"
+      "source_location": "L1445"
     },
     {
       "id": "src_data_reportregistry_metrictile",
@@ -11498,7 +11498,7 @@
       "file_type": "code",
       "norm_label": "metrictile()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1409"
+      "source_location": "L1418"
     },
     {
       "id": "src_data_reportregistry_minibars",
@@ -11509,7 +11509,7 @@
       "file_type": "code",
       "norm_label": "minibars()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L746"
+      "source_location": "L755"
     },
     {
       "id": "src_data_reportregistry_minidonut",
@@ -11520,7 +11520,7 @@
       "file_type": "code",
       "norm_label": "minidonut()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L766"
+      "source_location": "L775"
     },
     {
       "id": "src_data_reportregistry_miniline",
@@ -11531,7 +11531,7 @@
       "file_type": "code",
       "norm_label": "miniline()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L723"
+      "source_location": "L732"
     },
     {
       "id": "src_data_reportregistry_numfmt",
@@ -11542,7 +11542,7 @@
       "file_type": "code",
       "norm_label": "numfmt()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L802"
+      "source_location": "L811"
     },
     {
       "id": "src_data_reportregistry_projectburndowncard",
@@ -11553,7 +11553,7 @@
       "file_type": "code",
       "norm_label": "projectburndowncard()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1142"
+      "source_location": "L1151"
     },
     {
       "id": "src_data_reportregistry_projecthealth",
@@ -11564,7 +11564,7 @@
       "file_type": "code",
       "norm_label": "projecthealth()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L594"
+      "source_location": "L603"
     },
     {
       "id": "src_data_reportregistry_px",
@@ -11586,7 +11586,7 @@
       "file_type": "code",
       "norm_label": "reportminiviz()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L780"
+      "source_location": "L789"
     },
     {
       "id": "src_data_reportregistry_section",
@@ -11597,7 +11597,7 @@
       "file_type": "code",
       "norm_label": "section()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1424"
+      "source_location": "L1433"
     },
     {
       "id": "src_data_reportregistry_smallmultiples",
@@ -11608,7 +11608,7 @@
       "file_type": "code",
       "norm_label": "smallmultiples()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L326"
+      "source_location": "L335"
     },
     {
       "id": "src_data_reportregistry_sprintprogressview",
@@ -11619,7 +11619,7 @@
       "file_type": "code",
       "norm_label": "sprintprogressview()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1219"
+      "source_location": "L1228"
     },
     {
       "id": "src_data_reportregistry_summarystat",
@@ -11630,7 +11630,7 @@
       "file_type": "code",
       "norm_label": "summarystat()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1265"
+      "source_location": "L1274"
     },
     {
       "id": "src_data_reportregistry_usechartstate",
@@ -11652,7 +11652,7 @@
       "file_type": "code",
       "norm_label": "velocitychart()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L180"
+      "source_location": "L189"
     },
     {
       "id": "src_data_reportregistry_workloadchart",
@@ -11663,7 +11663,7 @@
       "file_type": "code",
       "norm_label": "workloadchart()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L433"
+      "source_location": "L442"
     },
     {
       "id": "src_data_clientportalstore_subscribe",
@@ -19671,7 +19671,7 @@
       "file_type": "code",
       "norm_label": "usechartmodal()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1555"
+      "source_location": "L1564"
     },
     {
       "id": "src_pages_dashboardhomepage_adminpanel",
@@ -24126,7 +24126,7 @@
       "file_type": "code",
       "norm_label": "reportchartmodal()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1478"
+      "source_location": "L1487"
     },
     {
       "id": "src_data_reportregistry_reportkpipreview",
@@ -24137,7 +24137,7 @@
       "file_type": "code",
       "norm_label": "reportkpipreview()",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L989"
+      "source_location": "L998"
     },
     {
       "id": "src_data_reportregistry_usereportsdata",
@@ -28581,7 +28581,7 @@
       "file_type": "code",
       "norm_label": "level_style",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1136"
+      "source_location": "L1145"
     },
     {
       "id": "src_data_reportregistry_mgmt_headers",
@@ -28591,7 +28591,7 @@
       "file_type": "code",
       "norm_label": "mgmt_headers",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1473"
+      "source_location": "L1482"
     },
     {
       "id": "src_data_reportregistry_report_cards_list",
@@ -28601,7 +28601,7 @@
       "file_type": "code",
       "norm_label": "report_cards_list",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L977"
+      "source_location": "L986"
     },
     {
       "id": "src_data_reportregistry_report_registry",
@@ -28611,7 +28611,7 @@
       "file_type": "code",
       "norm_label": "report_registry",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L804"
+      "source_location": "L813"
     },
     {
       "id": "src_data_reportregistry_reportsdatactx",
@@ -28631,7 +28631,7 @@
       "file_type": "code",
       "norm_label": "severity_style",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1027"
+      "source_location": "L1036"
     },
     {
       "id": "figma_make_dev",
@@ -49914,7 +49914,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L481",
+      "source_location": "L490",
       "weight": 1.0
     },
     {
@@ -49926,7 +49926,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L508",
+      "source_location": "L517",
       "weight": 1.0
     },
     {
@@ -49938,7 +49938,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1038",
+      "source_location": "L1047",
       "weight": 1.0
     },
     {
@@ -49950,7 +49950,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1043",
+      "source_location": "L1052",
       "weight": 1.0
     },
     {
@@ -49962,7 +49962,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1051",
+      "source_location": "L1060",
       "weight": 1.0
     },
     {
@@ -49974,7 +49974,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1043",
+      "source_location": "L1052",
       "weight": 1.0
     },
     {
@@ -49986,7 +49986,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L275",
+      "source_location": "L284",
       "weight": 1.0
     },
     {
@@ -49998,7 +49998,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L308",
+      "source_location": "L317",
       "weight": 1.0
     },
     {
@@ -50022,7 +50022,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L219",
+      "source_location": "L228",
       "weight": 1.0
     },
     {
@@ -50034,7 +50034,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L364",
+      "source_location": "L373",
       "weight": 1.0
     },
     {
@@ -50046,7 +50046,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L647",
+      "source_location": "L656",
       "weight": 1.0
     },
     {
@@ -50058,7 +50058,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1113",
+      "source_location": "L1122",
       "weight": 1.0
     },
     {
@@ -50070,7 +50070,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L533",
+      "source_location": "L542",
       "weight": 1.0
     },
     {
@@ -50082,7 +50082,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L575",
+      "source_location": "L584",
       "weight": 1.0
     },
     {
@@ -50094,7 +50094,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1302",
+      "source_location": "L1311",
       "weight": 1.0
     },
     {
@@ -50106,7 +50106,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1313",
+      "source_location": "L1322",
       "weight": 1.0
     },
     {
@@ -50118,7 +50118,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1314",
+      "source_location": "L1323",
       "weight": 1.0
     },
     {
@@ -50130,7 +50130,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1413",
+      "source_location": "L1422",
       "weight": 1.0
     },
     {
@@ -50142,7 +50142,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L981",
+      "source_location": "L990",
       "weight": 1.0
     },
     {
@@ -50154,7 +50154,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1143",
+      "source_location": "L1152",
       "weight": 1.0
     },
     {
@@ -50166,7 +50166,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1172",
+      "source_location": "L1181",
       "weight": 1.0
     },
     {
@@ -50178,7 +50178,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1184",
+      "source_location": "L1193",
       "weight": 1.0
     },
     {
@@ -50190,7 +50190,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L595",
+      "source_location": "L604",
       "weight": 1.0
     },
     {
@@ -50202,7 +50202,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L628",
+      "source_location": "L637",
       "weight": 1.0
     },
     {
@@ -50214,7 +50214,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1484",
+      "source_location": "L1493",
       "weight": 1.0
     },
     {
@@ -50226,7 +50226,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L990",
+      "source_location": "L999",
       "weight": 1.0
     },
     {
@@ -50262,7 +50262,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1426",
+      "source_location": "L1435",
       "weight": 1.0
     },
     {
@@ -50274,7 +50274,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L327",
+      "source_location": "L336",
       "weight": 1.0
     },
     {
@@ -50286,7 +50286,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1245",
+      "source_location": "L1254",
       "weight": 1.0
     },
     {
@@ -50298,7 +50298,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L181",
+      "source_location": "L190",
       "weight": 1.0
     },
     {
@@ -50310,7 +50310,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L434",
+      "source_location": "L443",
       "weight": 1.0
     },
     {
@@ -50322,7 +50322,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L463",
+      "source_location": "L472",
       "weight": 1.0
     },
     {
@@ -60414,7 +60414,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1041",
+      "source_location": "L1050",
       "weight": 1.0
     },
     {
@@ -62719,7 +62719,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L795",
+      "source_location": "L804",
       "weight": 1.0
     },
     {
@@ -62731,7 +62731,7 @@
       "confidence_score": 1.0,
       "context": "field",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L799",
+      "source_location": "L808",
       "weight": 1.0
     },
     {
@@ -105746,18 +105746,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1027",
-      "weight": 1.0
-    },
-    {
-      "source": "src_data_reportregistry",
-      "target": "src_data_reportregistry_assistantpanel",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1033",
+      "source_location": "L1036",
       "weight": 1.0
     },
     {
@@ -105773,13 +105762,24 @@
     },
     {
       "source": "src_data_reportregistry",
+      "target": "src_data_reportregistry_assistantpanel",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/data/reportRegistry.tsx",
+      "source_location": "L1042",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_reportregistry",
       "target": "src_data_reportregistry_insightrow",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1100",
+      "source_location": "L1109",
       "weight": 1.0
     },
     {
@@ -105790,7 +105790,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1136",
+      "source_location": "L1145",
       "weight": 1.0
     },
     {
@@ -105801,7 +105801,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1142",
+      "source_location": "L1151",
       "weight": 1.0
     },
     {
@@ -105812,7 +105812,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1219",
+      "source_location": "L1228",
       "weight": 1.0
     },
     {
@@ -105823,7 +105823,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1265",
+      "source_location": "L1274",
       "weight": 1.0
     },
     {
@@ -105834,7 +105834,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1276",
+      "source_location": "L1285",
       "weight": 1.0
     },
     {
@@ -105845,7 +105845,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1409",
+      "source_location": "L1418",
       "weight": 1.0
     },
     {
@@ -105856,7 +105856,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1424",
+      "source_location": "L1433",
       "weight": 1.0
     },
     {
@@ -105867,7 +105867,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1436",
+      "source_location": "L1445",
       "weight": 1.0
     },
     {
@@ -105878,7 +105878,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1473",
+      "source_location": "L1482",
       "weight": 1.0
     },
     {
@@ -105889,7 +105889,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1478",
+      "source_location": "L1487",
       "weight": 1.0
     },
     {
@@ -105911,7 +105911,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L1555",
+      "source_location": "L1564",
       "weight": 1.0
     },
     {
@@ -105955,7 +105955,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L326",
+      "source_location": "L335",
       "weight": 1.0
     },
     {
@@ -105999,7 +105999,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L703",
+      "source_location": "L712",
       "weight": 1.0
     },
     {
@@ -106010,7 +106010,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L705",
+      "source_location": "L714",
       "weight": 1.0
     },
     {
@@ -106021,7 +106021,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L717",
+      "source_location": "L726",
       "weight": 1.0
     },
     {
@@ -106032,18 +106032,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L723",
-      "weight": 1.0
-    },
-    {
-      "source": "src_data_reportregistry",
-      "target": "src_data_reportregistry_minibars",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L746",
+      "source_location": "L732",
       "weight": 1.0
     },
     {
@@ -106059,13 +106048,13 @@
     },
     {
       "source": "src_data_reportregistry",
-      "target": "src_data_reportregistry_minidonut",
+      "target": "src_data_reportregistry_minibars",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L766",
+      "source_location": "L755",
       "weight": 1.0
     },
     {
@@ -106081,13 +106070,24 @@
     },
     {
       "source": "src_data_reportregistry",
+      "target": "src_data_reportregistry_minidonut",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/data/reportRegistry.tsx",
+      "source_location": "L775",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_reportregistry",
       "target": "src_data_reportregistry_reportminiviz",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L780",
+      "source_location": "L789",
       "weight": 1.0
     },
     {
@@ -106098,29 +106098,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L788",
-      "weight": 1.0
-    },
-    {
-      "source": "src_data_reportregistry",
-      "target": "src_data_reportregistry_numfmt",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L802",
-      "weight": 1.0
-    },
-    {
-      "source": "src_data_reportregistry",
-      "target": "src_data_reportregistry_report_registry",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L804",
+      "source_location": "L797",
       "weight": 1.0
     },
     {
@@ -106136,13 +106114,35 @@
     },
     {
       "source": "src_data_reportregistry",
+      "target": "src_data_reportregistry_numfmt",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/data/reportRegistry.tsx",
+      "source_location": "L811",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_reportregistry",
+      "target": "src_data_reportregistry_report_registry",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/data/reportRegistry.tsx",
+      "source_location": "L813",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_reportregistry",
       "target": "src_data_reportregistry_report_cards_list",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L977",
+      "source_location": "L986",
       "weight": 1.0
     },
     {
@@ -106153,7 +106153,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L980",
+      "source_location": "L989",
       "weight": 1.0
     },
     {
@@ -106164,7 +106164,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L989",
+      "source_location": "L998",
       "weight": 1.0
     },
     {
@@ -118057,7 +118057,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L808",
+      "source_location": "L817",
       "weight": 1.0
     },
     {
@@ -118069,7 +118069,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L826",
+      "source_location": "L835",
       "weight": 1.0
     },
     {
@@ -118081,7 +118081,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L842",
+      "source_location": "L851",
       "weight": 1.0
     },
     {
@@ -118093,7 +118093,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L860",
+      "source_location": "L869",
       "weight": 1.0
     },
     {
@@ -118105,7 +118105,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L877",
+      "source_location": "L886",
       "weight": 1.0
     },
     {
@@ -118117,7 +118117,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L895",
+      "source_location": "L904",
       "weight": 1.0
     },
     {
@@ -118129,7 +118129,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L911",
+      "source_location": "L920",
       "weight": 1.0
     },
     {
@@ -118141,7 +118141,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L927",
+      "source_location": "L936",
       "weight": 1.0
     },
     {
@@ -118153,7 +118153,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L943",
+      "source_location": "L952",
       "weight": 1.0
     },
     {
@@ -118165,7 +118165,7 @@
       "confidence_score": 0.85,
       "context": "collection",
       "source_file": "src/data/reportRegistry.tsx",
-      "source_location": "L959",
+      "source_location": "L968",
       "weight": 1.0
     },
     {
@@ -118350,5 +118350,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "21f2dbb687d57e20f90ea66eefe96eacd2f5a907"
+  "built_at_commit": "abbb0e41a9a7e2a5f9a3e12e960046bc3af41f2c"
 }
