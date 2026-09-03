@@ -1876,7 +1876,7 @@ function UnifiedMural({ dashId, tenantId, nativeCards, onNav }: {
 
   return (
     <>
-      {openChartId && <ReportChartModal reportId={openChartId} onClose={() => setOpenChartId(null)} />}
+      {openChartId && <ReportChartModal reportId={openChartId} onClose={() => setOpenChartId(null)} onNav={onNav} />}
 
       {/* Mural toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
