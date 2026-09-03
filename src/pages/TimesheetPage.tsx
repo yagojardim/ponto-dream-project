@@ -356,7 +356,7 @@ export default function TimesheetPage() {
 
       {/* Add form */}
       {showForm && (
-        <div style={{ background: T.bgSurface, border: `1px solid ${T.accent}55`, borderRadius: 12, padding: 20, marginBottom: 24 }}>
+        <div data-tour="ts-form" style={{ background: T.bgSurface, border: `1px solid ${T.accent}55`, borderRadius: 12, padding: 20, marginBottom: 24 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: T.text1, marginBottom: 14 }}>Novo lançamento</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <div>
@@ -375,7 +375,7 @@ export default function TimesheetPage() {
               <div style={{ fontSize: 11, color: T.text3, marginBottom: 4 }}>Descrição (opcional)</div>
               <input value={formDesc} onChange={e => setFormDesc(e.target.value)} placeholder="O que foi feito…" style={{ ...inputSt, width: '100%', boxSizing: 'border-box' }} />
             </div>
-            <button onClick={() => { void handleAddOk() }} disabled={saving || !profileId}
+            <button data-tour="ts-ok" onClick={() => { void handleAddOk() }} disabled={saving || !profileId}
               style={{ padding: '7px 22px', borderRadius: 8, background: saving || !profileId ? T.border2 : T.accent, border: 'none', color: '#fff', fontSize: 13, fontWeight: 600, cursor: saving || !profileId ? 'not-allowed' : 'pointer' }}>
               {saving ? '…' : 'OK'}
             </button>
