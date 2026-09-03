@@ -86,6 +86,30 @@ function ArticleHeader({ section, title, subtitle, children }: {
   )
 }
 
+/** Card de tour guiado (lançador) — ícone + título + 1 frase. */
+function HelpTourCard({ label, desc, onRun }: { label: string; desc?: string; onRun: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onRun}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="text-left rounded-xl p-3 flex flex-col gap-2"
+      style={{
+        background: hovered ? `${T.accent}1F` : T.accentDim,
+        border: `1px solid ${hovered ? T.accent + '88' : T.accentBorder}`,
+        transition: 'all 0.15s', cursor: 'pointer',
+      }}
+    >
+      <span style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: `${T.accent}26`, border: `1px solid ${T.accentBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.accent, fontSize: 12 }}>▶</span>
+      <div style={{ minWidth: 0 }}>
+        <p className="m-0 text-[13px] font-semibold" style={{ color: T.accent, lineHeight: 1.3 }}>{label}</p>
+        {desc && <p className="m-0 text-[12px]" style={{ color: T.text2, lineHeight: 1.45, marginTop: 4 }}>{desc}</p>}
+      </div>
+    </button>
+  )
+}
+
 function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => void }) {
   const { activeUser } = useSession()
   const tip = ONBOARDING_TIPS[view]
@@ -97,26 +121,24 @@ function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => voi
   const role = activeUser?.role_context ?? null
   const viewHasTour = hasTour(view, role)
 
-  return (
-    <article className="flex flex-col" style={{ gap: 40 }}>
-      <ArticleHeader section={`Central de Ajuda › ${label}`} title={label} subtitle={intro}>
-        {viewHasTour && (
-          <button
-            onClick={() => { onNav?.(view); startTour(tourStepsFor(view, role)) }}
-            className="self-start mt-2 h-9 px-4 rounded-lg text-[13px] font-semibold"
-            style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}
-          >▶ Iniciar tour desta tela</button>
-        )}
-        {extraToursFor(view).map(t => (
-          <button
-            key={t.id}
-            onClick={() => { onNav?.(view); startTour(t.steps) }}
-            className="self-start mt-2 h-9 px-4 rounded-lg text-[13px] font-semibold"
-            style={{ background: T.accentDim, color: T.accent, border: `1px solid ${T.accentBorder}` }}
-          >▶ {t.label}</button>
-        ))}
+  const tourCards: { key: string; label: string; desc?: string; run: () => void }[] = [
+    ...(viewHasTour ? [{
+      key: 'screen',
+      label: 'Tour desta tela',
+      desc: `Passa pelos principais recursos de ${label}.`,
+      run: () => { onNav?.(view); startTour(tourStepsFor(view, role)) },
+    }] : []),
+    ...extraToursFor(view).map(t => ({
+      key: t.id,
+      label: t.label,
+      desc: t.desc,
+      run: () => { onNav?.(view); startTour(t.steps) },
+    })),
+  ]
 
-      </ArticleHeader>
+  return (
+    <article className="flex flex-col" style={{ gap: 32 }}>
+      <ArticleHeader section={`Central de Ajuda › ${label}`} title={label} subtitle={intro} />
 
       {blocks.length > 1 && (
         <div className="rounded-xl p-4" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
@@ -131,6 +153,20 @@ function HelpArticle({ view, onNav }: { view: string; onNav?: (v: string) => voi
             ))}
           </ul>
         </div>
+      )}
+
+      {tourCards.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <h3 className="m-0 font-semibold" style={{ color: T.text1, fontSize: 16 }}>Tours guiados</h3>
+            <span className="text-[11px]" style={{ color: T.text3 }}>— aprenda direto na tela, passo a passo</span>
+          </div>
+          <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))' }}>
+            {tourCards.map(tc => (
+              <HelpTourCard key={tc.key} label={tc.label} desc={tc.desc} onRun={tc.run} />
+            ))}
+          </div>
+        </section>
       )}
 
       <div className="flex flex-col" style={{ gap: 40 }}>
