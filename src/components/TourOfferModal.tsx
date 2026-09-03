@@ -97,9 +97,9 @@ export function TourOfferModal({ onStart, onSkip }: Props) {
             <div style={{ width: 48, height: 48, borderRadius: '50%', background: T.successDim, border: `1px solid ${T.success}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={T.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
             </div>
-            <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: T.text1 }}>Sem problema!</h3>
+            <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 700, color: T.text1 }}>Tour guiado desativado</h3>
             <p style={{ margin: 0, fontSize: 13, color: T.text2, lineHeight: 1.5 }}>
-              O tour guiado fica disponível quando você quiser em <strong style={{ color: T.text1 }}>Feedback &amp; Suporte › Central de Ajuda</strong>.
+              Desativamos os tours automáticos. Quando quiser vê-los, abra a <strong style={{ color: T.text1 }}>Central de Ajuda</strong> e clique em <strong style={{ color: T.text1 }}>Tour guiado</strong> na tela desejada.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', marginTop: 22 }}>
               <button onClick={onSkip} style={{ height: 40, padding: '0 28px', borderRadius: 8, fontSize: 14, fontWeight: 600, border: 'none', background: T.accent, color: '#fff', cursor: 'pointer' }}>Entendi</button>
