@@ -4,11 +4,13 @@ import {
   ACTIVE_USER_ID,
   setActiveUser as _setActiveUser,
   setActiveTenantId,
+  getActiveTenantId,
   MOCK_TENANT,
   hydratePersonas,
   applyRoleChoice, availableRoleChoices,
   type RoleChoice,
 } from './session'
+import { reloadLiveDashboardForTenant } from './db/homeLive'
 import {
   getSession, onAuthStateChange, signOut as authSignOut,
   INSPECTION_MODE_ENABLED, hasManualLogout, clearManualLogout, type AuthUser,
@@ -73,18 +75,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [mustChangePassword, setMustChange] = useState(false)
   const [, setPersonasVersion] = useState(0)
   const [tenantName, setTenantName] = useState('')
+  const [activeTenant, setActiveTenant] = useState<string>(getActiveTenantId())
   const [personaOverride, setPersonaOverride] = useState<string | null>(null)
   const [roleOverride, setRoleOverride] = useState<RoleChoice | null>(null)
 
-  useEffect(() => {
-    let alive = true
-    void getTenantName().then(name => { if (alive && name) setTenantName(name) })
-    return () => { alive = false }
-  }, [])
+  /** Atualiza o tenant ativo (módulo + estado) para re-hidratar dados no tenant certo. */
+  function applyTenant(tenantId: string) {
+    if (!tenantId) return
+    setActiveTenantId(tenantId)  // fonte única no cliente (leituras/escritas)
+    setActiveTenant(tenantId)    // re-dispara os fetches escopados por tenant
+  }
 
-  // Personas de Inspection vêm dos profiles reais do tenant (user_id === profiles.id).
+  // Nome do workspace, personas de Inspection e agregados do dashboard SEMPRE
+  // seguem o tenant ativo. Re-executa quando o tenant muda (login, troca de persona),
+  // evitando vazar dados do tenant padrão (#1) para o tenant real.
   useEffect(() => {
     let alive = true
+    reloadLiveDashboardForTenant()
+    void getTenantName().then(name => { if (alive) setTenantName(name ?? '') })
     void fetchTenantPersonas().then(list => {
       if (!alive || !list.length) return
       hydratePersonas(list)
@@ -93,7 +101,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setPersonasVersion(v => v + 1)
     })
     return () => { alive = false }
-  }, [])
+  }, [activeTenant])
 
   /** Inspection só vale quando NÃO houve logout manual nesta aba. */
   function fallbackStatus(): Exclude<SessionStatus, 'loading'> {
@@ -107,7 +115,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setPersonaOverride(id) // Inspection: persona escolhida vence o profile autenticado
     setRoleOverride(null)  // nova persona volta ao papel principal
     const persona = MOCK_USERS.find(u => u.user_id === id)
-    if (persona) setActiveTenantId(persona.tenant_id) // tenant acompanha a persona (Inspection)
+    if (persona) applyTenant(persona.tenant_id) // tenant acompanha a persona (Inspection)
   }
 
   useEffect(() => {
@@ -142,7 +150,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!alive || !profile) return
 
       setDbUser(profile)
-      setActiveTenantId(profile.tenant_id)   // fonte única do tenant no cliente
+      setActiveTenantId(profile.tenant_id)  // fonte única no cliente (módulo)
+      setActiveTenant(profile.tenant_id)    // re-dispara os fetches escopados por tenant
       setMustChange(!!profile.password_must_change)
       void safeCall(
         'SessionContext.touchAccess',
@@ -205,7 +214,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setUserId(ACTIVE_USER_ID)
     setPersonaOverride(null)
     setRoleOverride(null)
-    setActiveTenantId(MOCK_TENANT.tenant_id)   // volta ao tenant padrão ao sair
+    applyTenant(MOCK_TENANT.tenant_id)   // volta ao tenant padrão ao sair
     setStatus('anonymous')
   }
 
