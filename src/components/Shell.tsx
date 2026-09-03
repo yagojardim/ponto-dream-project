@@ -44,13 +44,14 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
   const [collapsed, setCollapsed] = useState(false)
   const [activeNav, setActiveNav] = useState<string>(currentView)
   const { tourActive, activeSteps, stopProjectTour } = useProjectTourState()
-  const { loaded, guideDisabled, markProjectTourDone, markTourDone, isTourDone } = useOnboarding()
+  const { loaded, guideDisabled, welcomeDone, markProjectTourDone, markTourDone, isTourDone } = useOnboarding()
   const { activeUser } = useSession()
   const autoStartedRef = useRef<string | null>(null)
 
   // Auto-start tour on first visit to a view
   useEffect(() => {
-    if (!loaded || guideDisabled || tourActive || signupOnboardingActive()) return
+    // !welcomeDone → carrossel de boas-vindas ainda pendente; não auto-iniciar tour (evita sobreposição).
+    if (!loaded || guideDisabled || !welcomeDone || tourActive || signupOnboardingActive()) return
     const role = activeUser?.role_context ?? null
     const id = tourIdFor(currentView, role)
     // Avoid re-triggering for the same id in this render cycle
@@ -62,7 +63,7 @@ export function Shell({ children, currentView, onViewChange, onCreateIssue, onOp
     } else {
       autoStartedRef.current = null
     }
-  }, [loaded, guideDisabled, tourActive, currentView, activeUser?.role_context, isTourDone])
+  }, [loaded, guideDisabled, welcomeDone, tourActive, currentView, activeUser?.role_context, isTourDone])
 
   function endTour() {
     const role = activeUser?.role_context ?? null
