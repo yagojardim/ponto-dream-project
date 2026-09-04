@@ -137,7 +137,7 @@ export interface ReportsData {
     /** Séries por projeto — só preenchido quando há escopo selecionado. */
     byProject: { projectId: string; created: number[]; resolved: number[] }[]
   }
-  workload: { name: string; fullName: string; pts: number }[]
+  workload: { name: string; fullName: string; pts: number; byProject: { projectId: string; active: number; pts: number }[] }[]
   aging: { id: string; itemId: string; projectId: string; days: number; tag: string | null; color: string }[]
   leadCycle: {
     leadAvg: number
@@ -511,10 +511,16 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
   const workload = profileRows
     .map(p => {
       const rows = itemRows.filter(i => i.assignee_id === p.id && i.status !== 'done' && i.status !== 'cancelled')
+      const byPid = new Map<string, { active: number; pts: number }>()
+      for (const i of rows) {
+        const cur = byPid.get(i.project_id) ?? { active: 0, pts: 0 }
+        byPid.set(i.project_id, { active: cur.active + 1, pts: cur.pts + pts(i) })
+      }
       return {
         name: p.avatar_initials ?? p.name.slice(0, 2).toUpperCase(),
         fullName: p.name,
         pts: rows.reduce((a, i) => a + pts(i), 0),
+        byProject: [...byPid.entries()].map(([projectId, v]) => ({ projectId, active: v.active, pts: v.pts })).sort((a, b) => b.pts - a.pts),
       }
     })
     .filter(p => p.pts > 0)
