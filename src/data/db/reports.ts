@@ -105,7 +105,11 @@ export interface ReportsData {
   /** Projects the aggregates were computed for (null ⇒ todo o tenant). */
   scopeProjectIds: string[] | null
 
-  velocity: { sprints: SeriesPoint[]; avg: number; max: number }
+  velocity: {
+    sprints: SeriesPoint[]; avg: number; max: number
+    /** Velocity das últimas 4 sprints concluídas por projeto (alinhadas por recência). */
+    byProject: { projectId: string; values: number[] }[]
+  }
   burndown: {
     sprintName: string | null
     days: string[]
@@ -375,6 +379,23 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     ? Math.round((velocitySeries.reduce((a, b) => a + b.value, 0) / velocitySeries.length) * 10) / 10
     : 0
   const velMax = Math.max(10, ...velocitySeries.map(v => v.value)) * 1.2
+
+  // Velocity por projeto — últimas K sprints concluídas de cada projeto (alinhadas por recência).
+  const VEL_K = 4
+  const velByProjectMap = new Map<string, number[]>()
+  sprintRows
+    .filter(s => s.state === 'completed')
+    .sort((a, b) => (a.start_date ?? '').localeCompare(b.start_date ?? ''))
+    .forEach(s => {
+      const v = s.velocity != null
+        ? Number(s.velocity)
+        : itemRows.filter(i => i.sprint_id === s.id && i.status === 'done').reduce((a, i) => a + pts(i), 0)
+      velByProjectMap.set(s.project_id, [...(velByProjectMap.get(s.project_id) ?? []), v])
+    })
+  const velByProject = [...velByProjectMap.entries()].map(([projectId, vals]) => {
+    const last = vals.slice(-VEL_K)
+    return { projectId, values: [...Array(Math.max(0, VEL_K - last.length)).fill(0), ...last] }
+  })
 
   // ── Burndown (active sprint, or the last completed one) ────────────────────
   const activeSprint = sprintRows.find(s => s.state === 'active') ?? finished[finished.length - 1] ?? null
@@ -728,7 +749,7 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     empty: totalItems === 0,
     scopeProjectIds: scoped,
 
-    velocity: { sprints: velocitySeries, avg: velAvg, max: velMax },
+    velocity: { sprints: velocitySeries, avg: velAvg, max: velMax, byProject: velByProject },
     burndown,
     cfd: { days: cfdDays, layers: cfdLayers, max: cfdMax * 1.1 },
     bugs,
