@@ -142,7 +142,12 @@ export interface ReportsData {
     /** Distribuição do lead por projeto (mesmas faixas de `buckets`). */
     byProject: { projectId: string; buckets: number[] }[]
   }
-  health: { axes: { label: string; val: number }[]; score: number }
+  health: {
+    axes: { label: string; val: number }[]
+    score: number
+    /** Radar por projeto (mesmas 5 dimensões) para a visão 1/N. */
+    byProject: { projectId: string; axes: { label: string; val: number }[]; score: number }[]
+  }
   epicBurndown: {
     weeks: string[]
     bucketTitles: string[]
@@ -556,21 +561,35 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     })),
   }
 
-  // ── Project health radar ───────────────────────────────────────────────────
+  // ── Project health radar (agregado + por projeto) ─────────────────────────
   const totalItems = itemRows.length
-  const doneCount = itemRows.filter(i => i.status === 'done').length
   const bugRate = totalItems > 0 ? Math.round((itemRows.filter(i => i.type === 'bug').length / totalItems) * 100) : 0
-  const blockedCount = itemRows.filter(i => i.is_blocked).length
-  const committed = finished.reduce((a, s) => a + itemRows.filter(i => i.sprint_id === s.id).length, 0)
-  const delivered = finished.reduce((a, s) => a + itemRows.filter(i => i.sprint_id === s.id && i.status === 'done').length, 0)
-  const axes = [
-    { label: 'Progresso', val: totalItems ? Math.round((doneCount / totalItems) * 100) : 0 },
-    { label: 'Qualidade', val: Math.max(0, 100 - bugRate * 2) },
-    { label: 'Previsibilidade', val: committed ? Math.round((delivered / committed) * 100) : 0 },
-    { label: 'Fluxo', val: aging.length ? Math.max(0, 100 - Math.round(avg(aging.map(a => a.days)) * 5)) : 100 },
-    { label: 'Risco', val: totalItems ? Math.max(0, 100 - Math.round((blockedCount / totalItems) * 100) * 3) : 100 },
-  ]
-  const health = { axes, score: Math.round(axes.reduce((a, b) => a + b.val, 0) / axes.length) }
+  const healthAxesFor = (rows: ItemRow[], finishedForScope: SprintRow[], agingDays: number[]) => {
+    const total = rows.length
+    const done = rows.filter(i => i.status === 'done').length
+    const bugRt = total > 0 ? Math.round((rows.filter(i => i.type === 'bug').length / total) * 100) : 0
+    const blocked = rows.filter(i => i.is_blocked).length
+    const committed = finishedForScope.reduce((a, s) => a + rows.filter(i => i.sprint_id === s.id).length, 0)
+    const delivered = finishedForScope.reduce((a, s) => a + rows.filter(i => i.sprint_id === s.id && i.status === 'done').length, 0)
+    return [
+      { label: 'Progresso', val: total ? Math.round((done / total) * 100) : 0 },
+      { label: 'Qualidade', val: Math.max(0, 100 - bugRt * 2) },
+      { label: 'Previsibilidade', val: committed ? Math.round((delivered / committed) * 100) : 0 },
+      { label: 'Fluxo', val: agingDays.length ? Math.max(0, 100 - Math.round(avg(agingDays) * 5)) : 100 },
+      { label: 'Risco', val: total ? Math.max(0, 100 - Math.round((blocked / total) * 100) * 3) : 100 },
+    ]
+  }
+  const scoreOf = (ax: { val: number }[]) => Math.round(ax.reduce((a, b) => a + b.val, 0) / ax.length)
+  const axes = healthAxesFor(itemRows, finished, aging.map(a => a.days))
+  const healthByProject = [...new Set(itemRows.map(i => i.project_id))].map(pid => {
+    const ax = healthAxesFor(
+      itemRows.filter(i => i.project_id === pid),
+      finished.filter(s => s.project_id === pid),
+      aging.filter(a => a.projectId === pid).map(a => a.days),
+    )
+    return { projectId: pid, axes: ax, score: scoreOf(ax) }
+  })
+  const health = { axes, score: scoreOf(axes), byProject: healthByProject }
 
   // ── Epic burndown — mesmo eixo ancorado no início do projeto ───────────────
   const epicSeries = epicRows.map(e => {
