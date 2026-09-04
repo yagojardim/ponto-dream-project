@@ -148,7 +148,7 @@ const NATIVE: WidgetDef[] = [
   card('native.admin-users',    'Usuários & Convites',       6,  c => <AdminUsersCard onNav={c.onNav} />),
   card('native.admin-modules',  'Módulos',                   6,  c => <AdminModulesCard onNav={c.onNav} />),
   card('native.admin-audit',    'Auditoria',                 12, c => <AdminAuditCard projectIds={c.projectIds} />),
-  card('native.client-feed',    'Client Feed',               12, () => <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />),
+  card('native.client-feed',    'Mensagens do Cliente',      12, () => <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />),
   card('native.pmo-rag',        'Saúde por Projeto (RAG)',   6,  c => <PmoRagCard {...c} />),
   card('native.critical-blockers', 'Bloqueadores Críticos',  6,  c => <CriticalBlockersCard {...c} />),
   card('native.delivery-rhythm', 'Ritmo de Entrega',         12, c => <DeliveryRhythmCard {...c} />),
