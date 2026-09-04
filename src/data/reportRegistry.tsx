@@ -486,6 +486,49 @@ export function WorkloadChart({ variant = 'full', data: explicit }: ChartProps) 
   )
 }
 
+/** Lista de aging (full): rola quando expande, "Ver mais", e SÓ o código abre a demanda. */
+function AgingList({ issues, onOpenItem }: {
+  issues: { id: string; itemId: string; days: number; tag: string | null; color: string }[]
+  onOpenItem?: (itemId: string) => void
+}) {
+  const [all, setAll] = useState(false)
+  const maxDays = Math.max(1, ...issues.map(i => i.days)) * 1.1
+  const shown = all ? issues : issues.slice(0, 5)
+  const extra = issues.length - 5
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: px(6) }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: px(8), maxHeight: all ? px(220) : undefined, overflowY: all ? 'auto' : 'visible' }}>
+        {shown.map(iss => (
+          <div key={iss.itemId} style={{ display: 'flex', alignItems: 'center', gap: px(8) }}>
+            <span
+              className="no-drag"
+              onClick={onOpenItem ? e => { e.stopPropagation(); onOpenItem(iss.itemId) } : undefined}
+              title={onOpenItem ? 'Abrir demanda' : undefined}
+              style={{ width: px(58), color: onOpenItem ? T.accent : T.text2, fontSize: px(11), fontFamily: 'monospace', cursor: onOpenItem ? 'pointer' : 'default', textDecoration: onOpenItem ? 'underline' : 'none' }}
+            >{iss.id}</span>
+            <div style={{ flex: 1, background: T.bgSurface2, borderRadius: px(4), height: px(14), overflow: 'hidden' }}>
+              <div style={{ width: `${(iss.days / maxDays) * 100}%`, height: '100%', background: iss.color, borderRadius: px(4), opacity: 0.7 }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: px(4), minWidth: px(72) }}>
+              <span style={{ color: T.text1, fontSize: px(11), fontWeight: 600 }}>{iss.days}d</span>
+              {iss.tag && (
+                <span style={{ fontSize: px(9), fontWeight: 700, padding: '2px 5px', borderRadius: px(4), background: iss.color === T.crit ? T.critDim : T.warnDim, color: iss.color }}>{iss.tag}</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      {extra > 0 && (
+        <button
+          className="no-drag"
+          onClick={e => { e.stopPropagation(); setAll(v => !v) }}
+          style={{ alignSelf: 'center', fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        >{all ? 'Ver menos ▴' : `Ver mais (${extra}) ▾`}</button>
+      )}
+    </div>
+  )
+}
+
 export function AgingChart({ variant = 'full', data: explicit, onOpenItem }: ChartProps & { onOpenItem?: (itemId: string) => void }) {
   const { data, loading, error } = useChartState(explicit)
   const th = variant === 'thumbnail'
@@ -513,26 +556,7 @@ export function AgingChart({ variant = 'full', data: explicit, onOpenItem }: Cha
             </svg>
           )
         }
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: px(8) }}>
-            {issues.map((iss, i) => (
-              <div key={i}
-                onClick={onOpenItem ? () => onOpenItem(iss.itemId) : undefined}
-                style={{ display: 'flex', alignItems: 'center', gap: px(8), cursor: onOpenItem ? 'pointer' : 'default' }}>
-                <div style={{ width: px(58), color: T.text2, fontSize: px(11), fontFamily: 'monospace' }}>{iss.id}</div>
-                <div style={{ flex: 1, background: T.bgSurface2, borderRadius: px(4), height: px(14), overflow: 'hidden' }}>
-                  <div style={{ width: `${(iss.days / maxDays) * 100}%`, height: '100%', background: iss.color, borderRadius: px(4), opacity: 0.7 }} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: px(4), minWidth: px(72) }}>
-                  <span style={{ color: T.text1, fontSize: px(11), fontWeight: 600 }}>{iss.days}d</span>
-                  {iss.tag && (
-                    <span style={{ fontSize: px(9), fontWeight: 700, padding: '2px 5px', borderRadius: px(4), background: iss.color === T.crit ? T.critDim : T.warnDim, color: iss.color }}>{iss.tag}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )
+        return <AgingList issues={issues} onOpenItem={onOpenItem} />
       }}
     </ChartFrame>
   )
@@ -1706,6 +1730,47 @@ function EpicAnalysisView({ data }: { data: ReportsData }) {
   )
 }
 
+function AgingAnalysisView({ data }: { data: ReportsData }) {
+  const info = new Map(liveProjects().map(p => [p.id, p]))
+  const all = data.aging
+  const projItems = [...new Set(all.map(a => a.projectId))].map(pid => ({ id: pid, name: info.get(pid)?.name ?? 'Projeto', color: info.get(pid)?.color ?? T.accent }))
+  const [sel, toggle] = useScopeSel(projItems.map(p => p.id))
+  const rows = all.filter(a => sel.has(a.projectId)).sort((x, y) => y.days - x.days).slice(0, 8)
+  if (all.length === 0) {
+    return <div style={{ fontSize: 12, color: T.text3, border: `1px dashed ${T.border}`, borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>Nenhum item em andamento para analisar.</div>
+  }
+  function suggestion(a: { id: string; days: number; tag: string | null; projectId: string }) {
+    const pj = info.get(a.projectId)?.name ?? ''
+    if (a.tag === 'Bloqueado') {
+      return { tone: 'crit' as const, title: `${a.id} · bloqueada há ${a.days}d`, text: `Caminhos possíveis: retomar contato com quem/o que bloqueia · isolar a parte travada e seguir o resto · repriorizar se não for crítica agora.` }
+    }
+    if (a.tag === 'Atrasado') {
+      return { tone: 'warn' as const, title: `${a.id} · atrasada · ${a.days}d parada`, text: `Caminhos possíveis: renegociar o prazo · reduzir o escopo da entrega · confirmar a prioridade com o time.` }
+    }
+    return { tone: 'warn' as const, title: `${a.id} · ${a.days}d no mesmo status${pj ? ` (${pj})` : ''}`, text: `Pode estar grande demais (fatiar em entregas menores) ou sem dono definido — vale confirmar o próximo passo.` }
+  }
+  return (
+    <>
+      <ScopeChips items={projItems} selected={sel} onToggle={toggle} />
+      <div style={{ fontSize: 11.5, color: T.text3, marginBottom: px(10) }}>Analisou {rows.length} demanda{rows.length !== 1 ? 's' : ''} envelhecida{rows.length !== 1 ? 's' : ''} — sugestões de caminhos para destravar (a decisão é sua).</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: px(9) }}>
+        {rows.map(a => {
+          const s = suggestion(a)
+          const color = s.tone === 'crit' ? T.crit : T.warn
+          return (
+            <div key={a.itemId} style={{ display: 'flex', gap: px(8), padding: `${px(10)} ${px(12)}`, borderLeft: `3px solid ${color}`, background: T.bgSurface2, borderRadius: 8 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text1 }}>{s.title}</div>
+                <div style={{ fontSize: 11.5, color: T.text3, marginTop: 2, lineHeight: 1.45 }}>{s.text}</div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
 // ─── Chart Modal ──────────────────────────────────────────────────────────────
 
 /** Título/subtítulo próprios das visões gerenciais (sobrepõem o entry do registry). */
@@ -1714,6 +1779,7 @@ const MGMT_HEADERS: Record<string, { title: string; subtitle: string }> = {
   leadtime: { title: 'Lead Time & Cycle Time', subtitle: 'Onde o tempo se perde, da criação à entrega' },
   criados: { title: 'Criados vs Resolvidos', subtitle: 'Ritmo de criação × conclusão · análise por projeto' },
   epic: { title: 'Epic / Release Burndown', subtitle: 'Pontos restantes por projeto · o que avança e o que trava' },
+  aging: { title: 'Aging de Demandas', subtitle: 'O que está travando — caminhos possíveis por demanda' },
 }
 
 export function ReportChartModal({ reportId, onClose, onNav }: {
@@ -1743,6 +1809,8 @@ export function ReportChartModal({ reportId, onClose, onNav }: {
     body = <CriadosAnalysisView data={data} />
   } else if (isMgmt && data && reportId === 'epic') {
     body = <EpicAnalysisView data={data} />
+  } else if (isMgmt && data && reportId === 'aging') {
+    body = <AgingAnalysisView data={data} />
   } else {
     body = <Chart />
   }
