@@ -276,6 +276,97 @@ export function VelocityChart({ variant = 'full', data: explicit }: ChartProps) 
   )
 }
 
+// ─── CFD helpers (área empilhada reutilizável + cards interpretativos) ────────
+interface CfdLayer { label: string; color: string; data: number[] }
+
+function StackedArea({ layers, dayLabels }: { layers: CfdLayer[]; dayLabels: string[] }) {
+  const W = 520, H = 160, PAD = { top: 12, right: 8, bottom: 24, left: 34 }
+  const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom
+  const days = dayLabels.length
+  const maxY = Math.max(1, ...dayLabels.map((_, d) => layers.reduce((a, l) => a + (l.data[d] ?? 0), 0))) * 1.1
+  const toX = (d: number) => days <= 1 ? PAD.left + cw / 2 : PAD.left + (d / (days - 1)) * cw
+  const toY = (v: number) => PAD.top + ch - (v / maxY) * ch
+  const stacked = layers.map((_, li) => Array.from({ length: days }, (_, d) => { let sum = 0; for (let l = 0; l <= li; l++) sum += layers[l].data[d] ?? 0; return sum }))
+  const areaPath = (top: number[], bottom: number[]) => {
+    const fwd = top.map((v, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(v)}`)
+    const bwd = bottom.slice().reverse().map((v, i) => `L ${toX(days - 1 - i)} ${toY(v)}`)
+    return [...fwd, ...bwd, 'Z'].join(' ')
+  }
+  const ticks = [...new Set([0, Math.round(maxY / 2), Math.round(maxY)])]
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+      {stacked.map((top, li) => {
+        const bottom = li === 0 ? new Array<number>(days).fill(0) : stacked[li - 1]
+        return <path key={li} d={areaPath(top, bottom)} fill={layers[li].color} opacity={0.45} />
+      })}
+      {ticks.map(t => <text key={t} x={PAD.left - 4} y={toY(t) + 4} textAnchor="end" fontSize={9} fill={T.text3}>{t}</text>)}
+      <text x={10} y={PAD.top + ch / 2} fontSize={8.5} fill={T.text2} transform={`rotate(-90 10 ${PAD.top + ch / 2})`} textAnchor="middle">nº de itens</text>
+      {dayLabels.map((d, i) => (i % 3 === 0 ? <text key={d + i} x={toX(i)} y={H - PAD.bottom + 14} textAnchor="middle" fontSize={9} fill={T.text3}>{d}</text> : null))}
+    </svg>
+  )
+}
+
+function CfdLegend({ layers }: { layers: CfdLayer[] }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 10.5, color: T.text3, marginTop: px(6) }}>
+      {layers.map(l => <span key={l.label}><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, background: l.color, marginRight: 5, verticalAlign: 'middle' }} />{l.label}</span>)}
+    </div>
+  )
+}
+
+function cfdStats(layers: CfdLayer[]) {
+  const at = (i: number) => layers[i]?.data ?? []
+  const last = (arr: number[]) => arr[arr.length - 1] ?? 0
+  const first = (arr: number[]) => arr[0] ?? 0
+  const backlog = last(at(0)), todo = last(at(1)), doing = last(at(2)), review = last(at(3)), done = last(at(4))
+  return { backlog, todo, doing, review, done, deltaDone: done - first(at(4)), total: backlog + todo + doing + review + done, throughput: Math.round(((done - first(at(4))) / 2) * 10) / 10 }
+}
+
+function miniTiles(items: { l: string; v: string | number; c?: string; s?: string }[]) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(92px, 1fr))', gap: px(8) }}>
+      {items.map(it => (
+        <div key={it.l} style={{ background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 9, padding: `${px(8)} ${px(10)}` }}>
+          <div style={{ fontSize: 10, color: T.text3 }}>{it.l}</div>
+          <div style={{ fontSize: 17, fontWeight: 750, color: it.c ?? T.text1, lineHeight: 1.1, marginTop: 2 }}>{it.v}</div>
+          {it.s && <div style={{ fontSize: 9.5, color: T.text3, marginTop: 2 }}>{it.s}</div>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function CfdTiles({ layers, mode }: { layers: CfdLayer[]; mode: 'retro' | 'cliente' }) {
+  const s = cfdStats(layers)
+  if (mode === 'retro') {
+    const revHot = s.review >= s.doing && s.review > 0
+    return miniTiles([
+      { l: 'Concluído', v: s.done, c: T.success, s: `+${s.deltaDone} na quinzena` },
+      { l: 'Em andamento', v: s.doing, c: T.accent },
+      { l: 'Em revisão', v: s.review, c: revHot ? T.warn : T.text1, s: revHot ? 'acumulando ⚠' : undefined },
+      { l: 'A fazer/backlog', v: s.backlog + s.todo },
+      { l: 'Throughput', v: `${s.throughput}/sem`, c: T.text1 },
+    ])
+  }
+  const pct = Math.round((s.done / Math.max(1, s.total)) * 100)
+  return miniTiles([
+    { l: 'Entregue', v: s.done, c: T.success },
+    { l: 'Em andamento', v: s.doing + s.review, c: T.accent },
+    { l: 'A fazer', v: s.backlog + s.todo },
+    { l: '% concluído', v: `${pct}%`, c: T.success },
+  ])
+}
+
+/** Reduz as 5 camadas do CFD às 3 faixas da visão do cliente. */
+function cfdTo3band(layers: CfdLayer[], days: number): CfdLayer[] {
+  const sum2 = (a: number, b: number) => Array.from({ length: days }, (_, d) => (layers[a]?.data[d] ?? 0) + (layers[b]?.data[d] ?? 0))
+  return [
+    { label: 'A fazer', color: '#7d7d95', data: sum2(0, 1) },
+    { label: 'Em andamento', color: T.accent, data: sum2(2, 3) },
+    { label: 'Concluído', color: T.success, data: layers[4]?.data ?? [] },
+  ]
+}
+
 export function CFDChart({ variant = 'full', data: explicit }: ChartProps) {
   const { data, loading, error } = useChartState(explicit)
   const th = variant === 'thumbnail'
@@ -302,7 +393,7 @@ export function CFDChart({ variant = 'full', data: explicit }: ChartProps) {
           return [...fwd, ...bwd, 'Z'].join(' ')
         }
         const ticks = [0, Math.round(maxY / 3), Math.round((2 * maxY) / 3), Math.round(maxY)]
-        return (
+        const chart = (
           <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
             {stacked.map((top, li) => {
               const bottom = li === 0 ? Array(days).fill(0) : stacked[li - 1]
@@ -326,6 +417,13 @@ export function CFDChart({ variant = 'full', data: explicit }: ChartProps) {
               </g>
             )}
           </svg>
+        )
+        if (th) return chart
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: px(10), height: '100%', minHeight: 0 }}>
+            <div style={{ flex: '1 1 auto', minHeight: 0 }}>{chart}</div>
+            <CfdTiles layers={c.layers} mode="retro" />
+          </div>
         )
       }}
     </ChartFrame>
@@ -1910,6 +2008,41 @@ function HealthStrategyView({ data }: { data: ReportsData }) {
   )
 }
 
+function CFDAnalysisView({ data }: { data: ReportsData }) {
+  const info = new Map(liveProjects().map(p => [p.id, p]))
+  const items = data.cfd.byProject.map(b => ({ id: b.projectId, name: info.get(b.projectId)?.name ?? 'Projeto', color: info.get(b.projectId)?.color ?? T.accent, layers: b.layers }))
+  const [sel, toggle] = useScopeSel(items.map(i => i.id))
+  const [tab, setTab] = useState<'retro' | 'cliente'>('retro')
+  const chosen = (() => { const u = items.filter(i => sel.has(i.id)); return u.length ? u : items })()
+  const days = data.cfd.days
+  const summed: CfdLayer[] = data.cfd.layers.map((L, li) => ({ label: L.label, color: L.color, data: days.map((_, d) => chosen.reduce((a, p) => a + (p.layers[li]?.data[d] ?? 0), 0)) }))
+  if (items.length === 0) {
+    return <div style={{ fontSize: 12, color: T.text3, border: `1px dashed ${T.border}`, borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>Sem histórico de status no período.</div>
+  }
+  const three = cfdTo3band(summed, days.length)
+  const tabBtn = (v: 'retro' | 'cliente', label: string) => (
+    <button onClick={() => setTab(v)} className="no-drag" style={{
+      fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 8, cursor: 'pointer',
+      background: tab === v ? T.accent : T.bgSurface2, border: `1px solid ${tab === v ? T.accent : T.border}`, color: tab === v ? '#fff' : T.text2,
+    }}>{label}</button>
+  )
+  const activeLayers = tab === 'retro' ? summed : three
+  return (
+    <>
+      <ScopeChips items={items} selected={sel} onToggle={toggle} />
+      <div style={{ display: 'flex', gap: px(6), marginBottom: px(8) }}>{tabBtn('retro', 'Retrospectiva (time)')}{tabBtn('cliente', 'Cliente (dashview)')}</div>
+      <div style={{ height: 200 }}><StackedArea layers={activeLayers} dayLabels={days} /></div>
+      <CfdLegend layers={activeLayers} />
+      <div style={{ marginTop: px(10) }}><CfdTiles layers={summed} mode={tab} /></div>
+      {tab === 'cliente' && (
+        <div style={{ marginTop: px(8), fontSize: 11.5, color: T.text2, lineHeight: 1.5 }}>
+          A área verde cresce = entregas acontecendo. Se a faixa do meio engorda, sinalizamos gargalo e agimos. Foco em <b style={{ color: T.text1 }}>progresso e previsibilidade</b>.
+        </div>
+      )}
+    </>
+  )
+}
+
 // ─── Chart Modal ──────────────────────────────────────────────────────────────
 
 /** Título/subtítulo próprios das visões gerenciais (sobrepõem o entry do registry). */
@@ -1921,6 +2054,7 @@ const MGMT_HEADERS: Record<string, { title: string; subtitle: string }> = {
   aging: { title: 'Aging de Demandas', subtitle: 'O que está travando — caminhos possíveis por demanda' },
   velocity: { title: 'Velocity', subtitle: 'Pontos entregues por sprint · por projeto' },
   health: { title: 'Saúde do Projeto', subtitle: 'Leitura estratégica · maior alavanca e efeito' },
+  cfd: { title: 'Fluxo de Trabalho (CFD)', subtitle: 'Retrospectiva do time e visão do cliente' },
 }
 
 export function ReportChartModal({ reportId, onClose, onNav }: {
@@ -1956,6 +2090,8 @@ export function ReportChartModal({ reportId, onClose, onNav }: {
     body = <VelocityAnalysisView data={data} />
   } else if (isMgmt && data && reportId === 'health') {
     body = <HealthStrategyView data={data} />
+  } else if (isMgmt && data && reportId === 'cfd') {
+    body = <CFDAnalysisView data={data} />
   } else {
     body = <Chart />
   }
