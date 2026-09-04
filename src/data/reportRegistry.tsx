@@ -810,13 +810,18 @@ export function ProjectHealth({ variant = 'full', data: explicit }: ChartProps) 
         }
         const pentagon = (frac: number) =>
           Array.from({ length: n }, (_, i) => point(i, frac)).map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ') + ' Z'
-        const dataPath = axes.map((a, i) => point(i, a.val / 100)).map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ') + ' Z'
         const dotColor = (v: number) => v >= 80 ? T.success : v >= 60 ? T.warn : T.crit
+        const info = new Map(liveProjects().map(p => [p.id, p]))
+        const byP = h!.byProject ?? []
+        const multi = !th && byP.length > 1
+        const pathFor = (ax: { val: number }[]) => ax.map((a, i) => point(i, a.val / 100)).map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`).join(' ') + ' Z'
         const radar = (
           <svg width={th ? '100%' : 170} height={th ? undefined : 150} viewBox="0 0 170 150" style={th ? { display: 'block' } : undefined}>
             {[0.25, 0.5, 0.75, 1].map(f => <path key={f} d={pentagon(f)} stroke={T.border2} strokeWidth={0.8} fill="none" />)}
             {Array.from({ length: n }, (_, i) => { const [x, y] = point(i, 1); return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke={T.border2} strokeWidth={0.8} /> })}
-            <path d={dataPath} fill={T.accentDim} stroke={T.accent} strokeWidth={1.5} />
+            {multi
+              ? byP.map(bp => <path key={bp.projectId} d={pathFor(bp.axes)} fill="none" stroke={info.get(bp.projectId)?.color ?? T.accent} strokeWidth={1.4} />)
+              : <path d={pathFor(axes)} fill={T.accentDim} stroke={T.accent} strokeWidth={1.5} />}
             {!th && axes.map((a, i) => { const [x, y] = point(i, 1.22); return <text key={i} x={x} y={y} textAnchor="middle" fontSize={8} fill={T.text2}>{a.label}</text> })}
             <circle cx={cx} cy={cy} r={20} fill={T.bgSurface2} />
             <text x={cx} y={cy - 4} textAnchor="middle" fontSize={14} fontWeight={700} fill={T.text1}>{score}</text>
@@ -825,16 +830,26 @@ export function ProjectHealth({ variant = 'full', data: explicit }: ChartProps) 
         )
         if (th) return radar
         return (
-          <div style={{ display: 'flex', gap: px(16), alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: px(16), alignItems: 'flex-start', flexWrap: 'wrap' }}>
             {radar}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: px(6), paddingTop: px(12) }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: px(6), paddingTop: px(12), minWidth: px(140) }}>
               {axes.map((a, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: px(6) }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor(a.val), flexShrink: 0 }} />
-                  <span style={{ color: T.text2, fontSize: px(11) }}>{a.label}</span>
-                  <span style={{ color: T.text1, fontSize: px(11), fontWeight: 600, marginLeft: 'auto' }}>{a.val}%</span>
+                  <span style={{ color: T.text1, fontSize: px(11.5), fontWeight: 600 }}>{a.label}</span>
+                  <b style={{ color: dotColor(a.val), fontSize: px(11.5), marginLeft: px(4) }}>{a.val}%</b>
                 </div>
               ))}
+              {multi && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', marginTop: px(6), fontSize: px(10), color: T.text3 }}>
+                  {byP.map(bp => (
+                    <span key={bp.projectId}>
+                      <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: info.get(bp.projectId)?.color ?? T.accent, marginRight: 5, verticalAlign: 'middle' }} />
+                      {info.get(bp.projectId)?.name ?? 'Projeto'} · {bp.score}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )
@@ -1845,6 +1860,56 @@ function VelocityAnalysisView({ data }: { data: ReportsData }) {
   )
 }
 
+const HEALTH_MEANING: Record<string, string> = {
+  Progresso: '% de itens concluídos',
+  Qualidade: 'baixa taxa de bugs / retrabalho',
+  Previsibilidade: 'quanto do comprometido foi entregue',
+  Fluxo: 'idade dos itens em andamento (menor = melhor)',
+  Risco: 'poucos itens bloqueados',
+}
+
+function HealthStrategyView({ data }: { data: ReportsData }) {
+  const info = new Map(liveProjects().map(p => [p.id, p]))
+  const items = data.health.byProject.map(b => ({ id: b.projectId, name: info.get(b.projectId)?.name ?? 'Projeto', color: info.get(b.projectId)?.color ?? T.accent, axes: b.axes, score: b.score }))
+  const [sel, toggle] = useScopeSel(items.map(i => i.id))
+  const shown = items.filter(i => sel.has(i.id))
+  const use = shown.length ? shown : items
+  const labels = data.health.axes.map(a => a.label)
+  if (items.length === 0 || labels.length === 0) {
+    return <div style={{ fontSize: 12, color: T.text3, border: `1px dashed ${T.border}`, borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>Sem dados suficientes para a saúde.</div>
+  }
+  const agg = labels.map((_, i) => Math.round(use.reduce((a, u) => a + (u.axes[i]?.val ?? 0), 0) / use.length))
+  const score = Math.round(agg.reduce((a, b) => a + b, 0) / agg.length)
+  const dotColor = (v: number) => v >= 80 ? T.success : v >= 60 ? T.warn : T.crit
+  let lowIdx = 0; agg.forEach((v, i) => { if (v < agg[lowIdx]) lowIdx = i })
+  const target = Math.max(80, agg[lowIdx])
+  const newScore = Math.round(agg.map((v, i) => (i === lowIdx ? target : v)).reduce((a, b) => a + b, 0) / agg.length)
+  const lever = `Maior alavanca: ${labels[lowIdx]} (${agg[lowIdx]}%) — é a dimensão mais baixa e a que mais segura o score. Se subir para ${target}%, o score geral vai de ${score} para ${newScore}.`
+  const riskIdx = labels.indexOf('Risco')
+  const strong = labels.filter((_, i) => agg[i] >= 80).slice(0, 2)
+  const clientSummary = `Projeto ${score >= 80 ? 'saudável' : score >= 60 ? 'em evolução' : 'em atenção'} (${score}/100): ${strong.length ? `${strong.join(' e ')} em bom nível` : 'sem destaques altos'}; ponto de atenção: ${labels[lowIdx]} (${agg[lowIdx]}%)${riskIdx >= 0 && agg[riskIdx] >= 80 ? '; sem risco crítico aberto' : ''}.`
+  return (
+    <>
+      <ScopeChips items={items} selected={sel} onToggle={toggle} />
+      <div style={{ fontSize: 20, fontWeight: 750, marginBottom: px(4) }}>{score}<span style={{ fontSize: 12, color: T.text3, fontWeight: 500 }}>/100</span></div>
+      <div style={{ marginBottom: px(12) }}><AnalysisNote text={lever} tone="info" /></div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: px(6), marginBottom: px(12) }}>
+        {labels.map((l, i) => (
+          <div key={l} style={{ display: 'flex', alignItems: 'center', gap: px(8), fontSize: 12 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: dotColor(agg[i]), flexShrink: 0 }} />
+            <b style={{ color: T.text1, width: px(96), flexShrink: 0 }}>{l} {agg[i]}%</b>
+            <span style={{ color: T.text3 }}>{HEALTH_MEANING[l] ?? ''}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: px(9) }}>
+        <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: T.success, marginBottom: px(5) }}>Resumo para o cliente</div>
+        <div style={{ fontSize: 12, color: T.text2, lineHeight: 1.5 }}>{clientSummary}</div>
+      </div>
+    </>
+  )
+}
+
 // ─── Chart Modal ──────────────────────────────────────────────────────────────
 
 /** Título/subtítulo próprios das visões gerenciais (sobrepõem o entry do registry). */
@@ -1855,6 +1920,7 @@ const MGMT_HEADERS: Record<string, { title: string; subtitle: string }> = {
   epic: { title: 'Epic / Release Burndown', subtitle: 'Pontos restantes por projeto · o que avança e o que trava' },
   aging: { title: 'Aging de Demandas', subtitle: 'O que está travando — caminhos possíveis por demanda' },
   velocity: { title: 'Velocity', subtitle: 'Pontos entregues por sprint · por projeto' },
+  health: { title: 'Saúde do Projeto', subtitle: 'Leitura estratégica · maior alavanca e efeito' },
 }
 
 export function ReportChartModal({ reportId, onClose, onNav }: {
@@ -1888,6 +1954,8 @@ export function ReportChartModal({ reportId, onClose, onNav }: {
     body = <AgingAnalysisView data={data} />
   } else if (isMgmt && data && reportId === 'velocity') {
     body = <VelocityAnalysisView data={data} />
+  } else if (isMgmt && data && reportId === 'health') {
+    body = <HealthStrategyView data={data} />
   } else {
     body = <Chart />
   }
