@@ -1557,12 +1557,163 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   )
 }
 
+// ─── Chips de projeto + views de análise (modais 1/N) ────────────────────────
+
+function ScopeChips({ items, selected, onToggle }: {
+  items: { id: string; name: string; color: string }[]
+  selected: Set<string>
+  onToggle: (id: string) => void
+}) {
+  if (items.length <= 1) return null
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: px(10) }}>
+      {items.map(p => {
+        const on = selected.has(p.id)
+        return (
+          <button key={p.id} className="no-drag" onClick={e => { e.stopPropagation(); onToggle(p.id) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, cursor: 'pointer',
+              color: on ? T.text1 : T.text3, background: on ? T.bgSurface2 : 'transparent',
+              border: `1px solid ${on ? T.border2 : T.border}`, borderRadius: 999, padding: '3px 9px',
+            }}>
+            <span style={{ width: 9, height: 9, borderRadius: 3, background: on ? p.color : 'transparent', border: `1.5px solid ${p.color}`, flexShrink: 0 }} />
+            {p.name}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Seleção de escopo com reset quando o conjunto de projetos muda. */
+function useScopeSel(ids: string[]) {
+  const key = ids.join(',')
+  const [sel, setSel] = useState<Set<string>>(() => new Set(ids))
+  useEffect(() => { setSel(new Set(key ? key.split(',') : [])) }, [key])
+  const toggle = (id: string) => setSel(prev => {
+    const n = new Set(prev)
+    if (n.has(id)) { if (n.size > 1) n.delete(id) } else n.add(id)
+    return n
+  })
+  return [sel, toggle] as const
+}
+
+/** Sugestão consultiva (mesma casca dos insights). */
+function AnalysisNote({ text, tone = 'info' }: { text: string; tone?: 'info' | 'warn' | 'crit' }) {
+  const color = tone === 'crit' ? T.crit : tone === 'warn' ? T.warn : T.accent
+  return (
+    <div style={{ display: 'flex', gap: px(8), padding: `${px(10)} ${px(12)}`, borderLeft: `3px solid ${color}`, background: T.bgSurface2, borderRadius: 8, fontSize: 12, color: T.text2, lineHeight: 1.45 }}>
+      {text}
+    </div>
+  )
+}
+
+function CriadosAnalysisView({ data }: { data: ReportsData }) {
+  const cvr = data.createdVsResolved
+  const info = new Map(liveProjects().map(p => [p.id, p]))
+  const items = cvr.byProject.map(b => ({
+    id: b.projectId, name: info.get(b.projectId)?.name ?? 'Projeto', color: info.get(b.projectId)?.color ?? T.accent,
+    created: b.created, resolved: b.resolved,
+  }))
+  const [sel, toggle] = useScopeSel(items.map(i => i.id))
+  const shown = items.filter(i => sel.has(i.id))
+  const use = shown.length ? shown : items
+  const n = cvr.weeks.length
+  const sumAt = (arrs: number[][], i: number) => arrs.reduce((a, arr) => a + (arr[i] ?? 0), 0)
+  const created = Array.from({ length: n }, (_, i) => sumAt(use.map(u => u.created), i))
+  const resolved = Array.from({ length: n }, (_, i) => sumAt(use.map(u => u.resolved), i))
+  const sumC = created[n - 1] ?? 0, sumR = resolved[n - 1] ?? 0, gap = sumC - sumR
+  const note = sel.size === 1
+    ? `${use[0].name}: ${sumC} criados × ${sumR} resolvidos — backlog ${gap > 0 ? `cresceu ${gap}` : gap < 0 ? `reduziu ${-gap}` : 'estável'} neste projeto.`
+    : `Agregado (${use.length} projeto${use.length !== 1 ? 's' : ''}): ${sumC} criados × ${sumR} resolvidos — gap de ${gap} itens. Selecione 1 projeto para a leitura individual.`
+
+  const W = 620, H = 200
+  const PAD = { top: 16, right: 14, bottom: 24, left: 34 }
+  const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom
+  const maxV = Math.max(1, ...created, ...resolved) * 1.15
+  const x = (i: number) => n <= 1 ? PAD.left + cw / 2 : PAD.left + (i / (n - 1)) * cw
+  const y = (v: number) => PAD.top + ch - (v / maxV) * ch
+  const path = (d: number[]) => d.map((v, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(v)}`).join(' ')
+  const ticks = [...new Set([0, Math.round(maxV / 2.3), Math.round(maxV / 1.15)])]
+
+  return (
+    <>
+      <ScopeChips items={items} selected={sel} onToggle={toggle} />
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+        {ticks.map(t => (
+          <g key={t}>
+            <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} stroke={T.border} strokeWidth={0.5} />
+            <text x={PAD.left - 5} y={y(t) + 3} textAnchor="end" fontSize={9} fill={T.text3}>{t}</text>
+          </g>
+        ))}
+        <text x={11} y={PAD.top + ch / 2} fontSize={8.5} fill={T.text2} transform={`rotate(-90 11 ${PAD.top + ch / 2})`} textAnchor="middle">demandas (acumulado)</text>
+        <path d={`${path(created)} L ${x(n - 1)} ${y(0)} L ${x(0)} ${y(0)} Z`} fill={T.warn} opacity={0.12} />
+        <path d={path(created)} stroke={T.warn} strokeWidth={2} fill="none" />
+        <path d={path(resolved)} stroke={T.success} strokeWidth={2} strokeDasharray="5,3" fill="none" />
+        <text x={PAD.left} y={H - 5} fontSize={9} fill={T.text3}>{cvr.weeks[0]}</text>
+        <text x={W - PAD.right} y={H - 5} textAnchor="end" fontSize={9} fill={T.text3}>{cvr.weeks[n - 1]}</text>
+      </svg>
+      <div style={{ display: 'flex', gap: px(16), margin: `${px(6)} 0 ${px(12)}`, fontSize: 11, color: T.text3 }}>
+        <span><span style={{ display: 'inline-block', width: 14, borderTop: `2px solid ${T.warn}`, verticalAlign: 'middle', marginRight: 5 }} />Criados</span>
+        <span><span style={{ display: 'inline-block', width: 14, borderTop: `2px dashed ${T.success}`, verticalAlign: 'middle', marginRight: 5 }} />Resolvidos</span>
+      </div>
+      <AnalysisNote text={note} tone={gap > 0 ? 'warn' : 'info'} />
+    </>
+  )
+}
+
+function EpicAnalysisView({ data }: { data: ReportsData }) {
+  const info = new Map(liveProjects().map(p => [p.id, p]))
+  const items = data.epicBurndown.byProject.map(b => ({
+    id: b.projectId, name: info.get(b.projectId)?.name ?? 'Projeto', color: info.get(b.projectId)?.color ?? T.accent,
+    remaining: b.remaining, prev: b.prev,
+  }))
+  const [sel, toggle] = useScopeSel(items.map(i => i.id))
+  const shown = items.filter(i => sel.has(i.id))
+  const use = shown.length ? shown : items
+  if (items.length === 0) {
+    return <div style={{ fontSize: 12, color: T.text3, border: `1px dashed ${T.border}`, borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>Nenhum épico com pontos estimados no escopo.</div>
+  }
+  const max = Math.max(1, ...use.map(u => u.remaining))
+  const trend = (u: { remaining: number; prev: number }) => u.remaining < u.prev ? { a: '▼', c: T.success } : u.remaining > u.prev ? { a: '▲', c: T.crit } : { a: '→', c: T.text3 }
+  const sortedStalled = use.filter(u => u.remaining > 0 && u.remaining >= u.prev).sort((a, b) => b.remaining - a.remaining)
+  const note = sel.size === 1
+    ? (() => { const u = use[0]; return `${u.name}: ${u.remaining < u.prev ? `caindo de ${u.prev}→${u.remaining} pts — avançando para a entrega` : u.remaining > 0 ? `estagnou em ${u.remaining} pts — possivelmente travado (dependência?)` : 'sem pontos restantes'}.` })()
+    : sortedStalled.length
+      ? `${sortedStalled.length} projeto(s) com épicos parados — maior: ${sortedStalled[0].name} (${numFmt(sortedStalled[0].remaining)} pts). Selecione 1 projeto para o detalhe.`
+      : 'Épicos avançando em todos os projetos selecionados.'
+  return (
+    <>
+      <ScopeChips items={items} selected={sel} onToggle={toggle} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: px(8), marginBottom: px(12) }}>
+        {use.map(u => {
+          const tr = trend(u)
+          return (
+            <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: px(8), fontSize: 12 }}>
+              <span style={{ width: 120, color: T.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 0 }}>{u.name}</span>
+              <div style={{ flex: 1, height: 12, background: T.bgSurface2, borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(100, (u.remaining / max) * 100)}%`, height: '100%', background: u.color, opacity: 0.8 }} />
+              </div>
+              <span style={{ width: 52, textAlign: 'right', fontWeight: 600, color: T.text1 }}>{numFmt(u.remaining)} pts</span>
+              <span style={{ width: 16, textAlign: 'center', color: tr.c }}>{tr.a}</span>
+            </div>
+          )
+        })}
+      </div>
+      <div style={{ fontSize: 10.5, color: T.text3, marginBottom: px(10) }}>pontos restantes por projeto · ▼ avançando · ▲ subiu/estagnou</div>
+      <AnalysisNote text={note} tone={sortedStalled.length ? 'warn' : 'info'} />
+    </>
+  )
+}
+
 // ─── Chart Modal ──────────────────────────────────────────────────────────────
 
 /** Título/subtítulo próprios das visões gerenciais (sobrepõem o entry do registry). */
 const MGMT_HEADERS: Record<string, { title: string; subtitle: string }> = {
   burndown: { title: 'Progresso da sprint', subtitle: 'Burndown por projeto · datas reais da sprint' },
   leadtime: { title: 'Lead Time & Cycle Time', subtitle: 'Onde o tempo se perde, da criação à entrega' },
+  criados: { title: 'Criados vs Resolvidos', subtitle: 'Ritmo de criação × conclusão · análise por projeto' },
+  epic: { title: 'Epic / Release Burndown', subtitle: 'Pontos restantes por projeto · o que avança e o que trava' },
 }
 
 export function ReportChartModal({ reportId, onClose, onNav }: {
@@ -1588,6 +1739,10 @@ export function ReportChartModal({ reportId, onClose, onNav }: {
     body = <SprintProgressView data={data} onNav={onNav} onClose={onClose} />
   } else if (isMgmt && data && reportId === 'leadtime') {
     body = <LeadCycleView data={data} onNav={onNav} onClose={onClose} />
+  } else if (isMgmt && data && reportId === 'criados') {
+    body = <CriadosAnalysisView data={data} />
+  } else if (isMgmt && data && reportId === 'epic') {
+    body = <EpicAnalysisView data={data} />
   } else {
     body = <Chart />
   }
