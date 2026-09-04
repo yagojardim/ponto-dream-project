@@ -186,6 +186,51 @@ export function BurndownChart({ variant = 'full', data: explicit }: ChartProps) 
   )
 }
 
+/** Velocity agrupada por projeto (últimas sprints, alinhadas por recência). */
+function VelocityGrouped({ series }: { series: { name: string; color: string; values: number[] }[] }) {
+  const K = series[0]?.values.length ?? 4
+  const labels = Array.from({ length: K }, (_, i) => (i === K - 1 ? 'atual' : `-${K - 1 - i}`))
+  const W = 380, H = 180, PAD = { top: 16, right: 12, bottom: 24, left: 32 }
+  const cw = W - PAD.left - PAD.right, ch = H - PAD.top - PAD.bottom
+  const slot = cw / K
+  const rawMax = Math.max(1, ...series.flatMap(s => s.values))
+  const maxV = rawMax * 1.2
+  const n = Math.max(1, series.length), grp = slot * 0.74, bw = grp / n
+  const x = (i: number) => PAD.left + i * slot, y = (val: number) => PAD.top + ch - (val / maxV) * ch
+  const ticks = [...new Set([0, Math.round(rawMax / 2), rawMax])]
+  const axisY = PAD.top + ch
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', minHeight: 0 }}>
+      <div style={{ flex: '1 1 auto', minHeight: 0 }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
+          {ticks.map(t => (
+            <g key={t}>
+              <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} stroke={T.border} strokeWidth={0.5} />
+              <text x={PAD.left - 5} y={y(t) + 3} textAnchor="end" fontSize={9} fill={T.text3}>{t}</text>
+            </g>
+          ))}
+          <text x={11} y={PAD.top + ch / 2} fontSize={8.5} fill={T.text2} transform={`rotate(-90 11 ${PAD.top + ch / 2})`} textAnchor="middle">pontos entregues</text>
+          {labels.map((_, i) => series.map((s, j) => {
+            const val = s.values[i]
+            const bx = x(i) + (slot - grp) / 2 + j * bw
+            return (
+              <g key={`${i}-${j}`}>
+                <rect x={bx} y={y(val)} width={Math.max(1, bw - 1.5)} height={axisY - y(val)} rx={1.5} fill={s.color} opacity={0.85} />
+                {val > 0 && <text x={bx + (bw - 1.5) / 2} y={y(val) - 3} textAnchor="middle" fontSize={7.5} fill={T.text2}>{val}</text>}
+              </g>
+            )
+          }))}
+          <line x1={PAD.left} x2={W - PAD.right} y1={axisY} y2={axisY} stroke={T.border2} strokeWidth={0.8} />
+          {labels.map((l, i) => <text key={l + i} x={x(i) + slot / 2} y={axisY + 13} textAnchor="middle" fontSize={8.5} fill={T.text3}>{l}</text>)}
+        </svg>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', fontSize: 10.5, color: T.text3 }}>
+        {series.map(s => <span key={s.name}><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, background: s.color, marginRight: 5, verticalAlign: 'middle' }} />{s.name}</span>)}
+      </div>
+    </div>
+  )
+}
+
 export function VelocityChart({ variant = 'full', data: explicit }: ChartProps) {
   const { data, loading, error } = useChartState(explicit)
   const th = variant === 'thumbnail'
@@ -196,6 +241,13 @@ export function VelocityChart({ variant = 'full', data: explicit }: ChartProps) 
       emptyText="Nenhuma sprint concluída ainda.">
       {() => {
         const vel = v!
+        const byP = vel.byProject ?? []
+        // Com mais de um projeto no escopo: barras agrupadas por projeto.
+        if (!th && byP.length > 1) {
+          const info = new Map(liveProjects().map(p => [p.id, p]))
+          const series = byP.map(b => ({ name: info.get(b.projectId)?.name ?? 'Projeto', color: info.get(b.projectId)?.color ?? T.accent, values: b.values }))
+          return <VelocityGrouped series={series} />
+        }
         const W = 200; const H = 140
         const PAD = { top: 12, right: 8, bottom: th ? 4 : 28, left: th ? 4 : 28 }
         const cw = W - PAD.left - PAD.right
@@ -1771,6 +1823,28 @@ function AgingAnalysisView({ data }: { data: ReportsData }) {
   )
 }
 
+function VelocityAnalysisView({ data }: { data: ReportsData }) {
+  const info = new Map(liveProjects().map(p => [p.id, p]))
+  const items = data.velocity.byProject.map(b => ({ id: b.projectId, name: info.get(b.projectId)?.name ?? 'Projeto', color: info.get(b.projectId)?.color ?? T.accent, values: b.values }))
+  const [sel, toggle] = useScopeSel(items.map(i => i.id))
+  const shown = items.filter(i => sel.has(i.id))
+  const use = shown.length ? shown : items
+  if (items.length === 0) {
+    return <div style={{ fontSize: 12, color: T.text3, border: `1px dashed ${T.border}`, borderRadius: 10, padding: '24px 16px', textAlign: 'center' }}>Nenhuma sprint concluída para medir velocity.</div>
+  }
+  const avgOf = (vals: number[]) => { const nz = vals.filter(v => v > 0); return nz.length ? Math.round(nz.reduce((a, b) => a + b, 0) / nz.length) : 0 }
+  const note = sel.size === 1
+    ? `${use[0].name}: média de ${avgOf(use[0].values)} pts/sprint nas últimas ${use[0].values.filter(v => v > 0).length || use[0].values.length}.`
+    : `Média por projeto: ${use.map(u => `${u.name} ${avgOf(u.values)}`).join(' · ')}. A média orienta quanto planejar por sprint.`
+  return (
+    <>
+      <ScopeChips items={items} selected={sel} onToggle={toggle} />
+      <div style={{ height: 220 }}><VelocityGrouped series={use.map(u => ({ name: u.name, color: u.color, values: u.values }))} /></div>
+      <div style={{ marginTop: px(4) }}><AnalysisNote text={note} /></div>
+    </>
+  )
+}
+
 // ─── Chart Modal ──────────────────────────────────────────────────────────────
 
 /** Título/subtítulo próprios das visões gerenciais (sobrepõem o entry do registry). */
@@ -1780,6 +1854,7 @@ const MGMT_HEADERS: Record<string, { title: string; subtitle: string }> = {
   criados: { title: 'Criados vs Resolvidos', subtitle: 'Ritmo de criação × conclusão · análise por projeto' },
   epic: { title: 'Epic / Release Burndown', subtitle: 'Pontos restantes por projeto · o que avança e o que trava' },
   aging: { title: 'Aging de Demandas', subtitle: 'O que está travando — caminhos possíveis por demanda' },
+  velocity: { title: 'Velocity', subtitle: 'Pontos entregues por sprint · por projeto' },
 }
 
 export function ReportChartModal({ reportId, onClose, onNav }: {
@@ -1811,6 +1886,8 @@ export function ReportChartModal({ reportId, onClose, onNav }: {
     body = <EpicAnalysisView data={data} />
   } else if (isMgmt && data && reportId === 'aging') {
     body = <AgingAnalysisView data={data} />
+  } else if (isMgmt && data && reportId === 'velocity') {
+    body = <VelocityAnalysisView data={data} />
   } else {
     body = <Chart />
   }
