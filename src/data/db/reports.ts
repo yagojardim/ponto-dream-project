@@ -117,7 +117,11 @@ export interface ReportsData {
     ideal: number[]
     actual: number[]
   }
-  cfd: { days: string[]; layers: { label: string; color: string; data: number[] }[]; max: number }
+  cfd: {
+    days: string[]; layers: { label: string; color: string; data: number[] }[]; max: number
+    /** Mesmas camadas por projeto (para o filtro 1/N do modal). */
+    byProject: { projectId: string; layers: { label: string; color: string; data: number[] }[] }[]
+  }
   bugs: { label: string; color: string; val: number }[]
   createdVsResolved: {
     weeks: string[]
@@ -428,18 +432,26 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     burndown = { sprintName: activeSprint.name, days, total, ideal, actual }
   }
 
-  // ── CFD — last 14 days ─────────────────────────────────────────────────────
+  // ── CFD — last 14 days (agregado + por projeto no mesmo loop) ──────────────
+  const CFD_N = 14
   const cfdDays: string[] = []
   const cfdLayers = CFD_STATUSES.map(s => ({ label: s.label, color: s.color, data: [] as number[] }))
+  const cfdByProjectMap = new Map<string, number[][]>() // pid → [layer][day]
+  const ensureCfdP = (pid: string) => {
+    let m = cfdByProjectMap.get(pid)
+    if (!m) { m = CFD_STATUSES.map(() => new Array<number>(CFD_N).fill(0)); cfdByProjectMap.set(pid, m) }
+    return m
+  }
   for (let d = 13; d >= 0; d--) {
     const day = addDays(now, -d)
+    const dayPos = 13 - d
     cfdDays.push(shortDay(day))
     const counts = CFD_STATUSES.map(() => 0)
     for (const item of itemRows) {
       const st = statusAt(item, historyByItem.get(item.id) ?? [], day)
       if (!st) continue
       const idx = CFD_STATUSES.findIndex(s => s.key.includes(st))
-      if (idx >= 0) counts[idx] += 1
+      if (idx >= 0) { counts[idx] += 1; ensureCfdP(item.project_id)[idx][dayPos] += 1 }
     }
     counts.forEach((c, i) => cfdLayers[i].data.push(c))
   }
@@ -447,6 +459,10 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     1,
     ...cfdDays.map((_, d) => cfdLayers.reduce((a, l) => a + l.data[d], 0)),
   )
+  const cfdByProject = [...cfdByProjectMap.entries()].map(([projectId, layerDays]) => ({
+    projectId,
+    layers: CFD_STATUSES.map((s, i) => ({ label: s.label, color: s.color, data: layerDays[i] })),
+  }))
 
   // ── Bugs by severity ───────────────────────────────────────────────────────
   const openBugs = itemRows.filter(i => i.type === 'bug' && i.status !== 'done')
@@ -770,7 +786,7 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
 
     velocity: { sprints: velocitySeries, avg: velAvg, max: velMax, byProject: velByProject },
     burndown,
-    cfd: { days: cfdDays, layers: cfdLayers, max: cfdMax * 1.1 },
+    cfd: { days: cfdDays, layers: cfdLayers, max: cfdMax * 1.1, byProject: cfdByProject },
     bugs,
     createdVsResolved: {
       weeks, bucketTitles, unit: axis.unit, axisStart: axisStart.toISOString(),
