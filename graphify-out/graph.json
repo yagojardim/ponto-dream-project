@@ -11872,7 +11872,7 @@
       "file_type": "code",
       "norm_label": "addwidgetmodal()",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L141"
+      "source_location": "L149"
     },
     {
       "id": "src_components_home_addwidgetmodal_vizcolor",
@@ -35139,7 +35139,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L154",
+      "source_location": "L165",
       "weight": 1.0
     },
     {
@@ -90930,7 +90930,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/home/AddWidgetModal.tsx",
-      "source_location": "L141",
+      "source_location": "L149",
       "weight": 1.0
     },
     {
@@ -118406,5 +118406,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3a057063a41e9e98dfb709eab94511baf61a2664"
+  "built_at_commit": "359f42c4045c24786a5b36791c250a0ce8ff5182"
 }
