@@ -146,6 +146,8 @@ export interface ReportsData {
     axisStart: string | null
     epics: { label: string; color: string; data: number[] }[]
     max: number
+    /** Pontos restantes por projeto (agora × período anterior) para análise 1/N. */
+    byProject: { projectId: string; remaining: number; prev: number }[]
   }
   /** Burndown gerencial por projeto (1/N) da(s) sprint(s) ativa(s). */
   sprintProgress: SprintProgress
@@ -456,7 +458,9 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
 
   const { created, resolved } = cumulative(itemRows)
   const cvrMax = Math.max(1, ...created, ...resolved)
-  const cvrByProject = (scoped ?? []).map(pid => ({
+  // Sempre por projeto (não só quando há escopo) — alimenta o filtro/chips do modal de análise.
+  const cvrProjectIds = [...new Set(itemRows.map(i => i.project_id))]
+  const cvrByProject = cvrProjectIds.map(pid => ({
     projectId: pid,
     ...cumulative(itemRows.filter(i => i.project_id === pid)),
   }))
@@ -562,6 +566,20 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     .slice(0, 3)
     .map(({ label, color, data }) => ({ label, color, data }))
   const epicMax = Math.max(1, ...epicSeries.flatMap(e => e.data)) * 1.15
+
+  // Pontos restantes por projeto (agora × período anterior) — análise do modal de épicos.
+  const epicProjectOf = new Map(epicRows.map(e => [e.id, e.project_id]))
+  const lastRange = axis.ranges[axis.ranges.length - 1]?.to ?? now
+  const prevRange = axis.ranges.length > 1 ? axis.ranges[axis.ranges.length - 2].to : lastRange
+  const remainingAt = (rows: ItemRow[], at: Date) => rows.reduce((a, i) => {
+    if (i.created_at && new Date(i.created_at) > at) return a
+    const dn = doneAt(i)
+    return dn && dn <= at ? a : a + pts(i)
+  }, 0)
+  const epicByProject = [...new Set(epicRows.map(e => e.project_id))].map(pid => {
+    const rows = itemRows.filter(i => i.epic_id && epicProjectOf.get(i.epic_id) === pid)
+    return { projectId: pid, remaining: remainingAt(rows, lastRange), prev: remainingAt(rows, prevRange) }
+  }).filter(e => e.remaining > 0 || e.prev > 0)
 
   // ── Progresso da sprint — burndown gerencial por projeto (datas reais) ─────
   const activeSprints = sprintRows.filter(s => s.state === 'active' && s.start_date && s.end_date)
@@ -725,7 +743,7 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     epicBurndown: {
       weeks: axis.labels, bucketTitles: axis.titles, unit: axis.unit,
       axisStart: anchor ? anchor.toISOString() : null,
-      epics: epicSeries, max: epicMax,
+      epics: epicSeries, max: epicMax, byProject: epicByProject,
     },
     sprintProgress,
     management,
