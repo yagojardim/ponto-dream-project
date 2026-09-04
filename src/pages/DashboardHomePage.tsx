@@ -838,24 +838,28 @@ export function ClientFeedCard({ poId, tenantId }: { poId?: string; tenantId: st
       )}
       <SCard
         title="Mensagens do Cliente"
-        action={unread.length > 0 ? (
+        action={(
           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <span style={{ fontSize:9, fontWeight:700, padding:'1px 6px', borderRadius:99, background:T.crit, color:'#fff' }}>
-              {unread.length} novo{unread.length > 1 ? 's' : ''}
+            <span style={{ fontSize:9, fontWeight:700, padding:'1px 7px', borderRadius:99, background: unread.length > 0 ? `${T.warn}1F` : `${T.success}1F`, color: unread.length > 0 ? T.warn : T.success }}>
+              {unread.length > 0 ? `${unread.length} pendente${unread.length > 1 ? 's' : ''}` : 'em dia'}
             </span>
-            <button
-              onClick={handleMarkAllRead}
-              style={{ fontSize:10, color:T.text3, cursor:'pointer', background:'none', border:'none', padding:0 }}
-              onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.color=T.accent}}
-              onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.color=T.text3}}
-            >
-              Lidas
-            </button>
+            {unread.length > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                style={{ fontSize:10, color:T.text3, cursor:'pointer', background:'none', border:'none', padding:0 }}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.color=T.accent}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.color=T.text3}}
+              >
+                Lidas
+              </button>
+            )}
           </div>
-        ) : undefined}
+        )}
       >
         {unread.length === 0 ? (
-          <p style={{ fontSize:12, color:T.text3, textAlign:'center', padding:'12px 0' }}>Nenhuma mensagem do cliente pendente.</p>
+          <div style={{ fontSize:12, color:T.text3, textAlign:'center', padding:'16px 8px', lineHeight:1.5 }}>
+            🎉 Nenhuma pendência com clientes.<br /><span style={{ fontSize:11 }}>Tudo respondido.</span>
+          </div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
             {unread.slice(0, 5).map(s => (
