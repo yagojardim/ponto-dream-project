@@ -99,7 +99,10 @@ function WidgetThumb({ viz }: { viz: WidgetViz }) {
   }
 }
 
-function WidgetCard({ entry, selected, onBoard, onSelect }: { entry: Entry; selected: boolean; onBoard: boolean; onSelect: () => void }) {
+function WidgetCard({ entry, selected, onBoard, format, onSelect, onToggleFormat }: {
+  entry: Entry; selected: boolean; onBoard: boolean; format: WidgetFormat
+  onSelect: () => void; onToggleFormat: () => void
+}) {
   const [hovered, setHovered] = useState(false)
   // Prioridade visual: selecionado para adicionar (azul) > já no painel (verde) > hover.
   const borderColor = selected ? T.accent : onBoard ? T.success : hovered ? T.accent + '66' : T.border
@@ -110,18 +113,13 @@ function WidgetCard({ entry, selected, onBoard, onSelect }: { entry: Entry; sele
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        textAlign: 'left', display: 'flex', gap: 10, alignItems: 'center', minWidth: 0,
+        textAlign: 'left', display: 'flex', gap: 10, alignItems: 'flex-start', minWidth: 0,
         background: bg, border: `1px solid ${borderColor}`,
         borderRadius: 12, padding: 10, cursor: 'pointer', transition: 'all 0.15s',
       }}
     >
-      <span style={{ position: 'relative', width: 72, height: 46, flexShrink: 0, background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <span style={{ width: 72, height: 46, flexShrink: 0, background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         <WidgetThumb viz={entry.viz} />
-        {(onBoard || selected) && (
-          <span style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%', background: selected ? T.accent : T.success, border: `2px solid ${T.bgPage}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5" /></svg>
-          </span>
-        )}
       </span>
       <span style={{ minWidth: 0 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
@@ -133,6 +131,16 @@ function WidgetCard({ entry, selected, onBoard, onSelect }: { entry: Entry; sele
         {entry.summary && (
           <span style={{ display: 'block', marginTop: 3, fontSize: 11, color: T.text3, lineHeight: 1.4 }}>{entry.summary}</span>
         )}
+        {/* Formato do card, dentro do próprio card (alterna vertical ⇄ horizontal). */}
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={e => { e.stopPropagation(); onToggleFormat() }}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onToggleFormat() } }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontSize: 10.5, fontWeight: 600, color: T.accent, cursor: 'pointer' }}
+        >
+          {format === 'vertical' ? '◱ Usar card na vertical' : '▭ Usar card na horizontal'} ⇄
+        </span>
       </span>
     </button>
   )
@@ -143,7 +151,10 @@ export function AddWidgetModal({ onClose, onAdd, activeIds = [] }: Props) {
   const [q, setQ] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const toggleSel = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-  const [format, setFormat] = useState<WidgetFormat>('vertical')
+  // Formato escolhido por card (dentro do próprio card). Default: vertical.
+  const [formats, setFormats] = useState<Record<string, WidgetFormat>>({})
+  const formatOf = (id: string): WidgetFormat => formats[id] ?? 'vertical'
+  const toggleFormat = (id: string) => setFormats(prev => ({ ...prev, [id]: (prev[id] ?? 'vertical') === 'vertical' ? 'horizontal' : 'vertical' }))
   const [activeCat, setActiveCat] = useState<string>('Todos')
 
   const entries: Entry[] = useMemo(() => {
@@ -221,7 +232,8 @@ export function AddWidgetModal({ onClose, onAdd, activeIds = [] }: Props) {
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.text3, margin: '10px 4px 8px' }}>{cat}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
                   {list.map(e => (
-                    <WidgetCard key={e.w.id} entry={e} selected={selectedIds.includes(e.w.id)} onBoard={onBoardSet.has(e.w.id)} onSelect={() => toggleSel(e.w.id)} />
+                    <WidgetCard key={e.w.id} entry={e} selected={selectedIds.includes(e.w.id)} onBoard={onBoardSet.has(e.w.id)}
+                      format={formatOf(e.w.id)} onSelect={() => toggleSel(e.w.id)} onToggleFormat={() => toggleFormat(e.w.id)} />
                   ))}
                 </div>
               </div>
@@ -232,25 +244,14 @@ export function AddWidgetModal({ onClose, onAdd, activeIds = [] }: Props) {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer — o formato agora é escolhido dentro de cada card. */}
         <div style={{ padding: '12px 20px', borderTop: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: T.text3 }}>Formato:</span>
-          {(['horizontal', 'vertical'] as WidgetFormat[]).map(f => {
-            const active = format === f
-            return (
-              <button key={f} onClick={() => setFormat(f)} style={{
-                fontSize: 11, fontWeight: 600, color: active ? T.accent : T.text2,
-                background: active ? T.accentDim : 'transparent',
-                border: `1px solid ${active ? T.accentBorder : T.border}`,
-                borderRadius: 6, padding: '5px 12px', cursor: 'pointer',
-              }}>{f === 'horizontal' ? 'Horizontal (largura total)' : 'Vertical (meia tela)'}</button>
-            )
-          })}
+          <span style={{ fontSize: 11, color: T.text3 }}>O formato (vertical/horizontal) é definido em cada card.</span>
           <div style={{ flex: 1 }} />
           <button onClick={onClose} style={{ fontSize: 12, color: T.text2, background: 'none', border: `1px solid ${T.border}`, borderRadius: 6, padding: '6px 14px', cursor: 'pointer' }}>Cancelar</button>
           <button
             disabled={selectedIds.length === 0}
-            onClick={() => { if (selectedIds.length) { selectedIds.forEach(id => onAdd(id, format)); onClose() } }}
+            onClick={() => { if (selectedIds.length) { selectedIds.forEach(id => onAdd(id, formatOf(id))); onClose() } }}
             style={{
               fontSize: 12, fontWeight: 600, color: selectedIds.length ? '#fff' : T.text3,
               background: selectedIds.length ? T.accent : T.bgSurface2,
