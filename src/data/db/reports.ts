@@ -107,8 +107,8 @@ export interface ReportsData {
 
   velocity: {
     sprints: SeriesPoint[]; avg: number; max: number
-    /** Velocity das últimas 4 sprints concluídas por projeto (alinhadas por recência). */
-    byProject: { projectId: string; values: number[] }[]
+    /** Últimas 4 sprints concluídas por projeto — comprometido × entregue (alinhadas por recência). */
+    byProject: { projectId: string; completed: number[]; committed: number[] }[]
   }
   burndown: {
     sprintName: string | null
@@ -389,21 +389,28 @@ export async function fetchReportsData(projectIds?: string[]): Promise<ReportsDa
     : 0
   const velMax = Math.max(10, ...velocitySeries.map(v => v.value)) * 1.2
 
-  // Velocity por projeto — últimas K sprints concluídas de cada projeto (alinhadas por recência).
+  // Velocity por projeto — últimas K sprints concluídas (comprometido × entregue, alinhadas por recência).
   const VEL_K = 4
-  const velByProjectMap = new Map<string, number[]>()
+  const velByProjectMap = new Map<string, { committed: number; completed: number }[]>()
   sprintRows
     .filter(s => s.state === 'completed')
     .sort((a, b) => (a.start_date ?? '').localeCompare(b.start_date ?? ''))
     .forEach(s => {
-      const v = s.velocity != null
+      const sprintItems = itemRows.filter(i => i.sprint_id === s.id)
+      const committed = sprintItems.reduce((a, i) => a + pts(i), 0)
+      const completed = s.velocity != null
         ? Number(s.velocity)
-        : itemRows.filter(i => i.sprint_id === s.id && i.status === 'done').reduce((a, i) => a + pts(i), 0)
-      velByProjectMap.set(s.project_id, [...(velByProjectMap.get(s.project_id) ?? []), v])
+        : sprintItems.filter(i => i.status === 'done').reduce((a, i) => a + pts(i), 0)
+      velByProjectMap.set(s.project_id, [...(velByProjectMap.get(s.project_id) ?? []), { committed, completed }])
     })
+  const padFront = (arr: number[]) => [...new Array<number>(Math.max(0, VEL_K - arr.length)).fill(0), ...arr]
   const velByProject = [...velByProjectMap.entries()].map(([projectId, vals]) => {
     const last = vals.slice(-VEL_K)
-    return { projectId, values: [...Array(Math.max(0, VEL_K - last.length)).fill(0), ...last] }
+    return {
+      projectId,
+      completed: padFront(last.map(v => v.completed)),
+      committed: padFront(last.map(v => v.committed)),
+    }
   })
 
   // ── Burndown (active sprint, or the last completed one) ────────────────────
