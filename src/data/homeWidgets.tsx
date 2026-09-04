@@ -4,7 +4,8 @@
  * can be dropped into the interactive Home grid.
  */
 import type { ReactNode } from 'react'
-import { REPORT_CARDS_LIST, ChartFillProvider, ReportsDataProvider } from '@/data/reportRegistry'
+import { REPORT_CARDS_LIST, ChartFillProvider, ReportsDataProvider, AgingChart } from '@/data/reportRegistry'
+import { liveItems } from '@/data/db/homeLive'
 import {
   BlockedWidget, ReadyWidget, TestingWidget, BacklogAlertWidget, MyQueueWidget,
   ReviewQueueWidget, DesignQueueWidget,
@@ -169,8 +170,8 @@ const NATIVE: WidgetDef[] = [
   card('native.qa-coverage',    'Aging / Rejeição (QA)',     6,  c => <QaCoverageCard {...c} />),
 ]
 
-/** Relatórios de DEMANDAS: o clique abre o board; os demais abrem o detalhe in-place. */
-const DEMAND_REPORTS = new Set<string>(['criados', 'bugs', 'aging'])
+/** Relatórios de DEMANDAS que abrem o board direto; os demais abrem o detalhe/análise. */
+const DEMAND_REPORTS = new Set<string>(['bugs'])
 
 const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
   id: `report.${entry.id}`,
@@ -186,7 +187,14 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
       <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <ChartFillProvider>
           <ReportsDataProvider projectIds={ctx.projectIds.size > 0 ? [...ctx.projectIds] : undefined}>
-            <entry.Component />
+            {entry.id === 'aging'
+              // No aging só o código abre a demanda (barra não é clicável).
+              ? <AgingChart onOpenItem={(id: string) => {
+                  if (!ctx.interactive) return
+                  const item = liveItems().find(w => w.id === id)
+                  if (item) ctx.onOpenItem(item)
+                }} />
+              : <entry.Component />}
           </ReportsDataProvider>
         </ChartFillProvider>
       </div>
@@ -201,7 +209,7 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
         }}
       >
-        {DEMAND_REPORTS.has(entry.id) ? 'Abrir board →' : 'Ver detalhes'}
+        {DEMAND_REPORTS.has(entry.id) ? 'Abrir board →' : entry.id === 'aging' ? 'Analisar demandas →' : 'Ver detalhes'}
       </button>
     </div>
   ),
