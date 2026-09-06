@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { T } from '../components/ds/tokens'
 import {
-  MOCK_USERS, MOCK_TENANT, DASHBOARD_CATALOG,
+  MOCK_USERS, MOCK_TENANT, DASHBOARD_CATALOG, buildPersona,
   deactivateMockUser, blockMockUser,
   type MockUser, type RoleContext, type DashboardType, type UserDashboard,
 } from '../data/session'
@@ -9,7 +9,8 @@ import {
   type Capability, PERMISSION_MATRIX, ROLE_TIER, derivePermissions,
   capabilityVisibility,
 } from '../data/permissions'
-import { getTenantOwnerEmails, getMembers } from '../data/db/members'
+import { getTenantOwnerEmails, getMembers, setMemberStatus, type MemberRow } from '../data/db/members'
+import { normalizeRole } from '../data/db/authProfile'
 import {
   fetchProfileReportsAccess, saveProfileReportsAccess, roleSupportsReportsAccess,
 } from '../data/db/reportsGovernance'
@@ -105,6 +106,18 @@ function ud(user_id: string, dashboard_id: DashboardType, is_default: boolean): 
 
 function userStatus(u: UserWithStatus): 'active'|'inactive'|'blocked' {
   return u.status ?? 'active'
+}
+
+/** Persona enxuta a partir de um profile real do banco — usada para membros
+ *  (ex.: inativos/suspensos) que a hidratação de personas de inspeção descarta,
+ *  garantindo que a tela de Times reflita todos os `profiles`. */
+function personaFromMember(r: MemberRow): UserWithStatus {
+  const role = normalizeRole(r.primary_role)
+  const persona = buildPersona({
+    user_id: r.id, name: r.name || r.email, email: r.email,
+    role_context: role, tenant_owner: r.tenant_owner,
+  })
+  return { ...(persona as UserWithStatus), status: (r.status as 'active'|'inactive'|'blocked') || 'active' }
 }
 
 function Av({ user, size=32 }: { user: MockUser; size?: number }) {
@@ -479,6 +492,19 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
       const map: Record<string,string> = {}
       rows.forEach(r=>{ if (r.email) map[r.email.toLowerCase()] = r.id })
       setProfileIds(map)
+      // Fonte única de status = profiles.status. Sobrepõe o status real nas personas
+      // e inclui membros que a inspeção descarta (inativos/suspensos), para a tela
+      // de Times refletir exatamente o que o card da Início gravou.
+      const statusById = new Map(rows.map(r => [r.id, (r.status as 'active'|'inactive'|'blocked') || 'active']))
+      setUsers(prev => {
+        const known = new Set(prev.map(u => u.user_id))
+        const overlaid = prev.map(u => {
+          const st = statusById.get(u.user_id)
+          return st ? { ...u, status: st } : u
+        })
+        const extra = rows.filter(r => !known.has(r.id)).map(personaFromMember)
+        return [...overlaid, ...extra]
+      })
     })
     return ()=>{ alive = false }
   }, [])
@@ -503,17 +529,22 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
 
   const visible = users.filter(u=>filter==='all'||userStatus(u)===filter)
 
-  function applyAction(userId: string, action: 'deactivate'|'block') {
+  async function applyAction(userId: string, action: 'deactivate'|'block') {
+    const next = action==='deactivate' ? 'inactive' : 'blocked'
     if (action==='deactivate') deactivateMockUser(userId)
     else blockMockUser(userId)
-    setUsers(prev=>prev.map(u=>u.user_id===userId?{...u,status:action==='deactivate'?'inactive':'blocked'}:u))
+    setUsers(prev=>prev.map(u=>u.user_id===userId?{...u,status:next}:u))
     setConfirmId(null); setConfirmAction(null)
+    const ok = await setMemberStatus(userId, next, activeUser.name)
+    if (!ok) showToast('Não foi possível salvar a alteração no banco. Tente novamente.')
   }
 
-  function reactivate(userId: string) {
+  async function reactivate(userId: string) {
     const u = MOCK_USERS.find(u=>u.user_id===userId)
     if (u) (u as UserWithStatus).status = 'active'
     setUsers(prev=>prev.map(u=>u.user_id===userId?{...u,status:'active'}:u))
+    const ok = await setMemberStatus(userId, 'active', activeUser.name)
+    if (!ok) showToast('Não foi possível salvar a reativação no banco. Tente novamente.')
   }
 
   function handleSave(userId: string, draft: EditDraft) {
@@ -539,13 +570,22 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
     const newPerms = userId==='u_admin' ? ['*'] : derivePermissions(draft.role, draft.optIns)
 
     // Mutate MOCK_USERS in place so the session module stays consistent
-    const mu = MOCK_USERS.find(u=>u.user_id===userId)!
-    mu.role_context = draft.role
-    mu.squad_id = draft.squad
-    mu.modules_enabled = draft.modules
-    mu.permissions = newPerms
-    mu.assigned_dashboards = newDashes
-    ;(mu as UserWithStatus).status = draft.status
+    // (membros só do banco — ex.: inativos — podem não estar no MOCK_USERS).
+    const mu = MOCK_USERS.find(u=>u.user_id===userId)
+    if (mu) {
+      mu.role_context = draft.role
+      mu.squad_id = draft.squad
+      mu.modules_enabled = draft.modules
+      mu.permissions = newPerms
+      mu.assigned_dashboards = newDashes
+      ;(mu as UserWithStatus).status = draft.status
+    }
+    // Persiste a mudança de status em profiles.status (fonte única).
+    if (draft.status !== userStatus(target)) {
+      void setMemberStatus(userId, draft.status, activeUser.name).then(ok => {
+        if (!ok) showToast('Não foi possível salvar o status no banco. Tente novamente.')
+      })
+    }
 
     // If editing the currently-active user, refresh the session
     if (userId === activeUser.user_id) {
