@@ -1046,27 +1046,3 @@ export function KpiQaEvidenceWidget(props: WidgetCtx) {
 
 // ─── Projects (RAG) ───────────────────────────────────────────────────────────
 
-export function ProjectsRagWidget(props: WidgetCtx) {
-  const { onNav } = props
-  const ctx = props
-  const projects = scopedProjects(liveAggregates()?.rag ?? [])
-  if (projects.length === 0) {
-    return <EmptyState message="Nenhum projeto no seu escopo." action={{ label: 'Ver projetos', onClick: () => onNav('projects') }} />
-  }
-  return (
-    <Scroll>
-      {projects.map(p => (
-        <RagCard
-          key={p.id}
-          name={p.name}
-          squad={p.squad}
-          rag={p.rag}
-          pct={p.pct}
-          daysLabel={`${p.done}/${p.total} itens`}
-          reason={p.reason}
-          onClick={() => doNav(ctx, 'project', p.id)}
-        />
-      ))}
-    </Scroll>
-  )
-}
