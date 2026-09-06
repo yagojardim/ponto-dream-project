@@ -91,7 +91,6 @@ export const WIDGET_META: Record<string, WidgetMeta> = {
   'native.kpi-ux-handoff':    { category: 'Design / UX', viz: 'donut',  summary: '% de handoff pronto para dev.' },
   'native.design-queue':      { category: 'Design / UX', viz: 'list',   summary: 'Fila de design ativa.' },
   'native.design-validation': { category: 'Design / UX', viz: 'list',   summary: 'Validações de design em andamento.' },
-  'native.design-system':     { category: 'Design / UX', viz: 'alert',  summary: 'Alertas do design system.' },
 
   // ── Portfólio & Gestão ──
   'native.kpi-pmo-active':     { category: 'Portfólio & Gestão', viz: 'number', summary: 'Projetos ativos no portfólio.' },
