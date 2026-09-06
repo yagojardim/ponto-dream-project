@@ -22,6 +22,8 @@ import {
   type DbCalendarEvent,
 } from '@/data/db/calendarEvents'
 import { humanizeActivity } from '@/data/activityLabels'
+import { canApproveTests } from '@/data/cardAuthority'
+import { useSession } from '@/data/SessionContext'
 import { logger } from '@/utils/logger'
 import { scopedItems, scopedProjects, type WidgetCtx } from '@/components/home/nativeWidgets'
 
@@ -669,6 +671,8 @@ export function DesignSystemAlertsCard({ onNav }: WidgetCtx) {
 // ─── QA ───────────────────────────────────────────────────────────────────────
 
 export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx) {
+  const { activeUser } = useSession()
+  const canAct = canApproveTests(activeUser)     // autoridade: só QA/Admin/Owner aprova
   const { reload } = useLiveDashboard()          // subscribe + refetch após gravar
   const [busy, setBusy] = useState<string | null>(null)
   const [handled, setHandled] = useState<Set<string>>(new Set())   // aprovados/reprovados somem
@@ -714,7 +718,8 @@ export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx
   })
 
   return (
-    <SCard title={`Fila de Execução de Testes ${testing.length > 0 ? `(${testing.length})` : ''}`}>
+    <SCard title={`Fila de Execução de Testes ${testing.length > 0 ? `(${testing.length})` : ''}`}
+      help={canAct ? undefined : 'Somente leitura — aprovar/reprovar é exclusivo de QA/Admin.'}>
       {testing.length === 0
         ? <EmptyState message="Nenhum item aguardando teste." action={{ label: 'Ver board', onClick: () => openBoard() }} />
         : (
@@ -731,7 +736,7 @@ export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx
                     {requested.has(item.id) && <ConditionalTag label="evidência pedida" severity="info" />}
                     <StatusBadge status={item.status} />
                   </div>
-                  {isRejecting ? (
+                  {canAct && (isRejecting ? (
                     <div style={{ marginTop: 7 }}>
                       <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
                         placeholder="Motivo da reprovação (obrigatório)…"
@@ -749,7 +754,7 @@ export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx
                       <button disabled={isBusy} onClick={() => setRejectId(item.id)} style={btn(T.crit)}>Reprovar</button>
                       <button disabled={isBusy} onClick={() => void requestEvidence(item)} style={btn(T.text3)}>Solicitar evidência</button>
                     </div>
-                  )}
+                  ))}
                 </div>
               )
             })}
