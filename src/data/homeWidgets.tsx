@@ -9,7 +9,7 @@ import { liveItems } from '@/data/db/homeLive'
 import {
   BlockedWidget, ReadyWidget, TestingWidget, BacklogAlertWidget, MyQueueWidget,
   ReviewQueueWidget, DesignQueueWidget,
-  SprintWidget, ProjectsRagWidget,
+  SprintWidget,
   KpiBlockedWidget, KpiWipWidget, KpiSprintProgressWidget, KpiProjectsWidget, KpiDeliveredWidget,
   KpiAdminProjectsWidget, KpiAdminBoardsWidget, KpiAdminModulesWidget, KpiAdminUsersWidget, KpiAdminInvitesWidget,
   KpiPmoActiveProjectsWidget, KpiPmoAtRiskWidget, KpiPredictabilityWidget, KpiPlannedVsDoneWidget,
@@ -26,7 +26,7 @@ import {
 import { SCard } from '@/components/ds/DashboardKit'
 import { T } from '@/components/ds/tokens'
 import {
-  PmoRagCard, DeliveryRhythmCard, PmMainRagCard, PlannedVsDoneCard, TeamWorkloadCard,
+  PmoRagCard, DeliveryRhythmCard, PlannedVsDoneCard, TeamWorkloadCard,
   ConversionFunnelCard, FeatureAdoptionCard, RoadmapCard, PoTeamCard,
   StuckAgingCard, CeremoniesCard, MyActiveQueueCard, MyBlockedCard, RecentActivityCard,
   DesignValidationCard, TestExecutionCard, QaCoverageCard,
@@ -142,17 +142,15 @@ const NATIVE: WidgetDef[] = [
   list('native.backlog-alert', 'Backlog com alerta',           c => <BacklogAlertWidget {...c} />),
   list('native.review-queue',  'Gargalos de PRs / revisão',    c => <ReviewQueueWidget {...c} />),
   list('native.design-queue',  'Fila de design ativa',         c => <DesignQueueWidget {...c} />),
-  list('native.projects-rag',  'Saúde dos projetos (RAG)',     c => <ProjectsRagWidget {...c} />, true),
 
   // Cards de corpo dos painéis originais
   card('native.admin-users',    'Usuários & Convites',       6,  c => <AdminUsersCard onNav={c.onNav} />),
   card('native.admin-modules',  'Módulos',                   6,  c => <AdminModulesCard onNav={c.onNav} />),
   card('native.admin-audit',    'Auditoria',                 12, c => <AdminAuditCard projectIds={c.projectIds} />),
   card('native.client-feed',    'Mensagens do Cliente',      12, () => <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />),
-  card('native.pmo-rag',        'Saúde por Projeto (RAG)',   6,  c => <PmoRagCard {...c} />),
+  card('native.pmo-rag',        'Saúde dos Projetos (RAG)',  6,  c => <PmoRagCard {...c} />),
   card('native.critical-blockers', 'Bloqueadores Críticos',  6,  c => <CriticalBlockersCard {...c} />),
   card('native.delivery-rhythm', 'Ritmo de Entrega',         12, c => <DeliveryRhythmCard {...c} />),
-  card('native.pm-rag',         'Projeto principal (RAG)',   6,  c => <PmMainRagCard {...c} />),
   card('native.planned-done',   'Planejado × Concluído',     6,  c => <PlannedVsDoneCard {...c} />),
   card('native.team-workload',  'Carga do Time',             12, () => <TeamWorkloadCard />),
   card('native.funnel',         'Funil de Conversão',        6,  () => <ConversionFunnelCard />),
@@ -231,7 +229,7 @@ const ROLE_DEFAULTS: Record<string, string[]> = {
     'native.kpi-admin-projects', 'native.kpi-admin-boards', 'native.kpi-admin-modules',
     'native.kpi-admin-users', 'native.kpi-admin-invites',
     'native.admin-users', 'native.admin-modules', 'native.admin-audit',
-    'report.health', 'native.projects-rag',
+    'report.health', 'native.pmo-rag',
   ],
   pmo: [
     'native.kpi-pmo-active', 'native.kpi-pmo-risk', 'native.kpi-predictability', 'native.kpi-planned-done',
@@ -240,7 +238,7 @@ const ROLE_DEFAULTS: Record<string, string[]> = {
   ],
   'project-manager': [
     'native.kpi-pm-progress', 'native.kpi-pm-deadline', 'native.kpi-blocked', 'native.kpi-predictability',
-    'native.pm-rag', 'native.planned-done', 'native.sprint', 'native.critical-blockers',
+    'native.pmo-rag', 'native.planned-done', 'native.sprint', 'native.critical-blockers',
     'native.team-workload', 'native.client-feed',
     'report.burndown', 'report.workload',
   ],
