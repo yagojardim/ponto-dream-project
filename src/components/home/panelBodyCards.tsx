@@ -12,8 +12,9 @@ import {
 } from '@/components/ds/DashboardKit'
 import {
   liveItems, liveAggregates, liveCurrentSprintName, liveProjects,
-  getBlockedItems, getSprintItems, getTestingItems,
+  getBlockedItems, getSprintItems, getTestingItems, useLiveDashboard,
 } from '@/data/db/homeLive'
+import { updateWorkItemField, addComment } from '@/data/db/workItem'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
 import {
   listCalendarEvents, EVENT_TYPE_LABEL, EVENT_TYPE_ICON,
@@ -599,29 +600,91 @@ const COBERTURA = [
   { criterio: 'Regressão coberta',             pct: 82 },
 ]
 
-export function TestExecutionCard({ openBoard, onOpenItem }: WidgetCtx) {
-  const testing = scopedItems(getTestingItems())
+export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx) {
+  const { reload } = useLiveDashboard()          // subscribe + refetch após gravar
+  const [busy, setBusy] = useState<string | null>(null)
+  const [handled, setHandled] = useState<Set<string>>(new Set())   // aprovados/reprovados somem
+  const [requested, setRequested] = useState<Set<string>>(new Set())
+  const [rejectId, setRejectId] = useState<string | null>(null)
+  const [note, setNote] = useState('')
+
+  const testing = scopedItems(getTestingItems()).filter(i => !handled.has(i.id))
+  const hide = (id: string) => setHandled(prev => new Set(prev).add(id))
+
+  // Aprovar → status done (sai da fila, avança no Board). Grava em work_items + histórico.
+  async function approve(item: WorkItem) {
+    setBusy(item.id)
+    try {
+      await updateWorkItemField(item.id, 'status', 'done', item.status, { actorName: userName })
+      hide(item.id); reload()
+    } catch (err) { logger.error('qa.approve', err) } finally { setBusy(null) }
+  }
+
+  // Reprovar → devolve ao Dev (in-progress) com comentário obrigatório.
+  async function reject(item: WorkItem) {
+    const text = note.trim()
+    if (!text) return
+    setBusy(item.id)
+    try {
+      await addComment(item.id, `Reprovado no teste: ${text}`, { actorName: userName })
+      await updateWorkItemField(item.id, 'status', 'in-progress', item.status, { actorName: userName })
+      hide(item.id); setRejectId(null); setNote(''); reload()
+    } catch (err) { logger.error('qa.reject', err) } finally { setBusy(null) }
+  }
+
+  async function requestEvidence(item: WorkItem) {
+    setBusy(item.id)
+    try {
+      await addComment(item.id, 'Evidência de teste solicitada pela QA.', { actorName: userName })
+      setRequested(prev => new Set(prev).add(item.id))
+    } catch (err) { logger.error('qa.evidence', err) } finally { setBusy(null) }
+  }
+
+  const btn = (color: string) => ({
+    fontSize: 10, color, background: `${color}14`, border: 'none' as const,
+    borderRadius: 4, padding: '3px 9px', cursor: 'pointer',
+  })
+
   return (
-    <SCard title="Fila de Execução de Testes">
+    <SCard title={`Fila de Execução de Testes ${testing.length > 0 ? `(${testing.length})` : ''}`}>
       {testing.length === 0
         ? <EmptyState message="Nenhum item aguardando teste." action={{ label: 'Ver board', onClick: () => openBoard() }} />
         : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {testing.map(item => (
-              <div key={item.id} className="no-drag" onClick={() => onOpenItem(item)}
-                style={{ background: T.bgPage, borderRadius: 7, padding: '9px 12px', cursor: 'pointer' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 9, fontFamily: 'monospace', color: T.text3, width: 52 }}>{item.key}</span>
-                  <span style={{ flex: 1, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}</span>
-                  <StatusBadge status={item.status} />
+            {testing.map(item => {
+              const isRejecting = rejectId === item.id
+              const isBusy = busy === item.id
+              return (
+                <div key={item.id} className="no-drag"
+                  style={{ background: T.bgPage, borderRadius: 7, padding: '9px 12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => onOpenItem(item)}>
+                    <span style={{ fontSize: 9, fontFamily: 'monospace', color: T.text3, width: 52 }}>{item.key}</span>
+                    <span style={{ flex: 1, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{item.title}</span>
+                    {requested.has(item.id) && <ConditionalTag label="evidência pedida" severity="info" />}
+                    <StatusBadge status={item.status} />
+                  </div>
+                  {isRejecting ? (
+                    <div style={{ marginTop: 7 }}>
+                      <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
+                        placeholder="Motivo da reprovação (obrigatório)…"
+                        style={{ width: '100%', resize: 'vertical', fontSize: 11, color: T.text1, background: T.bgSurface,
+                          border: `1px solid ${T.border2}`, borderRadius: 6, padding: '6px 8px', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                      <div style={{ display: 'flex', gap: 5, marginTop: 5 }}>
+                        <button disabled={isBusy || !note.trim()} onClick={() => void reject(item)}
+                          style={{ ...btn(T.crit), opacity: note.trim() ? 1 : 0.5 }}>Confirmar devolução</button>
+                        <button onClick={() => { setRejectId(null); setNote('') }} style={btn(T.text3)}>Cancelar</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
+                      <button disabled={isBusy} onClick={() => void approve(item)} style={btn(T.success)}>Aprovar</button>
+                      <button disabled={isBusy} onClick={() => setRejectId(item.id)} style={btn(T.crit)}>Reprovar</button>
+                      <button disabled={isBusy} onClick={() => void requestEvidence(item)} style={btn(T.text3)}>Solicitar evidência</button>
+                    </div>
+                  )}
                 </div>
-                <div style={{ display: 'flex', gap: 5, marginTop: 6 }}>
-                  <button onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: T.success, background: `${T.success}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Aprovar</button>
-                  <button onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: T.crit, background: `${T.crit}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Reprovar</button>
-                  <button onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: T.text3, background: `${T.text3}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Solicitar evidência</button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
     </SCard>
