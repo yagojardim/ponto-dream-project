@@ -49,6 +49,7 @@ import { getBoardsForScope } from '../data/boards'
 import { fetchAssignedProjects } from '../data/db/projects'
 import { useReportsGovernance, isCardReleased } from '../data/db/reportsGovernance'
 import { can } from '../data/permissions'
+import { canManageUsers } from '../data/cardAuthority'
 import { countActiveModules, listModules, type ModuleView } from '../data/db/modules'
 import { getMembers, setMemberStatus, type MemberRow, type MemberStatus } from '@/data/db/members'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
@@ -247,10 +248,11 @@ function colorOf(seed: string): string {
 const STATUS_COLOR: Record<string, string> = { active: T.success, blocked: T.warn, inactive: T.neutral }
 const STATUS_LABEL: Record<string, string> = { active: 'Ativo', blocked: 'Suspenso', inactive: 'Inativo' }
 
-export function AdminUsersCard({ onNav, onInvite, actorName }: {
+export function AdminUsersCard({ onNav, onInvite, actorName, canManage = true }: {
   onNav: (v: string, targetId?: string) => void
   onInvite?: () => void
   actorName?: string
+  canManage?: boolean
 }) {
   const [rows, setRows] = useState<MemberRow[] | null>(null)
   const [failed, setFailed] = useState(false)
@@ -303,14 +305,14 @@ export function AdminUsersCard({ onNav, onInvite, actorName }: {
                     <span style={{ fontSize: 10, color: c, background: `${c}18`, border: `1px solid ${c}33`, borderRadius: 4, padding: '2px 7px' }}>
                       {STATUS_LABEL[u.status] ?? u.status}
                     </span>
-                    {isActive ? (
+                    {canManage && (isActive ? (
                       <>
                         <button disabled={busy === u.id} onClick={() => void change(u, 'inactive')} style={{ fontSize: 10, color: T.text2, background: `${T.text3}18`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Inativar</button>
                         <button disabled={busy === u.id} onClick={() => void change(u, 'blocked')} style={{ fontSize: 10, color: T.warn, background: `${T.warn}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Suspender</button>
                       </>
                     ) : (
                       <button disabled={busy === u.id} onClick={() => void change(u, 'active')} style={{ fontSize: 10, color: T.success, background: `${T.success}14`, border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>Reativar</button>
-                    )}
+                    ))}
                   </div>
                 )
               })}
@@ -520,7 +522,7 @@ function AdminPanel({ onNav, onInvite }: { onNav: (v: string, targetId?: string)
       </div>
 
       <Grid cols="2fr 1fr">
-        <AdminUsersCard onNav={onNav} onInvite={onInvite} actorName={activeUser?.name} />
+        <AdminUsersCard onNav={onNav} onInvite={onInvite} actorName={activeUser?.name} canManage={canManageUsers(activeUser)} />
 
         <AdminModulesCard onNav={onNav} />
 
