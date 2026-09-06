@@ -237,8 +237,8 @@ export function ProjectHealthModal({ projects, initialId, sprintByProject, onClo
         {/* Rodapé */}
         <div style={{ display: 'flex', gap: 8, padding: '13px 18px', borderTop: `1px solid ${T.border}`, flexWrap: 'wrap' }}>
           {footBtn('Abrir board', () => onNav('project', active.id), true)}
-          {footBtn('Ver itens', () => onNav('list'))}
-          {footBtn('Ver sprint / prazo', () => onNav('project', active.id))}
+          {footBtn('Ver itens', () => onNav('project', `${active.id}#Backlog`))}
+          {footBtn('Ver sprint / prazo', () => onNav('project', `${active.id}#Sprints`))}
         </div>
       </div>
     </div>,
