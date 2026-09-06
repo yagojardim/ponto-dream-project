@@ -435,6 +435,7 @@ function ShellWithRole({
   const [clientMsgProjectId, setClientMsgProjectId] = useState<string | null>(null)
   const [inviteOpen, setInvite] = useState(false)
   const [selectedBoardId, setSelectedBoardId] = useState<string | undefined>()
+  const [projectInitialTab, setProjectInitialTab] = useState<'Backlog' | 'Sprints' | undefined>()
   const [selectedProjectId, setSelectedProjectId] =
     useState<string | undefined>()
   const [selectedIssueId, setSelectedIssueId] = useState<string | undefined>()
@@ -530,8 +531,11 @@ function ShellWithRole({
       return
     }
     if (v === "project" && targetId) {
-      setSelectedProjectId(targetId)
+      // targetId pode vir como "projectId#Aba" (ex.: vindo do modal de Saúde).
+      const [pid, tab] = targetId.split("#")
+      setSelectedProjectId(pid)
       setSelectedBoardId(undefined)
+      setProjectInitialTab(tab === "Backlog" || tab === "Sprints" ? tab : undefined)
     }
     if (v === "issue" && targetId) {
       setSelectedIssueId(targetId)
@@ -677,6 +681,7 @@ function ShellWithRole({
                 <ProjectPage
                   boardId={selectedBoardId}
                   projectId={selectedProjectId}
+                  initialTab={projectInitialTab}
                   onBackToBoards={
                     selectedBoardId ? () => setView("boards-list") : undefined
                   }
