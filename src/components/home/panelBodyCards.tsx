@@ -23,6 +23,7 @@ import {
 } from '@/data/db/calendarEvents'
 import { humanizeActivity } from '@/data/activityLabels'
 import { canApproveTests } from '@/data/cardAuthority'
+import { ProjectHealthModal } from '@/components/home/ProjectHealthModal'
 import { useSession } from '@/data/SessionContext'
 import { logger } from '@/utils/logger'
 import { scopedItems, scopedProjects, type WidgetCtx } from '@/components/home/nativeWidgets'
@@ -30,16 +31,23 @@ import { scopedItems, scopedProjects, type WidgetCtx } from '@/components/home/n
 // ─── PMO ──────────────────────────────────────────────────────────────────────
 
 export function PmoRagCard({ onNav }: WidgetCtx) {
-  const rags = scopedProjects(liveAggregates()?.rag ?? [])
+  const agg = liveAggregates()
+  const rags = scopedProjects(agg?.rag ?? [])
+  const sprintByProject = new Map((agg?.currentSprints ?? []).map(s => [s.projectId, s]))
+  const [openId, setOpenId] = useState<string | null>(null)
   return (
-    <SCard title="Saúde por Projeto (RAG)" help="Semáforo de saúde: 🟢 saudável · 🟡 em risco · 🔴 bloqueado.">
+    <SCard title="Saúde por Projeto (RAG)" help="Semáforo de saúde: 🟢 saudável · 🟡 em risco · 🔴 bloqueado. Clique num projeto para ver o diagnóstico.">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {rags.length === 0 && <EmptyState message="Nenhum projeto no escopo selecionado." />}
         {rags.map(r => (
           <RagCard key={r.id} name={r.name} squad={r.squad} rag={r.rag} pct={r.pct}
-            daysLabel={r.daysLabel} reason={r.reason} onClick={() => onNav('project', r.id)} />
+            daysLabel={r.daysLabel} reason={r.reason} onClick={() => setOpenId(r.id)} />
         ))}
       </div>
+      {openId && (
+        <ProjectHealthModal projects={rags} initialId={openId} sprintByProject={sprintByProject}
+          onClose={() => setOpenId(null)} onNav={onNav} />
+      )}
     </SCard>
   )
 }
