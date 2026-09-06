@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { T } from '@/components/ds/tokens'
 import { ragConfig, type RagStatus } from '@/components/ds/DashboardKit'
+import { setListPrefilter } from '@/data/listPrefilter'
 import type { RagProject, SprintSummary } from '@/data/db/dashboards'
 
 interface HealthAxis { name: string; value: number; color: string }
@@ -237,7 +238,7 @@ export function ProjectHealthModal({ projects, initialId, sprintByProject, onClo
         {/* Rodapé */}
         <div style={{ display: 'flex', gap: 8, padding: '13px 18px', borderTop: `1px solid ${T.border}`, flexWrap: 'wrap' }}>
           {footBtn('Abrir board', () => onNav('project', active.id), true)}
-          {footBtn('Ver itens', () => onNav('project', `${active.id}#Backlog`))}
+          {footBtn('Ver itens', () => { setListPrefilter({ projectId: active.id }); onNav('list') })}
           {footBtn('Ver sprint / prazo', () => onNav('project', `${active.id}#Sprints`))}
         </div>
       </div>
