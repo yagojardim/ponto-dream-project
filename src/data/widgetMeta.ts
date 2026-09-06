@@ -1,140 +1,290 @@
-// Metadados de apresentação dos cards no modal "Adicionar card":
-// categoria (tema), resumo de 1 linha e o tipo de thumbnail (mini-visualização).
-// Chaveado pelo id do WidgetDef (ver src/data/homeWidgets.tsx).
+/**
+ * Altech — Home widget catalog (single source of truth).
+ * Merges the native Início cards with every card of the Reports registry so both
+ * can be dropped into the interactive Home grid.
+ */
+import type { ReactNode } from 'react'
+import { REPORT_CARDS_LIST, ChartFillProvider, ReportsDataProvider, AgingChart } from '@/data/reportRegistry'
+import { liveItems } from '@/data/db/homeLive'
+import {
+  BlockedWidget, ReadyWidget, TestingWidget, BacklogAlertWidget, MyQueueWidget,
+  ReviewQueueWidget, DesignQueueWidget,
+  SprintWidget, ProjectsRagWidget,
+  KpiBlockedWidget, KpiWipWidget, KpiSprintProgressWidget, KpiProjectsWidget, KpiDeliveredWidget,
+  KpiAdminProjectsWidget, KpiAdminBoardsWidget, KpiAdminModulesWidget, KpiAdminUsersWidget, KpiAdminInvitesWidget,
+  KpiPmoActiveProjectsWidget, KpiPmoAtRiskWidget, KpiPredictabilityWidget, KpiPlannedVsDoneWidget,
+  KpiPmProgressWidget, KpiPmDeadlineWidget,
+  KpiMauWidget, KpiStickinessWidget, KpiChurnWidget, KpiAdoptionWidget,
+  KpiPoReadyWidget, KpiBacklogHealthWidget, KpiCreatedVsFinalizedWidget, KpiReleasesHealthWidget,
+  KpiSprintHealthWidget, KpiImpedimentsWidget, KpiSprintGoalWidget,
+  KpiCriticalBugsWidget, KpiLeadTimeWidget, KpiThroughputWidget, KpiReworkWidget,
+  KpiMyItemsWidget, KpiMyLateWidget, KpiMyBlockedWidget,
+  KpiUxFlowsWidget, KpiUxPrototypesWidget, KpiUxPendingWidget, KpiUxHandoffWidget,
+  KpiQaQueueWidget, KpiQaBugsWidget, KpiQaRejectionWidget, KpiQaEvidenceWidget,
+  type WidgetCtx,
+} from '@/components/home/nativeWidgets'
+import { SCard } from '@/components/ds/DashboardKit'
+import { T } from '@/components/ds/tokens'
+import {
+  PmoRagCard, DeliveryRhythmCard, PmMainRagCard, PlannedVsDoneCard, TeamWorkloadCard,
+  ConversionFunnelCard, FeatureAdoptionCard, RoadmapCard, PoTeamCard,
+  StuckAgingCard, CeremoniesCard, MyActiveQueueCard, MyBlockedCard, RecentActivityCard,
+  DesignValidationCard, TestExecutionCard, QaCoverageCard,
+  CriticalBlockersCard,
+} from '@/components/home/panelBodyCards'
+import { AdminUsersCard, AdminModulesCard, AdminAuditCard, ClientFeedCard } from '@/pages/DashboardHomePage'
+import { MOCK_TENANT } from '@/data/session'
 
-export type WidgetViz =
-  | 'number' | 'donut' | 'down' | 'bars' | 'rag' | 'burndown'
-  | 'target' | 'progress' | 'lines' | 'alert' | 'list' | 'grid'
+export type { WidgetCtx }
 
-export interface WidgetMeta {
-  category: string
-  summary: string
-  viz: WidgetViz
+export type WidgetGroup = 'Início' | 'Relatórios'
+
+export interface WidgetDef {
+  id: string
+  title: string
+  group: WidgetGroup
+  /** 'kpi' = card estreito da linha de topo; 'card' = card de corpo. */
+  kind: 'kpi' | 'card'
+  /** Largura padrão em colunas na composição original (12 = largura total). */
+  defaultW: number
+  /** 'fit' = conteúdo escala com o card (KPIs/gráficos); 'scroll' = listas roláveis. */
+  overflow: 'fit' | 'scroll'
+  /** Tamanho mínimo apresentável na grade (colunas / linhas). */
+  minW: number
+  minH: number
+  /** true = o widget não traz moldura própria; o grid o envolve num SCard com o título. */
+  framed?: boolean
+  render: (ctx: WidgetCtx) => ReactNode
 }
 
-// Ordem de exibição das categorias no modal.
-export const WIDGET_CATEGORY_ORDER: string[] = [
-  'Visão geral',
-  'Minha fila',
-  'Produto & Adoção',
-  'Backlog & Prontidão',
-  'Sprint & Cerimônias',
-  'Qualidade & Técnico',
-  'Design / UX',
-  'Portfólio & Gestão',
-  'Administração',
-  'Relatórios',
+function kpi(id: string, title: string, render: (c: WidgetCtx) => ReactNode): WidgetDef {
+  return { id, title, group: 'Início', kind: 'kpi', defaultW: 3, overflow: 'fit', minW: 2, minH: 2, render }
+}
+function list(id: string, title: string, render: (c: WidgetCtx) => ReactNode, framed = false): WidgetDef {
+  return { id, title, group: 'Início', kind: 'card', defaultW: 6, overflow: 'scroll', minW: 3, minH: 2, framed, render }
+}
+/** Card de corpo dos painéis originais (traz o próprio SCard/WorkQueue). */
+function card(id: string, title: string, defaultW: number, render: (c: WidgetCtx) => ReactNode): WidgetDef {
+  return { id, title, group: 'Início', kind: 'card', defaultW, overflow: 'scroll', minW: 3, minH: 3, render }
+}
+
+const NATIVE: WidgetDef[] = [
+  // KPIs genéricos
+  kpi('native.kpi-blocked',   'KPI · Itens bloqueados',      c => <KpiBlockedWidget {...c} />),
+  kpi('native.kpi-wip',       'KPI · Trabalho em andamento', c => <KpiWipWidget {...c} />),
+  kpi('native.kpi-sprint',    'KPI · Progresso da sprint',   c => <KpiSprintProgressWidget {...c} />),
+  kpi('native.kpi-projects',  'KPI · Projetos no escopo',    c => <KpiProjectsWidget {...c} />),
+  kpi('native.kpi-delivered', 'KPI · Entregues',             c => <KpiDeliveredWidget {...c} />),
+
+  // Admin Master
+  kpi('native.kpi-admin-projects', 'KPI · Projetos (tenant)', c => <KpiAdminProjectsWidget {...c} />),
+  kpi('native.kpi-admin-boards',   'KPI · Boards',            c => <KpiAdminBoardsWidget {...c} />),
+  kpi('native.kpi-admin-modules',  'KPI · Módulos ativos',    c => <KpiAdminModulesWidget {...c} />),
+  kpi('native.kpi-admin-users',    'KPI · Usuários',          c => <KpiAdminUsersWidget {...c} />),
+  kpi('native.kpi-admin-invites',  'KPI · Convites',          c => <KpiAdminInvitesWidget {...c} />),
+
+  // PMO / gestão de portfólio
+  kpi('native.kpi-pmo-active',   'KPI · Projetos ativos',        c => <KpiPmoActiveProjectsWidget {...c} />),
+  kpi('native.kpi-pmo-risk',     'KPI · Em risco / atrasados',   c => <KpiPmoAtRiskWidget {...c} />),
+  kpi('native.kpi-predictability', 'KPI · Previsibilidade',      c => <KpiPredictabilityWidget {...c} />),
+  kpi('native.kpi-planned-done', 'KPI · Planejado × Concluído',  c => <KpiPlannedVsDoneWidget {...c} />),
+
+  // Project Manager
+  kpi('native.kpi-pm-progress', 'KPI · Progresso do projeto', c => <KpiPmProgressWidget {...c} />),
+  kpi('native.kpi-pm-deadline', 'KPI · Prazo restante',       c => <KpiPmDeadlineWidget {...c} />),
+
+  // Product Manager
+  kpi('native.kpi-mau',         'KPI · MAU',                  c => <KpiMauWidget {...c} />),
+  kpi('native.kpi-stickiness',  'KPI · Stickiness',           c => <KpiStickinessWidget {...c} />),
+  kpi('native.kpi-churn',       'KPI · Churn Rate',           c => <KpiChurnWidget {...c} />),
+  kpi('native.kpi-adoption',    'KPI · Adoção de features',   c => <KpiAdoptionWidget {...c} />),
+
+  // Product Owner
+  kpi('native.kpi-po-ready',        'KPI · Cobertura Ready',      c => <KpiPoReadyWidget {...c} />),
+  kpi('native.kpi-backlog-health',  'KPI · Saúde do backlog',     c => <KpiBacklogHealthWidget {...c} />),
+  kpi('native.kpi-created-vs-done', 'KPI · Criado vs Finalizado', c => <KpiCreatedVsFinalizedWidget {...c} />),
+  kpi('native.kpi-releases-health', 'KPI · Saúde das releases',   c => <KpiReleasesHealthWidget {...c} />),
+
+  // Scrum Master
+  kpi('native.kpi-sprint-health', 'KPI · Saúde da sprint', c => <KpiSprintHealthWidget {...c} />),
+  kpi('native.kpi-impediments',   'KPI · Impedimentos',    c => <KpiImpedimentsWidget {...c} />),
+  kpi('native.kpi-sprint-goal',   'KPI · Sprint Goal',     c => <KpiSprintGoalWidget {...c} />),
+
+  // Tech Lead
+  kpi('native.kpi-critical-bugs', 'KPI · Bugs críticos', c => <KpiCriticalBugsWidget {...c} />),
+  kpi('native.kpi-leadtime',      'KPI · Lead Time',     c => <KpiLeadTimeWidget {...c} />),
+  kpi('native.kpi-throughput',    'KPI · Vazão',         c => <KpiThroughputWidget {...c} />),
+  kpi('native.kpi-rework',        'KPI · % Retrabalho',  c => <KpiReworkWidget {...c} />),
+
+  // Dev
+  kpi('native.kpi-my-items',   'KPI · Meus itens ativos', c => <KpiMyItemsWidget {...c} />),
+  kpi('native.kpi-my-late',    'KPI · Meus atrasados',    c => <KpiMyLateWidget {...c} />),
+  kpi('native.kpi-my-blocked', 'KPI · Meus bloqueados',   c => <KpiMyBlockedWidget {...c} />),
+
+  // UX / UI
+  kpi('native.kpi-ux-flows',      'KPI · Fluxos em design',       c => <KpiUxFlowsWidget {...c} />),
+  kpi('native.kpi-ux-prototypes', 'KPI · Protótipos p/ validação', c => <KpiUxPrototypesWidget {...c} />),
+  kpi('native.kpi-ux-pending',    'KPI · Pendências UX críticas',  c => <KpiUxPendingWidget {...c} />),
+  kpi('native.kpi-ux-handoff',    'KPI · Handoff pronto',          c => <KpiUxHandoffWidget {...c} />),
+
+  // QA
+  kpi('native.kpi-qa-queue',     'KPI · Aguardando teste',     c => <KpiQaQueueWidget {...c} />),
+  kpi('native.kpi-qa-bugs',      'KPI · Bugs críticos (QA)',   c => <KpiQaBugsWidget {...c} />),
+  kpi('native.kpi-qa-rejection', 'KPI · Taxa de rejeição',     c => <KpiQaRejectionWidget {...c} />),
+  kpi('native.kpi-qa-evidence',  'KPI · Evidências pendentes', c => <KpiQaEvidenceWidget {...c} />),
+
+  // Listas / filas
+  list('native.blocked',       'Bloqueados',                   c => <BlockedWidget {...c} />),
+  list('native.my-queue',      'Minha fila',                   c => <MyQueueWidget {...c} />),
+  list('native.sprint',        'Sprint atual',                 c => <SprintWidget {...c} />),
+  list('native.ready',         'Prontos para desenvolvimento', c => <ReadyWidget {...c} />),
+  list('native.testing',       'Aguardando teste',             c => <TestingWidget {...c} />),
+  list('native.backlog-alert', 'Backlog com alerta',           c => <BacklogAlertWidget {...c} />),
+  list('native.review-queue',  'Gargalos de PRs / revisão',    c => <ReviewQueueWidget {...c} />),
+  list('native.design-queue',  'Fila de design ativa',         c => <DesignQueueWidget {...c} />),
+  list('native.projects-rag',  'Saúde dos projetos (RAG)',     c => <ProjectsRagWidget {...c} />, true),
+
+  // Cards de corpo dos painéis originais
+  card('native.admin-users',    'Usuários & Convites',       6,  c => <AdminUsersCard onNav={c.onNav} />),
+  card('native.admin-modules',  'Módulos',                   6,  c => <AdminModulesCard onNav={c.onNav} />),
+  card('native.admin-audit',    'Auditoria',                 12, c => <AdminAuditCard projectIds={c.projectIds} />),
+  card('native.client-feed',    'Mensagens do Cliente',      12, () => <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />),
+  card('native.pmo-rag',        'Saúde por Projeto (RAG)',   6,  c => <PmoRagCard {...c} />),
+  card('native.critical-blockers', 'Bloqueadores Críticos',  6,  c => <CriticalBlockersCard {...c} />),
+  card('native.delivery-rhythm', 'Ritmo de Entrega',         12, c => <DeliveryRhythmCard {...c} />),
+  card('native.pm-rag',         'Projeto principal (RAG)',   6,  c => <PmMainRagCard {...c} />),
+  card('native.planned-done',   'Planejado × Concluído',     6,  c => <PlannedVsDoneCard {...c} />),
+  card('native.team-workload',  'Carga do Time',             12, () => <TeamWorkloadCard />),
+  card('native.funnel',         'Funil de Conversão',        6,  () => <ConversionFunnelCard />),
+  card('native.feature-adoption', 'Adoção de Features',      6,  () => <FeatureAdoptionCard />),
+  card('native.roadmap',        'Roadmap Estratégico',       12, c => <RoadmapCard {...c} />),
+  card('native.po-team',        'Time Atuando no Projeto',   6,  () => <PoTeamCard />),
+  card('native.stuck-aging',    'Itens Parados + Aging WIP', 6,  c => <StuckAgingCard {...c} />),
+  card('native.ceremonies',     'Cerimônias',                12, c => <CeremoniesCard {...c} />),
+  card('native.my-active-queue', 'Minha Fila Ativa',         12, c => <MyActiveQueueCard {...c} />),
+  card('native.my-blocked',     'Meus Bloqueados',           6,  c => <MyBlockedCard {...c} />),
+  card('native.recent-activity', 'Atividade Recente',        6,  c => <RecentActivityCard {...c} />),
+  card('native.design-validation', 'Design QA / Validação', 6, c => <DesignValidationCard {...c} />),
+  card('native.test-execution', 'Fila de Execução de Testes', 6, c => <TestExecutionCard {...c} />),
+  card('native.qa-coverage',    'Aging / Rejeição (QA)',     6,  c => <QaCoverageCard {...c} />),
 ]
 
-export const WIDGET_META: Record<string, WidgetMeta> = {
-  // ── Visão geral ──
-  'native.kpi-blocked':   { category: 'Visão geral', viz: 'alert',  summary: 'Quantas demandas estão bloqueadas agora.' },
-  'native.kpi-wip':       { category: 'Visão geral', viz: 'number', summary: 'Itens em andamento (trabalho em progresso).' },
-  'native.kpi-sprint':    { category: 'Visão geral', viz: 'burndown', summary: '% de conclusão da sprint atual.' },
-  'native.kpi-projects':  { category: 'Visão geral', viz: 'number', summary: 'Quantos projetos estão no seu escopo.' },
-  'native.kpi-delivered': { category: 'Visão geral', viz: 'bars',   summary: 'Demandas entregues no período.' },
+/** Relatórios de DEMANDAS que abrem o board direto; os demais abrem o detalhe/análise. */
+const DEMAND_REPORTS = new Set<string>(['bugs'])
 
-  // ── Minha fila ──
-  'native.kpi-my-items':   { category: 'Minha fila', viz: 'number', summary: 'Suas demandas ativas no momento.' },
-  'native.kpi-my-late':    { category: 'Minha fila', viz: 'alert',  summary: 'Suas demandas com prazo estourado.' },
-  'native.kpi-my-blocked': { category: 'Minha fila', viz: 'alert',  summary: 'Suas demandas bloqueadas aguardando ação.' },
-  'native.blocked':        { category: 'Minha fila', viz: 'list',   summary: 'Lista das demandas bloqueadas.' },
-  'native.my-queue':       { category: 'Minha fila', viz: 'list',   summary: 'Sua fila de trabalho priorizada.' },
-  'native.ready':          { category: 'Minha fila', viz: 'list',   summary: 'Itens prontos para desenvolvimento.' },
-  'native.testing':        { category: 'Minha fila', viz: 'list',   summary: 'Itens aguardando teste.' },
-  'native.backlog-alert':  { category: 'Minha fila', viz: 'list',   summary: 'Backlog com pendências (critério, épico…).' },
-  'native.my-active-queue':{ category: 'Minha fila', viz: 'list',   summary: 'Sua fila ativa detalhada.' },
-  'native.my-blocked':     { category: 'Minha fila', viz: 'list',   summary: 'Seus itens bloqueados, em detalhe.' },
-  'native.recent-activity':{ category: 'Minha fila', viz: 'list',   summary: 'Atividades recentes no seu escopo.' },
+const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
+  id: `report.${entry.id}`,
+  title: entry.title,
+  group: 'Relatórios' as const,
+  kind: 'card' as const,
+  defaultW: 6,
+  overflow: 'fit' as const,
+  minW: 3,
+  minH: 3,
+  render: (ctx: WidgetCtx) => (
+    <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <ChartFillProvider>
+          <ReportsDataProvider projectIds={ctx.projectIds.size > 0 ? [...ctx.projectIds] : undefined}>
+            {entry.id === 'aging'
+              // No aging só o código abre a demanda (barra não é clicável).
+              ? <AgingChart onOpenItem={(id: string) => {
+                  if (!ctx.interactive) return
+                  const item = liveItems().find(w => w.id === id)
+                  if (item) ctx.onOpenItem(item)
+                }} />
+              : <entry.Component />}
+          </ReportsDataProvider>
+        </ChartFillProvider>
+      </div>
+      <button
+        className="no-drag"
+        onClick={() => {
+          if (!ctx.interactive) return
+          DEMAND_REPORTS.has(entry.id) ? ctx.openBoard() : ctx.openDetail(entry.id)
+        }}
+        style={{
+          flex: '0 0 auto', alignSelf: 'flex-start', fontSize: 11, color: T.accent,
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+        }}
+      >
+        {DEMAND_REPORTS.has(entry.id) ? 'Abrir board →' : entry.id === 'aging' ? 'Analisar demandas →' : 'Ver detalhes'}
+      </button>
+    </div>
+  ),
 
-  // ── Produto & Adoção ──
-  'native.kpi-mau':          { category: 'Produto & Adoção', viz: 'number', summary: 'Usuários ativos mensais do produto.' },
-  'native.kpi-stickiness':   { category: 'Produto & Adoção', viz: 'donut',  summary: 'Razão DAU/MAU — recorrência de uso.' },
-  'native.kpi-churn':        { category: 'Produto & Adoção', viz: 'down',   summary: '% de usuários que deixaram de usar.' },
-  'native.kpi-adoption':     { category: 'Produto & Adoção', viz: 'bars',   summary: '% de usuários que usam cada recurso.' },
-  'native.funnel':           { category: 'Produto & Adoção', viz: 'bars',   summary: 'Funil de conversão por etapa.' },
-  'native.feature-adoption': { category: 'Produto & Adoção', viz: 'bars',   summary: 'Adoção das principais funcionalidades.' },
 
-  // ── Backlog & Prontidão ──
-  'native.kpi-po-ready':        { category: 'Backlog & Prontidão', viz: 'donut', summary: '% do backlog pronto para dev.' },
-  'native.kpi-backlog-health':  { category: 'Backlog & Prontidão', viz: 'rag',   summary: 'Itens sem critério, épico ou estimativa.' },
-  'native.kpi-created-vs-done': { category: 'Backlog & Prontidão', viz: 'lines', summary: 'Ritmo: abertas × concluídas.' },
-  'native.kpi-releases-health': { category: 'Backlog & Prontidão', viz: 'progress', summary: 'Progresso e estado das releases.' },
-  'native.po-team':             { category: 'Backlog & Prontidão', viz: 'grid',  summary: 'Time atuando no projeto.' },
-  'native.stuck-aging':         { category: 'Backlog & Prontidão', viz: 'bars',  summary: 'Itens parados e aging do WIP.' },
+}))
 
-  // ── Sprint & Cerimônias ──
-  'native.kpi-sprint-health': { category: 'Sprint & Cerimônias', viz: 'burndown', summary: 'Saúde/burndown da sprint atual.' },
-  'native.kpi-impediments':   { category: 'Sprint & Cerimônias', viz: 'alert',    summary: 'Impedimentos abertos na sprint.' },
-  'native.kpi-sprint-goal':   { category: 'Sprint & Cerimônias', viz: 'target',   summary: 'Objetivo da sprint e progresso.' },
-  'native.sprint':            { category: 'Sprint & Cerimônias', viz: 'list',     summary: 'Demandas da sprint atual.' },
-  'native.ceremonies':        { category: 'Sprint & Cerimônias', viz: 'grid',     summary: 'Cerimônias agendadas da sprint.' },
-  'native.delivery-rhythm':   { category: 'Sprint & Cerimônias', viz: 'lines',    summary: 'Ritmo de entrega ao longo do tempo.' },
+export const HOME_WIDGETS: WidgetDef[] = [...NATIVE, ...REPORTS]
 
-  // ── Qualidade & Técnico ──
-  'native.kpi-critical-bugs': { category: 'Qualidade & Técnico', viz: 'alert',  summary: 'Bugs críticos abertos.' },
-  'native.kpi-leadtime':      { category: 'Qualidade & Técnico', viz: 'number', summary: 'Tempo médio da criação à entrega.' },
-  'native.kpi-throughput':    { category: 'Qualidade & Técnico', viz: 'bars',   summary: 'Vazão: itens concluídos por período.' },
-  'native.kpi-rework':        { category: 'Qualidade & Técnico', viz: 'donut',  summary: '% de retrabalho nas demandas.' },
-  'native.kpi-qa-queue':      { category: 'Qualidade & Técnico', viz: 'number', summary: 'Itens aguardando teste.' },
-  'native.kpi-qa-bugs':       { category: 'Qualidade & Técnico', viz: 'alert',  summary: 'Bugs críticos na visão de QA.' },
-  'native.kpi-qa-rejection':  { category: 'Qualidade & Técnico', viz: 'down',   summary: 'Taxa de rejeição em testes.' },
-  'native.kpi-qa-evidence':   { category: 'Qualidade & Técnico', viz: 'number', summary: 'Evidências de teste pendentes.' },
-  'native.review-queue':      { category: 'Qualidade & Técnico', viz: 'list',   summary: 'Gargalos de PRs / revisão.' },
-  'native.test-execution':    { category: 'Qualidade & Técnico', viz: 'list',   summary: 'Fila de execução de testes.' },
-  'native.qa-coverage':       { category: 'Qualidade & Técnico', viz: 'bars',   summary: 'Aging e rejeição na visão de QA.' },
-
-  // ── Design / UX ──
-  'native.kpi-ux-flows':      { category: 'Design / UX', viz: 'number', summary: 'Fluxos em design no momento.' },
-  'native.kpi-ux-prototypes': { category: 'Design / UX', viz: 'number', summary: 'Protótipos aguardando validação.' },
-  'native.kpi-ux-pending':    { category: 'Design / UX', viz: 'alert',  summary: 'Pendências de UX críticas.' },
-  'native.kpi-ux-handoff':    { category: 'Design / UX', viz: 'donut',  summary: '% de handoff pronto para dev.' },
-  'native.design-queue':      { category: 'Design / UX', viz: 'list',   summary: 'Fila de design ativa.' },
-  'native.design-validation': { category: 'Design / UX', viz: 'list',   summary: 'Validações de design em andamento.' },
-
-  // ── Portfólio & Gestão ──
-  'native.kpi-pmo-active':     { category: 'Portfólio & Gestão', viz: 'number', summary: 'Projetos ativos no portfólio.' },
-  'native.kpi-pmo-risk':       { category: 'Portfólio & Gestão', viz: 'alert',  summary: 'Projetos em risco ou atrasados.' },
-  'native.kpi-predictability': { category: 'Portfólio & Gestão', viz: 'donut',  summary: 'Previsibilidade das entregas.' },
-  'native.kpi-planned-done':   { category: 'Portfólio & Gestão', viz: 'bars',   summary: 'Planejado × concluído.' },
-  'native.kpi-pm-progress':    { category: 'Portfólio & Gestão', viz: 'donut',  summary: 'Progresso geral do projeto.' },
-  'native.kpi-pm-deadline':    { category: 'Portfólio & Gestão', viz: 'number', summary: 'Prazo restante do projeto.' },
-  'native.projects-rag':       { category: 'Portfólio & Gestão', viz: 'rag',    summary: 'Semáforo RAG dos projetos.' },
-  'native.pmo-rag':            { category: 'Portfólio & Gestão', viz: 'rag',    summary: 'Saúde por projeto (RAG).' },
-  'native.pm-rag':             { category: 'Portfólio & Gestão', viz: 'rag',    summary: 'Saúde do projeto principal (RAG).' },
-  'native.critical-blockers':  { category: 'Portfólio & Gestão', viz: 'alert',  summary: 'Bloqueadores críticos do portfólio.' },
-  'native.planned-done':       { category: 'Portfólio & Gestão', viz: 'bars',   summary: 'Planejado × concluído, em detalhe.' },
-  'native.team-workload':      { category: 'Portfólio & Gestão', viz: 'bars',   summary: 'Carga de trabalho do time.' },
-  'native.roadmap':            { category: 'Portfólio & Gestão', viz: 'grid',   summary: 'Roadmap estratégico por período.' },
-
-  // ── Administração ──
-  'native.kpi-admin-projects': { category: 'Administração', viz: 'number', summary: 'Projetos do tenant.' },
-  'native.kpi-admin-boards':   { category: 'Administração', viz: 'number', summary: 'Boards do tenant.' },
-  'native.kpi-admin-modules':  { category: 'Administração', viz: 'number', summary: 'Módulos ativos no tenant.' },
-  'native.kpi-admin-users':    { category: 'Administração', viz: 'number', summary: 'Usuários da conta.' },
-  'native.kpi-admin-invites':  { category: 'Administração', viz: 'number', summary: 'Convites pendentes.' },
-  'native.admin-users':        { category: 'Administração', viz: 'grid',   summary: 'Usuários e convites do tenant.' },
-  'native.admin-modules':      { category: 'Administração', viz: 'grid',   summary: 'Módulos contratados/ativos.' },
-  'native.admin-audit':        { category: 'Administração', viz: 'list',   summary: 'Auditoria de marcos do tenant.' },
-  'native.client-feed':        { category: 'Administração', viz: 'list',   summary: 'Feed de sinais dos clientes.' },
-
-  // ── Relatórios ──
-  'report.burndown': { category: 'Relatórios', viz: 'burndown', summary: 'Story points restantes vs. ideal na sprint.' },
-  'report.velocity': { category: 'Relatórios', viz: 'bars',     summary: 'Story points entregues por sprint.' },
-  'report.cfd':      { category: 'Relatórios', viz: 'bars',     summary: 'Distribuição de itens por status (CFD).' },
-  'report.bugs':     { category: 'Relatórios', viz: 'bars',     summary: 'Bugs abertos por severidade.' },
-  'report.criados':  { category: 'Relatórios', viz: 'lines',    summary: 'Demandas criadas × resolvidas.' },
-  'report.workload': { category: 'Relatórios', viz: 'bars',     summary: 'Story points ativos por pessoa.' },
-  'report.aging':    { category: 'Relatórios', viz: 'bars',     summary: 'Dias no status atual por demanda.' },
-  'report.leadtime': { category: 'Relatórios', viz: 'number',   summary: 'Lead time e cycle time médios.' },
-  'report.health':   { category: 'Relatórios', viz: 'rag',      summary: 'Score de saúde do projeto (5 dimensões).' },
-  'report.epic':     { category: 'Relatórios', viz: 'burndown', summary: 'Burndown por épico / release.' },
+export function getWidget(id: string): WidgetDef | undefined {
+  return HOME_WIDGETS.find(w => w.id === id)
 }
 
-/** Metadados de um card, com fallback pela categoria do grupo (Início/Relatórios). */
-export function widgetMetaFor(id: string, group: string, kind: 'kpi' | 'card'): WidgetMeta {
-  const meta = WIDGET_META[id]
-  if (meta) return meta
-  const fallbackViz: WidgetViz = kind === 'kpi' ? 'number' : 'grid'
-  return { category: group, summary: '', viz: fallbackViz }
+/**
+ * Composição original de cada painel por papel: KPIs de topo na ordem do mural,
+ * seguidos das filas/listas e dos cards de relatório do board de composição.
+ */
+const ROLE_DEFAULTS: Record<string, string[]> = {
+  admin: [
+    'native.kpi-admin-projects', 'native.kpi-admin-boards', 'native.kpi-admin-modules',
+    'native.kpi-admin-users', 'native.kpi-admin-invites',
+    'native.admin-users', 'native.admin-modules', 'native.admin-audit',
+    'report.health', 'native.projects-rag',
+  ],
+  pmo: [
+    'native.kpi-pmo-active', 'native.kpi-pmo-risk', 'native.kpi-predictability', 'native.kpi-planned-done',
+    'native.pmo-rag', 'native.critical-blockers', 'native.delivery-rhythm', 'native.client-feed',
+    'report.velocity', 'report.criados',
+  ],
+  'project-manager': [
+    'native.kpi-pm-progress', 'native.kpi-pm-deadline', 'native.kpi-blocked', 'native.kpi-predictability',
+    'native.pm-rag', 'native.planned-done', 'native.sprint', 'native.critical-blockers',
+    'native.team-workload', 'native.client-feed',
+    'report.burndown', 'report.workload',
+  ],
+  'product-manager': [
+    'native.kpi-mau', 'native.kpi-stickiness', 'native.kpi-churn', 'native.kpi-adoption',
+    'native.funnel', 'native.feature-adoption', 'native.roadmap',
+    'report.criados', 'report.health',
+  ],
+  'product-owner': [
+    'native.kpi-po-ready', 'native.kpi-backlog-health', 'native.kpi-created-vs-done', 'native.kpi-releases-health',
+    'native.backlog-alert', 'native.ready', 'native.client-feed', 'native.po-team',
+    'report.criados', 'report.aging',
+  ],
+  'scrum-master': [
+    'native.kpi-sprint-health', 'native.kpi-impediments', 'native.kpi-sprint-goal', 'native.kpi-wip',
+    'native.blocked', 'native.stuck-aging', 'native.ceremonies',
+    'report.burndown', 'report.cfd',
+  ],
+  'tech-lead': [
+    'native.kpi-critical-bugs', 'native.kpi-leadtime', 'native.kpi-throughput', 'native.kpi-rework',
+    'native.review-queue', 'native.client-feed',
+    'report.leadtime',
+  ],
+  dev: [
+    'native.kpi-my-items', 'native.kpi-my-late', 'native.kpi-my-blocked',
+    'native.my-active-queue', 'native.my-blocked', 'native.recent-activity', 'native.client-feed',
+    'report.burndown',
+  ],
+  ux: [
+    'native.kpi-ux-flows', 'native.kpi-ux-prototypes', 'native.kpi-ux-pending', 'native.kpi-ux-handoff',
+    'native.design-queue', 'native.design-validation',
+    'report.workload',
+  ],
+  qa: [
+    'native.kpi-qa-queue', 'native.kpi-qa-bugs', 'native.kpi-qa-rejection', 'native.kpi-qa-evidence',
+    'native.test-execution', 'native.qa-coverage',
+    'report.bugs', 'report.criados',
+  ],
+}
+
+/** Widgets shown on the very first access, per dashboard/role. */
+export function defaultWidgetIds(role: string): string[] {
+  return ROLE_DEFAULTS[role] ?? [
+    'native.kpi-blocked', 'native.kpi-wip', 'native.kpi-sprint', 'native.kpi-projects',
+    'native.my-queue', 'native.sprint',
+  ]
 }
