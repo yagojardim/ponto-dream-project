@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import {
   KpiCard, RagCard, WorkQueue, SprintDonutCard, EmptyState,
-  MiniBarChart, MiniSparkline,
+  MiniBarChart, MiniSparkline, SCard, ConditionalTag, Av,
   type WorkItem,
 } from '@/components/ds/DashboardKit'
 import { BurndownChart } from '@/data/reportRegistry'
@@ -205,21 +205,61 @@ export function MyQueueWidget(props: WidgetCtx) {
   )
 }
 
-/** Itens em revisão / bugs — gargalos técnicos do painel do Tech Lead. */
+/** Itens em revisão / bugs — gargalos técnicos do painel do Tech Lead.
+ *  Enriquecido: revisor (ou "sem reviewer"), tempo parado (days_blocked) e marca de bug.
+ *  Ordena os mais críticos no topo (sem revisor → mais dias parados). */
 export function ReviewQueueWidget(props: WidgetCtx) {
-  const { openBoard, onOpenItem } = props
   const ctx = props
   const items = scopedItems(liveItems()).filter(w => w.status === 'in-review' || w.type === 'bug')
+  const rows = [...items].sort((a, b) => {
+    const noRevA = a.assignee ? 0 : 1
+    const noRevB = b.assignee ? 0 : 1
+    if (noRevA !== noRevB) return noRevB - noRevA          // sem revisor primeiro
+    return (b.days_blocked ?? 0) - (a.days_blocked ?? 0)   // mais parado primeiro
+  })
+  const noReviewer = items.filter(w => !w.assignee).length
+
+  const viewAll = items.length > 0 ? (
+    <button onClick={e => { e.stopPropagation(); doOpenBoard(ctx) }}
+      style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Ver board →</button>
+  ) : undefined
+
   return (
-    <WorkQueue
-      title={`Gargalos de PRs / Issues em revisão (${items.length})`}
-      items={items}
-      maxItems={20}
-      emptyMsg="Nenhum gargalo no momento."
-      onOpen={item => doOpenItem(ctx, item)}
-      onViewAll={() => doOpenBoard(ctx)}
+    <SCard title={`Gargalos de PRs / Issues em revisão (${items.length})`} action={viewAll}
       style={{ border: 'none', background: 'transparent' }}
-    />
+      help={noReviewer > 0 ? `${noReviewer} sem revisor — prioridade de atribuição.` : undefined}>
+      {rows.length === 0
+        ? <EmptyState message="Nenhum gargalo no momento. 🟢" />
+        : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {rows.slice(0, 20).map(w => {
+              const d = w.days_blocked ?? 0
+              return (
+                <div key={w.id} className="no-drag" onClick={() => doOpenItem(ctx, w)}
+                  style={{ background: T.bgPage, borderRadius: 7, padding: '8px 10px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 99, background: w.type === 'bug' ? T.crit : T.purple, flexShrink: 0 }} />
+                    <span style={{ fontSize: 9, fontFamily: 'monospace', color: T.text3, width: 56, flexShrink: 0 }}>{w.key}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{w.title}</span>
+                    {d > 0 && <ConditionalTag label={`${d}d parado`} severity={d >= 3 ? 'crit' : 'warn'} />}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                    {w.assignee
+                      ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <Av initials={w.assignee.initials} color={w.assignee.color} size={18} />
+                          <span style={{ fontSize: 10.5, color: T.text3 }}>revisor: {w.assignee.name}</span>
+                        </span>
+                      )
+                      : <ConditionalTag label="sem reviewer" severity="warn" />}
+                    {w.type === 'bug' && <ConditionalTag label="bug" severity="crit" />}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+    </SCard>
   )
 }
 
