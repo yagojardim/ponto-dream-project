@@ -15,6 +15,7 @@ import {
   getBlockedItems, getSprintItems, getTestingItems, useLiveDashboard,
 } from '@/data/db/homeLive'
 import { updateWorkItemField, addComment } from '@/data/db/workItem'
+import { listEpics, type EpicsData } from '@/data/db/epics'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
 import {
   listCalendarEvents, EVENT_TYPE_LABEL, EVENT_TYPE_ICON,
@@ -159,12 +160,6 @@ const FEATURES = [
   { name: 'Portal Cliente', adocao: 31 },
   { name: 'Automações',     adocao: 12 },
 ]
-const ROADMAP = [
-  { epic: 'Portal do Cliente v2', quarter: 'Q3 2025', status: 'Em andamento', valor: 'Retenção' },
-  { epic: 'Automações',           quarter: 'Q4 2025', status: 'Planejado',    valor: 'Eficiência' },
-  { epic: 'Relatórios avançados', quarter: 'Q4 2025', status: 'Planejado',    valor: 'Expansão' },
-]
-
 export function ConversionFunnelCard() {
   return (
     <SCard title="Funil de Conversão / Ativação">
@@ -201,22 +196,65 @@ export function FeatureAdoptionCard() {
   )
 }
 
-export function RoadmapCard({ onNav }: WidgetCtx) {
+export function RoadmapCard({ onNav, projectIds }: WidgetCtx) {
+  const [data, setData] = useState<EpicsData | null>(null)
+  useEffect(() => {
+    let alive = true
+    listEpics(projectIds.size ? [...projectIds] : undefined)
+      .then(d => { if (alive) setData(d) })
+      .catch(err => { logger.error('pm.roadmap', err); if (alive) setData({ epics: [], features: [], items: [], profiles: [], projects: [] }) })
+    return () => { alive = false }
+  }, [projectIds])
+
+  if (!data) return <SCard title="Roadmap Estratégico"><LoadingState rows={3} /></SCard>
+
+  const projMap = new Map(data.projects.map(p => [p.id, p]))
+  const showTag = projectIds.size !== 1
+  const rows = data.epics.map(e => {
+    const its = data.items.filter(i => i.epic_id === e.id)
+    const total = its.length
+    const done = its.filter(i => i.status === 'done').length
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0
+    const status = pct >= 100 ? 'Concluído' : pct > 0 ? 'Em andamento' : 'Planejado'
+    return { e, pct, done, total, status }
+  }).sort((a, b) => a.pct - b.pct)
+
   return (
-    <SCard title="Roadmap Estratégico">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
-        {ROADMAP.map(r => (
-          <div key={r.epic} className="no-drag" onClick={() => onNav('epics')}
-            style={{ background: T.bgPage, borderRadius: 8, padding: '12px 14px', cursor: 'pointer' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text1 }}>{r.epic}</div>
-            <div style={{ fontSize: 10, color: T.text3, marginTop: 3 }}>{r.quarter}</div>
-            <div style={{ marginTop: 8 }}>
-              <ConditionalTag label={r.status} severity={r.status === 'Em andamento' ? 'info' : 'neutral'} />
-            </div>
-            <div style={{ fontSize: 10, color: T.success, marginTop: 8 }}>↑ {r.valor}</div>
+    <SCard title="Roadmap Estratégico" help="Épicos do tenant e o progresso real de cada um (itens concluídos). Segue o filtro de projetos.">
+      {rows.length === 0
+        ? <EmptyState message="Nenhum épico no escopo." action={{ label: 'Ver épicos', onClick: () => onNav('epics') }} />
+        : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {rows.map(({ e, pct, done, total, status }) => {
+              const p = showTag ? projMap.get(e.project_id) : null
+              const col = pct >= 60 ? T.success : pct >= 20 ? T.accent : T.text3
+              return (
+                <div key={e.id} className="no-drag" onClick={() => onNav('epics', e.id)}
+                  style={{ background: T.bgPage, borderRadius: 8, padding: '10px 12px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: 2, background: e.color || T.indigo, flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{e.name}</span>
+                    {e.quarter && <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{e.quarter}</span>}
+                    <ConditionalTag label={status} severity={status === 'Em andamento' ? 'info' : 'neutral'} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                    <div style={{ flex: 1, height: 7, background: T.bgSurface2, borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: col }} />
+                    </div>
+                    <span style={{ fontSize: 10, color: T.text3, width: 66, textAlign: 'right', flexShrink: 0 }}>{done}/{total} · {pct}%</span>
+                  </div>
+                  {p && (
+                    <div style={{ marginTop: 5 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: T.text3 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: 2, background: T.indigo }} />{p.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
-        ))}
-      </div>
+        )}
     </SCard>
   )
 }
@@ -549,56 +587,86 @@ export function RecentActivityCard({ userName }: WidgetCtx) {
 
 // ─── UX / UI ──────────────────────────────────────────────────────────────────
 
-const VALIDACOES = [
-  { item: 'Board Kanban v2',  feedback: 'Aprovado pelo PO',              status: 'in-review' as const },
-  { item: 'Modal de criação', feedback: 'Dev devolveu — acessibilidade', status: 'blocked'   as const },
-  { item: 'Filtros avançados', feedback: 'Aguardando usuário teste',     status: 'testing'   as const },
-]
-const DS_ALERTS = [
-  { component: 'Button', issue: 'Variante ghost ausente no tema escuro' },
-  { component: 'Badge',  issue: 'Tamanho inconsistente com Figma' },
-]
+// Fila real de validação = itens em revisão (aguardando aprovação de design/PO).
+function reviewItems(): WorkItem[] {
+  return scopedItems(liveItems()).filter(w => w.status === 'in-review')
+}
 
-export function DesignValidationCard() {
+export function DesignValidationCard({ onNav, onOpenItem, projectIds }: WidgetCtx) {
+  const items = reviewItems()
+  const showTag = projectIds.size !== 1
+  const projMap = new Map(liveProjects().map(p => [p.id, p]))
+  const shown = items.slice(0, 6)
+  const viewAll = items.length > 0 ? (
+    <button onClick={e => { e.stopPropagation(); onNav('list') }}
+      style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Ver todos →</button>
+  ) : undefined
   return (
-    <SCard title="Design QA / Validação">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {VALIDACOES.map(v => (
-          <div key={v.item} style={{ background: T.bgPage, borderRadius: 7, padding: '9px 12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: T.text1 }}>{v.item}</span>
-              <StatusBadge status={v.status} />
-            </div>
-            <div style={{ fontSize: 10, color: T.text3, marginTop: 3 }}>{v.feedback}</div>
+    <SCard title={`Design QA / Validação ${items.length > 0 ? `(${items.length})` : ''}`} action={viewAll}
+      help="Itens em revisão aguardando validação. Clique para abrir a demanda.">
+      {shown.length === 0
+        ? <EmptyState message="Nada aguardando validação. ✅" />
+        : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {shown.map(w => {
+              const p = showTag ? projMap.get(w.project_id) : null
+              return (
+                <div key={w.id} className="no-drag" onClick={() => onOpenItem(w)}
+                  style={{ background: T.bgPage, borderRadius: 7, padding: '9px 12px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 9, fontFamily: 'monospace', color: T.text3, width: 52, flexShrink: 0 }}>{w.key}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{w.title}</span>
+                    <StatusBadge status={w.status} />
+                  </div>
+                  {(p || w.assignee) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
+                      {p && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: T.text3 }}><span style={{ width: 7, height: 7, borderRadius: 2, background: p.color }} />{p.name}</span>}
+                      {w.assignee && <span style={{ fontSize: 10, color: T.text3 }}>{w.assignee.name}</span>}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
-        ))}
-      </div>
+        )}
     </SCard>
   )
 }
 
-export function DesignSystemAlertsCard() {
+// Roll-up por projeto das validações pendentes — visão 1/N (ex-"Design System").
+export function DesignSystemAlertsCard({ onNav }: WidgetCtx) {
+  const items = reviewItems()
+  const projMap = new Map(liveProjects().map(p => [p.id, p]))
+  const byProj = [...items.reduce((m, w) => m.set(w.project_id, (m.get(w.project_id) ?? 0) + 1), new Map<string, number>())]
+    .sort((a, b) => b[1] - a[1])
+  const max = Math.max(1, ...byProj.map(([, n]) => n))
   return (
-    <SCard title="Design System — Inconsistências">
-      {DS_ALERTS.length === 0
-        ? <EmptyState message="Design System consistente. ✅" />
-        : DS_ALERTS.map(a => (
-          <div key={a.component} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <ConditionalTag label={a.component} severity="info" />
-            <span style={{ fontSize: 11, color: T.text2 }}>{a.issue}</span>
+    <SCard title="Validações de Design" help="Quantas validações estão pendentes em cada projeto (itens em revisão)."
+      action={<button onClick={() => onNav('list')} style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer' }}>Ver todos →</button>}>
+      {byProj.length === 0
+        ? <EmptyState message="Nenhuma validação pendente. ✅" />
+        : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {byProj.map(([pid, n]) => {
+              const p = projMap.get(pid)
+              return (
+                <div key={pid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 9, height: 9, borderRadius: 2, background: p?.color ?? T.accent, flexShrink: 0 }} />
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{p?.name ?? 'Projeto'}</span>
+                  <div style={{ width: 90, height: 8, background: T.bgSurface2, borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ width: `${(n / max) * 100}%`, height: '100%', background: p?.color ?? T.accent, opacity: 0.85 }} />
+                  </div>
+                  <span style={{ width: 20, textAlign: 'right', fontSize: 12, fontWeight: 700, color: T.text1 }}>{n}</span>
+                </div>
+              )
+            })}
           </div>
-        ))}
+        )}
     </SCard>
   )
 }
 
 // ─── QA ───────────────────────────────────────────────────────────────────────
-
-const COBERTURA = [
-  { criterio: 'Critérios de aceite validados', pct: 68 },
-  { criterio: 'Casos de teste documentados',   pct: 45 },
-  { criterio: 'Regressão coberta',             pct: 82 },
-]
 
 export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx) {
   const { reload } = useLiveDashboard()          // subscribe + refetch após gravar
@@ -694,21 +762,8 @@ export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx
 export function QaCoverageCard({ onNav, onOpenItem }: WidgetCtx) {
   const retest = scopedItems(liveItems()).filter(w => w.type === 'bug' && w.status === 'testing')
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <WorkQueue title="Bugs para Reteste" items={retest} onOpen={onOpenItem}
-        onViewAll={() => onNav('list')} emptyMsg="Nenhum bug aguardando reteste." />
-      <SCard title="Cobertura / Critérios Validados">
-        {COBERTURA.map(c => (
-          <div key={c.criterio} style={{ marginBottom: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 11, color: T.text2 }}>{c.criterio}</span>
-              <span style={{ fontSize: 10, color: c.pct >= 70 ? T.success : T.warn }}>{c.pct}%</span>
-            </div>
-            <ProgressBar pct={c.pct} color={c.pct >= 70 ? T.success : T.warn} />
-          </div>
-        ))}
-      </SCard>
-    </div>
+    <WorkQueue title="Bugs para Reteste" items={retest} onOpen={onOpenItem}
+      onViewAll={() => onNav('list')} emptyMsg="Nenhum bug aguardando reteste." />
   )
 }
 
