@@ -635,39 +635,6 @@ export function DesignValidationCard({ onNav, onOpenItem, projectIds }: WidgetCt
   )
 }
 
-// Roll-up por projeto das validações pendentes — visão 1/N (ex-"Design System").
-export function DesignSystemAlertsCard({ onNav }: WidgetCtx) {
-  const items = reviewItems()
-  const projMap = new Map(liveProjects().map(p => [p.id, p]))
-  const byProj = [...items.reduce((m, w) => m.set(w.project_id, (m.get(w.project_id) ?? 0) + 1), new Map<string, number>())]
-    .sort((a, b) => b[1] - a[1])
-  const max = Math.max(1, ...byProj.map(([, n]) => n))
-  return (
-    <SCard title="Validações de Design" help="Quantas validações estão pendentes em cada projeto (itens em revisão)."
-      action={<button onClick={() => onNav('list')} style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer' }}>Ver todos →</button>}>
-      {byProj.length === 0
-        ? <EmptyState message="Nenhuma validação pendente. ✅" />
-        : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {byProj.map(([pid, n]) => {
-              const p = projMap.get(pid)
-              return (
-                <div key={pid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 9, height: 9, borderRadius: 2, background: p?.color ?? T.accent, flexShrink: 0 }} />
-                  <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{p?.name ?? 'Projeto'}</span>
-                  <div style={{ width: 90, height: 8, background: T.bgSurface2, borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ width: `${(n / max) * 100}%`, height: '100%', background: p?.color ?? T.accent, opacity: 0.85 }} />
-                  </div>
-                  <span style={{ width: 20, textAlign: 'right', fontSize: 12, fontWeight: 700, color: T.text1 }}>{n}</span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-    </SCard>
-  )
-}
-
 // ─── QA ───────────────────────────────────────────────────────────────────────
 
 export function TestExecutionCard({ openBoard, onOpenItem, userName }: WidgetCtx) {
