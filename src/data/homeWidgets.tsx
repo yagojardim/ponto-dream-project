@@ -164,8 +164,8 @@ const NATIVE: WidgetDef[] = [
   card('native.my-active-queue', 'Minha Fila Ativa',         12, c => <MyActiveQueueCard {...c} />),
   card('native.my-blocked',     'Meus Bloqueados',           6,  c => <MyBlockedCard {...c} />),
   card('native.recent-activity', 'Atividade Recente',        6,  c => <RecentActivityCard {...c} />),
-  card('native.design-validation', 'Validações em Andamento', 6, () => <DesignValidationCard />),
-  card('native.design-system',  'Alertas do Design System',  6,  () => <DesignSystemAlertsCard />),
+  card('native.design-validation', 'Design QA / Validação', 6, c => <DesignValidationCard {...c} />),
+  card('native.design-system',  'Validações de Design',  6,  c => <DesignSystemAlertsCard {...c} />),
   card('native.test-execution', 'Fila de Execução de Testes', 6, c => <TestExecutionCard {...c} />),
   card('native.qa-coverage',    'Aging / Rejeição (QA)',     6,  c => <QaCoverageCard {...c} />),
 ]
