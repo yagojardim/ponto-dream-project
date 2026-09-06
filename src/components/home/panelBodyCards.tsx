@@ -7,13 +7,19 @@ import { useEffect, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import {
   SCard, RagCard, ProgressCard, ProgressBar, WorkQueue, SprintDonutCard,
-  StatusBadge, ConditionalTag, Av, EmptyState, ActivityTimeline,
+  StatusBadge, ConditionalTag, Av, EmptyState, ActivityTimeline, LoadingState,
+  type WorkItem,
 } from '@/components/ds/DashboardKit'
 import {
   liveItems, liveAggregates, liveCurrentSprintName, liveProjects,
   getBlockedItems, getSprintItems, getTestingItems,
 } from '@/data/db/homeLive'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
+import {
+  listCalendarEvents, EVENT_TYPE_LABEL, EVENT_TYPE_ICON,
+  type DbCalendarEvent,
+} from '@/data/db/calendarEvents'
+import { humanizeActivity } from '@/data/activityLabels'
 import { logger } from '@/utils/logger'
 import { scopedItems, scopedProjects, type WidgetCtx } from '@/components/home/nativeWidgets'
 
@@ -36,9 +42,56 @@ export function PmoRagCard({ onNav }: WidgetCtx) {
 
 export function DeliveryRhythmCard({ openDetail }: WidgetCtx) {
   const agg = liveAggregates()
+  const rag = scopedProjects(agg?.rag ?? [])
+  const velAvg = agg?.velocityAvg ?? 0
+
+  // Sem projeto no escopo (ou dados ainda não carregados): mantém o cartão de portfólio.
+  if (rag.length === 0) {
+    return (
+      <ProgressCard pct={agg?.consolidatedPct ?? 0} label="Ritmo de Entrega — Portfólio"
+        velocity={`Velocity média: ${velAvg}pt/sprint`} onClick={() => openDetail('velocity')} />
+    )
+  }
+
+  const single = rag.length === 1
+  const done = rag.reduce((s, r) => s + r.done, 0)
+  const total = rag.reduce((s, r) => s + r.total, 0)
+  const donePts = rag.reduce((s, r) => s + (r.donePoints ?? 0), 0)
+  const plannedPts = rag.reduce((s, r) => s + (r.points ?? 0), 0)
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0
+  const rows = [...rag].sort((a, b) => a.pct - b.pct)  // menor progresso primeiro (atenção no topo)
+
   return (
-    <ProgressCard pct={agg?.consolidatedPct ?? 0} label="Ritmo de Entrega — Portfólio"
-      velocity={`Velocity média: ${agg?.velocityAvg ?? 0}pt/sprint`} onClick={() => openDetail('velocity')} />
+    <div className="no-drag" onClick={() => openDetail('velocity')}
+      style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 10, padding: '14px 16px', cursor: 'pointer' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
+        <div style={{ fontSize: 34, fontWeight: 800, color: T.text1, lineHeight: 1 }}>{pct}%</div>
+        <div style={{ paddingBottom: 3, flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, color: T.text2 }}>
+            {single ? `Ritmo de Entrega — ${rows[0].name}` : `Ritmo de Entrega — ${rag.length} projetos`}
+          </div>
+          <div style={{ fontSize: 10, color: T.text3, marginTop: 2 }}>
+            {donePts}pt concluídos de {plannedPts}pt · velocity média {velAvg}pt/sprint
+          </div>
+        </div>
+      </div>
+      <div style={{ marginTop: 8 }}><ProgressBar pct={pct} color={T.accent} height={5} /></div>
+
+      {!single && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {rows.map(r => (
+            <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span title={r.name} style={{ width: 92, flexShrink: 0, fontSize: 11, color: T.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+              <div style={{ flex: 1, height: 8, background: T.bgSurface2, borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ width: `${r.pct}%`, height: '100%', background: r.color || T.accent, opacity: 0.9 }} />
+              </div>
+              <span style={{ width: 34, textAlign: 'right', fontSize: 11, fontWeight: 700, color: T.text1 }}>{r.pct}%</span>
+              <span style={{ width: 52, textAlign: 'right', fontSize: 10, color: T.text3 }}>{r.done}/{r.total}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -259,12 +312,6 @@ const AGING = [
   { col: 'Em Revisão', avg: 4.3 },
   { col: 'Em Teste',   avg: 3.8 },
 ]
-const CERIMONIAS = [
-  { name: 'Daily Standup',   data: 'Hoje 09h',   status: 'pendente' },
-  { name: 'Sprint Review',   data: 'Sex 16h',    status: 'pendente' },
-  { name: 'Retrospectiva',   data: 'Amanhã 14h', status: 'pendente' },
-  { name: 'Sprint Planning', data: '28 jul 10h', status: 'planejado' },
-]
 
 export function StuckAgingCard({ onOpenItem }: WidgetCtx) {
   const sprint = scopedItems(getSprintItems(liveCurrentSprintName() ?? undefined))
@@ -298,20 +345,96 @@ export function StuckAgingCard({ onOpenItem }: WidgetCtx) {
   )
 }
 
-export function CeremoniesCard() {
+/** Formata o horário de uma cerimônia de forma relativa (Hoje/Amanhã/dia da semana). */
+function ceremonyWhen(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const diff = Math.round((dd.getTime() - day0.getTime()) / 86400000)
+  const hh = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  if (diff === 0) return `Hoje · ${hh}`
+  if (diff === 1) return `Amanhã · ${hh}`
+  if (diff > 1 && diff < 7) return `${d.toLocaleDateString('pt-BR', { weekday: 'short' })} · ${hh}`
+  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · ${hh}`
+}
+
+export function CeremoniesCard({ projectIds, onNav }: WidgetCtx) {
+  const [events, setEvents] = useState<DbCalendarEvent[] | null>(null)
+  useEffect(() => {
+    let alive = true
+    const now = new Date()
+    const to = new Date(now.getTime() + 21 * 86400000)  // próximas 3 semanas
+    listCalendarEvents(undefined, now.toISOString(), to.toISOString())
+      .then(list => { if (alive) setEvents(list) })
+      .catch(err => { logger.error('sm.ceremonies', err); if (alive) setEvents([]) })
+    return () => { alive = false }
+  }, [])
+
+  const projMap = new Map(liveProjects().map(p => [p.id, p]))
+  // Segue o filtro da Início: N projetos → só os do escopo (+ eventos gerais sem projeto).
+  const scoped = (events ?? []).filter(e =>
+    projectIds.size === 0 || e.projectId === null || projectIds.has(e.projectId))
+  const showTag = projectIds.size !== 1  // marca o projeto quando há 0 ou N no escopo
+
+  const projTag = (e: DbCalendarEvent) => {
+    if (!showTag) return null
+    const p = e.projectId ? projMap.get(e.projectId) : null
+    const name = p?.name ?? 'Geral'
+    const color = p?.color ?? T.text3
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: T.text3 }}>
+        <span style={{ width: 7, height: 7, borderRadius: 2, background: color, flexShrink: 0 }} />{name}
+      </span>
+    )
+  }
+
+  const next = scoped[0]
+  const rest = scoped.slice(1, 6)
+
   return (
-    <SCard title="Cerimônias & Ações de Facilitação">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
-        {CERIMONIAS.map(c => (
-          <div key={c.name} style={{ background: T.bgPage, borderRadius: 8, padding: '12px 14px' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: T.text1 }}>{c.name}</div>
-            <div style={{ fontSize: 10, color: T.text3, marginTop: 4 }}>{c.data}</div>
-            <div style={{ marginTop: 8 }}>
-              <ConditionalTag label={c.status === 'pendente' ? 'Pendente' : 'Planejado'} severity={c.status === 'pendente' ? 'info' : 'neutral'} />
+    <SCard title="Cerimônias & Ações de Facilitação"
+      help="Próximas cerimônias da agenda (calendar_events), seguindo o filtro de projetos da Início.">
+      {events === null ? <LoadingState rows={3} />
+        : scoped.length === 0 ? (
+          <EmptyState message="Nenhuma cerimônia agendada para os próximos dias."
+            action={{ label: 'Abrir calendário', onClick: () => onNav('calendar') }} />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Próxima cerimônia em destaque */}
+            <div className="no-drag" onClick={() => onNav('calendar')}
+              style={{ background: T.bgPage, border: `1px solid ${next.color}55`, borderLeft: `3px solid ${next.color}`,
+                borderRadius: 8, padding: '11px 13px', cursor: 'pointer' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <span style={{ fontSize: 14 }}>{EVENT_TYPE_ICON[next.eventType]}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: next.color }}>
+                  {EVENT_TYPE_LABEL[next.eventType]}
+                </span>
+                <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, color: T.text1 }}>{ceremonyWhen(next.startIso)}</span>
+              </div>
+              <div style={{ fontSize: 13, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{next.title}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
+                {projTag(next)}
+                {next.location && <span style={{ fontSize: 10, color: T.text3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>📍 {next.location}</span>}
+              </div>
             </div>
+
+            {/* Próximas */}
+            {rest.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {rest.map(e => (
+                  <div key={e.id} className="no-drag" onClick={() => onNav('calendar')}
+                    style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 4px', cursor: 'pointer', borderTop: `1px solid ${T.border}` }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 99, background: e.color, flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{e.title}</span>
+                    {projTag(e)}
+                    <span style={{ fontSize: 10, color: T.text3, flexShrink: 0 }}>{ceremonyWhen(e.startIso)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        )}
     </SCard>
   )
 }
@@ -329,26 +452,96 @@ export function MyActiveQueueCard({ onNav, onOpenItem, userName }: WidgetCtx) {
 
 export function MyBlockedCard({ onNav, onOpenItem, userName }: WidgetCtx) {
   const blocked = scopedItems(getBlockedItems()).filter(w => w.assignee?.name === userName)
+  const projMap = new Map(liveProjects().map(p => [p.id, p]))
+  const multi = new Set(blocked.map(b => b.project_id)).size > 1  // tag de projeto só quando há N
+  const shown = blocked.slice(0, 5)
+  const reasonOf = (w: WorkItem) => (w.history && w.history.length ? w.history[w.history.length - 1].action : null)
+
+  const viewAll = blocked.length > 0 ? (
+    <button onClick={e => { e.stopPropagation(); onNav('list') }}
+      style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Ver todos →</button>
+  ) : undefined
+
   return (
-    <WorkQueue title="Meus Bloqueados" items={blocked} onOpen={onOpenItem} showDaysBlocked
-      onViewAll={() => onNav('list')} emptyMsg="Nenhum item bloqueado." />
+    <SCard title={`Meus Bloqueados ${blocked.length > 0 ? `(${blocked.length})` : ''}`} action={viewAll}>
+      {shown.length === 0
+        ? <EmptyState message="Nenhum item bloqueado. 🟢" />
+        : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {shown.map(w => {
+              const days = w.days_blocked ?? 0
+              const p = multi ? projMap.get(w.project_id) : null
+              const reason = reasonOf(w)
+              return (
+                <div key={w.id} className="no-drag" onClick={() => onOpenItem(w)}
+                  style={{ background: T.bgPage, borderRadius: 7, padding: '8px 10px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 9, fontFamily: 'monospace', color: T.text3, width: 52, flexShrink: 0 }}>{w.key}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: T.text1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{w.title}</span>
+                    <ConditionalTag label={days > 0 ? `${days}d parado` : 'bloqueado'} severity={days >= 3 ? 'crit' : 'warn'} />
+                  </div>
+                  {(p || reason) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
+                      {p && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: T.text3 }}>
+                          <span style={{ width: 7, height: 7, borderRadius: 2, background: p.color, flexShrink: 0 }} />{p.name}
+                        </span>
+                      )}
+                      {reason && <span style={{ fontSize: 10, color: T.text3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>⛔ {reason}</span>}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+    </SCard>
   )
 }
 
 export function RecentActivityCard({ userName }: WidgetCtx) {
   const [activity, setActivity] = useState<AdminActivityRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [type, setType] = useState<string | null>(null)  // filtro por tipo de entidade (null = tudo)
   useEffect(() => {
     let alive = true
-    fetchRecentAdminActivity(6, { actorName: userName })
-      .then(a => { if (alive) setActivity(a) })
-      .catch(err => { logger.error('dev.activity', err); if (alive) setActivity([]) })
+    setLoading(true)
+    fetchRecentAdminActivity(20, { actorName: userName })
+      .then(a => { if (alive) { setActivity(a); setLoading(false) } })
+      .catch(err => { logger.error('dev.activity', err); if (alive) { setActivity([]); setLoading(false) } })
     return () => { alive = false }
   }, [userName])
+
+  const views = activity.map(a => ({ row: a, v: humanizeActivity(a) }))
+  const types = [...new Set(views.map(x => x.v.entityLabel))]
+  const filtered = type ? views.filter(x => x.v.entityLabel === type) : views
+  const events = filtered.slice(0, 8).map(x => ({
+    label: x.v.label, sub: x.v.sub, date: relativeTime(x.row.createdAt), color: x.v.color,
+  }))
+
   return (
-    <SCard title="Atividade Recente">
-      {activity.length === 0
-        ? <EmptyState message="Sem atividade recente." />
-        : <ActivityTimeline events={activity.map(a => ({ label: `${a.action} · ${a.entityType}`, date: relativeTime(a.createdAt), color: T.accent }))} />}
+    <SCard title="Atividade Recente" help="Suas ações recentes registradas no histórico da conta.">
+      {loading ? <LoadingState rows={3} />
+        : activity.length === 0 ? <EmptyState message="Sem atividade recente." />
+        : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {types.length > 1 && (
+              <div className="no-drag" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {['Tudo', ...types].map(t => {
+                  const val = t === 'Tudo' ? null : t
+                  const on = type === val
+                  return (
+                    <button key={t} onClick={() => setType(val)}
+                      style={{ fontSize: 10.5, cursor: 'pointer', color: on ? T.text1 : T.text3,
+                        background: on ? T.bgSurface2 : 'transparent', border: `1px solid ${on ? T.border2 : T.border}`,
+                        borderRadius: 999, padding: '2px 9px' }}>{t}</button>
+                  )
+                })}
+              </div>
+            )}
+            {events.length === 0 ? <EmptyState message="Nada neste filtro." /> : <ActivityTimeline events={events} />}
+          </div>
+        )}
     </SCard>
   )
 }
