@@ -109,18 +109,6 @@ export function DeliveryRhythmCard({ openDetail }: WidgetCtx) {
 
 // ─── Project Manager ──────────────────────────────────────────────────────────
 
-export function PmMainRagCard({ onNav }: WidgetCtx) {
-  const agg = liveAggregates()
-  const mainRag = (scopedProjects(agg?.rag ?? []))[0]
-  const sprintName = liveCurrentSprintName()
-  if (!mainRag) return <EmptyState message="Nenhum projeto no escopo selecionado." />
-  return (
-    <RagCard name={mainRag.name} squad={`${mainRag.squad}${sprintName ? ` · ${sprintName}` : ''}`}
-      rag={mainRag.rag} pct={mainRag.pct} daysLabel={mainRag.daysLabel} reason={mainRag.reason}
-      onClick={() => onNav('project', mainRag.id)} />
-  )
-}
-
 export function PlannedVsDoneCard({ openDetail }: WidgetCtx) {
   const agg = liveAggregates()
   return (
