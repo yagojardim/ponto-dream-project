@@ -2500,11 +2500,13 @@ interface ProjectPageProps {
   boardId?: string
   /** projects.id — usado quando a navegação aponta para um projeto específico. */
   projectId?: string
+  /** Aba inicial ao abrir (ex.: navegação vinda do modal de Saúde → 'Sprints'). */
+  initialTab?: Tab
   onBackToBoards?: () => void
 }
 
-export default function ProjectPage({ boardId, projectId, onBackToBoards }: ProjectPageProps = {}) {
-  const [tab, setTab]     = useState<Tab>('Board')
+export default function ProjectPage({ boardId, projectId, initialTab, onBackToBoards }: ProjectPageProps = {}) {
+  const [tab, setTab]     = useState<Tab>(initialTab ?? 'Board')
   const [quickCreate, setQuickCreate] = useState<{colStatus?:string; sprintId?:string}|null>(null)
   // Demanda recém-criada pelo quadro: abre no drawer lateral direito.
   const [createdItemId, setCreatedItemId] = useState<string|null>(null)
