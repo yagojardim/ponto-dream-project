@@ -19040,7 +19040,7 @@
       "file_type": "code",
       "norm_label": "reportsrouteguard()",
       "source_file": "src/App.tsx",
-      "source_location": "L760"
+      "source_location": "L765"
     },
     {
       "id": "src_components_ds_toast_toastprovider",
@@ -21163,7 +21163,7 @@
       "file_type": "code",
       "norm_label": "handleglobalcreatedemand()",
       "source_file": "src/App.tsx",
-      "source_location": "L449"
+      "source_location": "L450"
     },
     {
       "id": "src_app_shellwithrole_navto",
@@ -21174,7 +21174,7 @@
       "file_type": "code",
       "norm_label": "navto()",
       "source_file": "src/App.tsx",
-      "source_location": "L516"
+      "source_location": "L517"
     },
     {
       "id": "src_data_db_board_columncolor",
@@ -34844,7 +34844,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L761",
+      "source_location": "L766",
       "weight": 1.0
     },
     {
@@ -34856,7 +34856,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L762",
+      "source_location": "L767",
       "weight": 1.0
     },
     {
@@ -34868,7 +34868,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L763",
+      "source_location": "L768",
       "weight": 1.0
     },
     {
@@ -34892,7 +34892,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L457",
+      "source_location": "L458",
       "weight": 1.0
     },
     {
@@ -34904,7 +34904,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L462",
+      "source_location": "L463",
       "weight": 1.0
     },
     {
@@ -34916,7 +34916,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L482",
+      "source_location": "L483",
       "weight": 1.0
     },
     {
@@ -34928,7 +34928,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L489",
+      "source_location": "L490",
       "weight": 1.0
     },
     {
@@ -34940,7 +34940,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L457",
+      "source_location": "L458",
       "weight": 1.0
     },
     {
@@ -34952,7 +34952,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L462",
+      "source_location": "L463",
       "weight": 1.0
     },
     {
@@ -34964,7 +34964,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L482",
+      "source_location": "L483",
       "weight": 1.0
     },
     {
@@ -34976,7 +34976,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L489",
+      "source_location": "L490",
       "weight": 1.0
     },
     {
@@ -61208,7 +61208,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L449",
+      "source_location": "L450",
       "weight": 1.0
     },
     {
@@ -61220,7 +61220,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L516",
+      "source_location": "L517",
       "weight": 1.0
     },
     {
@@ -91646,7 +91646,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L760",
+      "source_location": "L765",
       "weight": 1.0
     },
     {
@@ -122082,5 +122082,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "34c25b79cb454039c171838651b79cb76a5ae072"
+  "built_at_commit": "1c7c637f4afa7b126f4aaaa6f42ad6bde6d8ada8"
 }
