@@ -44,7 +44,7 @@ interface Props {
   onNav: (view: string, targetId?: string) => void
 }
 
-function storageKey(userId: string, role: string) { return `altech.home.layout.v2.${userId}.${role}` }
+function storageKey(userId: string, role: string) { return `altech.home.layout.v3.${userId}.${role}` }
 function filterKey(userId: string) { return `altech.home.projfilter.${userId}` }
 
 function newId(): string {
@@ -236,15 +236,15 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   }), [onNav, userName, scope, openBoard, openDetail, editing])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
-    setState(prev => {
-      const next = { instances: prev.instances, layout }
-      // Em modo edição, a persistência acontece só no Salvar.
-      if (!editing) {
-        try { localStorage.setItem(storageKey(userId, role), JSON.stringify(next)) } catch { /* noop */ }
-      }
-      return next
-    })
-  }, [userId, role, editing])
+    // Fora do modo edição o grid não é interativo (isDraggable/isResizable = editing):
+    // todo onLayoutChange aqui vem de recomputação automática do react-grid-layout
+    // (montagem ou troca de breakpoint). Persistir isso deixaria uma tela estreita —
+    // que compacta os cards numa única coluna — sobrescrever a disposição canônica do
+    // desktop. Só mudanças feitas arrastando/redimensionando em modo edição contam;
+    // a persistência acontece no Salvar (saveEditing).
+    if (!editing) return
+    setState(prev => ({ instances: prev.instances, layout }))
+  }, [editing])
 
   // Atualização funcional: ao adicionar vários cards de uma vez (o modal envia
   // em lote), cada add enxerga o estado já acumulado — antes o closure lia o
