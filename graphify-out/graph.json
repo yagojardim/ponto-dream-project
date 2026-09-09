@@ -793,7 +793,7 @@
       "file_type": "code",
       "norm_label": "compositetypes",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3964"
+      "source_location": "L3974"
     },
     {
       "id": "src_integrations_supabase_types_databasewithoutinternals",
@@ -805,7 +805,7 @@
       "file_type": "code",
       "norm_label": "databasewithoutinternals",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3864"
+      "source_location": "L3874"
     },
     {
       "id": "src_integrations_supabase_types_defaultschema",
@@ -817,7 +817,7 @@
       "file_type": "code",
       "norm_label": "defaultschema",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3866"
+      "source_location": "L3876"
     },
     {
       "id": "src_integrations_supabase_types_enums",
@@ -829,7 +829,7 @@
       "file_type": "code",
       "norm_label": "enums",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3947"
+      "source_location": "L3957"
     },
     {
       "id": "src_integrations_supabase_types_json",
@@ -853,7 +853,7 @@
       "file_type": "code",
       "norm_label": "tables",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3868"
+      "source_location": "L3878"
     },
     {
       "id": "src_integrations_supabase_types_tablesinsert",
@@ -865,7 +865,7 @@
       "file_type": "code",
       "norm_label": "tablesinsert",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3897"
+      "source_location": "L3907"
     },
     {
       "id": "src_integrations_supabase_types_tablesupdate",
@@ -877,7 +877,7 @@
       "file_type": "code",
       "norm_label": "tablesupdate",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3922"
+      "source_location": "L3932"
     },
     {
       "id": "src_components_ds_chip_chipinputprops",
@@ -28871,7 +28871,7 @@
       "file_type": "code",
       "norm_label": "constants",
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3981"
+      "source_location": "L3991"
     },
     {
       "id": "src_components_ds_chip",
@@ -111169,7 +111169,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3864",
+      "source_location": "L3874",
       "weight": 1.0
     },
     {
@@ -111180,7 +111180,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3866",
+      "source_location": "L3876",
       "weight": 1.0
     },
     {
@@ -111191,7 +111191,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3868",
+      "source_location": "L3878",
       "weight": 1.0
     },
     {
@@ -111202,7 +111202,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3897",
+      "source_location": "L3907",
       "weight": 1.0
     },
     {
@@ -111213,7 +111213,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3922",
+      "source_location": "L3932",
       "weight": 1.0
     },
     {
@@ -111224,7 +111224,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3947",
+      "source_location": "L3957",
       "weight": 1.0
     },
     {
@@ -111235,7 +111235,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3964",
+      "source_location": "L3974",
       "weight": 1.0
     },
     {
@@ -111246,7 +111246,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/integrations/supabase/types.ts",
-      "source_location": "L3981",
+      "source_location": "L3991",
       "weight": 1.0
     },
     {
@@ -122014,5 +122014,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0f8579ec245fde6de433b8e05ba663d7e873d10e"
+  "built_at_commit": "d24272b5c1ad9752bcb06cc40165a4dd19921650"
 }
