@@ -1,1 +1,13 @@
-project_id = "edjbajhaqtqqkvqikxcx"
+project_id = "edjbajhaqtqqkvqikxcx"project_id = "edjbajhaqtqqkvqikxcx"
+
+# log-event é chamada pelo front AUTENTICADO: deriva tenant/profile do JWT.
+[functions.log-event]
+verify_jwt = true
+
+# notify-ticket é chamada pelo front AUTENTICADO ao abrir um chamado (envia e-mail p/ suporte@).
+[functions.notify-ticket]
+verify_jwt = true
+
+# resend-webhook é público (Resend não envia JWT do Supabase); valida a assinatura Svix.
+[functions.resend-webhook]
+verify_jwt = false
