@@ -49,6 +49,21 @@ async function createFeedback__raw(
     screen_label: input.screenLabel ?? null,
   })
   if (error) throw new Error(`[feedback] ${error.message}`)
+
+  // Chamados (problema/sugestão) disparam e-mail para o suporte. Fire-and-forget:
+  // uma falha no envio nunca deve derrubar o registro do chamado.
+  if (input.type !== 'feedback') {
+    void supabase.functions
+      .invoke('notify-ticket', {
+        body: {
+          type: input.type,
+          message,
+          screen_url: input.screenUrl ?? null,
+          screen_label: input.screenLabel ?? null,
+        },
+      })
+      .catch(() => { /* notificação best-effort */ })
+  }
   return true
 }
 
