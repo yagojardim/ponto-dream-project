@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { logger } from '../utils/logger'
+import { logger } from '@/utils/logger'
 
 interface Props {
   children: ReactNode
@@ -7,25 +7,28 @@ interface Props {
   scope?: string
   fallback?: ReactNode
 }
-interface State { hasError: boolean }
+interface State { hasError: boolean; correlationId: string | null }
 
 /**
  * Catches render-time failures so a single broken section never blanks the app.
+ * Cada falha gera um correlation_id (registrado em support_logs) mostrado ao
+ * usuário para agilizar o suporte.
  */
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false }
+  state: State = { hasError: false, correlationId: null }
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(): Partial<State> {
     return { hasError: true }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    logger.error(`render:${this.props.scope ?? 'unknown'}`, error, {
+    const correlationId = logger.error(`render:${this.props.scope ?? 'unknown'}`, error, {
       componentStack: info.componentStack?.slice(0, 500),
     })
+    this.setState({ correlationId })
   }
 
-  private retry = () => this.setState({ hasError: false })
+  private retry = () => this.setState({ hasError: false, correlationId: null })
 
   render() {
     if (!this.state.hasError) return this.props.children
@@ -45,6 +48,14 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className="text-sm mb-4" style={{ color: 'var(--text-primary, #e6e9f2)' }}>
             Não foi possível carregar esta seção. Tente novamente.
           </p>
+          {this.state.correlationId && (
+            <p className="text-xs mb-4" style={{ color: 'var(--text-muted, #8a90a6)' }}>
+              Código do erro:{' '}
+              <code style={{ userSelect: 'all', fontFamily: 'monospace' }}>{this.state.correlationId}</code>
+              <br />
+              Informe este código ao suporte.
+            </p>
+          )}
           <button
             onClick={this.retry}
             className="px-4 py-2 rounded-lg text-sm"
