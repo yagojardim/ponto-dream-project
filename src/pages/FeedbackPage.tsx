@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import { useSession } from '@/data/SessionContext'
 import { createFeedback, type FeedbackType } from '@/data/db/feedback'
@@ -294,6 +294,95 @@ function HelpOverview({ groups, onPick }: {
   )
 }
 
+/** Combobox de telas (dark, alinhado ao design) — substitui o <datalist> nativo. */
+function ScreenPicker({ options, value, onChange }: {
+  options: { id: string; label: string }[]
+  value: string
+  onChange: (label: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  const q = value.trim().toLowerCase()
+  const filtered = q ? options.filter(o => o.label.toLowerCase().includes(q)) : options
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [])
+
+  function pick(label: string) {
+    onChange(label)
+    setOpen(false)
+  }
+
+  return (
+    <div ref={boxRef} style={{ position: 'relative' }}>
+      <input
+        value={value}
+        onChange={e => { onChange(e.target.value); setOpen(true); setActive(0) }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={e => {
+          if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); setActive(a => Math.min(a + 1, filtered.length - 1)) }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(a - 1, 0)) }
+          else if (e.key === 'Enter') { if (open && filtered[active]) { e.preventDefault(); pick(filtered[active].label) } }
+          else if (e.key === 'Escape') setOpen(false)
+        }}
+        placeholder="Busque e selecione a tela"
+        className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
+        style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+      />
+      {open && filtered.length > 0 && (
+        <ul
+          className="m-0 p-1 list-none"
+          style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
+            background: T.bgSurface, border: `1px solid ${T.border2}`, borderRadius: 10,
+            boxShadow: T.shadow2, maxHeight: 240, overflowY: 'auto',
+          }}
+        >
+          {filtered.map((o, i) => (
+            <li key={o.id}>
+              <button
+                type="button"
+                onMouseDown={e => { e.preventDefault(); pick(o.label) }}
+                onMouseEnter={() => setActive(i)}
+                className="w-full text-left px-3 py-2 rounded-md text-[13px] transition-colors"
+                style={{
+                  background: i === active ? T.accentDim : 'transparent',
+                  color: i === active ? T.accent : T.text1,
+                  cursor: 'pointer',
+                }}
+              >
+                {o.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {open && q && filtered.length === 0 && (
+        <div
+          className="text-[12px] px-3 py-2"
+          style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 50,
+            background: T.bgSurface, border: `1px solid ${T.border2}`, borderRadius: 10,
+            boxShadow: T.shadow2, color: T.text3,
+          }}
+        >
+          Nenhuma tela encontrada.
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: string) => void; initialTab?: FeedbackTab }) {
   const { activeUser, isTenantOwner } = useSession()
   // Telas que ESTE usuário acessa (mesma regra do menu) — o chamado só pode
@@ -447,17 +536,7 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
         <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>
           Em qual tela? (opcional)
         </label>
-        <input
-          list="support-screen-options"
-          value={screenQuery}
-          onChange={e => setScreenQuery(e.target.value)}
-          placeholder="Busque e selecione a tela"
-          className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
-          style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
-        />
-        <datalist id="support-screen-options">
-          {screenOptions.map(o => <option key={o.id} value={o.label} />)}
-        </datalist>
+        <ScreenPicker options={screenOptions} value={screenQuery} onChange={setScreenQuery} />
         <p className="m-0 mt-1 text-[11px]" style={{ color: T.text3 }}>
           Escolha uma tela da lista (só aparecem as que você tem acesso).
         </p>
