@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import { useSession } from '@/data/SessionContext'
-import { canManageUsers } from '@/data/cardAuthority'
-import SupportLogsPanel from '@/components/support/SupportLogsPanel'
 import { createFeedback, type FeedbackType } from '@/data/db/feedback'
 import { screenLabelFromUrl } from '@/lib/screenLabel'
 import { ONBOARDING_TIPS } from '@/data/onboardingContent'
@@ -19,7 +17,7 @@ const RATINGS: { value: number; emoji: string; label: string }[] = [
   { value: 5, emoji: '🤩', label: 'Excelente' },
 ]
 
-type FeedbackTab = 'feedback' | 'suporte' | 'ajuda' | 'diagnostico'
+type FeedbackTab = 'feedback' | 'suporte' | 'ajuda'
 
 const TABS: { id: FeedbackTab; label: string; icon: string; subtitle: string }[] = [
   { id: 'ajuda', label: 'Central de Ajuda', icon: '📘', subtitle: 'Guias passo a passo de cada tela da plataforma.' },
@@ -298,7 +296,6 @@ function HelpOverview({ groups, onPick }: {
 
 export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: string) => void; initialTab?: FeedbackTab }) {
   const { activeUser } = useSession()
-  const isAdmin = canManageUsers(activeUser)
   const [tab, setTab] = useState<FeedbackTab>(initialTab ?? 'feedback')
   const [helpView, setHelpView] = useState<string | null>(null)
 
@@ -315,6 +312,7 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
   const [screen, setScreen] = useState<{ label: string; view: string | null } | null>(null)
   const [rating, setRating] = useState<number | null>(null)
   const [message, setMessage] = useState('')
+  const [errorCode, setErrorCode] = useState('')
   const [supportType, setSupportType] = useState<Exclude<FeedbackType, 'feedback'>>('problema')
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -353,6 +351,7 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
     clearScreen()
     setRating(null)
     setMessage('')
+    setErrorCode('')
     setSupportType('problema')
   }
 
@@ -375,6 +374,7 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
           message,
           screenUrl: screenUrl.trim() || null,
           screenLabel: screen?.label ?? null,
+          correlationId: tab === 'feedback' ? null : (errorCode.trim() || null),
         },
         { userId: activeUser.user_id, name: activeUser.name },
       )
@@ -400,7 +400,7 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
     setError(null)
   }
 
-  const meta = TABS.find(t => t.id === tab) ?? TABS[0]
+  const meta = TABS.find(t => t.id === tab)!
 
   function navItem(id: FeedbackTab) {
     const t = TABS.find(x => x.id === id)!
@@ -513,6 +513,22 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
         </div>
       )}
 
+      {tab !== 'feedback' && (
+        <div>
+          <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>Código do erro (opcional)</label>
+          <input
+            value={errorCode}
+            onChange={e => setErrorCode(e.target.value)}
+            placeholder="Se apareceu um código na tela do erro, cole aqui"
+            className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
+            style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
+          />
+          <p className="m-0 mt-1 text-[11px]" style={{ color: T.text3 }}>
+            Ajuda o time a localizar exatamente o que aconteceu.
+          </p>
+        </div>
+      )}
+
       <div>
         <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>
           {tab === 'feedback' ? 'Comentário *' : 'Descrição *'}
@@ -602,21 +618,6 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
           )}
           {navItem('feedback')}
           {navItem('suporte')}
-          {isAdmin && (
-            <button
-              onClick={() => selectTab('diagnostico')}
-              aria-pressed={tab === 'diagnostico'}
-              className="text-left px-3 py-2 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-2"
-              style={{
-                background: tab === 'diagnostico' ? T.accentDim : 'transparent',
-                color: tab === 'diagnostico' ? T.accent : T.text2,
-                borderLeft: `2px solid ${tab === 'diagnostico' ? T.accent : 'transparent'}`,
-              }}
-            >
-              <span aria-hidden style={{ fontSize: 13 }}>🩺</span>
-              <span className="truncate">Diagnóstico</span>
-            </button>
-          )}
         </nav>
       </aside>
 
@@ -638,7 +639,6 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
             {allItems.map(it => <option key={it.view} value={`help:${it.view}`}>{`   ${it.label}`}</option>)}
             <option value="feedback">Enviar feedback</option>
             <option value="suporte">Reportar problema / suporte</option>
-            {isAdmin && <option value="diagnostico">Diagnóstico</option>}
           </select>
         </div>
 
@@ -646,8 +646,6 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
           helpView
             ? <HelpArticle view={helpView} onNav={onNav} />
             : <HelpOverview groups={groups} onPick={setHelpView} />
-        ) : tab === 'diagnostico' && isAdmin ? (
-          <SupportLogsPanel />
         ) : (
           <article className="flex flex-col" style={{ gap: 24 }}>
             <ArticleHeader section={meta.label} title={meta.label} subtitle={meta.subtitle} />
