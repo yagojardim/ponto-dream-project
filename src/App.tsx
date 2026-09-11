@@ -50,6 +50,8 @@ import { ErrorBoundary } from "./components/ErrorBoundary"
 import { AdminMasterOverlay } from "./components/AdminMasterOverlay"
 import CreatePasswordPage from "./pages/CreatePasswordPage"
 import ActivatePage from "./pages/ActivatePage"
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage"
+import SupportPage from "./pages/SupportPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import ProfilePage from "./pages/ProfilePage"
 import PreferencesPage from "./pages/PreferencesPage"
@@ -142,11 +144,26 @@ export const VIEW_LABELS: Record<View, string> = {
 initAppPrefs()
 
 export default function App() {
+  const pathname = typeof window !== "undefined" ? window.location.pathname : ""
+
+  // Páginas PÚBLICAS (abertas a partir dos e-mails, sem login e sem sessão).
+  if (pathname === "/privacidade") {
+    return (
+      <ErrorBoundary scope="PrivacyPolicy">
+        <PrivacyPolicyPage />
+      </ErrorBoundary>
+    )
+  }
+  if (pathname === "/suporte") {
+    return (
+      <ErrorBoundary scope="Support">
+        <SupportPage />
+      </ErrorBoundary>
+    )
+  }
+
   // Rota de retorno do OAuth do conector Google Calendar (abre em popup).
-  if (
-    typeof window !== "undefined" &&
-    window.location.pathname === GOOGLE_RETURN_PATH
-  ) {
+  if (pathname === GOOGLE_RETURN_PATH) {
     return (
       <ErrorBoundary scope="OAuthGoogleReturn">
         <OAuthGoogleReturn />
