@@ -1,4 +1,4 @@
-project_id = "edjbajhaqtqqkvqikxcx"project_id = "edjbajhaqtqqkvqikxcx"
+project_id = "edjbajhaqtqqkvqikxcx"
 
 # log-event é chamada pelo front AUTENTICADO: deriva tenant/profile do JWT.
 [functions.log-event]
