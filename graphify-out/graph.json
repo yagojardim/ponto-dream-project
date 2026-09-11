@@ -1669,7 +1669,7 @@
       "file_type": "code",
       "norm_label": "errorboundary",
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L15"
+      "source_location": "L17"
     },
     {
       "id": "src_components_errorboundary_props",
@@ -12455,7 +12455,7 @@
       "file_type": "code",
       "norm_label": ".componentdidcatch()",
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L22"
+      "source_location": "L24"
     },
     {
       "id": "src_components_errorboundary_errorboundary_getderivedstatefromerror",
@@ -12466,7 +12466,7 @@
       "file_type": "code",
       "norm_label": ".getderivedstatefromerror()",
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L18"
+      "source_location": "L20"
     },
     {
       "id": "src_components_errorboundary_errorboundary_render",
@@ -12477,7 +12477,7 @@
       "file_type": "code",
       "norm_label": ".render()",
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L30"
+      "source_location": "L33"
     },
     {
       "id": "src_components_errorboundary_errorboundary_retry",
@@ -12488,7 +12488,7 @@
       "file_type": "code",
       "norm_label": ".retry()",
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L28"
+      "source_location": "L31"
     },
     {
       "id": "src_components_touroffermodal_touroffermodal",
@@ -94396,7 +94396,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L15",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -121577,7 +121577,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L18",
+      "source_location": "L20",
       "weight": 1.0
     },
     {
@@ -121588,7 +121588,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L22",
+      "source_location": "L24",
       "weight": 1.0
     },
     {
@@ -121599,7 +121599,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L28",
+      "source_location": "L31",
       "weight": 1.0
     },
     {
@@ -121610,7 +121610,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/ErrorBoundary.tsx",
-      "source_location": "L30",
+      "source_location": "L33",
       "weight": 1.0
     },
     {
@@ -123006,5 +123006,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ba65f290dea4904397aee97c217bf5cf7f6dfdfc"
+  "built_at_commit": "749707d5758a469f5129d35fe9344765c21a1c09"
 }
