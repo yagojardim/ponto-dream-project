@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import { useSession } from '@/data/SessionContext'
 import { createFeedback, type FeedbackType } from '@/data/db/feedback'
-import { screenLabelFromUrl } from '@/lib/screenLabel'
+import { accessibleScreens } from '@/components/Sidebar'
 import { ONBOARDING_TIPS } from '@/data/onboardingContent'
 import type { OnboardingGuideBlock } from '@/data/onboardingContent'
 import { VIEW_LABELS } from '@/App'
@@ -295,7 +295,15 @@ function HelpOverview({ groups, onPick }: {
 }
 
 export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: string) => void; initialTab?: FeedbackTab }) {
-  const { activeUser } = useSession()
+  const { activeUser, isTenantOwner } = useSession()
+  // Telas que ESTE usuário acessa (mesma regra do menu) — o chamado só pode
+  // referenciar telas do próprio perfil; nada de link/texto livre.
+  const screenOptions = useMemo(
+    () => accessibleScreens(activeUser.role_context, activeUser.permissions ?? [], isTenantOwner)
+      .slice()
+      .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR')),
+    [activeUser.role_context, activeUser.permissions, isTenantOwner],
+  )
   const [tab, setTab] = useState<FeedbackTab>(initialTab ?? 'feedback')
   const [helpView, setHelpView] = useState<string | null>(null)
 
@@ -308,8 +316,7 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
   const [helpExpanded, setHelpExpanded] = useState(true)
   const [query, setQuery] = useState('')
 
-  const [screenUrl, setScreenUrl] = useState('')
-  const [screen, setScreen] = useState<{ label: string; view: string | null } | null>(null)
+  const [screenQuery, setScreenQuery] = useState('')
   const [rating, setRating] = useState<number | null>(null)
   const [message, setMessage] = useState('')
   const [errorCode, setErrorCode] = useState('')
@@ -336,19 +343,15 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
     ? blocksOf(helpView).map((b, i) => ({ id: `${slugify(blockHeading(b))}-${i}`, label: blockHeading(b) }))
     : []
 
-  function applyUrl(value: string) {
-    setScreenUrl(value)
-    const parsed = value.trim() ? screenLabelFromUrl(value) : null
-    setScreen(parsed && parsed.label ? parsed : null)
-  }
-
-  function clearScreen() {
-    setScreenUrl('')
-    setScreen(null)
+  /** Resolve o texto digitado para uma tela do perfil (ou null se não bater). */
+  function resolveScreen(): { id: string; label: string } | null {
+    const q = screenQuery.trim().toLowerCase()
+    if (!q) return null
+    return screenOptions.find(o => o.label.toLowerCase() === q) ?? null
   }
 
   function resetForm() {
-    clearScreen()
+    setScreenQuery('')
     setRating(null)
     setMessage('')
     setErrorCode('')
@@ -365,6 +368,12 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
       setError('Selecione uma nota de 1 a 5.')
       return
     }
+    // Tela é opcional; se preenchida, precisa ser uma tela do perfil (lista).
+    const picked = resolveScreen()
+    if (screenQuery.trim() && !picked) {
+      setError('Selecione uma tela da lista.')
+      return
+    }
     setBusy(true)
     try {
       const ok = await createFeedback(
@@ -372,8 +381,8 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
           type: tab === 'feedback' ? 'feedback' : supportType,
           rating: tab === 'feedback' ? rating : null,
           message,
-          screenUrl: screenUrl.trim() || null,
-          screenLabel: screen?.label ?? null,
+          screenUrl: picked?.id ?? null,
+          screenLabel: picked?.label ?? null,
           correlationId: tab === 'feedback' ? null : (errorCode.trim() || null),
         },
         { userId: activeUser.user_id, name: activeUser.name },
@@ -433,37 +442,25 @@ export default function FeedbackPage({ onNav, initialTab }: { onNav?: (view: str
 
   const formCard = (
     <section className="rounded-2xl p-6 flex flex-col gap-5" style={{ background: T.bgSurface, border: `1px solid ${T.border}` }}>
-      {/* Tela referenciada */}
+      {/* Tela referenciada — busca entre as telas do perfil do usuário (sem texto livre) */}
       <div>
-        <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>Tela referenciada</label>
-        {screen ? (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { if (screen.view && onNav) onNav(screen.view) }}
-              className="text-[13px] font-semibold underline"
-              style={{ color: T.accent, cursor: screen.view ? 'pointer' : 'default' }}
-              title={screenUrl}
-            >
-              {screen.label.toUpperCase()}
-            </button>
-            <button
-              onClick={clearScreen}
-              aria-label="Limpar tela referenciada"
-              className="h-5 w-5 rounded-full text-[11px] leading-none"
-              style={{ background: T.bgSurface2, color: T.text3, border: `1px solid ${T.border}` }}
-            >×</button>
-          </div>
-        ) : (
-          <input
-            value={screenUrl}
-            onChange={e => setScreenUrl(e.target.value)}
-            onBlur={e => applyUrl(e.target.value)}
-            onPaste={e => setTimeout(() => applyUrl((e.target as HTMLInputElement).value), 0)}
-            placeholder="Cole aqui o link da tela (opcional)"
-            className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
-            style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
-          />
-        )}
+        <label className="block text-[12px] font-medium mb-1.5" style={{ color: T.text1 }}>
+          Em qual tela? (opcional)
+        </label>
+        <input
+          list="support-screen-options"
+          value={screenQuery}
+          onChange={e => setScreenQuery(e.target.value)}
+          placeholder="Busque e selecione a tela"
+          className="w-full h-9 px-3 rounded-lg text-[13px] outline-none"
+          style={{ background: T.bgSurface2, color: T.text1, border: `1px solid ${T.border}` }}
+        />
+        <datalist id="support-screen-options">
+          {screenOptions.map(o => <option key={o.id} value={o.label} />)}
+        </datalist>
+        <p className="m-0 mt-1 text-[11px]" style={{ color: T.text3 }}>
+          Escolha uma tela da lista (só aparecem as que você tem acesso).
+        </p>
       </div>
 
       {tab === 'feedback' ? (
