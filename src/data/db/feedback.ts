@@ -12,6 +12,8 @@ export interface FeedbackInput {
   message: string
   screenUrl?: string | null
   screenLabel?: string | null
+  /** Código do erro (support_logs.correlation_id) informado pelo usuário, se houver. */
+  correlationId?: string | null
 }
 
 export interface FeedbackRow {
@@ -24,6 +26,7 @@ export interface FeedbackRow {
   message: string
   screen_url: string | null
   screen_label: string | null
+  correlation_id: string | null
   status: string
   created_at: string
 }
@@ -47,6 +50,7 @@ async function createFeedback__raw(
     message,
     screen_url: input.screenUrl ?? null,
     screen_label: input.screenLabel ?? null,
+    correlation_id: input.correlationId ?? null,
   })
   if (error) throw new Error(`[feedback] ${error.message}`)
 
@@ -60,6 +64,7 @@ async function createFeedback__raw(
           message,
           screen_url: input.screenUrl ?? null,
           screen_label: input.screenLabel ?? null,
+          correlation_id: input.correlationId ?? null,
         },
       })
       .catch(() => { /* notificação best-effort */ })
@@ -78,7 +83,7 @@ export function createFeedback(
 
 async function listFeedback__raw(): Promise<FeedbackRow[]> {
   const { data, error } = await tbl('feedback')
-    .select('id, tenant_id, profile_id, author_name, type, rating, message, screen_url, screen_label, status, created_at')
+    .select('id, tenant_id, profile_id, author_name, type, rating, message, screen_url, screen_label, correlation_id, status, created_at')
     .eq('tenant_id', getActiveTenantId())
     .order('created_at', { ascending: false })
   if (error) throw new Error(`[feedback] ${error.message}`)
