@@ -151,6 +151,29 @@ function getGroups(role: RoleContext, permissions: string[], isTenantOwner = fal
     .filter(g => g.items.length > 0)
 }
 
+/**
+ * Telas que o usuário enxerga no menu, achatadas para uso fora do Sidebar
+ * (ex.: seletor de "tela referenciada" no chamado de suporte). Mesma fonte da
+ * verdade do menu (ROLE_NAV_MAP + capabilities + dono do tenant), garantindo
+ * que o usuário só referencie telas do próprio perfil de acesso.
+ */
+export function accessibleScreens(
+  role: RoleContext,
+  permissions: string[],
+  isTenantOwner = false,
+): { id: string; label: string }[] {
+  const seen = new Set<string>()
+  const out: { id: string; label: string }[] = []
+  for (const g of getGroups(role, permissions, isTenantOwner)) {
+    for (const it of g.items) {
+      if (seen.has(it.id)) continue
+      seen.add(it.id)
+      out.push({ id: it.id, label: it.label })
+    }
+  }
+  return out
+}
+
 // ─── Project sub-list data & state ───────────────────────────────────────────
 const MAX_VISIBLE = 5
 
