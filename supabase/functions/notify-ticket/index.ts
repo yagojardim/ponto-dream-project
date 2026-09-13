@@ -12,6 +12,7 @@ import { sendEmail } from '../_shared/email.ts'
 
 const SUPPORT_INBOX = 'suporte@altechlab.com.br'
 const MAX_MESSAGE = 8000
+const LOGO = 'https://edjbajhaqtqqkvqikxcx.supabase.co/storage/v1/object/public/email-assets/altech-logo.png'
 
 const TYPE_LABEL: Record<string, string> = {
   problema: 'Problema',
@@ -34,8 +35,8 @@ function escapeHtml(s: string): string {
 
 function row(label: string, value: string): string {
   return `<tr>
-    <td style="padding:6px 12px;color:#5C5C7A;font-size:13px;vertical-align:top;white-space:nowrap">${label}</td>
-    <td style="padding:6px 12px;color:#111;font-size:13px">${value}</td>
+    <td style="padding:8px 0;border-bottom:1px solid #EBEEF3;color:#7A869A;font-size:13px;vertical-align:top;white-space:nowrap;">${label}</td>
+    <td align="right" style="padding:8px 0;border-bottom:1px solid #EBEEF3;color:#172B4D;font-size:13px;font-weight:600;">${value}</td>
   </tr>`
 }
 
@@ -107,20 +108,36 @@ Deno.serve(async (req: Request) => {
       row('Workspace', escapeHtml(tenantName || '—')),
       row('Aberto por', `${escapeHtml(authorName)}${requesterEmail ? ` &lt;${escapeHtml(requesterEmail)}&gt;` : ''}`),
       screenLabel || screenUrl
-        ? row('Tela', escapeHtml(screenLabel || screenUrl) + (screenUrl ? ` — <a href="${escapeHtml(screenUrl)}">abrir</a>` : ''))
+        ? row('Tela', escapeHtml(screenLabel || screenUrl))
         : '',
       correlationId ? row('Código do erro', `<code>${escapeHtml(correlationId)}</code>`) : '',
       row('Aberto em', new Date().toLocaleString('pt-BR')),
     ].filter(Boolean).join('')
 
     const html = `
-      <div style="font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:640px;margin:0 auto">
-        <h2 style="font-size:18px;color:#111;margin:0 0 12px">Novo chamado de suporte</h2>
-        <table style="width:100%;border-collapse:collapse;background:#f6f7f9;border-radius:8px;overflow:hidden">${rows}</table>
-        <p style="color:#5C5C7A;font-size:13px;margin:16px 0 6px">Descrição:</p>
-        <div style="white-space:pre-wrap;color:#111;font-size:14px;line-height:1.6;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px">${escapeHtml(message)}</div>
-        <p style="color:#9aa0ac;font-size:12px;margin-top:16px">Responda este e-mail para falar direto com quem abriu o chamado.</p>
-      </div>`
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F7FC;margin:0;padding:24px 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <tr><td align="center">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#FFFFFF;border:1px solid #EBEEF3;border-radius:16px;overflow:hidden;">
+      <tr><td style="padding:30px 34px 22px;border-bottom:1px solid #EBEEF3;text-align:center;">
+        <img src="${LOGO}" alt="Altech Lab" width="180" style="width:180px;max-width:180px;height:auto;border:0;outline:none;display:block;margin:0 auto;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#7A869A;margin-top:10px;">Gestão de projetos com clareza</div>
+      </td></tr>
+      <tr><td style="padding:28px 30px 8px;">
+        <span style="display:inline-block;font-size:11px;font-weight:700;color:#2563EB;background:#EEF4FF;border-radius:99px;padding:4px 11px;">${escapeHtml(typeLabel)}</span>
+        <h1 style="margin:12px 0 4px;font-size:22px;color:#172B4D;font-weight:800;letter-spacing:-0.01em;">Novo chamado de suporte</h1>
+        <p style="margin:0 0 18px;font-size:13px;color:#7A869A;">de ${escapeHtml(authorName)}${requesterEmail ? ` · ${escapeHtml(requesterEmail)}` : ''}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5F7FC;border:1px solid #EBEEF3;border-radius:12px;"><tr><td style="padding:4px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+        </td></tr></table>
+        <p style="margin:18px 0 6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#7A869A;">Descrição</p>
+        <div style="white-space:pre-wrap;color:#172B4D;font-size:14px;line-height:1.6;background:#FFFFFF;border:1px solid #EBEEF3;border-radius:12px;padding:14px;">${escapeHtml(message)}</div>
+      </td></tr>
+      <tr><td style="padding:18px 30px 24px;border-top:1px solid #EBEEF3;">
+        <p style="margin:0;font-size:12px;line-height:1.6;color:#7A869A;">Responda este e-mail para falar direto com quem abriu o chamado.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>`
 
     await sendEmail({
       to: SUPPORT_INBOX,
