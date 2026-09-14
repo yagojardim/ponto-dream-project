@@ -11,3 +11,7 @@ verify_jwt = true
 # resend-webhook é público (Resend não envia JWT do Supabase); valida a assinatura Svix.
 [functions.resend-webhook]
 verify_jwt = false
+
+# meeting-summarize é chamada pelo front AUTENTICADO (módulo mod_meeting_intel): deriva tenant do JWT.
+[functions.meeting-summarize]
+verify_jwt = true
