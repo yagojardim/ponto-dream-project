@@ -10,6 +10,7 @@ import { MOCK_USERS, type RoleContext } from '../data/session'
 import { useProfileReportsAccess, canAccessReports } from '../data/db/reportsGovernance'
 import { fetchDashboardAggregates } from '../data/db/dashboards'
 import { logger } from '../utils/logger'
+import { isMeetingModuleEnabled } from '../data/db/meetings'
 import {
   DashboardIcon as AltechDashboard, ProjectsIcon as AltechProjects, DiscoveryIcon as AltechDiscovery,
   BacklogIcon as AltechBacklog, RoadmapIcon as AltechRoadmap, ReportsAltIcon as AltechReports,
@@ -72,6 +73,9 @@ const ALL_GROUPS: NavGroup[] = [
       { id: 'timeline',      label: 'Timeline',           icon: RoadmapIcon},
       { id: 'dashboard', label: 'Dashboard Executivo', icon: DashboardIcon, cap: 'access:dashview' },
       { id: 'storage',       label: 'Armazenamento',      icon: AdminIcon   },
+      { id: 'meetings', label: 'Reuniões', icon: () => (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8 21h8"/></svg>
+      ) },
     ],
   },
   {
@@ -139,6 +143,9 @@ function getGroups(role: RoleContext, permissions: string[], isTenantOwner = fal
       items: g.items.filter(item => {
         // (a) explicitly in this role's nav map
         if (allowed.has(item.id)) return true
+        // Reuniões (módulo premium): visível a qualquer papel; a visibilidade real
+        // é decidida pelo gate de módulo (meetingsEnabled) no componente.
+        if (item.id === 'meetings') return true
         // (a2) dono do tenant sempre enxerga os menus administrativos
         if (isTenantOwner && TENANT_OWNER_NAV.has(item.id)) return true
         // (b) capability opt-in: user has the cap AND it's an opt-in for this role
@@ -742,8 +749,15 @@ export function Sidebar({ collapsed, onToggle, activeNav, onNav }: SidebarProps)
   const hasReportsFlag = useProfileReportsAccess(activeUser.user_id)
   const reportsAllowed = canAccessReports(permissions, hasReportsFlag)
 
+  const [meetingsEnabled, setMeetingsEnabled] = useState(false)
+  useEffect(() => {
+    let alive = true
+    void isMeetingModuleEnabled().then(v => { if (alive) setMeetingsEnabled(v) })
+    return () => { alive = false }
+  }, [])
+
   const groups         = getGroups(activeUser.role_context, permissions, isTenantOwner)
-    .map(g => ({ ...g, items: g.items.filter(i => i.id !== 'reports' || reportsAllowed) }))
+    .map(g => ({ ...g, items: g.items.filter(i => (i.id !== 'reports' || reportsAllowed) && (i.id !== 'meetings' || meetingsEnabled)) }))
     .filter(g => g.items.length > 0)
   const canLogHours      = can(permissions, 'log:hours')
   const canApproveHours  = can(permissions, 'approve:hours')
