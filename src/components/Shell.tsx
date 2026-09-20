@@ -36,8 +36,7 @@ const VALID_VIEWS: View[] = [
   'reports','automations','config','team','my-tasks',
   'login','role-dashboard','client-access','client-login','client-messages',
   'timesheet','hours-approval','boards-list','modules','tenant-settings',
-  'profile','preferences','storage','feedback',
-]
+  'profile','preferences','storage','feedback','meetings',]
 
 export function Shell({ children, currentView, onViewChange, onCreateIssue, onOpenClientMessages }: ShellProps) {
   const [collapsed, setCollapsed] = useState(false)
