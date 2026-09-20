@@ -24379,7 +24379,7 @@
       "file_type": "code",
       "norm_label": "reportsrouteguard()",
       "source_file": "src/App.tsx",
-      "source_location": "L786"
+      "source_location": "L790"
     },
     {
       "id": "src_data_db_reportsgovernance_canaccessreports",
@@ -36003,7 +36003,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L787",
+      "source_location": "L791",
       "weight": 1.0
     },
     {
@@ -36015,7 +36015,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L788",
+      "source_location": "L792",
       "weight": 1.0
     },
     {
@@ -36027,7 +36027,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/App.tsx",
-      "source_location": "L789",
+      "source_location": "L793",
       "weight": 1.0
     },
     {
@@ -96130,7 +96130,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/App.tsx",
-      "source_location": "L786",
+      "source_location": "L790",
       "weight": 1.0
     },
     {
@@ -127107,5 +127107,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "83f7601e2740c72e1fe5cc8fdb5ada769e54d358"
+  "built_at_commit": "a61c87b38e6fd975188d55b937913336aa413f91"
 }
