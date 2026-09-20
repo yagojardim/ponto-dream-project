@@ -2173,7 +2173,7 @@
       "file_type": "code",
       "norm_label": "shellprops",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L26"
+      "source_location": "L25"
     },
     {
       "id": "src_components_shell_view",
@@ -12906,7 +12906,7 @@
       "file_type": "code",
       "norm_label": "shell()",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L43"
+      "source_location": "L42"
     },
     {
       "id": "src_components_shell_shell_endtour",
@@ -12917,7 +12917,7 @@
       "file_type": "code",
       "norm_label": "endtour()",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L68"
+      "source_location": "L67"
     },
     {
       "id": "src_components_shell_shell_handlenav",
@@ -12928,7 +12928,7 @@
       "file_type": "code",
       "norm_label": "handlenav()",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L77"
+      "source_location": "L76"
     },
     {
       "id": "src_components_shell_signuponboardingactive",
@@ -30439,7 +30439,7 @@
       "file_type": "code",
       "norm_label": "valid_views",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L34"
+      "source_location": "L33"
     },
     {
       "id": "src_data_projecttoursteps",
@@ -40527,7 +40527,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L46",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -40539,7 +40539,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L47",
+      "source_location": "L46",
       "weight": 1.0
     },
     {
@@ -40551,7 +40551,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L48",
+      "source_location": "L47",
       "weight": 1.0
     },
     {
@@ -40563,7 +40563,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L54",
+      "source_location": "L53",
       "weight": 1.0
     },
     {
@@ -40575,7 +40575,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L56",
+      "source_location": "L55",
       "weight": 1.0
     },
     {
@@ -40587,7 +40587,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L59",
+      "source_location": "L58",
       "weight": 1.0
     },
     {
@@ -40599,7 +40599,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L61",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -40611,7 +40611,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L62",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -40623,7 +40623,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L70",
+      "source_location": "L69",
       "weight": 1.0
     },
     {
@@ -64707,7 +64707,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L77",
+      "source_location": "L76",
       "weight": 1.0
     },
     {
@@ -100547,7 +100547,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L26",
+      "source_location": "L25",
       "weight": 1.0
     },
     {
@@ -100558,7 +100558,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L34",
+      "source_location": "L33",
       "weight": 1.0
     },
     {
@@ -100569,7 +100569,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L43",
+      "source_location": "L42",
       "weight": 1.0
     },
     {
@@ -100580,7 +100580,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Shell.tsx",
-      "source_location": "L68",
+      "source_location": "L67",
       "weight": 1.0
     },
     {
@@ -127047,5 +127047,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e9295cad13ceba07836d3bd308a28f8d46a70cb2"
+  "built_at_commit": "4eeee40117cbf0bd247608b854bcafe50cbfa719"
 }
