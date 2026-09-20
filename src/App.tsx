@@ -564,7 +564,6 @@ function ShellWithRole({
       setFeedbackInitialTab(targetId === "ajuda" || targetId === "suporte" ? targetId : "feedback")
     }
     if (ALL_VIEWS.includes(v as View)) setView(v as View)
-    
   }
 
   return (
@@ -760,7 +759,12 @@ function ShellWithRole({
                 <PreferencesPage />
               </div>
             )}
-                        {view === "meetings" && (
+            {view === "storage" && (
+              <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
+                <StoragePage onNav={navTo} />
+              </div>
+            )}
+            {view === "meetings" && (
               <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
                 <MeetingsPage onNav={navTo} />
               </div>
