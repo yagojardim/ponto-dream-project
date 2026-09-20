@@ -760,9 +760,9 @@ function ShellWithRole({
                 <PreferencesPage />
               </div>
             )}
-            {view === "storage" && (
+                        {view === "meetings" && (
               <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
-                <StoragePage onNav={navTo} />
+                <MeetingsPage onNav={navTo} />
               </div>
             )}
             {view === "feedback" && (
