@@ -56,6 +56,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage"
 import ProfilePage from "./pages/ProfilePage"
 import PreferencesPage from "./pages/PreferencesPage"
 import StoragePage from "./pages/StoragePage"
+import MeetingsPage from "./pages/MeetingsPage"
 import FeedbackPage from "./pages/FeedbackPage"
 import OAuthGoogleReturn from "./pages/OAuthGoogleReturn"
 import { initAppPrefs } from "./lib/appPrefs"
@@ -101,6 +102,7 @@ const ALL_VIEWS: View[] = [
   "preferences",
   "storage",
   "feedback",
+  "meetings",
 ]
 
 export const VIEW_LABELS: Record<View, string> = {
@@ -138,6 +140,7 @@ export const VIEW_LABELS: Record<View, string> = {
   profile: "Meu perfil",
   preferences: "Preferências",
   storage: "Armazenamento",
+  meetings: "Reuniões",
   feedback: "Feedback & Suporte",
 }
 
@@ -561,6 +564,7 @@ function ShellWithRole({
       setFeedbackInitialTab(targetId === "ajuda" || targetId === "suporte" ? targetId : "feedback")
     }
     if (ALL_VIEWS.includes(v as View)) setView(v as View)
+    
   }
 
   return (
