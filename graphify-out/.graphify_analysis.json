@@ -822,48 +822,47 @@
       "src_pages_clientmessagespage_todos_mention"
     ],
     "15": [
-      "src_components_errorboundary",
-      "src_components_errorboundary_props",
-      "src_components_errorboundary_state",
-      "src_data_db_filteroptions",
-      "src_data_db_filteroptions_boardfilteroptions",
-      "src_data_db_filteroptions_empty",
-      "src_data_db_filteroptions_filteroption",
-      "src_data_db_filteroptions_idname",
-      "src_integrations_supabase_client",
-      "src_integrations_supabase_client_supabase",
-      "src_integrations_supabase_previewauthstorage",
-      "src_integrations_supabase_previewauthstorage_brokeredpreviewstorage",
-      "src_lib_passwordreset",
-      "src_lib_passwordreset_auditpasswordresetcompleted",
-      "src_lib_passwordreset_requestpasswordreset",
-      "src_lib_passwordreset_reset_path",
-      "src_lib_passwordreset_resetredirecturl",
-      "src_lib_passwordreset_tbl",
-      "src_pages_loginpage_loginpage_handleforgot",
-      "src_pages_oauthgooglereturn",
-      "src_pages_oauthgooglereturn_oauthgooglereturn",
-      "src_pages_profilepage",
-      "src_pages_profilepage_field",
-      "src_pages_profilepage_profilepage",
-      "src_pages_profilepage_profilepage_handlechangepassword",
-      "src_pages_profilepage_role_label",
-      "src_pages_resetpasswordpage",
-      "src_pages_resetpasswordpage_phase",
-      "src_pages_resetpasswordpage_props",
-      "src_pages_resetpasswordpage_resetpasswordpage",
-      "src_pages_resetpasswordpage_resetpasswordpage_handleresend",
-      "src_pages_resetpasswordpage_resetpasswordpage_handlesubmit",
-      "src_pages_resetpasswordpage_rules",
-      "src_utils_logger",
-      "src_utils_logger_allowremote",
-      "src_utils_logger_ctx",
-      "src_utils_logger_logger",
-      "src_utils_logger_newcorrelationid",
-      "src_utils_logger_postremote",
-      "src_utils_logger_ratestamps",
-      "src_utils_logger_recentsignatures",
-      "src_utils_logger_remotelevel"
+      "src_app_appinner",
+      "src_app_appinner_leaveactivate",
+      "src_app_appinner_leavereset",
+      "src_components_onboarding_guidedtour",
+      "src_components_onboarding_guidedtour_guidedtour",
+      "src_components_onboarding_guidedtour_guidedtour_handlenext",
+      "src_components_onboarding_guidedtour_guidedtour_onkey",
+      "src_components_onboarding_guidedtour_guidedtour_sync",
+      "src_components_onboarding_guidedtour_rect",
+      "src_components_onboarding_guidedtour_rectof",
+      "src_components_onboarding_guidedtour_tourstep",
+      "src_components_onboarding_guidedtour_waitfor",
+      "src_components_shell",
+      "src_components_shell_shell",
+      "src_components_shell_shell_endtour",
+      "src_components_shell_shell_handlenav",
+      "src_components_shell_shellprops",
+      "src_components_shell_signuponboardingactive",
+      "src_components_shell_valid_views",
+      "src_data_projecttoursteps",
+      "src_data_projecttoursteps_project_tour_steps",
+      "src_data_toursteps",
+      "src_data_toursteps_all_roles",
+      "src_data_toursteps_byrole",
+      "src_data_toursteps_dash_tour",
+      "src_data_toursteps_extra_tours",
+      "src_data_toursteps_extratour",
+      "src_data_toursteps_extratoursfor",
+      "src_data_toursteps_hastour",
+      "src_data_toursteps_home_tour",
+      "src_data_toursteps_tour_steps",
+      "src_data_toursteps_tour_steps_by_role",
+      "src_data_toursteps_touridfor",
+      "src_data_toursteps_tourstepsfor",
+      "src_hooks_useprojecttour",
+      "src_hooks_useprojecttour_listener",
+      "src_hooks_useprojecttour_listeners",
+      "src_hooks_useprojecttour_startprojecttour",
+      "src_hooks_useprojecttour_starttour",
+      "src_hooks_useprojecttour_useprojecttourstate",
+      "src_lib_portalsession_clearportalsession"
     ],
     "16": [
       "src_data_db_board_epiccolor",
@@ -948,46 +947,6 @@
       "src_data_db_clientportal_tocontext"
     ],
     "18": [
-      "ref_react",
-      "src_components_onboarding_guidedtour",
-      "src_components_onboarding_guidedtour_guidedtour",
-      "src_components_onboarding_guidedtour_guidedtour_handlenext",
-      "src_components_onboarding_guidedtour_guidedtour_onkey",
-      "src_components_onboarding_guidedtour_guidedtour_sync",
-      "src_components_onboarding_guidedtour_rect",
-      "src_components_onboarding_guidedtour_rectof",
-      "src_components_onboarding_guidedtour_tourstep",
-      "src_components_onboarding_guidedtour_waitfor",
-      "src_components_shell",
-      "src_components_shell_shell",
-      "src_components_shell_shell_endtour",
-      "src_components_shell_shell_handlenav",
-      "src_components_shell_shellprops",
-      "src_components_shell_signuponboardingactive",
-      "src_components_shell_valid_views",
-      "src_components_shell_view",
-      "src_data_projecttoursteps",
-      "src_data_projecttoursteps_project_tour_steps",
-      "src_data_toursteps",
-      "src_data_toursteps_all_roles",
-      "src_data_toursteps_byrole",
-      "src_data_toursteps_dash_tour",
-      "src_data_toursteps_extra_tours",
-      "src_data_toursteps_extratour",
-      "src_data_toursteps_hastour",
-      "src_data_toursteps_home_tour",
-      "src_data_toursteps_tour_steps",
-      "src_data_toursteps_tour_steps_by_role",
-      "src_data_toursteps_touridfor",
-      "src_data_toursteps_tourstepsfor",
-      "src_hooks_useprojecttour",
-      "src_hooks_useprojecttour_listener",
-      "src_hooks_useprojecttour_listeners",
-      "src_hooks_useprojecttour_startprojecttour",
-      "src_hooks_useprojecttour_starttour",
-      "src_hooks_useprojecttour_useprojecttourstate"
-    ],
-    "19": [
       "src_components_ds_dashboardkit_workitem",
       "src_components_home_nativewidgets_backlogalertwidget",
       "src_components_home_nativewidgets_blockedwidget",
@@ -1027,7 +986,7 @@
       "src_data_db_homelive_reloadlivedashboardfortenant",
       "src_data_reportregistry_reportsdataprovider"
     ],
-    "20": [
+    "19": [
       "src_components_addsubtaskmodal",
       "src_components_addsubtaskmodal_addsubtaskmodal",
       "src_components_addsubtaskmodal_addsubtaskmodal_handlecreate",
@@ -1066,7 +1025,7 @@
       "src_components_logworkmodal_logworkmodal_handlesave",
       "src_components_logworkmodal_props"
     ],
-    "21": [
+    "20": [
       "src_components_ds_card",
       "src_components_ds_card_card",
       "src_components_ds_card_cardbody",
@@ -1105,7 +1064,7 @@
       "src_pages_foundationspage_tabledemo_togglerow",
       "src_pages_foundationspage_typerow"
     ],
-    "22": [
+    "21": [
       "src_data_reportregistry",
       "src_data_reportregistry_agingchart",
       "src_data_reportregistry_bugsdonut",
@@ -1144,7 +1103,7 @@
       "src_data_reportregistry_vizseries",
       "src_data_reportregistry_workloadchart"
     ],
-    "23": [
+    "22": [
       "src_components_boardsettingsmodal",
       "src_components_boardsettingsmodal_boardsettingsmodal",
       "src_components_boardsettingsmodal_boardsettingsmodal_run",
@@ -1181,43 +1140,7 @@
       "src_pages_boardslistpage_projectdot",
       "src_pages_boardslistpage_props"
     ],
-    "24": [
-      "src_components_sidebar_accessiblescreens",
-      "src_data_db_feedback_createfeedback",
-      "src_data_onboardingcontent",
-      "src_data_onboardingcontent_onboarding_tips",
-      "src_data_onboardingcontent_onboardingguideblock",
-      "src_data_onboardingcontent_onboardingtip",
-      "src_data_toursteps_extratoursfor",
-      "src_pages_feedbackpage",
-      "src_pages_feedbackpage_articleheader",
-      "src_pages_feedbackpage_blockheading",
-      "src_pages_feedbackpage_blocksof",
-      "src_pages_feedbackpage_feedbackpage",
-      "src_pages_feedbackpage_feedbackpage_navitem",
-      "src_pages_feedbackpage_feedbackpage_resetform",
-      "src_pages_feedbackpage_feedbackpage_resolvescreen",
-      "src_pages_feedbackpage_feedbackpage_selecttab",
-      "src_pages_feedbackpage_feedbackpage_submit",
-      "src_pages_feedbackpage_feedbacktab",
-      "src_pages_feedbackpage_guidetext",
-      "src_pages_feedbackpage_help_sections",
-      "src_pages_feedbackpage_help_view_icons",
-      "src_pages_feedbackpage_helparticle",
-      "src_pages_feedbackpage_helpcardsubtitle",
-      "src_pages_feedbackpage_helpoverview",
-      "src_pages_feedbackpage_helpoverviewcard",
-      "src_pages_feedbackpage_helptourcard",
-      "src_pages_feedbackpage_norm",
-      "src_pages_feedbackpage_ratings",
-      "src_pages_feedbackpage_screenpicker",
-      "src_pages_feedbackpage_screenpicker_ondoc",
-      "src_pages_feedbackpage_screenpicker_pick",
-      "src_pages_feedbackpage_slugify",
-      "src_pages_feedbackpage_tabs",
-      "src_pages_feedbackpage_viewlabel"
-    ],
-    "25": [
+    "23": [
       "src_data_db_reports",
       "src_data_db_reports_adddays",
       "src_data_db_reports_axis",
@@ -1253,7 +1176,7 @@
       "src_data_db_reports_statusat",
       "src_data_db_reports_tables"
     ],
-    "26": [
+    "24": [
       "src_components_createissuemodal",
       "src_components_createissuemodal_creatablecombobox",
       "src_components_createissuemodal_creatablecombobox_commit",
@@ -1288,7 +1211,42 @@
       "src_data_db_catalogs_listtenantlabels",
       "src_data_db_catalogs_norm"
     ],
-    "27": [
+    "25": [
+      "src_components_sidebar_accessiblescreens",
+      "src_data_db_feedback_createfeedback",
+      "src_data_onboardingcontent",
+      "src_data_onboardingcontent_onboarding_tips",
+      "src_data_onboardingcontent_onboardingguideblock",
+      "src_data_onboardingcontent_onboardingtip",
+      "src_pages_feedbackpage",
+      "src_pages_feedbackpage_articleheader",
+      "src_pages_feedbackpage_blockheading",
+      "src_pages_feedbackpage_blocksof",
+      "src_pages_feedbackpage_feedbackpage",
+      "src_pages_feedbackpage_feedbackpage_navitem",
+      "src_pages_feedbackpage_feedbackpage_resetform",
+      "src_pages_feedbackpage_feedbackpage_resolvescreen",
+      "src_pages_feedbackpage_feedbackpage_selecttab",
+      "src_pages_feedbackpage_feedbackpage_submit",
+      "src_pages_feedbackpage_feedbacktab",
+      "src_pages_feedbackpage_guidetext",
+      "src_pages_feedbackpage_help_sections",
+      "src_pages_feedbackpage_help_view_icons",
+      "src_pages_feedbackpage_helparticle",
+      "src_pages_feedbackpage_helpcardsubtitle",
+      "src_pages_feedbackpage_helpoverview",
+      "src_pages_feedbackpage_helpoverviewcard",
+      "src_pages_feedbackpage_helptourcard",
+      "src_pages_feedbackpage_norm",
+      "src_pages_feedbackpage_ratings",
+      "src_pages_feedbackpage_screenpicker",
+      "src_pages_feedbackpage_screenpicker_ondoc",
+      "src_pages_feedbackpage_screenpicker_pick",
+      "src_pages_feedbackpage_slugify",
+      "src_pages_feedbackpage_tabs",
+      "src_pages_feedbackpage_viewlabel"
+    ],
+    "26": [
       "src_components_taskmodal",
       "src_components_taskmodal_activitysection",
       "src_components_taskmodal_activitysection_handledraft",
@@ -1322,41 +1280,41 @@
       "src_components_taskmodal_taskmodalprops",
       "src_components_taskmodal_teammembers"
     ],
-    "28": [
-      "src_data_db_authprofile",
-      "src_data_db_authprofile_dash",
-      "src_data_db_authprofile_initials",
-      "src_data_db_authprofile_loadprofilebyauthuserid",
-      "src_data_db_authprofile_resolveroles",
-      "src_data_db_authprofile_role_aliases",
-      "src_data_db_authprofile_role_dashboard",
-      "src_data_db_authprofile_tbl",
+    "27": [
       "src_data_db_authprofile_touchaccess",
-      "src_data_db_authprofile_writeloginaudit",
-      "src_data_db_invite_homerolesfrommetadata",
-      "src_data_session_userdashboard",
-      "src_lib_auth_signin",
-      "src_lib_authstorage",
-      "src_lib_authstorage_authstorage",
-      "src_lib_authstorage_isrememberme",
-      "src_lib_authstorage_remember_me_key",
-      "src_lib_authstorage_setrememberme",
-      "src_lib_authstorage_target",
-      "src_pages_loginpage",
-      "src_pages_loginpage_badge_colors",
-      "src_pages_loginpage_checkcircle",
-      "src_pages_loginpage_eyeclosed",
-      "src_pages_loginpage_eyeopen",
-      "src_pages_loginpage_loginpage",
-      "src_pages_loginpage_loginpage_handlesubmit",
-      "src_pages_loginpage_loginstate",
-      "src_pages_loginpage_logomark",
-      "src_pages_loginpage_props",
-      "src_pages_loginpage_role_colors",
-      "src_pages_loginpage_roles",
-      "src_pages_loginpage_spinner"
+      "src_data_session_active_user_id",
+      "src_data_session_availablerolechoices",
+      "src_data_session_hydratepersonas",
+      "src_data_session_rolechoice",
+      "src_data_session_setactivetenantid",
+      "src_data_session_setactiveuser",
+      "src_data_sessioncontext",
+      "src_data_sessioncontext_sessioncontext",
+      "src_data_sessioncontext_sessionctx",
+      "src_data_sessioncontext_sessionprovider",
+      "src_data_sessioncontext_sessionprovider_applytenant",
+      "src_data_sessioncontext_sessionprovider_enterinspection",
+      "src_data_sessioncontext_sessionprovider_fallbackstatus",
+      "src_data_sessioncontext_sessionprovider_hydrateprofile",
+      "src_data_sessioncontext_sessionprovider_resolve",
+      "src_data_sessioncontext_sessionprovider_setactiveuser",
+      "src_data_sessioncontext_sessionprovider_settlestatus",
+      "src_data_sessioncontext_sessionprovider_signout",
+      "src_data_sessioncontext_sessionstatus",
+      "src_data_sessioncontext_withtimeout",
+      "src_lib_auth",
+      "src_lib_auth_authuser",
+      "src_lib_auth_clearmanuallogout",
+      "src_lib_auth_getsession",
+      "src_lib_auth_hasmanuallogout",
+      "src_lib_auth_markmanuallogout",
+      "src_lib_auth_onauthstatechange",
+      "src_lib_auth_signinresult",
+      "src_lib_auth_signout",
+      "src_lib_auth_toauthuser",
+      "src_lib_authstorage_clearrememberme"
     ],
-    "29": [
+    "28": [
       "src_data_db_clientportal_addclientapproval_raw",
       "src_data_db_clientportal_addclientcomment_raw",
       "src_data_db_clientportal_addporeply_raw",
@@ -1390,7 +1348,7 @@
       "src_data_db_clientportal_tenanterror",
       "src_data_db_clientportal_writeaudit"
     ],
-    "30": [
+    "29": [
       "src_data_db_timesheets_approveroption",
       "src_data_db_timesheets_createentry",
       "src_data_db_timesheets_deleteentry",
@@ -1424,74 +1382,7 @@
       "src_pages_timesheetpage_timesheetpage_showtoast",
       "src_pages_timesheetpage_today"
     ],
-    "31": [
-      "src_data_session_active_user_id",
-      "src_data_session_availablerolechoices",
-      "src_data_session_hydratepersonas",
-      "src_data_session_rolechoice",
-      "src_data_session_setactivetenantid",
-      "src_data_session_setactiveuser",
-      "src_data_sessioncontext",
-      "src_data_sessioncontext_sessioncontext",
-      "src_data_sessioncontext_sessionctx",
-      "src_data_sessioncontext_sessionprovider",
-      "src_data_sessioncontext_sessionprovider_applytenant",
-      "src_data_sessioncontext_sessionprovider_enterinspection",
-      "src_data_sessioncontext_sessionprovider_fallbackstatus",
-      "src_data_sessioncontext_sessionprovider_hydrateprofile",
-      "src_data_sessioncontext_sessionprovider_resolve",
-      "src_data_sessioncontext_sessionprovider_setactiveuser",
-      "src_data_sessioncontext_sessionprovider_settlestatus",
-      "src_data_sessioncontext_sessionprovider_signout",
-      "src_data_sessioncontext_sessionstatus",
-      "src_data_sessioncontext_withtimeout",
-      "src_lib_auth",
-      "src_lib_auth_authuser",
-      "src_lib_auth_clearmanuallogout",
-      "src_lib_auth_getsession",
-      "src_lib_auth_hasmanuallogout",
-      "src_lib_auth_inspection_mode_enabled",
-      "src_lib_auth_markmanuallogout",
-      "src_lib_auth_onauthstatechange",
-      "src_lib_auth_signinresult",
-      "src_lib_auth_signout",
-      "src_lib_auth_toauthuser",
-      "src_lib_authstorage_clearrememberme"
-    ],
-    "32": [
-      "src_data_calendarevents",
-      "src_data_calendarevents_calendarevent",
-      "src_data_db_calendarevents_calendareventinput",
-      "src_data_db_calendarevents_calendareventtype",
-      "src_data_db_calendarevents_dbcalendarevent",
-      "src_data_db_calendarevents_event_type_color",
-      "src_data_db_calendarevents_event_type_icon",
-      "src_data_db_calendarevents_event_type_label",
-      "src_data_db_calendarevents_event_types",
-      "src_data_db_calendarevents_google_provider",
-      "src_lib_googlecalendar_googlestatus",
-      "src_pages_calendarpage",
-      "src_pages_calendarpage_all_hours",
-      "src_pages_calendarpage_calview",
-      "src_pages_calendarpage_composerprops",
-      "src_pages_calendarpage_dayviewprops",
-      "src_pages_calendarpage_deadlines",
-      "src_pages_calendarpage_dow_pt",
-      "src_pages_calendarpage_event_colors",
-      "src_pages_calendarpage_eventchip",
-      "src_pages_calendarpage_eventheightpx",
-      "src_pages_calendarpage_eventtoppx",
-      "src_pages_calendarpage_getweekdays",
-      "src_pages_calendarpage_integrationspanel",
-      "src_pages_calendarpage_integrationspanelprops",
-      "src_pages_calendarpage_issueduechip",
-      "src_pages_calendarpage_months_pt",
-      "src_pages_calendarpage_months_short",
-      "src_pages_calendarpage_priority_dot",
-      "src_pages_calendarpage_startofweek",
-      "src_pages_calendarpage_weekeventblock"
-    ],
-    "33": [
+    "30": [
       "src_data_db_timesheets",
       "src_data_db_timesheets_anytbl",
       "src_data_db_timesheets_approvalqueue",
@@ -1524,7 +1415,7 @@
       "src_data_db_timesheets_writeaudit",
       "src_data_session_getactivetenantid"
     ],
-    "34": [
+    "31": [
       "src_components_ds_dashboardkit_av",
       "src_components_ds_dashboardkit_progresscard",
       "src_components_ds_dashboardkit_sprintdonutcard",
@@ -1556,7 +1447,7 @@
       "src_data_db_homelive_liveprojects",
       "src_pages_dashboardhomepage_adminauditcard"
     ],
-    "35": [
+    "32": [
       "src_data_dashboardassignments",
       "src_data_dashboardassignments_assignments",
       "src_data_dashboardassignments_dashboardassignment",
@@ -1588,7 +1479,39 @@
       "src_pages_dashboardhomepage_unifiedmural_handledismissreport",
       "src_pages_reportspage_reportspage"
     ],
-    "36": [
+    "33": [
+      "src_data_db_calendarevents",
+      "src_data_db_calendarevents_at",
+      "src_data_db_calendarevents_calendareventinput",
+      "src_data_db_calendarevents_ceremonyresult",
+      "src_data_db_calendarevents_daykey",
+      "src_data_db_calendarevents_dbcalendarevent",
+      "src_data_db_calendarevents_default_ceremony_slots",
+      "src_data_db_calendarevents_event_type_color",
+      "src_data_db_calendarevents_event_type_icon",
+      "src_data_db_calendarevents_event_type_label",
+      "src_data_db_calendarevents_event_types",
+      "src_data_db_calendarevents_eventguest",
+      "src_data_db_calendarevents_eventmeta",
+      "src_data_db_calendarevents_externaleventinput",
+      "src_data_db_calendarevents_externalimportresult",
+      "src_data_db_calendarevents_generatesprintceremonies",
+      "src_data_db_calendarevents_google_event_color",
+      "src_data_db_calendarevents_google_provider",
+      "src_data_db_calendarevents_maprow",
+      "src_data_db_calendarevents_normalizeeventtype",
+      "src_data_db_calendarevents_parseday",
+      "src_data_db_calendarevents_parsetime",
+      "src_data_db_calendarevents_plannedceremony",
+      "src_data_db_calendarevents_plansprintceremonies",
+      "src_data_db_calendarevents_readguests",
+      "src_data_db_calendarevents_readmeta",
+      "src_data_db_calendarevents_row",
+      "src_data_db_calendarevents_sprintceremonyinput",
+      "src_data_db_calendarevents_tables",
+      "src_pages_projectpage_projectpage_handlegenerateceremonies"
+    ],
+    "34": [
       "src_data_db_modules",
       "src_data_db_modules_activationinput",
       "src_data_db_modules_activationrequestrow",
@@ -1620,7 +1543,7 @@
       "src_data_db_modules_writeaudit",
       "src_pages_dashboardhomepage_adminmodulescard"
     ],
-    "37": [
+    "35": [
       "src_data_db_projects_projectcolor",
       "src_data_db_projects_projectmemberrow",
       "src_data_db_projects_projectprofilerow",
@@ -1652,7 +1575,7 @@
       "src_pages_projectslistpage_subtask",
       "src_pages_projectslistpage_taskstatus"
     ],
-    "38": [
+    "36": [
       "src_data_db_timeline",
       "src_data_db_timeline_dependencyrow",
       "src_data_db_timeline_epic_color_map",
@@ -1684,7 +1607,7 @@
       "src_pages_ganttpage_projectdropdownprops",
       "src_pages_ganttpage_shortname"
     ],
-    "39": [
+    "37": [
       "src_components_home_panelbodycards_testexecutioncard",
       "src_components_home_panelbodycards_testexecutioncard_approve",
       "src_components_home_panelbodycards_testexecutioncard_reject",
@@ -1715,7 +1638,7 @@
       "src_data_db_workitem_updateworkitemfield",
       "src_data_db_workitem_writeaudit"
     ],
-    "40": [
+    "38": [
       "src_components_projectfilesdrawer_projectfilesdrawer_download",
       "src_components_workitemdetail_attachmentssection",
       "src_components_workitemdetail_attachmentssection_handledownload",
@@ -1746,7 +1669,7 @@
       "src_data_db_attachments_uploadargs",
       "src_data_db_attachments_uploadattachment"
     ],
-    "41": [
+    "39": [
       "src_data_db_board_default_tenant_id",
       "src_data_db_workitem",
       "src_data_db_workitem_acceptancerow",
@@ -1777,38 +1700,7 @@
       "src_data_db_workitem_workitemrow",
       "src_utils_logger_fmt"
     ],
-    "42": [
-      "src_data_db_calendarevents",
-      "src_data_db_calendarevents_at",
-      "src_data_db_calendarevents_ceremonyresult",
-      "src_data_db_calendarevents_createcalendarevent",
-      "src_data_db_calendarevents_daykey",
-      "src_data_db_calendarevents_default_ceremony_slots",
-      "src_data_db_calendarevents_eventguest",
-      "src_data_db_calendarevents_eventmeta",
-      "src_data_db_calendarevents_externaleventinput",
-      "src_data_db_calendarevents_externalimportresult",
-      "src_data_db_calendarevents_generatesprintceremonies",
-      "src_data_db_calendarevents_google_event_color",
-      "src_data_db_calendarevents_maprow",
-      "src_data_db_calendarevents_normalizecreatedby",
-      "src_data_db_calendarevents_normalizeeventtype",
-      "src_data_db_calendarevents_parseday",
-      "src_data_db_calendarevents_parsetime",
-      "src_data_db_calendarevents_plannedceremony",
-      "src_data_db_calendarevents_plansprintceremonies",
-      "src_data_db_calendarevents_readguests",
-      "src_data_db_calendarevents_readmeta",
-      "src_data_db_calendarevents_row",
-      "src_data_db_calendarevents_setexternalid",
-      "src_data_db_calendarevents_sprintceremonyinput",
-      "src_data_db_calendarevents_tables",
-      "src_data_db_calendarevents_tometadata",
-      "src_data_db_calendarevents_updatecalendarevent",
-      "src_data_db_calendarevents_upsertexternalevents",
-      "src_pages_projectpage_projectpage_handlegenerateceremonies"
-    ],
-    "43": [
+    "40": [
       "src_data_db_activationtokens",
       "src_data_db_activationtokens_activationlink",
       "src_data_db_activationtokens_audit",
@@ -1838,7 +1730,7 @@
       "src_pages_createpasswordpage_translateautherror",
       "src_pages_teampage_memberstab_generateresetlink"
     ],
-    "44": [
+    "41": [
       "src_data_db_timeline_updateworkitemdates",
       "src_pages_timelinepage",
       "src_pages_timelinepage_adddays",
@@ -1868,7 +1760,7 @@
       "src_pages_timelinepage_zoom_label",
       "src_pages_timelinepage_zoom_px"
     ],
-    "45": [
+    "42": [
       "src_data_db_authprofile_normalizerole",
       "src_data_permissions_derivepermissions",
       "src_data_session",
@@ -1897,7 +1789,7 @@
       "src_pages_teampage_permissionstab_toggleroleoptin",
       "src_pages_teampage_personafrommember"
     ],
-    "46": [
+    "43": [
       "src_data_db_clientportal_addclientcomment",
       "src_data_db_clientportal_addporeply",
       "src_data_db_clientportal_createclientportalusers",
@@ -1926,7 +1818,7 @@
       "src_pages_clientaccesspage_props",
       "src_utils_logger_safecall"
     ],
-    "47": [
+    "44": [
       "src_data_db_members",
       "src_data_db_members_getmembers",
       "src_data_db_members_gettenantowneremails",
@@ -1955,7 +1847,7 @@
       "src_pages_teampage_tabbar",
       "src_pages_teampage_userwithstatus"
     ],
-    "48": [
+    "45": [
       "src_data_db_sprints",
       "src_data_db_sprints_additemtosprint",
       "src_data_db_sprints_auditpayload",
@@ -1984,7 +1876,7 @@
       "src_data_db_sprints_writescopeevents",
       "src_data_db_sprints_writesprintaudit"
     ],
-    "49": [
+    "46": [
       "src_pages_roledashboard",
       "src_pages_roledashboard_actionbtn",
       "src_pages_roledashboard_alerttag",
@@ -2013,35 +1905,35 @@
       "src_pages_roledashboard_techleaddashboard",
       "src_pages_roledashboard_uxdashboard"
     ],
-    "50": [
-      "src_app",
-      "src_app_all_views",
-      "src_app_appinner",
-      "src_app_appinner_leaveactivate",
-      "src_app_appinner_leavereset",
-      "src_app_view_labels",
-      "src_components_touroffermodal",
-      "src_components_touroffermodal_phase",
-      "src_components_touroffermodal_props",
-      "src_components_touroffermodal_slide",
-      "src_components_touroffermodal_slides",
-      "src_components_touroffermodal_touroffermodal",
-      "src_lib_portalsession_clearportalsession",
-      "src_lib_screenlabel",
-      "src_lib_screenlabel_keymap",
-      "src_lib_screenlabel_normalize",
-      "src_lib_screenlabel_screenlabelfromurl",
-      "src_pages_dashboardhomepage_dashboardhomepage",
-      "src_pages_privacypolicypage",
-      "src_pages_privacypolicypage_li",
-      "src_pages_privacypolicypage_privacypolicypage",
-      "src_pages_privacypolicypage_section",
-      "src_pages_supportpage",
-      "src_pages_supportpage_supportpage",
-      "src_pages_taskdrawerpage",
-      "src_pages_taskdrawerpage_taskdrawerpage"
+    "47": [
+      "src_data_db_authprofile",
+      "src_data_db_authprofile_dash",
+      "src_data_db_authprofile_initials",
+      "src_data_db_authprofile_loadprofilebyauthuserid",
+      "src_data_db_authprofile_resolveroles",
+      "src_data_db_authprofile_role_aliases",
+      "src_data_db_authprofile_role_dashboard",
+      "src_data_db_authprofile_tbl",
+      "src_data_db_authprofile_writeloginaudit",
+      "src_data_session_userdashboard",
+      "src_lib_auth_inspection_mode_enabled",
+      "src_lib_auth_signin",
+      "src_lib_authstorage_setrememberme",
+      "src_pages_loginpage",
+      "src_pages_loginpage_badge_colors",
+      "src_pages_loginpage_checkcircle",
+      "src_pages_loginpage_eyeclosed",
+      "src_pages_loginpage_eyeopen",
+      "src_pages_loginpage_loginpage",
+      "src_pages_loginpage_loginpage_handlesubmit",
+      "src_pages_loginpage_loginstate",
+      "src_pages_loginpage_logomark",
+      "src_pages_loginpage_props",
+      "src_pages_loginpage_role_colors",
+      "src_pages_loginpage_roles",
+      "src_pages_loginpage_spinner"
     ],
-    "51": [
+    "48": [
       "src_data_db_modules_moduleview",
       "src_data_db_moduletrials_daysremaining",
       "src_data_db_moduletrials_moduletrialrow",
@@ -2069,7 +1961,7 @@
       "src_pages_modulesportfoliopage_props",
       "src_pages_modulesportfoliopage_typetag"
     ],
-    "52": [
+    "49": [
       "src_data_db_timesheets_approveentries",
       "src_data_db_timesheets_getapproversquads",
       "src_data_db_timesheets_listpendingforapprover",
@@ -2097,7 +1989,7 @@
       "src_pages_hoursapprovalpage_status_meta",
       "src_pages_hoursapprovalpage_statusbadge"
     ],
-    "53": [
+    "50": [
       "src_data_clientaccess_clientaccessrecord",
       "src_data_clientportalstore",
       "src_data_clientportalstore_allsignals",
@@ -2124,7 +2016,7 @@
       "src_data_db_clientportal_clientsignalrow",
       "src_data_db_clientportal_portalproject"
     ],
-    "54": [
+    "51": [
       "src_data_db_dashboards",
       "src_data_db_dashboards_active_module_statuses",
       "src_data_db_dashboards_adminkpis",
@@ -2151,7 +2043,7 @@
       "src_data_db_dashboards_type_from_db",
       "src_data_db_dashboards_workloadentry"
     ],
-    "55": [
+    "52": [
       "src_data_db_tenant",
       "src_data_db_tenant_changeslug",
       "src_data_db_tenant_changeslugresult",
@@ -2178,7 +2070,7 @@
       "src_pages_tenantsettingspage_tenantsettingspage_save",
       "src_pages_tenantsettingspage_timezones"
     ],
-    "56": [
+    "53": [
       "src_data_reportregistry_aginganalysisview",
       "src_data_reportregistry_aginganalysisview_suggestion",
       "src_data_reportregistry_aginglist",
@@ -2205,7 +2097,33 @@
       "src_data_reportregistry_velocitymini",
       "src_data_reportregistry_workloadanalysisview"
     ],
-    "57": [
+    "54": [
+      "ref_react",
+      "src_app",
+      "src_app_all_views",
+      "src_app_view_labels",
+      "src_components_shell_view",
+      "src_components_touroffermodal",
+      "src_components_touroffermodal_phase",
+      "src_components_touroffermodal_props",
+      "src_components_touroffermodal_slide",
+      "src_components_touroffermodal_slides",
+      "src_components_touroffermodal_touroffermodal",
+      "src_lib_screenlabel",
+      "src_lib_screenlabel_keymap",
+      "src_lib_screenlabel_normalize",
+      "src_lib_screenlabel_screenlabelfromurl",
+      "src_pages_dashboardhomepage_dashboardhomepage",
+      "src_pages_privacypolicypage",
+      "src_pages_privacypolicypage_li",
+      "src_pages_privacypolicypage_privacypolicypage",
+      "src_pages_privacypolicypage_section",
+      "src_pages_supportpage",
+      "src_pages_supportpage_supportpage",
+      "src_pages_taskdrawerpage",
+      "src_pages_taskdrawerpage_taskdrawerpage"
+    ],
+    "55": [
       "src_components_ds_modal",
       "src_components_ds_modal_modal",
       "src_components_ds_modal_modalprops",
@@ -2231,7 +2149,7 @@
       "src_hooks_useonboarding_onboardingstate",
       "src_hooks_useonboarding_useonboarding"
     ],
-    "58": [
+    "56": [
       "src_components_storageplansmodal_canrequeststorage",
       "src_data_db_attachments_bytestohuman",
       "src_data_db_storage",
@@ -2257,7 +2175,33 @@
       "src_pages_storagepage_usagebar",
       "src_pages_storagepage_usagecolor"
     ],
-    "59": [
+    "57": [
+      "src_data_calendarevents",
+      "src_data_calendarevents_calendarevent",
+      "src_data_db_calendarevents_calendareventtype",
+      "src_lib_googlecalendar_googlestatus",
+      "src_pages_calendarpage",
+      "src_pages_calendarpage_all_hours",
+      "src_pages_calendarpage_calview",
+      "src_pages_calendarpage_composerprops",
+      "src_pages_calendarpage_dayviewprops",
+      "src_pages_calendarpage_deadlines",
+      "src_pages_calendarpage_dow_pt",
+      "src_pages_calendarpage_event_colors",
+      "src_pages_calendarpage_eventchip",
+      "src_pages_calendarpage_eventheightpx",
+      "src_pages_calendarpage_eventtoppx",
+      "src_pages_calendarpage_getweekdays",
+      "src_pages_calendarpage_integrationspanel",
+      "src_pages_calendarpage_integrationspanelprops",
+      "src_pages_calendarpage_issueduechip",
+      "src_pages_calendarpage_months_pt",
+      "src_pages_calendarpage_months_short",
+      "src_pages_calendarpage_priority_dot",
+      "src_pages_calendarpage_startofweek",
+      "src_pages_calendarpage_weekeventblock"
+    ],
+    "58": [
       "src_data_timesheets",
       "src_data_timesheets_addentry",
       "src_data_timesheets_all_items",
@@ -2283,7 +2227,7 @@
       "src_data_timesheets_timesheetstatus",
       "src_data_timesheets_updateentry"
     ],
-    "60": [
+    "59": [
       "src_app_shellwithrole",
       "src_app_shellwithrole_handleglobalcreatedemand",
       "src_app_shellwithrole_navto",
@@ -2308,7 +2252,7 @@
       "src_pages_projectpage_projectpage_quickcreatecard",
       "src_pages_projectpage_togglearrtop"
     ],
-    "61": [
+    "60": [
       "src_components_invitemembermodal_initials",
       "src_components_invitemembermodal_invitemembermodal",
       "src_components_invitemembermodal_invitemembermodal_canadvance",
@@ -2333,7 +2277,7 @@
       "src_pages_teampage_editusermodal_toggleoptin",
       "src_pages_teampage_inputstyle"
     ],
-    "62": [
+    "61": [
       "src_data_dashboardassignments_assignment_targets",
       "src_data_dashboardassignments_assignmenttarget",
       "src_data_dashboardassignments_getallassignments",
@@ -2358,7 +2302,7 @@
       "src_pages_reportspage_reportspageinner_openassign",
       "src_pages_reportspage_usetoast"
     ],
-    "63": [
+    "62": [
       "src_components_ds_badge",
       "src_components_ds_badge_badge",
       "src_components_ds_badge_badgeprops",
@@ -2382,7 +2326,7 @@
       "src_components_taskdrawer_taskdrawer",
       "src_components_taskdrawer_taskdrawerprops"
     ],
-    "64": [
+    "63": [
       "src_components_ds_dashboardkit_workstatus",
       "src_pages_mytaskspage",
       "src_pages_mytaskspage_alldoneempty",
@@ -2406,7 +2350,7 @@
       "src_pages_mytaskspage_toworkitem",
       "src_pages_mytaskspage_type_icon"
     ],
-    "65": [
+    "64": [
       "src_data_db_members_setmemberstatus",
       "src_data_db_reportsgovernance_saveprofilereportsaccess",
       "src_data_session_blockmockuser",
@@ -2429,6 +2373,29 @@
       "src_pages_teampage_memberstab_showtoast",
       "src_pages_teampage_ud",
       "src_pages_teampage_userstatus"
+    ],
+    "65": [
+      "src_data_db_filteroptions",
+      "src_data_db_filteroptions_boardfilteroptions",
+      "src_data_db_filteroptions_empty",
+      "src_data_db_filteroptions_filteroption",
+      "src_data_db_filteroptions_idname",
+      "src_data_db_invite_homerolesfrommetadata",
+      "src_data_db_tenantpersonas",
+      "src_data_db_tenantpersonas_fetchtenantpersonas",
+      "src_data_db_tenantpersonas_name_overrides",
+      "src_data_db_tenantpersonas_normalizerole",
+      "src_data_db_tenantpersonas_profilelite",
+      "src_data_db_tenantpersonas_role_aliases",
+      "src_data_db_tenantpersonas_role_order",
+      "src_data_db_tenantpersonas_rolelite",
+      "src_data_db_tenantpersonas_userrolelite",
+      "src_integrations_supabase_client",
+      "src_integrations_supabase_client_supabase",
+      "src_integrations_supabase_previewauthstorage",
+      "src_integrations_supabase_previewauthstorage_brokeredpreviewstorage",
+      "src_pages_oauthgooglereturn",
+      "src_pages_oauthgooglereturn_oauthgooglereturn"
     ],
     "66": [
       "src_data_invites",
@@ -2648,6 +2615,27 @@
       "src_pages_calendarpage_uselocaltoast_toast"
     ],
     "76": [
+      "src_lib_passwordreset",
+      "src_lib_passwordreset_auditpasswordresetcompleted",
+      "src_lib_passwordreset_requestpasswordreset",
+      "src_lib_passwordreset_reset_path",
+      "src_lib_passwordreset_resetredirecturl",
+      "src_lib_passwordreset_tbl",
+      "src_pages_loginpage_loginpage_handleforgot",
+      "src_pages_profilepage",
+      "src_pages_profilepage_field",
+      "src_pages_profilepage_profilepage",
+      "src_pages_profilepage_profilepage_handlechangepassword",
+      "src_pages_profilepage_role_label",
+      "src_pages_resetpasswordpage",
+      "src_pages_resetpasswordpage_phase",
+      "src_pages_resetpasswordpage_props",
+      "src_pages_resetpasswordpage_resetpasswordpage",
+      "src_pages_resetpasswordpage_resetpasswordpage_handleresend",
+      "src_pages_resetpasswordpage_resetpasswordpage_handlesubmit",
+      "src_pages_resetpasswordpage_rules"
+    ],
+    "77": [
       "src_components_ds_dashboardkit_ragstatus",
       "src_data_db_dashboards_featureaggregate",
       "src_data_db_dashboards_ragproject",
@@ -2667,7 +2655,7 @@
       "src_pages_dashboardpage_sparkline",
       "src_pages_dashboardpage_status"
     ],
-    "77": [
+    "78": [
       "src_components_filterbuilder",
       "src_components_filterbuilder_conditionsfromfilter",
       "src_components_filterbuilder_conditionstofilter",
@@ -2687,7 +2675,7 @@
       "src_components_filterbuilder_uuid_fields",
       "src_data_db_filtertranslator_filtercondition"
     ],
-    "78": [
+    "79": [
       "src_components_workitemdetail_fmttime",
       "src_components_workitemdetail_toworkitemdata",
       "src_components_workitemdetail_workitemdetail_applydetail",
@@ -2707,7 +2695,7 @@
       "src_pages_listpage_listpage_togglesort",
       "src_pages_listpage_uitype"
     ],
-    "79": [
+    "80": [
       "src_data_db_clientportal_portallogin",
       "src_data_db_clientportal_portalloginuser",
       "src_lib_portalsession",
@@ -2727,7 +2715,7 @@
       "src_pages_clientloginpage_props",
       "src_pages_clientloginpage_spinner"
     ],
-    "80": [
+    "81": [
       "src_data_db_dashboardassignments",
       "src_data_db_dashboardassignments_assign",
       "src_data_db_dashboardassignments_assign_raw",
@@ -2747,7 +2735,7 @@
       "src_data_db_dashboardassignments_tocard",
       "src_data_db_dashboardassignments_writeaudit"
     ],
-    "81": [
+    "82": [
       "src_lib_appprefs",
       "src_lib_appprefs_active_languages",
       "src_lib_appprefs_applytheme",
@@ -2767,7 +2755,7 @@
       "src_pages_preferencespage_preferencespage_picklang",
       "src_pages_preferencespage_preferencespage_picktheme"
     ],
-    "82": [
+    "83": [
       "src_pages_homepage",
       "src_pages_homepage_approvals",
       "src_pages_homepage_approvalswidget",
@@ -2787,7 +2775,7 @@
       "src_pages_homepage_today_tasks",
       "src_pages_homepage_widget"
     ],
-    "83": [
+    "84": [
       "src_components_storageplansmodal",
       "src_components_storageplansmodal_billing",
       "src_components_storageplansmodal_brl",
@@ -2806,7 +2794,7 @@
       "src_pages_modulesportfoliopage_moduleactivationrequestmodal",
       "src_pages_modulesportfoliopage_moduleactivationrequestmodal_handlesubmit"
     ],
-    "84": [
+    "85": [
       "src_data_db_audit",
       "src_data_db_audit_auditafter",
       "src_data_db_audit_auditopts",
@@ -2825,7 +2813,7 @@
       "src_data_db_audit_writeauditonce",
       "src_data_db_storage_recordquotagrowth"
     ],
-    "85": [
+    "86": [
       "src_data_db_notifications",
       "src_data_db_notifications_create_raw",
       "src_data_db_notifications_list",
@@ -2844,7 +2832,7 @@
       "src_data_db_notifications_unreadcount_raw",
       "src_data_db_notifications_writeaudit"
     ],
-    "86": [
+    "87": [
       "src_data_workitems",
       "src_data_workitems_al",
       "src_data_workitems_bs",
@@ -2863,7 +2851,7 @@
       "src_data_workitems_rm",
       "src_data_workitems_work_items"
     ],
-    "87": [
+    "88": [
       "supabase_functions_gcal_disconnect_index",
       "supabase_functions_gcal_disconnect_index_json",
       "supabase_functions_gcal_oauth_complete_index",
@@ -2882,7 +2870,7 @@
       "supabase_functions_shared_appuserconnector_exchangeappuseroauthcoderesult",
       "supabase_functions_shared_appuserconnector_requireapikey"
     ],
-    "88": [
+    "89": [
       "src_components_closereleasemodal",
       "src_components_closereleasemodal_dest",
       "src_components_closereleasemodal_props",
@@ -2900,7 +2888,7 @@
       "src_data_db_releases_releaserow",
       "src_data_db_timeline_db_status_cfg"
     ],
-    "89": [
+    "90": [
       "src_components_ds_drawer",
       "src_components_ds_drawer_drawer",
       "src_components_ds_drawer_drawerprops",
@@ -2918,7 +2906,7 @@
       "src_data_db_attachments_listprojectboards",
       "src_data_db_attachments_projectboardoption"
     ],
-    "90": [
+    "91": [
       "src_pages_automationspage",
       "src_pages_automationspage_action_options",
       "src_pages_automationspage_autodef",
@@ -2936,7 +2924,7 @@
       "src_pages_automationspage_trigger_options",
       "src_pages_automationspage_workflow_statuses"
     ],
-    "91": [
+    "92": [
       "ref_react_dom",
       "src_components_addrelationmodal",
       "src_components_addrelationmodal_addrelationmodal",
@@ -2953,7 +2941,7 @@
       "src_components_ds_helphint_helphintprops",
       "src_data_db_workitem_listlinkableitems"
     ],
-    "92": [
+    "93": [
       "src_app_app",
       "src_components_ds_toast",
       "src_components_ds_toast_toastcontextvalue",
@@ -2970,7 +2958,7 @@
       "src_index",
       "src_main"
     ],
-    "93": [
+    "94": [
       "src_components_ds_altechicons",
       "src_components_ds_altechicons_adminicon",
       "src_components_ds_altechicons_altechiconprops",
@@ -2987,7 +2975,7 @@
       "src_components_ds_altechicons_sprinticon",
       "src_components_ds_altechicons_storyicon"
     ],
-    "94": [
+    "95": [
       "src_components_ds_dashboardkit_ragconfig",
       "src_components_home_projecthealthmodal",
       "src_components_home_projecthealthmodal_axiscolor",
@@ -3004,7 +2992,7 @@
       "src_components_home_projecthealthmodal_statuscolor",
       "src_data_db_dashboards_sprintsummary"
     ],
-    "95": [
+    "96": [
       "src_components_workitemdetail_epicselector",
       "src_components_workitemdetail_epicselector_handlekey",
       "src_components_workitemdetail_epicselector_ondown",
@@ -3021,7 +3009,7 @@
       "src_components_workitemdetail_searchableselect_ondown",
       "src_components_workitemdetail_searchableselect_select"
     ],
-    "96": [
+    "97": [
       "src_data_clientportalstore_emit",
       "src_data_clientportalstore_initialsof",
       "src_data_clientportalstore_isuuid",
@@ -3038,7 +3026,7 @@
       "src_data_clientportalstore_writeportalaccess",
       "src_data_clientportalstore_writeprojectread"
     ],
-    "97": [
+    "98": [
       "src_data_db_clientportal_listclientunreadreplies",
       "src_data_db_clientportal_listprojectresponsibleprofiles",
       "src_pages_clientportalpage_clientchatpanel",
@@ -3055,7 +3043,7 @@
       "src_pages_clientportalpage_rendermentionbody",
       "src_pages_clientportalpage_resolvementions"
     ],
-    "98": [
+    "99": [
       "src_pages_projectpage_boardtab",
       "src_pages_projectpage_boardtab_confirmremove",
       "src_pages_projectpage_boardtab_flashtoast",
@@ -3072,7 +3060,7 @@
       "src_pages_projectpage_defaultsprint",
       "src_pages_projectpage_uistatus"
     ],
-    "99": [
+    "100": [
       "supabase_functions_notify_ticket_index",
       "supabase_functions_notify_ticket_index_escapehtml",
       "supabase_functions_notify_ticket_index_json",
@@ -3089,7 +3077,7 @@
       "supabase_functions_shared_email_sendemailresult",
       "supabase_functions_shared_email_tag"
     ],
-    "100": [
+    "101": [
       "src_components_support_supportlogspanel",
       "src_components_support_supportlogspanel_fmtwhen",
       "src_components_support_supportlogspanel_level_style",
@@ -3105,7 +3093,7 @@
       "src_data_db_supportlogs_supportlogrow",
       "src_data_db_supportlogs_tbl"
     ],
-    "101": [
+    "102": [
       "src_data_clientsignals",
       "src_data_clientsignals_addclientsignal",
       "src_data_clientsignals_addmanagementmessage",
@@ -3121,7 +3109,7 @@
       "src_data_clientsignals_markreplyreadbyclient",
       "src_data_clientsignals_signaltype"
     ],
-    "102": [
+    "103": [
       "src_data_db_releases_listreleases",
       "src_data_db_releases_releasesdata",
       "src_pages_releasespage",
@@ -3137,7 +3125,7 @@
       "src_pages_releasespage_statelabel",
       "src_pages_releasespage_statuscfg"
     ],
-    "103": [
+    "104": [
       "src_data_db_reports_reportsdata",
       "src_data_managementinsights",
       "src_data_managementinsights_assistantinsight",
@@ -3152,22 +3140,6 @@
       "src_data_reportregistry_reportentry",
       "src_data_reportregistry_reportsctxvalue",
       "src_lib_reportnav_reportnavintent"
-    ],
-    "104": [
-      "src_lib_googlecalendar",
-      "src_lib_googlecalendar_connectgoogle",
-      "src_lib_googlecalendar_errmessage",
-      "src_lib_googlecalendar_fetchgoogleevents",
-      "src_lib_googlecalendar_getgooglestatus",
-      "src_lib_googlecalendar_google_connector_id",
-      "src_lib_googlecalendar_google_return_path",
-      "src_lib_googlecalendar_googlepushinput",
-      "src_lib_googlecalendar_googleremoteevent",
-      "src_lib_googlecalendar_pusheventtogoogle",
-      "src_lib_googlecalendar_waitforoauthcompletion",
-      "src_pages_calendarpage_calendarpage_handlegoogleconnect",
-      "src_pages_calendarpage_calendarpage_handlesave",
-      "src_pages_calendarpage_toeventinput"
     ],
     "105": [
       "supabase_functions_log_event_index",
@@ -3230,6 +3202,20 @@
       "src_components_ds_avatar_sizes"
     ],
     "109": [
+      "src_components_errorboundary",
+      "src_components_errorboundary_props",
+      "src_components_errorboundary_state",
+      "src_utils_logger",
+      "src_utils_logger_allowremote",
+      "src_utils_logger_ctx",
+      "src_utils_logger_logger",
+      "src_utils_logger_newcorrelationid",
+      "src_utils_logger_postremote",
+      "src_utils_logger_ratestamps",
+      "src_utils_logger_recentsignatures",
+      "src_utils_logger_remotelevel"
+    ],
+    "110": [
       "src_components_newprojectmodal",
       "src_components_newprojectmodal_dialog",
       "src_components_newprojectmodal_inputstyle",
@@ -3243,7 +3229,7 @@
       "src_components_newprojectmodal_overlay",
       "src_components_newprojectmodal_props"
     ],
-    "110": [
+    "111": [
       "src_data_clientportalstore_subscribe",
       "src_data_clientportalstore_useclientportal",
       "src_data_clientsignals_addporeply",
@@ -3257,7 +3243,7 @@
       "src_pages_dashboardhomepage_clientfeedcard_handlerowclick",
       "src_pages_dashboardhomepage_clientfeedcard_handlesend"
     ],
-    "111": [
+    "112": [
       "src_data_db_signup",
       "src_data_db_signup_signup_onboarding_key",
       "src_data_db_signup_signupinput",
@@ -3271,7 +3257,7 @@
       "src_pages_signuppage_signuppage_handlesubmit",
       "src_pages_signuppage_spinner"
     ],
-    "112": [
+    "113": [
       "src_pages_calendarpage_calendarpage_opencreate",
       "src_pages_calendarpage_calendarpage_openedit",
       "src_pages_calendarpage_eventcomposer",
@@ -3285,7 +3271,7 @@
       "src_pages_calendarpage_fmttime",
       "src_pages_calendarpage_parsedatetime"
     ],
-    "113": [
+    "114": [
       "supabase_functions_gcal_oauth_start_index",
       "supabase_functions_gcal_oauth_start_index_json",
       "supabase_functions_gcal_oauth_start_index_scopes",
@@ -3299,7 +3285,7 @@
       "supabase_functions_shared_connectionkeycrypto_encryptconnectionkey",
       "supabase_functions_shared_connectionkeycrypto_key"
     ],
-    "114": [
+    "115": [
       "src_components_dailymodal",
       "src_components_dailymodal_dailycolumn",
       "src_components_dailymodal_dailyissue",
@@ -3312,7 +3298,7 @@
       "src_components_dailymodal_fmt",
       "src_components_dailymodal_s"
     ],
-    "115": [
+    "116": [
       "src_components_sprintceremoniesmodal",
       "src_components_sprintceremoniesmodal_inputstyle",
       "src_components_sprintceremoniesmodal_occurrences",
@@ -3325,7 +3311,20 @@
       "src_data_db_calendarevents_clonedefaultceremonyslots",
       "src_data_db_calendarevents_weekday_labels"
     ],
-    "116": [
+    "117": [
+      "src_lib_googlecalendar",
+      "src_lib_googlecalendar_connectgoogle",
+      "src_lib_googlecalendar_errmessage",
+      "src_lib_googlecalendar_fetchgoogleevents",
+      "src_lib_googlecalendar_getgooglestatus",
+      "src_lib_googlecalendar_google_connector_id",
+      "src_lib_googlecalendar_google_return_path",
+      "src_lib_googlecalendar_googlepushinput",
+      "src_lib_googlecalendar_googleremoteevent",
+      "src_lib_googlecalendar_waitforoauthcompletion",
+      "src_pages_calendarpage_calendarpage_handlegoogleconnect"
+    ],
+    "118": [
       "ref_npm_supabase",
       "supabase_functions_client_portal_login_index",
       "supabase_functions_client_portal_login_index_hits",
@@ -3337,7 +3336,7 @@
       "supabase_functions_meeting_summarize_index_json",
       "supabase_functions_meeting_summarize_index_summarize"
     ],
-    "117": [
+    "119": [
       "src_components_completesprintmodal",
       "src_components_completesprintmodal_completesprintmodal",
       "src_components_completesprintmodal_completesprintmodal_handleconfirm",
@@ -3349,7 +3348,7 @@
       "src_components_completesprintmodal_remainingitem",
       "src_components_completesprintmodal_sprintdecision"
     ],
-    "118": [
+    "120": [
       "src_data_db_clientportal_markclientrepliesread",
       "src_data_db_clientportal_markreplyreadbyclient",
       "src_pages_clientportalpage_clientnotifbell",
@@ -3361,7 +3360,7 @@
       "src_pages_clientportalpage_projectselector",
       "src_pages_clientportalpage_projectselector_close"
     ],
-    "119": [
+    "121": [
       "src_integrations_supabase_types",
       "src_integrations_supabase_types_compositetypes",
       "src_integrations_supabase_types_constants",
@@ -3373,7 +3372,18 @@
       "src_integrations_supabase_types_tablesinsert",
       "src_integrations_supabase_types_tablesupdate"
     ],
-    "120": [
+    "122": [
+      "src_data_db_calendarevents_createcalendarevent",
+      "src_data_db_calendarevents_normalizecreatedby",
+      "src_data_db_calendarevents_setexternalid",
+      "src_data_db_calendarevents_tometadata",
+      "src_data_db_calendarevents_updatecalendarevent",
+      "src_data_db_calendarevents_upsertexternalevents",
+      "src_lib_googlecalendar_pusheventtogoogle",
+      "src_pages_calendarpage_calendarpage_handlesave",
+      "src_pages_calendarpage_toeventinput"
+    ],
+    "123": [
       "src_data_db_myqueue",
       "src_data_db_myqueue_listmyqueue",
       "src_data_db_myqueue_missingtablemessage",
@@ -3384,18 +3394,7 @@
       "src_data_db_myqueue_resolveprofileidbyname",
       "src_data_db_myqueue_tables"
     ],
-    "121": [
-      "src_data_db_tenantpersonas",
-      "src_data_db_tenantpersonas_fetchtenantpersonas",
-      "src_data_db_tenantpersonas_name_overrides",
-      "src_data_db_tenantpersonas_normalizerole",
-      "src_data_db_tenantpersonas_profilelite",
-      "src_data_db_tenantpersonas_role_aliases",
-      "src_data_db_tenantpersonas_role_order",
-      "src_data_db_tenantpersonas_rolelite",
-      "src_data_db_tenantpersonas_userrolelite"
-    ],
-    "122": [
+    "124": [
       "src_data_activitylabels",
       "src_data_activitylabels_action",
       "src_data_activitylabels_activityentitylabel",
@@ -3405,7 +3404,7 @@
       "src_data_activitylabels_humanizeactivity",
       "src_data_activitylabels_titleize"
     ],
-    "123": [
+    "125": [
       "src_data_db_dashboards_dashprojectcolor",
       "src_data_db_dashboards_daysbetween",
       "src_data_db_dashboards_fetchadminkpis",
@@ -3415,7 +3414,7 @@
       "src_data_db_dashboards_projectfinalizeinfo",
       "src_data_db_dashboards_toworkitem"
     ],
-    "124": [
+    "126": [
       "src_data_db_feedback",
       "src_data_db_feedback_createfeedback_raw",
       "src_data_db_feedback_feedbackinput",
@@ -3425,7 +3424,7 @@
       "src_data_db_feedback_listfeedback_raw",
       "src_data_db_feedback_tbl"
     ],
-    "125": [
+    "127": [
       "src_data_clientaccess",
       "src_data_clientaccess_createclientaccess",
       "src_data_clientaccess_getallclientaccess",
@@ -3434,7 +3433,7 @@
       "src_data_clientaccess_getclientpermissions",
       "src_data_clientaccess_updateclientpassword"
     ],
-    "126": [
+    "128": [
       "src_data_db_calendar",
       "src_data_db_calendar_deadlineitem",
       "src_data_db_calendar_deadlinerow",
@@ -3443,7 +3442,7 @@
       "src_data_db_calendar_tables",
       "src_data_db_timeline_default_tenant_id"
     ],
-    "127": [
+    "129": [
       "src_data_db_globalsearch",
       "src_data_db_globalsearch_profilerow",
       "src_data_db_globalsearch_projectrow",
@@ -3452,7 +3451,7 @@
       "src_data_db_globalsearch_workitemrow",
       "src_integrations_supabase_types_database"
     ],
-    "128": [
+    "130": [
       "src_data_dashboardassignments_dismissgridcard",
       "src_data_dashboardassignments_pingridcard",
       "src_pages_dashboardhomepage_all_proj_ids",
@@ -3460,7 +3459,7 @@
       "src_pages_dashboardhomepage_compositiongrid_handleadd",
       "src_pages_dashboardhomepage_compositiongrid_handledismiss"
     ],
-    "129": [
+    "131": [
       "supabase_functions_validate_activation_index",
       "supabase_functions_validate_activation_index_hits",
       "supabase_functions_validate_activation_index_json",
@@ -3468,105 +3467,112 @@
       "supabase_functions_validate_activation_index_sha256hex",
       "supabase_functions_validate_activation_index_tokenstate"
     ],
-    "130": [
+    "132": [
       "src_components_closereleasemodal_closereleasemodal",
       "src_components_closereleasemodal_closereleasemodal_confirm",
       "src_components_closereleasemodal_statuscfg",
       "src_data_session_getactiveuser",
       "src_pages_roledashboard_roledashboard"
     ],
-    "131": [
+    "133": [
       "src_data_db_moduletrials_starttrial",
       "src_pages_modulesportfoliopage_modulesportfoliopage",
       "src_pages_modulesportfoliopage_modulesportfoliopage_handleaction",
       "src_pages_modulesportfoliopage_modulesportfoliopage_handletrial",
       "src_pages_modulesportfoliopage_modulesportfoliopage_showtoast"
     ],
-    "132": [
+    "134": [
       "src_data_reportregistry_assistantpanel",
       "src_data_reportregistry_assistantpanel_go",
       "src_data_reportregistry_navigatetoreport",
       "src_lib_reportnav_setreportnav",
       "src_pages_dashboardhomepage_reportcardtile"
     ],
-    "133": [
+    "135": [
+      "src_lib_authstorage",
+      "src_lib_authstorage_authstorage",
+      "src_lib_authstorage_isrememberme",
+      "src_lib_authstorage_remember_me_key",
+      "src_lib_authstorage_target"
+    ],
+    "136": [
       "src_pages_ganttpage_ganttpage_toggleproject",
       "src_pages_ganttpage_projectdropdown",
       "src_pages_ganttpage_projectdropdown_handler",
       "src_pages_ganttpage_projectdropdown_toggleall",
       "src_pages_ganttpage_projectdropdown_toggleproject"
     ],
-    "134": [
+    "137": [
       "supabase_functions_gcal_list_events_index",
       "supabase_functions_gcal_list_events_index_googleevent",
       "supabase_functions_gcal_list_events_index_googleeventdate",
       "supabase_functions_gcal_list_events_index_isoof",
       "supabase_functions_gcal_list_events_index_json"
     ],
-    "135": [
+    "138": [
       "src_pages_timelinepage_projectdropdown",
       "src_pages_timelinepage_projectdropdown_handler",
       "src_pages_timelinepage_projectdropdown_toggle",
       "src_pages_timelinepage_projectdropdown_toggleall"
     ],
-    "136": [
+    "139": [
       "supabase_functions_gcal_push_event_index",
       "supabase_functions_gcal_push_event_index_daypart",
       "supabase_functions_gcal_push_event_index_json",
       "supabase_functions_gcal_push_event_index_pushbody"
     ],
-    "137": [
+    "140": [
       "src_pages_dashboardpage_projectdropdown",
       "src_pages_dashboardpage_projectdropdown_h",
       "src_pages_dashboardpage_projectdropdown_toggle"
     ],
-    "138": [
+    "141": [
       "src_pages_roledashboard_admindashboard",
       "src_pages_roledashboard_admindashboard_genpassword",
       "src_pages_roledashboard_admindashboard_handleresetpwd"
     ],
-    "139": [
+    "142": [
       "src_pages_timelinepage_timelinepage_startresize",
       "src_pages_timelinepage_timelinepage_startresize_onmove",
       "src_pages_timelinepage_timelinepage_startresize_onup"
     ],
-    "140": [
+    "143": [
       "figma_make_analyze_routes",
       "figma_make_analyze_routes__entry"
     ],
-    "141": [
+    "144": [
       "figma_make_deploy",
       "figma_make_deploy__entry"
     ],
-    "142": [
+    "145": [
       "figma_make_deploy_preview",
       "figma_make_deploy_preview__entry"
     ],
-    "143": [
+    "146": [
       "figma_make_dev",
       "figma_make_dev__entry"
     ],
-    "144": [
+    "147": [
       "figma_make_format",
       "figma_make_format__entry"
     ],
-    "145": [
+    "148": [
       "figma_make_install",
       "figma_make_install__entry"
     ],
-    "146": [
+    "149": [
       "figma_make_langserver",
       "figma_make_langserver__entry"
     ],
-    "147": [
+    "150": [
       "ref_https",
       "supabase_functions_tmp_apply_sql_index"
     ],
-    "148": [
+    "151": [
       "src_data_reportregistry_leaddistchart",
       "src_data_reportregistry_leaddistchart_toggle"
     ],
-    "149": [
+    "152": [
       "src_vite_env_d"
     ]
   },
@@ -3586,57 +3592,57 @@
     "12": 0.080338266384778,
     "13": 0.05426356589147287,
     "14": 0.07751937984496124,
-    "15": 0.08013937282229965,
+    "15": 0.08170731707317073,
     "16": 0.07017543859649122,
     "17": 0.06747638326585695,
-    "18": 0.09246088193456614,
-    "19": 0.12233285917496443,
-    "20": 0.06156156156156156,
-    "21": 0.06756756756756757,
-    "22": 0.07207207207207207,
-    "23": 0.10756302521008404,
-    "24": 0.0944741532976827,
-    "25": 0.08199643493761141,
-    "26": 0.08712121212121213,
-    "27": 0.06653225806451613,
-    "28": 0.10887096774193548,
-    "29": 0.17137096774193547,
-    "30": 0.10887096774193548,
-    "31": 0.1310483870967742,
-    "32": 0.08387096774193549,
-    "33": 0.20430107526881722,
+    "18": 0.12233285917496443,
+    "19": 0.06156156156156156,
+    "20": 0.06756756756756757,
+    "21": 0.07207207207207207,
+    "22": 0.10756302521008404,
+    "23": 0.08199643493761141,
+    "24": 0.08712121212121213,
+    "25": 0.09659090909090909,
+    "26": 0.06653225806451613,
+    "27": 0.13306451612903225,
+    "28": 0.17137096774193547,
+    "29": 0.10887096774193548,
+    "30": 0.20430107526881722,
+    "31": 0.10344827586206896,
+    "32": 0.11264367816091954,
+    "33": 0.08735632183908046,
     "34": 0.10344827586206896,
-    "35": 0.11264367816091954,
-    "36": 0.10344827586206896,
-    "37": 0.09195402298850575,
-    "38": 0.09655172413793103,
-    "39": 0.14285714285714285,
-    "40": 0.10591133004926108,
-    "41": 0.0812807881773399,
-    "42": 0.11330049261083744,
-    "43": 0.1402116402116402,
-    "44": 0.1111111111111111,
-    "45": 0.10541310541310542,
-    "46": 0.09401709401709402,
-    "47": 0.08547008547008547,
-    "48": 0.1396011396011396,
-    "49": 0.07407407407407407,
-    "50": 0.10461538461538461,
-    "51": 0.10153846153846154,
-    "52": 0.12,
+    "35": 0.09195402298850575,
+    "36": 0.09655172413793103,
+    "37": 0.14285714285714285,
+    "38": 0.10591133004926108,
+    "39": 0.0812807881773399,
+    "40": 0.1402116402116402,
+    "41": 0.1111111111111111,
+    "42": 0.10541310541310542,
+    "43": 0.09401709401709402,
+    "44": 0.08547008547008547,
+    "45": 0.1396011396011396,
+    "46": 0.07407407407407407,
+    "47": 0.12615384615384614,
+    "48": 0.10153846153846154,
+    "49": 0.12,
+    "50": 0.10666666666666667,
+    "51": 0.08666666666666667,
+    "52": 0.17,
     "53": 0.10666666666666667,
-    "54": 0.08666666666666667,
-    "55": 0.17,
-    "56": 0.10666666666666667,
-    "57": 0.13405797101449277,
-    "58": 0.15942028985507245,
-    "59": 0.09057971014492754,
-    "60": 0.1383399209486166,
-    "61": 0.1422924901185771,
-    "62": 0.11067193675889328,
-    "63": 0.09956709956709957,
-    "64": 0.1038961038961039,
-    "65": 0.14285714285714285,
+    "54": 0.12318840579710146,
+    "55": 0.13405797101449277,
+    "56": 0.15942028985507245,
+    "57": 0.11594202898550725,
+    "58": 0.09057971014492754,
+    "59": 0.1383399209486166,
+    "60": 0.1422924901185771,
+    "61": 0.11067193675889328,
+    "62": 0.09956709956709957,
+    "63": 0.1038961038961039,
+    "64": 0.14285714285714285,
+    "65": 0.12380952380952381,
     "66": 0.1523809523809524,
     "67": 0.2,
     "68": 0.21052631578947367,
@@ -3647,71 +3653,71 @@
     "73": 0.1286549707602339,
     "74": 0.10526315789473684,
     "75": 0.15789473684210525,
-    "76": 0.13071895424836602,
-    "77": 0.1503267973856209,
-    "78": 0.1568627450980392,
-    "79": 0.1437908496732026,
-    "80": 0.24183006535947713,
-    "81": 0.22875816993464052,
-    "82": 0.1111111111111111,
-    "83": 0.16176470588235295,
-    "84": 0.15441176470588236,
-    "85": 0.27941176470588236,
-    "86": 0.11764705882352941,
-    "87": 0.16911764705882354,
-    "88": 0.2,
-    "89": 0.175,
-    "90": 0.15,
-    "91": 0.1523809523809524,
-    "92": 0.14285714285714285,
-    "93": 0.13333333333333333,
-    "94": 0.20952380952380953,
-    "95": 0.18095238095238095,
-    "96": 0.21904761904761905,
-    "97": 0.17142857142857143,
-    "98": 0.1619047619047619,
-    "99": 0.1523809523809524,
-    "100": 0.27472527472527475,
-    "101": 0.15384615384615385,
-    "102": 0.24175824175824176,
-    "103": 0.15384615384615385,
-    "104": 0.1978021978021978,
+    "76": 0.1695906432748538,
+    "77": 0.13071895424836602,
+    "78": 0.1503267973856209,
+    "79": 0.1568627450980392,
+    "80": 0.1437908496732026,
+    "81": 0.24183006535947713,
+    "82": 0.22875816993464052,
+    "83": 0.1111111111111111,
+    "84": 0.16176470588235295,
+    "85": 0.15441176470588236,
+    "86": 0.27941176470588236,
+    "87": 0.11764705882352941,
+    "88": 0.16911764705882354,
+    "89": 0.2,
+    "90": 0.175,
+    "91": 0.15,
+    "92": 0.1523809523809524,
+    "93": 0.14285714285714285,
+    "94": 0.13333333333333333,
+    "95": 0.20952380952380953,
+    "96": 0.18095238095238095,
+    "97": 0.21904761904761905,
+    "98": 0.17142857142857143,
+    "99": 0.1619047619047619,
+    "100": 0.1523809523809524,
+    "101": 0.27472527472527475,
+    "102": 0.15384615384615385,
+    "103": 0.24175824175824176,
+    "104": 0.15384615384615385,
     "105": 0.18681318681318682,
     "106": 0.2564102564102564,
     "107": 0.19230769230769232,
     "108": 0.19696969696969696,
-    "109": 0.16666666666666666,
-    "110": 0.24242424242424243,
-    "111": 0.22727272727272727,
-    "112": 0.19696969696969696,
-    "113": 0.3181818181818182,
-    "114": 0.21818181818181817,
-    "115": 0.23636363636363636,
-    "116": 0.2222222222222222,
-    "117": 0.2,
-    "118": 0.24444444444444444,
+    "109": 0.19696969696969696,
+    "110": 0.16666666666666666,
+    "111": 0.24242424242424243,
+    "112": 0.22727272727272727,
+    "113": 0.19696969696969696,
+    "114": 0.3181818181818182,
+    "115": 0.21818181818181817,
+    "116": 0.23636363636363636,
+    "117": 0.2545454545454545,
+    "118": 0.2222222222222222,
     "119": 0.2,
-    "120": 0.3055555555555556,
-    "121": 0.25,
-    "122": 0.32142857142857145,
-    "123": 0.35714285714285715,
-    "124": 0.35714285714285715,
-    "125": 0.3333333333333333,
-    "126": 0.3333333333333333,
-    "127": 0.2857142857142857,
-    "128": 0.4666666666666667,
-    "129": 0.3333333333333333,
-    "130": 0.5,
-    "131": 0.6,
+    "120": 0.24444444444444444,
+    "121": 0.2,
+    "122": 0.3055555555555556,
+    "123": 0.3055555555555556,
+    "124": 0.32142857142857145,
+    "125": 0.35714285714285715,
+    "126": 0.35714285714285715,
+    "127": 0.3333333333333333,
+    "128": 0.3333333333333333,
+    "129": 0.2857142857142857,
+    "130": 0.4666666666666667,
+    "131": 0.3333333333333333,
     "132": 0.5,
-    "133": 0.4,
-    "134": 0.4,
+    "133": 0.6,
+    "134": 0.5,
     "135": 0.5,
-    "136": 0.5,
-    "137": 0.6666666666666666,
-    "138": 1.0,
-    "139": 1.0,
-    "140": 1.0,
+    "136": 0.4,
+    "137": 0.4,
+    "138": 0.5,
+    "139": 0.5,
+    "140": 0.6666666666666666,
     "141": 1.0,
     "142": 1.0,
     "143": 1.0,
@@ -3720,7 +3726,10 @@
     "146": 1.0,
     "147": 1.0,
     "148": 1.0,
-    "149": 1.0
+    "149": 1.0,
+    "150": 1.0,
+    "151": 1.0,
+    "152": 1.0
   },
   "gods": [
     {
