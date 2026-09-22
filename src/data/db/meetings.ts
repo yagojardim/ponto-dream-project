@@ -6,6 +6,7 @@
 // usamos o mesmo cast de db/modules.ts para acessá-las.
 import { supabase } from '@/integrations/supabase/client'
 import { safeCall } from '@/utils/logger'
+import { getActiveTenantId } from '@/data/session'
 import { listModules } from '@/data/db/modules'
 
 function tbl(name: string): any {
@@ -84,6 +85,7 @@ export async function fetchMeetings(opts: { ownerId: string; isAdmin: boolean })
   return safeCall('meetings.fetchMeetings', async () => {
     let query = tbl('meetings')
       .select('id, title, project_id, source, status, meeting_date, owner_id, created_at, projects(name)')
+      .eq('tenant_id', getActiveTenantId())
       .order('created_at', { ascending: false })
     if (!opts.isAdmin) query = query.eq('owner_id', opts.ownerId)
     const { data, error } = await query
@@ -108,7 +110,8 @@ export async function fetchMeetings(opts: { ownerId: string; isAdmin: boolean })
 /** Detalhe completo de uma reunião (transcrição + resumo). */
 export async function fetchMeeting(id: string): Promise<MeetingRow | null> {
   return safeCall('meetings.fetchMeeting', async () => {
-    const { data, error } = await tbl('meetings').select('*').eq('id', id).maybeSingle()
+    const { data, error } = await tbl('meetings').select('*')
+      .eq('id', id).eq('tenant_id', getActiveTenantId()).maybeSingle()
     if (error) throw error
     return (data as MeetingRow) ?? null
   }, null)
@@ -117,7 +120,8 @@ export async function fetchMeeting(id: string): Promise<MeetingRow | null> {
 /** Projetos do tenant para o select do formulário (RLS isola por tenant). */
 export async function fetchProjectOptions(): Promise<MeetingProjectOption[]> {
   return safeCall('meetings.fetchProjectOptions', async () => {
-    const { data, error } = await tbl('projects').select('id, name').order('name', { ascending: true })
+    const { data, error } = await tbl('projects').select('id, name')
+      .eq('tenant_id', getActiveTenantId()).order('name', { ascending: true })
     if (error) throw error
     return ((data ?? []) as any[]).map(p => ({ id: p.id, name: p.name }))
   }, [])
@@ -130,6 +134,7 @@ export async function fetchProjectOptions(): Promise<MeetingProjectOption[]> {
 export async function createMeeting(input: CreateMeetingInput, ownerId: string): Promise<string | null> {
   return safeCall('meetings.createMeeting', async () => {
     const { data, error } = await tbl('meetings').insert({
+      tenant_id: getActiveTenantId(),
       title: input.title.trim(),
       project_id: input.projectId,
       source: 'upload',
