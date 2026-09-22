@@ -217,7 +217,7 @@
       "file_type": "code",
       "norm_label": "props",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L10"
+      "source_location": "L16"
     },
     {
       "id": "src_data_issues_epic",
@@ -8805,7 +8805,7 @@
       "file_type": "code",
       "norm_label": "atatext()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L364"
+      "source_location": "L384"
     },
     {
       "id": "src_pages_meetingspage_createmeetingmodal",
@@ -8816,7 +8816,7 @@
       "file_type": "code",
       "norm_label": "createmeetingmodal()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L280"
+      "source_location": "L300"
     },
     {
       "id": "src_pages_meetingspage_createmeetingmodal_save",
@@ -8827,7 +8827,7 @@
       "file_type": "code",
       "norm_label": "save()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L299"
+      "source_location": "L319"
     },
     {
       "id": "src_pages_meetingspage_formatdate",
@@ -8838,7 +8838,7 @@
       "file_type": "code",
       "norm_label": "formatdate()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L433"
+      "source_location": "L453"
     },
     {
       "id": "src_pages_meetingspage_meetingdetail",
@@ -8849,7 +8849,7 @@
       "file_type": "code",
       "norm_label": "meetingdetail()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L170"
+      "source_location": "L181"
     },
     {
       "id": "src_pages_meetingspage_meetingdetail_copytranscript",
@@ -8860,7 +8860,7 @@
       "file_type": "code",
       "norm_label": "copytranscript()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L204"
+      "source_location": "L215"
     },
     {
       "id": "src_pages_meetingspage_meetingdetail_generate",
@@ -8871,7 +8871,7 @@
       "file_type": "code",
       "norm_label": "generate()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L196"
+      "source_location": "L207"
     },
     {
       "id": "src_pages_meetingspage_meetingspage",
@@ -8882,7 +8882,7 @@
       "file_type": "code",
       "norm_label": "meetingspage()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L35"
+      "source_location": "L46"
     },
     {
       "id": "src_pages_meetingspage_statuspill",
@@ -8893,7 +8893,7 @@
       "file_type": "code",
       "norm_label": "statuspill()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L22"
+      "source_location": "L33"
     },
     {
       "id": "src_pages_meetingspage_summarysections",
@@ -8904,7 +8904,7 @@
       "file_type": "code",
       "norm_label": "summarysections()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L375"
+      "source_location": "L395"
     },
     {
       "id": "src_pages_meetingspage_summarysections_copyata",
@@ -8915,7 +8915,7 @@
       "file_type": "code",
       "norm_label": "copyata()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L387"
+      "source_location": "L407"
     },
     {
       "id": "src_pages_meetingspage_toast",
@@ -8926,7 +8926,7 @@
       "file_type": "code",
       "norm_label": "toast()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L423"
+      "source_location": "L443"
     },
     {
       "id": "src_utils_copytoclipboard_copytoclipboard",
@@ -28653,7 +28653,7 @@
       "file_type": "code",
       "norm_label": "cardstyle",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L18"
+      "source_location": "L29"
     },
     {
       "id": "src_pages_meetingspage_status_meta",
@@ -28663,7 +28663,7 @@
       "file_type": "code",
       "norm_label": "status_meta",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L12"
+      "source_location": "L23"
     },
     {
       "id": "src_utils_copytoclipboard",
@@ -60609,7 +60609,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L283",
+      "source_location": "L303",
       "weight": 1.0
     },
     {
@@ -60621,7 +60621,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L293",
+      "source_location": "L313",
       "weight": 1.0
     },
     {
@@ -60633,7 +60633,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L302",
+      "source_location": "L322",
       "weight": 1.0
     },
     {
@@ -60645,7 +60645,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L302",
+      "source_location": "L322",
       "weight": 1.0
     },
     {
@@ -60657,7 +60657,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L185",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -60669,7 +60669,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L198",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -60681,7 +60681,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L206",
+      "source_location": "L217",
       "weight": 1.0
     },
     {
@@ -60693,7 +60693,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L231",
+      "source_location": "L242",
       "weight": 1.0
     },
     {
@@ -60705,7 +60705,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L206",
+      "source_location": "L217",
       "weight": 1.0
     },
     {
@@ -60717,7 +60717,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L198",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -60729,7 +60729,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L148",
+      "source_location": "L159",
       "weight": 1.0
     },
     {
@@ -60741,7 +60741,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L36",
+      "source_location": "L47",
       "weight": 1.0
     },
     {
@@ -60753,7 +60753,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L51",
+      "source_location": "L62",
       "weight": 1.0
     },
     {
@@ -60765,7 +60765,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L62",
+      "source_location": "L73",
       "weight": 1.0
     },
     {
@@ -60777,7 +60777,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L388",
+      "source_location": "L408",
       "weight": 1.0
     },
     {
@@ -60789,7 +60789,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L388",
+      "source_location": "L408",
       "weight": 1.0
     },
     {
@@ -60801,7 +60801,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L388",
+      "source_location": "L408",
       "weight": 1.0
     },
     {
@@ -82455,30 +82455,6 @@
     },
     {
       "source": "src_pages_meetingspage",
-      "target": "src_components_ds_tokens_t",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L2",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_sessioncontext_usesession",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L3",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
       "target": "src_utils_copytoclipboard_copytoclipboard",
       "relation": "imports",
       "_origin": "ast",
@@ -82486,7 +82462,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L4",
+      "source_location": "L10",
       "weight": 1.0
     },
     {
@@ -82498,7 +82474,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82510,7 +82486,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82522,7 +82498,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82534,7 +82510,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82546,7 +82522,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82558,7 +82534,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82570,7 +82546,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82582,7 +82558,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82594,7 +82570,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82606,7 +82582,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
       "weight": 1.0
     },
     {
@@ -82618,7 +82594,31 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_components_ds_tokens_t",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_sessioncontext_usesession",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L9",
       "weight": 1.0
     },
     {
@@ -93911,42 +93911,6 @@
     },
     {
       "source": "src_pages_meetingspage",
-      "target": "ref_react",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L1",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_components_ds_tokens",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L2",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_sessioncontext",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L3",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
       "target": "src_utils_copytoclipboard",
       "relation": "imports_from",
       "_origin": "ast",
@@ -93954,7 +93918,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L4",
+      "source_location": "L10",
       "weight": 1.0
     },
     {
@@ -93966,7 +93930,43 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "ref_react",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
       "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_components_ds_tokens",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_sessioncontext",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L9",
       "weight": 1.0
     },
     {
@@ -121766,7 +121766,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L10",
+      "source_location": "L459",
       "weight": 1.0
     },
     {
@@ -121777,18 +121777,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L12",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_pages_meetingspage_meetingdetail",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L170",
+      "source_location": "L461",
       "weight": 1.0
     },
     {
@@ -121799,7 +121788,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L18",
+      "source_location": "L467",
       "weight": 1.0
     },
     {
@@ -121810,18 +121799,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L22",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_pages_meetingspage_createmeetingmodal",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L280",
+      "source_location": "L471",
       "weight": 1.0
     },
     {
@@ -121832,7 +121810,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L35",
+      "source_location": "L484",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_pages_meetingspage_meetingdetail",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L619",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_pages_meetingspage_createmeetingmodal",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L729",
       "weight": 1.0
     },
     {
@@ -121843,7 +121843,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L364",
+      "source_location": "L813",
       "weight": 1.0
     },
     {
@@ -121854,7 +121854,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L375",
+      "source_location": "L824",
       "weight": 1.0
     },
     {
@@ -121865,7 +121865,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L423",
+      "source_location": "L872",
       "weight": 1.0
     },
     {
@@ -121876,7 +121876,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L433",
+      "source_location": "L882",
       "weight": 1.0
     },
     {
@@ -121887,7 +121887,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L299",
+      "source_location": "L748",
       "weight": 1.0
     },
     {
@@ -121898,7 +121898,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L196",
+      "source_location": "L645",
       "weight": 1.0
     },
     {
@@ -121909,7 +121909,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L204",
+      "source_location": "L653",
       "weight": 1.0
     },
     {
@@ -121920,7 +121920,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L387",
+      "source_location": "L836",
       "weight": 1.0
     },
     {
@@ -127441,5 +127441,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "048ad6a0f6c567e79cb2205a8a5fbca4bd9f4668"
+  "built_at_commit": "2ff92d6fc369325a87d16264edd4bb858dcf04ad"
 }
