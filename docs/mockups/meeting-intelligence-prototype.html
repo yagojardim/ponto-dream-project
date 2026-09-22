@@ -1,0 +1,1414 @@
+<title>Meeting Intelligence — Protótipo</title>
+<style>
+  :root{
+    --bg:#09090B; --surface:#16161D; --surface2:#1C1C26; --surface3:#131319;
+    --border:#262633; --border2:#2E2E40;
+    --t1:#F1F1F5; --t2:#9898AD; --t3:#5C5C7A; --tc:#C7C7D6;
+    --accent:#3B82F6; --accentDim:rgba(59,130,246,.12); --accentBorder:rgba(59,130,246,.30);
+    --indigo:#6366F1; --purple:#A78BFA;
+    --success:#10B981; --successDim:rgba(16,185,129,.12);
+    --warn:#F59E0B; --warnDim:rgba(245,158,11,.12);
+    --crit:#EF4444; --critDim:rgba(239,68,68,.12);
+    --gold:#F5B301; --goldDim:rgba(245,179,1,.13);
+    --r-sm:6px; --r-md:10px; --r-lg:14px;
+  }
+  #notifPanel{position:absolute;top:52px;right:20px;width:380px;max-width:calc(100vw - 32px);background:var(--surface);
+    border:1px solid var(--border2);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.6);z-index:60;overflow:hidden}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--t1);
+    font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;font-size:14px}
+  a{color:var(--accent);text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  #shell{display:flex;height:100vh;overflow:hidden}
+
+  /* sidebar */
+  aside{width:236px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;padding:16px 12px;gap:3px;overflow:auto}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px}
+  .brand .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#3B82F6,#6366F1);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px}
+  .brand .name{font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .navlabel{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:10px 8px 4px}
+  .nav{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;color:var(--t2);font-size:13.5px;
+    position:relative;border:1px solid transparent}
+  .nav:hover{background:rgba(255,255,255,.03);color:var(--tc)}
+  .nav.active{background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent);font-weight:600}
+  .nav.active::before{content:"";position:absolute;left:-13px;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--accent)}
+  .nav svg{flex-shrink:0}
+  .nav .star{margin-left:auto}
+
+  /* main */
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .topbar{height:56px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 24px}
+  .crumb{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);display:flex;align-items:center;gap:8px}
+  .crumb b{color:var(--t2);font-weight:600}
+  .search{margin-left:auto;display:flex;align-items:center;gap:8px;width:260px;height:34px;padding:0 12px;
+    background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--t3);font-size:13px}
+  .avatar{width:32px;height:32px;border-radius:99px;background:linear-gradient(135deg,#6366F1,#A78BFA);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+  .content{flex:1;overflow:auto;padding:28px 32px}
+
+  h1.page{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em}
+  .sub{margin:6px 0 0;font-size:14px;color:var(--t2);line-height:1.6}
+  .row-head{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:var(--r-md);
+    font-size:13.5px;font-weight:600;border:1px solid transparent}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#2f74e6}
+  .btn-ghost{background:var(--surface2);color:var(--t1);border-color:var(--border)}
+  .btn-ghost:hover{border-color:var(--border2)}
+  .btn-sm{height:34px;padding:0 12px;font-size:12.5px;border-radius:9px}
+  .btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accentBorder)}
+  .btn-outline:hover{background:var(--accentDim)}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg)}
+  .pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:99px;font-size:12px;font-weight:600}
+  .dot{width:6px;height:6px;border-radius:99px}
+
+  /* list */
+  .tabs-filter{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+  .tf{height:32px;padding:0 14px;display:flex;align-items:center;border-radius:8px;color:var(--t2);font-size:13px;border:1px solid transparent}
+  .tf .c{margin-left:6px;color:var(--t3)}
+  .tf.active{background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent);font-weight:600}
+  .tf.active .c{color:var(--t2)}
+  .list-head,.list-row{display:grid;grid-template-columns:1fr 140px 120px 140px 26px;gap:16px;align-items:center;padding:14px 20px}
+  .list-head{padding:12px 20px;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3)}
+  .list-row{border-bottom:1px solid var(--border);cursor:pointer}
+  .list-row:last-child{border-bottom:none}
+  .list-row:hover{background:rgba(59,130,246,.04)}
+  .mtitle{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mmeta{font-size:12px;color:var(--t3)}
+  .ico-badge{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;color:var(--t2)}
+
+  /* detail */
+  .tabs{display:flex;align-items:center;gap:2px;border-bottom:1px solid var(--border);margin:0 0 22px}
+  .tab{padding:10px 14px;font-size:13.5px;color:var(--t2);border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
+  .tab:hover{color:var(--tc)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  .grid2{display:grid;grid-template-columns:1fr 296px;gap:22px;align-items:start}
+  .sec-title{margin:0 0 12px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:9px}
+  .ai-badge{width:26px;height:26px;border-radius:7px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.30);
+    display:flex;align-items:center;justify-content:center;color:var(--purple);flex-shrink:0}
+  .ai-item{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:11px}
+  .chip{height:22px;padding:0 9px;display:inline-flex;align-items:center;gap:6px;border-radius:99px;background:var(--surface);border:1px solid var(--border);color:var(--t2);font-size:11.5px}
+  .chip .av{width:16px;height:16px;border-radius:99px;display:inline-block}
+  .decision{display:flex;align-items:flex-start;gap:10px}
+  .decision span{font-size:14px;line-height:1.6;color:var(--tc)}
+
+  /* transcript */
+  .tline{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid rgba(38,38,51,.5);font-size:13.5px;line-height:1.6}
+  .tline .who{color:var(--tc);font-weight:600;white-space:nowrap}
+  .tline .ts{color:var(--t3);font-variant-numeric:tabular-nums}
+
+  /* chat */
+  .chatwrap{display:flex;flex-direction:column;height:520px}
+  .chatlog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;padding:4px 2px}
+  .msg{max-width:78%;padding:11px 14px;border-radius:12px;font-size:13.5px;line-height:1.6}
+  .msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+  .msg.bot{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);color:var(--tc);border-bottom-left-radius:4px}
+  .chatbar{display:flex;gap:10px;margin-top:14px}
+  input,textarea,select{font-family:inherit;color:var(--t1);background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-md);outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--accentBorder)}
+  .chatbar input{flex:1;height:42px;padding:0 14px;font-size:13.5px}
+
+  /* form */
+  .field{display:flex;flex-direction:column;gap:7px}
+  .label{font-size:12.5px;font-weight:600;color:var(--tc)}
+  .field input,.field select{height:40px;padding:0 13px;font-size:13.5px}
+  textarea.transcript{min-height:200px;padding:14px 15px;font-size:13px;line-height:1.7;resize:vertical}
+  .src-opt{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:9px 18px;display:flex;align-items:center;gap:10px}
+  .src-opt.active{border:1.5px solid var(--accentBorder);background:var(--surface)}
+  .src-opt.soon{background:var(--surface3);opacity:.72}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(9,9,11,.8);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+  .modal{width:600px;max-width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-lg);
+    box-shadow:0 32px 80px rgba(0,0,0,.64);max-height:92vh;overflow:auto}
+  .modal-h{display:flex;align-items:center;gap:12px;padding:20px 22px;border-bottom:1px solid var(--border)}
+  .modal-b{padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+  .modal-f{display:flex;align-items:center;gap:10px;padding:16px 22px;border-top:1px solid var(--border);background:var(--surface3)}
+  .quote{display:flex;gap:10px;padding:12px 14px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.22);border-radius:10px;font-size:13px;line-height:1.55;color:var(--tc)}
+
+  /* toast + loader */
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:13px;
+    display:flex;align-items:center;gap:9px;box-shadow:0 12px 40px rgba(0,0,0,.5);transition:.25s;z-index:80;pointer-events:none}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .loader{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:70px 0;color:var(--t2)}
+  .spin{width:34px;height:34px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:99px;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes eq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+  .recdot{width:12px;height:12px;border-radius:99px;background:var(--crit);animation:pulse 1.2s ease-in-out infinite}
+  .eqbars{display:flex;align-items:center;gap:4px;height:48px}
+  .eqbars i{width:5px;height:100%;border-radius:3px;background:var(--accent);transform-origin:center;animation:eq 1s ease-in-out infinite}
+  .toggle{width:38px;height:22px;border-radius:99px;background:var(--border2);position:relative;transition:.2s;flex-shrink:0}
+  .toggle.on{background:var(--accent)}
+  .toggle b{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:99px;background:#fff;transition:.2s}
+  .toggle.on b{left:18px}
+  .empty{padding:60px 0;text-align:center;color:var(--t3)}
+
+  .banner{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t3);margin-top:14px}
+
+  /* admin / gestão */
+  .seg{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px}
+  .seg button{height:34px;padding:0 16px;border:0;background:transparent;color:var(--t2);font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px}
+  .seg button.on{background:var(--accentDim);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accentBorder)}
+  .kpi4{display:flex;gap:12px;flex-wrap:wrap}
+  .kpi{flex:1;min-width:130px;background:var(--surface3);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .kpi .kl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;font-weight:600}
+  .kpi .kv{font-weight:700;font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .kpi .ks{font-size:11.5px;color:var(--t3);margin-top:3px}
+  .utable{width:100%;border-collapse:collapse;font-size:13.5px}
+  .utable th{text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);color:var(--t3);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  .utable td{padding:12px;border-bottom:1px solid var(--border);color:var(--tc);vertical-align:middle}
+  .utable tbody tr:last-child td{border-bottom:none}
+  .utable tr.totrow td{border-top:1px solid var(--border2);font-weight:700;color:var(--t1)}
+  input[type=range].rng{-webkit-appearance:none;appearance:none;width:100%;height:9px;border-radius:6px;
+    background:linear-gradient(90deg,var(--accent) 0%,var(--accent) var(--pct,20%),var(--surface2) var(--pct,20%),var(--surface2) 100%);
+    border:1px solid var(--border2);outline:none}
+  input[type=range].rng::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--accent);cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.5)}
+  input[type=range].rng::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--accent);cursor:pointer}
+  input[type=range].rng:focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+
+  @media(max-width:920px){.grid2{grid-template-columns:1fr}.list-head,.list-row{grid-template-columns:1fr 110px 90px 26px}
+    .list-head>div:nth-child(4),.list-row>div:nth-child(4){display:none}}
+  @media(max-width:680px){aside{display:none}}
+</style>
+
+<div id="shell">
+  <aside id="sidebar"></aside>
+  <main>
+    <div class="topbar">
+      <div class="crumb" id="crumb"></div>
+      <div style="margin-left:auto"></div>
+      <button class="btn btn-ghost btn-sm" id="roleBtn" data-role="1" title="Alternar visão (protótipo): Admin master / Usuário" style="gap:6px"></button>
+      <button class="btn btn-ghost btn-sm" data-nav="help" title="Ajuda do Meeting Intelligence" style="gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>Ajuda</button>
+      <button class="btn btn-ghost btn-sm" id="notifBtn" data-notif-toggle="1" title="Notificações" style="position:relative;width:38px;padding:0;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span id="notifDot" hidden style="position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--crit);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center"></span></button>
+      <div class="avatar">YJ</div>
+    </div>
+    <div id="notifPanel" hidden></div>
+    <div class="content" id="view"></div>
+  </main>
+</div>
+<div id="modal-root"></div>
+<div id="toast"></div>
+
+<script>
+/* ---------- icons ---------- */
+const I = {
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+  calendar:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/>',
+  tasks:'<path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+  projects:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  boards:'<rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="14" rx="1"/>',
+  video:'<path d="m16 8 5-3v14l-5-3"/><rect x="2" y="6" width="14" height="12" rx="2"/>',
+  storage:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8M4.6 9a1.6 1.6 0 0 0-.3-1.8"/>',
+  upload:'<path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+  mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8 21h8"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/>',
+  spark:'', // filled, handled separately
+  check:'<path d="m5 12 5 5L20 7"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  chevR:'<path d="m9 18 6-6-6-6"/>',
+  chevL:'<path d="m15 18-6-6 6-6"/>',
+  chevD:'<path d="m6 9 6 6 6-6"/>',
+  refresh:'<path d="M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M3 12h3m12 0h3"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  link:'<path d="M9 17H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M15 11h4a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-4"/>',
+  close:'<path d="M18 6 6 18M6 6l12 12"/>',
+  paste:'<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash:'<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/>',
+  help:'<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  share:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+  download:'<path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+};
+const sv=(p,s=1.8,sz=18)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${s}">${p}</svg>`;
+const star=(sz=13,c='#F59E0B')=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="${c}"><path d="m12 2 2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z"/></svg>`;
+const sparkFill=(sz=14,c='currentColor')=>`<svg width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="${c}"><path d="m12 2 2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>`;
+const grad=['linear-gradient(135deg,#3B82F6,#6366F1)','linear-gradient(135deg,#6366F1,#A78BFA)','linear-gradient(135deg,#A78BFA,#EC4899)','linear-gradient(135deg,#10B981,#3B82F6)'];
+
+/* ---------- state ---------- */
+let issueSeq = 143;
+const STATUS = {
+  ready:{label:'Pronta',color:'var(--success)',bg:'var(--successDim)',dot:true},
+  processing:{label:'Resumindo…',color:'var(--purple)',bg:'rgba(99,102,241,.12)',spark:true},
+  failed:{label:'Falhou',color:'var(--crit)',bg:'var(--critDim)'},
+};
+const SOURCE = {zoom:{icon:I.video,label:'Zoom'},meet:{icon:I.video,label:'Google Meet'},teams:{icon:I.video,label:'Microsoft Teams'},upload:{icon:I.upload,label:'Transcrição colada'},record:{icon:I.mic,label:'Gravado no navegador'}};
+
+const meetings = [
+  { id:'m1', title:'Kickoff — Projeto Rautaki', source:'zoom', project:'Rautaki', date:'13 set 2026', time:'10:00', dur:'48 min', status:'ready',
+    people:[{n:'Yago Jardim',g:0},{n:'Alex (Analista)',g:1},{n:'Uma (UX)',g:2},{n:'Dara (Dados)',g:3},{n:'Cliente',g:-1}],
+    summary:'A reunião de kickoff alinhou o escopo da primeira fase do projeto Rautaki e definiu a cadência de sprints quinzenais. O cliente priorizou o módulo de cadastro de clientes e a integração com o gateway de pagamento. Ficou acordado que o time entrega um protótipo navegável até o fim do mês, com validação com usuários finais na semana seguinte.',
+    objetivo:'Alinhar o escopo da fase 1 e a cadência de sprints do projeto Rautaki.',
+    assunto:'Kickoff — escopo, prioridades e cronograma da fase 1.',
+    itensDiscutidos:['Prioridades do cliente para a fase 1.','Cadência das sprints e dia de planning.','Prazo de entrega do protótipo navegável.'],
+    pontosDefinir:['Provedor do gateway de pagamento a integrar.','Responsável pela validação com usuários finais.'],
+    decisions:['Sprints quinzenais, com planning às segundas.','Prioridade da fase 1: cadastro de clientes + gateway de pagamento.','Protótipo navegável entregue até 30/09.'],
+    actionItems:[
+      {id:'a1',text:'Modelar o schema do cadastro de clientes',assignee:'Dara',ag:3,due:'até sexta',issue:'RAU-142'},
+      {id:'a2',text:'Levantar requisitos da integração com o gateway de pagamento',assignee:'Alex',ag:1,due:'esta semana',issue:null},
+      {id:'a3',text:'Preparar protótipo navegável das telas de cadastro',assignee:'Uma',ag:2,due:'até 30/09',issue:null},
+    ],
+    transcript:[
+      {ts:'00:02',who:'Yago',text:'Pessoal, obrigado por virem. A ideia de hoje é fechar o escopo da fase 1 e a cadência de sprints.'},
+      {ts:'00:47',who:'Cliente',text:'Para nós, o mais urgente é o cadastro de clientes e conseguir cobrar pela plataforma.'},
+      {ts:'03:15',who:'Alex',text:'Então proponho sprints de duas semanas, com planning na segunda.'},
+      {ts:'07:40',who:'Dara',text:'Consigo modelar o schema do cadastro ainda esta semana para não travar o time.'},
+      {ts:'12:10',who:'Uma',text:'Vou preparar um protótipo navegável das telas de cadastro até o fim do mês.'},
+      {ts:'21:55',who:'Yago',text:'Fechado. Protótipo até 30/09 e validação com usuários na semana seguinte.'},
+    ],
+    notes:[{id:'nt1',ts:'07:40',author:'Você',ag:0,body:'Confirmar com a Dara se o schema cobre CPF e CNPJ dos clientes.'}] },
+  { id:'m2', title:'Daily — Squad Pagamentos', source:'meet', project:'Rautaki', date:'13 set 2026', time:'09:15', dur:'22 min', status:'processing',
+    people:[{n:'Alex',g:1},{n:'Dara',g:3}], summary:'', decisions:[], actionItems:[], transcript:[] },
+  { id:'m3', title:'Alinhamento com cliente — Escopo v2', source:'upload', project:'Rautaki', date:'11 set 2026', time:'14:00', dur:'36 min', status:'ready',
+    people:[{n:'Yago',g:0},{n:'Cliente',g:-1}],
+    summary:'Revisão do escopo v2 com o cliente: confirmados os limites de armazenamento por plano e o fluxo de aprovação de horas. Cinco encaminhamentos definidos, todos já convertidos em issues no board.',
+    objetivo:'Revisar o escopo v2 com o cliente.',
+    assunto:'Limites por plano e fluxo de aprovação de horas.',
+    itensDiscutidos:['Limite de armazenamento por plano.','Fluxo de aprovação de horas antes do faturamento.'],
+    pontosDefinir:['Data de comunicação da mudança ao cliente.'],
+    decisions:['Limite de 5 GB no plano inicial.','Aprovação de horas obrigatória antes do faturamento.'],
+    actionItems:[
+      {id:'b1',text:'Ajustar limite de storage por plano',assignee:'Dara',ag:3,due:'11 set',issue:'RAU-131'},
+      {id:'b2',text:'Implementar aprovação de horas',assignee:'Alex',ag:1,due:'12 set',issue:'RAU-132'},
+      {id:'b3',text:'Revisar textos da tela de planos',assignee:'Uma',ag:2,due:'12 set',issue:'RAU-133'},
+      {id:'b4',text:'Documentar regra de faturamento',assignee:'Yago',ag:0,due:'13 set',issue:'RAU-134'},
+      {id:'b5',text:'Comunicar mudança ao cliente',assignee:'Yago',ag:0,due:'13 set',issue:'RAU-135'},
+    ],
+    transcript:[
+      {ts:'00:10',who:'Yago',text:'Vamos revisar o escopo v2 e fechar os limites por plano.'},
+      {ts:'05:00',who:'Cliente',text:'Concordo com 5 GB no plano inicial, e horas precisam de aprovação antes de faturar.'},
+    ]},
+  { id:'m4', title:'Retrospectiva Sprint 7', source:'teams', project:'Rautaki', date:'08 set 2026', time:'16:00', dur:'51 min', status:'failed',
+    people:[], summary:'', decisions:[], actionItems:[], transcript:[] },
+];
+
+// compartilhamento (mock): dono + com quem está compartilhada
+meetings[0].owner='Yago Jardim'; meetings[0].sharedWith=[{id:'u2',n:'Alex',ag:1},{id:'u4',n:'River',ag:0}];
+meetings[1].owner='Alex'; meetings[1].sharedWith=[];
+meetings[2].owner='Alex'; meetings[2].sharedWith=[{id:'u3',n:'Pax',ag:3},{id:'u1',n:'Morgan',ag:2},{id:'u4',n:'River',ag:0},{id:'u6',n:'Dex',ag:1}];
+meetings[3].owner='River'; meetings[3].sharedWith=[];
+
+let route = {name:'list', id:null, tab:'resumo'};
+let filter = 'todas';
+let search = '';
+let notesAdding = false;
+let transcriptEditing = false;
+let isAdmin = true;
+let rechargeHours = 10;
+const RECHARGE_RATE = 5; // R$/h avulsa
+let notifOpen = false;
+let reqForm = { tipo:'temporaria', horas:2 };
+let reqSeq = 2, notifSeq = 3;
+const CURRENT_USER_ID = 'u2'; // quem está logado na visão "Usuário"
+// cota padrão por cargo (gestão 3h, desenvolvimento 1h30)
+const ROLE_QUOTA = { 'PMO':3, 'PM':3, 'P.O':3, 'SM':3, 'Tech Lead':1.5, 'Dev':1.5 };
+const tenantUsage = { plano: 15, extras: 5, diaAtual: 18, diasMes: 30, renova: '01 out 2026' };
+let team = [
+  { id:'u1', n:'Morgan', role:'PMO', ag:2, quota:3, used:2.6, meets:5 },
+  { id:'u2', n:'Alex', role:'PM', ag:1, quota:3, used:2.7, meets:6 },
+  { id:'u3', n:'Pax', role:'P.O', ag:3, quota:3, used:1.8, meets:4 },
+  { id:'u4', n:'River', role:'SM', ag:0, quota:3, used:2.4, meets:5 },
+  { id:'u5', n:'Aria', role:'Tech Lead', ag:2, quota:1.5, used:1.5, meets:3 },
+  { id:'u6', n:'Dex', role:'Dev', ag:1, quota:1.5, used:0.6, meets:2 },
+];
+// usuários já existentes no workspace que ainda NÃO têm o módulo (candidatos a liberar)
+let orgAvailable = [
+  { id:'o1', n:'Nina', role:'PMO', ag:2 },
+  { id:'o2', n:'Théo', role:'Tech Lead', ag:1 },
+  { id:'o3', n:'Lia', role:'P.O', ag:3 },
+  { id:'o4', n:'Caio', role:'Dev', ag:0 },
+];
+let addSel = new Set();
+let requests = [
+  { id:'rq1', userId:'u5', tipo:'temporaria', horas:2, justificativa:'Sprint review com cliente novo entrou de última hora.', status:'pending', when:'Hoje, 09:12' },
+];
+let notifications = [
+  { id:'nt1', audience:'admin', kind:'request', text:'<b>Aria (Tech Lead)</b> solicitou <b>+2 h</b> (temporária) — atingiu 100% da cota.', when:'09:12', read:false },
+  { id:'nt2', audience:'admin', kind:'usage', text:'Consumo do workspace passou de <b>80%</b> neste mês.', when:'Ontem', read:true },
+];
+let rec = {sec:0, timer:null, shareAudio:true, stopped:false, title:'Reunião sem título', project:'Rautaki'};
+const chatByMeeting = {};
+function fmtDur(s){const m=Math.floor(s/60),ss=s%60;return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
+function stopRecTimer(){if(rec.timer){clearInterval(rec.timer);rec.timer=null;}}
+let audio = {playing:false, pct:0, timer:null};
+function clearAudio(){if(audio.timer){clearInterval(audio.timer);audio.timer=null;}audio.playing=false;audio.pct=0;}
+function audioIcon(){return audio.playing
+  ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+  : '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';}
+function toggleAudio(){
+  audio.playing=!audio.playing;
+  const btn=$('#audiobtn');if(btn)btn.innerHTML=audioIcon();
+  if(audio.playing){
+    audio.timer=setInterval(()=>{
+      audio.pct=Math.min(100,audio.pct+4);
+      const bar=$('#audiopct');if(bar)bar.style.width=audio.pct+'%';
+      if(audio.pct>=100){clearInterval(audio.timer);audio.timer=null;audio.playing=false;audio.pct=0;
+        const b=$('#audiobtn');if(b)b.innerHTML=audioIcon();const b2=$('#audiopct');if(b2)b2.style.width='0%';}
+    },350);
+  } else {clearInterval(audio.timer);audio.timer=null;}
+}
+
+/* ---------- helpers ---------- */
+const $ = s=>document.querySelector(s);
+const find = id=>meetings.find(m=>m.id===id);
+function fallbackCopy(text,done){try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();document.execCommand('copy');document.body.removeChild(ta);}catch(e){}done();}
+function copyText(text,okMsg){const done=()=>toast(okMsg);try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));}else{fallbackCopy(text,done);}}catch(e){fallbackCopy(text,done);}}
+function ataText(m){
+  const L=[];
+  L.push(m.title);
+  L.push(`${m.date}${m.time?' · '+m.time:''} · ${m.dur}`);
+  if(m.people&&m.people.length)L.push('Integrantes: '+m.people.map(p=>p.n).join(', '));
+  if(m.objetivo)L.push('\nOBJETIVO\n'+m.objetivo);
+  if(m.assunto)L.push('\nASSUNTO\n'+m.assunto);
+  if(m.itensDiscutidos&&m.itensDiscutidos.length)L.push('\nITENS DISCUTIDOS\n'+m.itensDiscutidos.map(x=>'- '+x).join('\n'));
+  if(m.decisions&&m.decisions.length)L.push('\nDECISÕES\n'+m.decisions.map(x=>'- '+x).join('\n'));
+  if(m.pontosDefinir&&m.pontosDefinir.length)L.push('\nPONTOS A DEFINIR\n'+m.pontosDefinir.map(x=>'- '+x).join('\n'));
+  if(m.actionItems&&m.actionItems.length)L.push('\nPRÓXIMOS PASSOS\n'+m.actionItems.map(a=>`- ${a.text} (Responsável: ${a.assignee||'—'}; Data: ${a.due||'—'})`).join('\n'));
+  return L.join('\n');
+}
+function transcriptText(m){return (m.transcript||[]).map(l=>`[${l.ts}] ${l.who}: ${l.text}`).join('\n');}
+function toast(msg){const t=$('#toast');t.innerHTML=`${sv(I.check,2.4,15).replace('stroke="currentColor"','stroke="#10B981"')}<span>${msg}</span>`;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function avatar(g,sz=26){const bg=g<0?'var(--surface2)':grad[g%grad.length];const brd=g<0?'border:1px solid var(--border);':'';return `<span style="width:${sz}px;height:${sz}px;border-radius:99px;background:${bg};${brd}display:inline-flex;align-items:center;justify-content:center;color:var(--t3);font-size:11px;flex-shrink:0">${g<0?'+':''}</span>`;}
+function pill(st){const s=STATUS[st];const lead=s.dot?`<span class="dot" style="background:${s.color}"></span>`:s.spark?sparkFill(11):'';return `<span class="pill" style="background:${s.bg};color:${s.color}">${lead}${s.label}</span>`;}
+
+/* ---------- cota / consumo helpers ---------- */
+const curUser=()=>team.find(u=>u.id===CURRENT_USER_ID)||team[0];
+const userPct=u=>u.quota>0?Math.min(100,u.used/u.quota*100):0;
+const allocated=()=>team.reduce((s,u)=>s+u.quota,0);
+const poolContratadas=()=>tenantUsage.plano+tenantUsage.extras;
+const poolUsed=()=>team.reduce((s,u)=>s+u.used,0);
+const pendingReqs=()=>requests.filter(r=>r.status==='pending');
+const unreadNotif=()=>notifications.filter(n=>n.audience===(isAdmin?'admin':'user'+CURRENT_USER_ID)&&!n.read).length;
+const isOwner=m=>!isAdmin && m.owner===curUser().n;
+const isSharedToMe=m=>!isAdmin && m.owner!==curUser().n && (m.sharedWith||[]).some(s=>s.id===CURRENT_USER_ID||s.n===curUser().n);
+const canManage=m=>isAdmin||isOwner(m);
+function durH(m){const n=parseInt(m.dur,10);return isNaN(n)?0:n/60;}
+function savedHours(){return meetings.filter(m=>!m.archived).reduce((s,m)=>s+((m.sharedWith||[]).length)*durH(m),0);}
+function initials(name){
+  const parts=(name||'').replace(/\(.*?\)/g,'').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length)return '?';
+  if(parts.length===1)return parts[0].slice(0,1).toUpperCase();
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+function avatarStack(list,sz=20,max=3){
+  const shown=(list||[]).slice(0,max), extra=(list||[]).length-shown.length;
+  const f=Math.round(sz*0.42);
+  return `<span style="display:inline-flex;align-items:center;vertical-align:middle">${shown.map((s,i)=>`<span title="${s.n}" style="width:${sz}px;height:${sz}px;border-radius:99px;background:${grad[(s.ag<0?0:s.ag)%grad.length]};border:2px solid var(--surface);${i?'margin-left:-6px':''};display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:${f}px;font-weight:700;letter-spacing:-.02em">${initials(s.n)}</span>`).join('')}${extra>0?`<span style="margin-left:5px;font-size:11px;color:var(--t3)">+${extra}</span>`:''}</span>`;
+}
+function fmtH(h){const H=Math.floor(h+1e-6);const m=Math.round((h-H)*60);return m?`${H}h${String(m).padStart(2,'0')}`:`${H}h`;}
+function stateColor(pct){return pct>=100?'var(--crit)':pct>=80?'var(--warn)':'var(--success)';}
+function gauge(pct,size=150){
+  pct=Math.max(0,Math.min(100,pct));
+  const color=stateColor(pct), R=52, len=Math.PI*R, off=len*(1-pct/100);
+  return `<svg viewBox="0 0 120 74" width="${size}" height="${(size*0.62).toFixed(0)}" style="display:block">
+    <path d="M 8 60 A 52 52 0 0 1 112 60" fill="none" stroke="var(--surface2)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 8 60 A 52 52 0 0 1 112 60" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>
+    <text x="60" y="52" text-anchor="middle" font-size="26" font-weight="800" fill="var(--t1)" style="font-variant-numeric:tabular-nums">${Math.round(pct)}%</text>
+  </svg>`;
+}
+
+/* ---------- sidebar ---------- */
+function renderSidebar(){
+  const cur=route.name;
+  const modScreens=['detail','new','record','help','admin'];
+  const nav=(ic,label,r,premium)=>{
+    const active = r && (cur===r || (r==='list'&&modScreens.includes(cur)));
+    return `<div class="nav ${active?'active':''}" ${r?`data-nav="${r}"`:''} style="${r?'cursor:pointer':''}">${sv(ic)}${label}${premium?`<span class="star">${star()}</span>`:''}</div>`;
+  };
+  $('#sidebar').innerHTML=`
+    <div class="brand"><div class="logo">A</div><div class="name">Altech Project</div></div>
+    <div class="navlabel">Meu dia</div>
+    ${nav(I.home,'Início','home')}${nav(I.calendar,'Calendário')}${nav(I.tasks,'Minhas tarefas')}
+    <div class="navlabel">Gestão</div>
+    ${nav(I.projects,'Projetos')}${nav(I.boards,'Boards')}
+    ${nav(I.mic,'Reuniões','list',true)}
+    ${nav(I.storage,'Armazenamento')}
+    <div style="margin-top:auto">${nav(I.gear,'Configurações')}</div>`;
+}
+
+/* ---------- LIST ---------- */
+function renderList(){
+  $('#crumb').innerHTML='Meeting Intelligence';
+  const active=meetings.filter(m=>!m.archived);
+  // usuário vê só as próprias + as compartilhadas com ele; admin vê todas do workspace
+  const mine=isAdmin?active:active.filter(m=>isOwner(m)||isSharedToMe(m));
+  const counts={todas:mine.length,processando:mine.filter(m=>m.status==='processing').length,prontas:mine.filter(m=>m.status==='ready').length};
+  const q=search.trim().toLowerCase();
+  const shown=mine
+    .filter(m=>filter==='todas'||(filter==='processando'&&m.status==='processing')||(filter==='prontas'&&m.status==='ready'))
+    .filter(m=>!q||m.title.toLowerCase().includes(q)||(m.project||'').toLowerCase().includes(q));
+  const rows=shown.map(m=>{
+    const sharedToMe=isSharedToMe(m);
+    const ownerShared=isOwner(m)&&(m.sharedWith||[]).length>0;
+    const metaShare=sharedToMe
+      ? ` · <span style="display:inline-flex;align-items:center;gap:5px;color:#9db6ff;vertical-align:middle">${sv(I.share,1.8,11).replace('stroke="currentColor"','stroke="#9db6ff"')}Compartilhada comigo</span>`
+      : ownerShared
+        ? ` · <span style="display:inline-flex;align-items:center;gap:5px;vertical-align:middle" title="Compartilhada com ${(m.sharedWith||[]).map(s=>s.n).join(', ')}">${sv(I.share,1.8,11).replace('stroke="currentColor"','stroke="var(--t3)"')}${avatarStack(m.sharedWith,22,4)}</span>`
+        : '';
+    return `<div class="list-row" data-open="${m.id}">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        <span class="ico-badge" style="${m.status==='ready'?'color:var(--accent)':''}">${sv(SOURCE[m.source].icon,1.8,17)}</span>
+        <div style="min-width:0"><div class="mtitle">${m.title}</div><div class="mmeta">${SOURCE[m.source].label} · ${m.dur}${m.people.length?` · ${m.people.length} participantes`:''}${metaShare}</div></div>
+      </div>
+      <div style="font-size:13px;color:var(--t2)">${m.project}</div>
+      <div style="font-size:13px;color:var(--t2)">${m.date}</div>
+      <div>${pill(m.status)}</div>
+      ${sv(I.chevR,2,16).replace('stroke="currentColor"','stroke="var(--t3)"')}
+    </div>`;}).join('');
+  $('#view').innerHTML=`
+    ${isAdmin?`<div class="seg" style="margin-bottom:18px"><button class="on">Minhas reuniões</button><button data-nav="admin">${sv(I.gear,1.8,14)}Gestão do módulo</button></div>`:''}
+    <div class="row-head" style="align-items:flex-start;gap:16px">
+      <div><h1 class="page">Reuniões</h1><p class="sub">${isAdmin?'Transcrições e resumos do Meeting Intelligence que viram tarefas no board.':'Suas reuniões e as que foram compartilhadas com você.'}</p></div>
+      ${!isAdmin?`<div style="margin-left:auto;width:260px;max-width:100%;flex-shrink:0">${userQuotaMini()}</div>`:''}
+    </div>
+    <div class="tabs-filter">
+      ${['todas','processando','prontas'].map(f=>`<div class="tf ${filter===f?'active':''}" data-filter="${f}">${f[0].toUpperCase()+f.slice(1)}<span class="c">${counts[f]}</span></div>`).join('')}
+      <div style="margin-left:auto;flex:1;min-width:150px;max-width:420px;display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <input id="searchInput" placeholder="Buscar reuniões…" style="flex:1;min-width:0;background:transparent;border:none;height:30px;padding:0;font-size:13px;color:var(--t1)">
+      </div>
+      <button class="btn btn-primary" data-nav="new" style="height:32px;width:260px;flex-shrink:0;justify-content:center;font-size:13px;border-radius:8px">${sv(I.mic,1.8,15)}Iniciar gravação</button>
+    </div>
+    <div class="card">
+      <div class="list-head"><div>Reunião</div><div>Projeto</div><div>Data</div><div>Status</div><div></div></div>
+      ${rows||'<div class="empty">Nenhuma reunião encontrada.</div>'}
+    </div>
+    <p class="banner">${star()} Módulo premium — ativo para este workspace.</p>`;
+  const si=$('#searchInput');
+  if(si){si.value=search;si.oninput=()=>{search=si.value;renderList();const s2=$('#searchInput');if(s2){s2.focus();const v=s2.value;s2.value='';s2.value=v;}};}
+}
+
+/* ---------- DETAIL ---------- */
+function renderDetail(){
+  const m=find(route.id); if(!m){route={name:'list'};return render();}
+  $('#crumb').innerHTML=`<span data-nav="list" style="cursor:pointer">Reuniões</span> ${sv(I.chevR,2,12)} <b>${m.title}</b>`;
+  if(m.status==='processing'){
+    $('#view').innerHTML=headerDetail(m)+`<div class="card" style="padding:0"><div class="loader"><div class="spin"></div><div>Transcrevendo e resumindo com o Meeting Intelligence…</div><div style="font-size:12px;color:var(--t3)">Isso normalmente leva alguns minutos.</div></div></div>`;
+    return;
+  }
+  if(m.status==='failed'){
+    $('#view').innerHTML=headerDetail(m)+`<div class="card"><div class="empty"><div style="color:var(--crit);font-weight:600;margin-bottom:6px">O processamento falhou</div>Não foi possível gerar o resumo desta reunião.<div style="margin-top:16px"><button class="btn btn-ghost" data-reprocess="${m.id}">${sv(I.refresh,1.8,16)}Tentar novamente</button></div></div></div>`;
+    return;
+  }
+  const tab=route.tab;
+  let body='';
+  if(tab==='notas') body=tabNotas(m);
+  else if(tab==='transcricao') body=tabTranscript(m);
+  else body=tabResumo(m);
+  const nc=(m.notes||[]).length;
+  $('#view').innerHTML=headerDetail(m)+`
+    <div class="tabs">
+      <button class="tab ${(tab==='resumo'||!['notas','transcricao'].includes(tab))?'active':''}" data-tab="resumo">Resumo</button>
+      <button class="tab ${tab==='notas'?'active':''}" data-tab="notas">Notas${nc?` <span class="chip" style="height:18px;padding:0 7px">${nc}</span>`:''}</button>
+      <button class="tab ${tab==='transcricao'?'active':''}" data-tab="transcricao">Transcrição</button>
+    </div>${body}`;
+}
+function headerDetail(m){
+  const shared=isSharedToMe(m), manage=canManage(m);
+  const player = m.status==='ready' ? `
+    <div class="card" style="padding:11px 16px;margin:0 0 20px;display:flex;align-items:center;gap:14px">
+      <button class="btn" id="audiobtn" data-audio-toggle="1" style="width:38px;height:38px;padding:0;border-radius:99px;background:var(--accent);color:#fff;border:none;justify-content:center;flex-shrink:0">${audioIcon()}</button>
+      <div style="flex:1;height:5px;border-radius:3px;background:var(--border2);position:relative"><span id="audiopct" style="position:absolute;left:0;top:0;bottom:0;width:${audio.pct}%;background:var(--accent);border-radius:3px"></span></div>
+      <span style="font-size:12px;color:var(--t3);font-variant-numeric:tabular-nums;flex-shrink:0">${m.dur}</span>
+      ${manage?`<button class="btn btn-ghost btn-sm" data-dl-audio="${m.id}" title="Baixar a gravação no formato original (WEBM/Opus)">${sv(I.download,1.8,14)}Baixar áudio</button>`:`<span style="font-size:12px;color:var(--t3);flex-shrink:0">Ouvir gravação</span>`}
+    </div>` : '';
+  const chip=(name,ag,role)=>`<span class="chip"><span class="av" style="background:${grad[(ag<0?0:ag)%grad.length]}"></span>${name}${role?` <span style="color:var(--t3)">· ${role}</span>`:''}</span>`;
+  const shWith=(m.sharedWith||[]);
+  const shareLine=`<div style="display:flex;align-items:center;gap:8px;margin-top:11px;flex-wrap:wrap">
+    ${chip(m.owner||'—',0,'dono')}
+    ${shWith.map(s=>chip(s.n,s.ag)).join('')}
+    ${manage
+      ? `<button class="btn btn-sm btn-outline" data-share-open="${m.id}" style="height:24px;padding:0 10px">${sv(I.share,1.8,12)}Compartilhar</button>`
+      : `<button class="btn btn-sm" disabled title="Só o dono da reunião pode compartilhar ou baixar" style="height:24px;padding:0 10px;background:var(--surface2);border:1px solid var(--border);color:var(--t3);cursor:not-allowed;opacity:.55;display:inline-flex;align-items:center;gap:6px">${sv(I.share,1.8,12)}Compartilhar</button>`}
+  </div>`;
+  const actions = manage
+    ? `<button class="btn btn-ghost" data-reprocess="${m.id}">${sv(I.refresh,1.8,16)}Reprocessar</button>
+       <button class="btn btn-ghost" data-archive="${m.id}" title="Arquivar — sai da lista, mas fica 30 dias no repositório" style="width:40px;padding:0;justify-content:center;color:var(--t2)">${sv(I.trash,1.8,16)}</button>`
+    : (shared?`<span class="pill" style="background:var(--accentDim);color:#9db6ff;border:1px solid var(--accentBorder);height:30px">${sv(I.share,1.8,13)} Compartilhada por ${m.owner} · você não consome cota</span>`:'');
+  return `<div class="row-head" style="align-items:flex-start">
+    <div><h1 class="page">${m.title}</h1>
+      <div style="display:flex;align-items:center;gap:14px;font-size:13px;color:var(--t2);margin-top:8px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:6px">${sv(SOURCE[m.source].icon,1.8,15)}${SOURCE[m.source].label}</span>
+        <span>${m.date}${m.time?', '+m.time:''}</span><span>${m.dur}</span>
+        ${m.people.length?`<span style="display:flex;align-items:center;gap:6px">${sv(I.users,1.8,15)}${m.people.length} ${m.people.length===1?'participante':'participantes'}</span>`:''}
+      </div>
+      ${shareLine}
+    </div>
+    <div style="margin-left:auto;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end;max-width:360px">
+      ${actions}
+    </div></div>${player}`;
+}
+function tabResumo(m){
+  const diahora=`${m.date}${m.time?` · ${m.time}`:''}`;
+  const integrantes=(m.people||[]).map(p=>p.n).join(', ')||'—';
+  const bullets=arr=>(arr&&arr.length)
+    ? `<ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px">${arr.map(x=>`<li style="font-size:14px;line-height:1.55;color:var(--tc)">${x}</li>`).join('')}</ul>`
+    : `<div style="font-size:13px;color:var(--t3)">—</div>`;
+  const sec=(label,content)=>`<div style="display:flex;flex-direction:column;gap:7px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3)">${label}</div>${content}</div>`;
+  const line=v=>`<div style="font-size:14px;line-height:1.55;color:var(--tc)">${v}</div>`;
+  const th='text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--t3);font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:600';
+  const td='padding:9px 10px;border-bottom:1px solid var(--border);color:var(--tc);vertical-align:top';
+  const passosTable=items=>(!items||!items.length)?'<div style="font-size:13px;color:var(--t3)">—</div>':
+    `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13.5px">
+      <thead><tr><th style="${th}">Descrição</th><th style="${th};white-space:nowrap">Responsável</th><th style="${th};white-space:nowrap">Data</th></tr></thead>
+      <tbody>${items.map(a=>`<tr><td style="${td}">${a.text}</td><td style="${td};color:var(--t2);white-space:nowrap">${a.assignee||'—'}</td><td style="${td};color:var(--t2);white-space:nowrap">${a.due||'—'}</td></tr>`).join('')}</tbody>
+    </table></div>`;
+  return `<div class="grid2">
+    <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+      <div class="card" style="padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="sec-title" style="margin:0"><span class="ai-badge">${sparkFill(14)}</span>Resumo da reunião</div>
+          <button class="btn btn-sm btn-ghost" data-copy-resumo="${m.id}">${sv(I.copy,1.8,14)}Copiar ata</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 24px">
+          ${sec('Dia e hora',line(diahora))}
+          ${sec('Integrantes',line(integrantes))}
+        </div>
+        ${sec('Objetivo',line(m.objetivo||'—'))}
+        ${sec('Assunto',line(m.assunto||'—'))}
+        ${sec('Itens discutidos',bullets(m.itensDiscutidos))}
+        ${sec('Decisões',bullets(m.decisions))}
+        ${sec('Pontos a definir',bullets(m.pontosDefinir))}
+        ${sec('Próximos passos',passosTable(m.actionItems))}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card" style="padding:18px 20px">
+        <div class="sec-title" style="font-size:13px;margin-bottom:12px">Processamento</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:12.5px;color:var(--t2)">
+          <div style="display:flex;justify-content:space-between"><span>Transcrição</span><span style="color:var(--success)">Concluída</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Resumo</span><span style="color:var(--success)">Concluído</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Idioma</span><span style="color:var(--tc)">Português</span></div>
+        </div>
+        <div class="banner" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">${sparkFill(13,'#A78BFA')} Gerado pelo Meeting Intelligence — revise o conteúdo.</div>
+      </div>
+    </div>
+  </div>`;
+}
+function tabTranscript(m){
+  const actions=transcriptEditing
+    ? `<button class="btn btn-sm btn-ghost" data-cancel-transcript="1">Cancelar</button>
+       <button class="btn btn-sm btn-primary" data-save-transcript="${m.id}">${sv(I.check,2.2,14)}Salvar</button>`
+    : `<button class="btn btn-sm btn-ghost" data-copy-transcript="${m.id}">${sv(I.copy,1.8,14)}Copiar</button>
+       ${canManage(m)?`<button class="btn btn-sm btn-outline" data-edit-transcript="1">${sv(I.edit,1.8,14)}Editar</button>`:''}`;
+  const lines=transcriptEditing
+    ? m.transcript.map((l,i)=>`<div class="tline" style="align-items:flex-start;border-bottom:none;padding:6px 0"><span class="ts" style="padding-top:6px">${l.ts}</span><span class="who" style="padding-top:6px">${l.who}:</span><span class="tedit" contenteditable="true" data-tidx="${i}" style="flex:1;min-width:0;color:var(--t1);outline:none;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 9px;line-height:1.6">${l.text.replace(/</g,'&lt;')}</span></div>`).join('')
+    : m.transcript.map(l=>`<div class="tline"><span class="ts">${l.ts}</span><span class="who">${l.who}:</span><span style="color:var(--t2)">${l.text}</span></div>`).join('');
+  const hint=transcriptEditing
+    ? `<p style="margin:12px 0 0;font-size:12px;color:var(--t3)">Edite cada fala para complementar ou corrigir. A transcrição é a base das citações do Meeting Intelligence — ajuste com cuidado.</p>`
+    : '';
+  return `<div class="card" style="padding:8px 22px 16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:6px">
+      <span style="font-size:12.5px;color:var(--t3)">Transcrição completa · ${m.dur} · ${SOURCE[m.source].label}</span>
+      <div style="display:flex;align-items:center;gap:8px">${actions}</div>
+    </div>
+    ${lines||'<div class="empty" style="padding:34px 0">Sem transcrição.</div>'}
+    ${hint}
+  </div>`;
+}
+function tabNotas(m){
+  const notes=m.notes||(m.notes=[]);
+  const cards=notes.map(n=>`
+    <div class="ai-item" style="align-items:flex-start">
+      <div style="min-width:0;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <span class="chip"><span class="av" style="background:${grad[(n.ag??0)%grad.length]}"></span>${n.author}</span>
+          ${n.ts?`<span class="chip" style="color:var(--accent);border-color:var(--accentBorder)">↳ ${n.ts}</span>`:''}
+        </div>
+        <div style="font-size:14px;line-height:1.6;color:var(--tc);white-space:pre-wrap">${n.body.replace(/</g,'&lt;')}</div>
+      </div>
+      <button class="btn btn-sm" style="background:transparent;border:1px solid var(--border);color:var(--t3)" data-note-del="${m.id}:${n.id}">Excluir</button>
+    </div>`).join('');
+  const editor=notesAdding?`
+    <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;border-color:var(--accentBorder)">
+      <textarea id="notebody" class="transcript" style="min-height:96px" placeholder="Escreva seu apontamento…"></textarea>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <label class="label" style="display:flex;align-items:center;gap:8px;font-weight:500;color:var(--t2)">Âncora no tempo (opcional)
+          <input id="notets" placeholder="mm:ss" style="width:80px;height:34px;padding:0 10px"></label>
+        <div style="margin-left:auto;display:flex;gap:10px">
+          <button class="btn btn-ghost btn-sm" data-note-cancel="1">Cancelar</button>
+          <button class="btn btn-primary btn-sm" data-note-save="${m.id}">Salvar apontamento</button>
+        </div>
+      </div>
+    </div>`:'';
+  return `<div class="card" style="padding:20px 22px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="sec-title" style="margin:0">Notas da reunião</div>
+      ${notesAdding?'':`<button class="btn btn-sm btn-outline" data-note-add="1">${sv(I.plus,2.2,14)}Adicionar apontamento</button>`}
+    </div>
+    <p style="margin:0 0 16px;font-size:12.5px;color:var(--t3)">Apontamentos da equipe — visíveis a quem tem acesso à reunião. A transcrição continua intacta.</p>
+    ${editor}
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:${notesAdding?'12px':'0'}">
+      ${cards||(notesAdding?'':'<div class="empty" style="padding:34px 0">Nenhum apontamento ainda. Clique em “Adicionar apontamento”.</div>')}
+    </div>
+  </div>`;
+}
+function tabChat(m){
+  const log=chatByMeeting[m.id]||(chatByMeeting[m.id]=[{role:'bot',text:'Posso responder sobre esta reunião. Pergunte, por exemplo: “quais foram as decisões?” ou “o que ficou para a Uma?”'}]);
+  return `<div class="card" style="padding:18px 20px">
+    <div class="banner" style="margin:0 0 12px">${sparkFill(13,'#A78BFA')} Chat sobre a reunião (RAG) — <b style="color:var(--t2);font-weight:600">simulação</b> para teste de usabilidade.</div>
+    <div class="chatwrap">
+      <div class="chatlog" id="chatlog">${log.map(x=>`<div class="msg ${x.role}">${x.text}</div>`).join('')}</div>
+      <div class="chatbar">
+        <input id="chatinput" placeholder="Pergunte sobre esta reunião…" autocomplete="off">
+        <button class="btn btn-primary" data-send="${m.id}">Enviar</button>
+      </div>
+    </div>
+  </div>`;
+}
+function botReply(m,q){
+  const t=q.toLowerCase();
+  if(/decis|decid/.test(t)) return m.decisions.length?('As decisões foram: '+m.decisions.map(d=>d.replace(/\.$/,'')).join('; ')+'.'):'Não registrei decisões formais nesta reunião.';
+  if(/uma/.test(t)) return 'A Uma ficou responsável por preparar o protótipo navegável das telas de cadastro, com prazo até 30/09.';
+  if(/prazo|quando|data/.test(t)) return 'O protótipo navegável ficou para 30/09 e a validação com usuários na semana seguinte.';
+  if(/action|tarefa|encaminh/.test(t)) return 'Há '+m.actionItems.length+' action items: '+m.actionItems.map(a=>a.text.toLowerCase()).join('; ')+'.';
+  if(/resumo|sobre/.test(t)) return m.summary;
+  return 'Com base na transcrição, o foco foi o escopo da fase 1 (cadastro de clientes e gateway de pagamento) e a cadência de sprints. Quer que eu detalhe as decisões ou os action items?';
+}
+
+/* ---------- RECORD (grava na própria aba) ---------- */
+function renderRecord(){
+  $('#crumb').innerHTML=`<span data-nav="list" style="cursor:pointer">Reuniões</span> ${sv(I.chevR,2,12)} <b>Gravar reunião</b>`;
+  const bars=Array.from({length:11}).map((_,i)=>`<i style="animation-delay:${(i*0.08).toFixed(2)}s"></i>`).join('');
+  let inner;
+  if(!rec.stopped){
+    inner=`
+      <div style="display:flex;flex-direction:column;align-items:center;gap:18px;padding:34px 0">
+        <div style="display:flex;align-items:center;gap:10px;color:var(--crit);font-weight:600;font-size:13px"><span class="recdot"></span>GRAVANDO</div>
+        <div id="rectimer" style="font-size:44px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums">${fmtDur(rec.sec)}</div>
+        <div class="eqbars">${bars}</div>
+        <button class="btn" style="background:var(--critDim);color:var(--crit);border:1px solid rgba(239,68,68,.3);height:44px" data-rec-stop="1">
+          <span style="width:12px;height:12px;border-radius:3px;background:var(--crit);display:inline-block"></span>Encerrar gravação</button>
+      </div>`;
+  } else {
+    inner=`
+      <div style="display:flex;flex-direction:column;gap:16px;padding:8px 0">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="ai-badge" style="width:40px;height:40px;border-radius:10px;background:var(--successDim);border-color:rgba(16,185,129,.3);color:var(--success)">${sv(I.check,2,20)}</span>
+          <div><div style="font-size:15px;font-weight:600">Gravação encerrada</div><div style="font-size:12.5px;color:var(--t2)">Duração ${fmtDur(rec.sec)} · áudio salvo no seu workspace</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px">
+          <button style="width:34px;height:34px;border-radius:99px;background:var(--accent);border:none;color:#fff;display:flex;align-items:center;justify-content:center">${sv('<path d="M8 5v14l11-7z"/>',0,15).replace('fill="none"','fill="currentColor"')}</button>
+          <div style="flex:1;height:4px;border-radius:3px;background:var(--border2);position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:32%;background:var(--accent);border-radius:3px"></span></div>
+          <span style="font-size:12px;color:var(--t3);font-variant-numeric:tabular-nums">00:00 / ${fmtDur(rec.sec)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding-top:4px">
+          <button class="btn btn-ghost" data-rec-discard="1">Descartar</button>
+          <button class="btn btn-primary" style="margin-left:auto;height:44px" data-rec-transcribe="1">${sparkFill(16)}Iniciar transcrição</button>
+        </div>
+      </div>`;
+  }
+  $('#view').innerHTML=`
+    <div style="max-width:720px">
+      <div style="margin-bottom:20px"><h1 class="page">${rec.title}</h1><p class="sub">Gravação na própria aba — sem instalar nada.</p></div>
+      ${!rec.stopped?`<div class="card" style="padding:13px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;border-color:rgba(245,158,11,.35);background:var(--warnDim)">
+        <span style="color:var(--warn);flex-shrink:0">${sv(I.share,1.8,17)}</span>
+        <div style="flex:1;font-size:12.5px;color:var(--tc);line-height:1.5"><b style="color:var(--warn)">Aria (Tech Lead)</b> já está gravando uma reunião agora. Se for a mesma, <b>peça o compartilhamento</b> em vez de gravar de novo — você não gasta cota e o time evita gravar em dobro.</div>
+        <button class="btn btn-sm btn-ghost" data-ask-share="1" style="flex-shrink:0">Pedir compartilhamento</button>
+      </div>`:''}
+      <div class="card" style="padding:24px">
+        ${inner}
+      </div>
+      <div class="card" style="padding:14px 18px;margin-top:16px;display:flex;align-items:center;gap:14px">
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">Também capturar o áudio da call</div>
+          <div style="font-size:12px;color:var(--t3)">Para reuniões remotas de fone. Abre o compartilhamento de aba do navegador (Chrome/Edge).</div></div>
+        <div class="toggle ${rec.shareAudio?'on':''}" data-rec-toggle="1"><b></b></div>
+      </div>
+      <p class="banner" style="margin-top:14px">${sv(I.shield,1.8,14)} Consentimento do módulo já registrado. Avise os participantes antes de gravar.</p>
+    </div>`;
+  if(!rec.stopped && !rec.timer){
+    rec.timer=setInterval(()=>{rec.sec++;const el=$('#rectimer');if(el)el.textContent=fmtDur(rec.sec);},1000);
+  }
+}
+
+/* ---------- NEW MEETING ---------- */
+function renderNew(){
+  $('#crumb').innerHTML=`<span data-nav="list" style="cursor:pointer">Reuniões</span> ${sv(I.chevR,2,12)} <b>Nova reunião</b>`;
+  $('#view').innerHTML=`
+    <div style="max-width:960px">
+      <div style="margin-bottom:24px"><h1 class="page">Nova reunião</h1><p class="sub">Traga uma reunião para o Altech e o Meeting Intelligence gera resumo, decisões e tarefas para o board.</p></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px">
+        <div class="src-opt" style="cursor:pointer;border-color:var(--accentBorder)" data-nav="record">
+          <span class="ai-badge" style="width:28px;height:28px;border-radius:8px;background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent)">${sv(I.mic,1.8,18)}</span>
+          <div><div style="font-size:14.5px;font-weight:600">Gravar agora</div><div style="font-size:12.5px;color:var(--t2)">Grava na própria aba. Presencial ou call.</div></div>
+        </div>
+        <div class="src-opt active">
+          <span class="ai-badge" style="width:28px;height:28px;border-radius:8px;background:var(--surface2);border-color:var(--border);color:var(--t2)">${sv(I.paste,1.8,18)}</span>
+          <div><div style="font-size:14.5px;font-weight:600">Colar transcrição</div><div style="font-size:12.5px;color:var(--t2)">Já tem o texto? Cole abaixo.</div></div>
+        </div>
+        <button class="btn btn-primary" id="gen" style="height:auto;justify-content:center;font-size:14px">${sparkFill(16)}Gerar resumo</button>
+      </div>
+      <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="field"><label class="label">Título da reunião</label><input id="nt" value="Kickoff — Projeto Rautaki"></div>
+          <div class="field"><label class="label">Projeto</label>
+            <select id="np"><option>Rautaki</option><option>Interno — Altech</option><option>Sem projeto</option></select></div>
+        </div>
+        <div class="field">
+          <div style="display:flex;align-items:center;justify-content:space-between"><label class="label">Transcrição</label><span id="wc" style="font-size:11.5px;color:var(--t3)">0 palavras</span></div>
+          <textarea class="transcript" id="tx" placeholder="Cole aqui a transcrição da reunião (Zoom, Meet, Teams…)"></textarea>
+          <button class="btn btn-ghost btn-sm" id="sample" style="align-self:flex-start">Usar transcrição de exemplo</button>
+        </div>
+        <span class="banner" style="margin:0">${sv(I.shield,1.8,14)} O conteúdo fica restrito ao seu workspace. Dados sensíveis são mascarados.</span>
+      </div>
+    </div>`;
+  const tx=$('#tx'),wc=$('#wc');
+  const count=()=>{const n=tx.value.trim()?tx.value.trim().split(/\s+/).length:0;wc.textContent=n+' palavras';};
+  tx.addEventListener('input',count);
+  $('#sample').onclick=()=>{tx.value='[00:02] Yago: Pessoal, obrigado por virem. A ideia de hoje é fechar o escopo da fase 1 e a cadência de sprints.\n[00:47] Cliente: Para nós, o mais urgente é o cadastro de clientes e conseguir cobrar pela plataforma.\n[03:15] Alex: Proponho sprints de duas semanas, com planning na segunda.\n[07:40] Dara: Consigo modelar o schema do cadastro ainda esta semana.\n[12:10] Uma: Preparo um protótipo navegável das telas de cadastro até o fim do mês.';count();};
+  $('#gen').onclick=()=>{
+    if(!tx.value.trim()){toast('Cole uma transcrição primeiro.');tx.focus();return;}
+    const title=$('#nt').value.trim()||'Reunião sem título';const project=$('#np').value;
+    generate(title,project);
+  };
+}
+function generate(title,project,source,dur){
+  const id='m'+(meetings.length+1)+Date.now().toString().slice(-3);
+  $('#view').innerHTML=`<div class="card" style="padding:0;margin-top:40px"><div class="loader"><div class="spin"></div><div>Transcrevendo e resumindo com o Meeting Intelligence…</div><div style="font-size:12px;color:var(--t3)">Extraindo decisões e action items.</div></div></div>`;
+  $('#crumb').innerHTML='Meeting Intelligence';
+  setTimeout(()=>{
+    meetings.unshift({id,title,source:source||'upload',project,date:'13 set 2026',time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),dur:dur||'—',status:'ready',notes:[],owner:(isAdmin?'Você':curUser().n),sharedWith:[],
+      people:[{n:'Você',g:0}],
+      summary:'O Meeting Intelligence resumiu a transcrição enviada: o foco foi o escopo da fase 1, priorizando o cadastro de clientes e o gateway de pagamento, com sprints quinzenais e um protótipo navegável até o fim do mês.',
+      objetivo:'Registrar e organizar os pontos da reunião gravada.',
+      assunto:'Escopo da fase 1 — cadastro de clientes e gateway de pagamento.',
+      itensDiscutidos:['Prioridades do cliente para a fase 1.','Cadência quinzenal das sprints.','Prazo do protótipo navegável.'],
+      pontosDefinir:['Provedor do gateway de pagamento a integrar.'],
+      decisions:['Sprints quinzenais.','Prioridade: cadastro de clientes + gateway.','Protótipo até 30/09.'],
+      actionItems:[
+        {id:'n1',text:'Modelar o schema do cadastro de clientes',assignee:'Dara',ag:3,due:'esta semana',issue:null},
+        {id:'n2',text:'Preparar protótipo navegável das telas de cadastro',assignee:'Uma',ag:2,due:'até 30/09',issue:null},
+      ],
+      transcript:[{ts:'00:02',who:'Yago',text:'Transcrição enviada e processada pelo Meeting Intelligence.'}]});
+    route={name:'detail',id,tab:'resumo'};render();
+    toast('Resumo gerado pelo Meeting Intelligence.');
+  },1700);
+}
+
+/* ---------- CREATE ISSUE MODAL ---------- */
+function openIssueModal(mid,aid){
+  const m=find(mid),a=m.actionItems.find(x=>x.id===aid);
+  $('#modal-root').innerHTML=`
+  <div class="overlay" data-close="1">
+    <div class="modal">
+      <div class="modal-h">
+        <span class="ai-badge" style="width:34px;height:34px;border-radius:9px;background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent)">${sv(I.plus,2,17)}</span>
+        <div style="flex:1"><div style="font-size:15.5px;font-weight:700;letter-spacing:-.01em">Criar demanda a partir do próximo passo</div><div style="font-size:12.5px;color:var(--t2)">${m.title}</div></div>
+        <button class="tab" style="padding:4px" data-close="1">${sv(I.close,2,18).replace('stroke="currentColor"','stroke="var(--t3)"')}</button>
+      </div>
+      <div class="modal-b">
+        <div class="quote">${sparkFill(15,'#A78BFA')}<div><span style="color:var(--t3)">Sugerido pelo Meeting Intelligence:</span> ${a.text}</div></div>
+        <div class="field"><label class="label">Título da demanda</label><input id="it" value="${a.text.replace(/"/g,'&quot;')}"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="field"><label class="label">Tipo</label><select><option>Tarefa</option><option>Bug</option><option>Melhoria</option></select></div>
+          <div class="field"><label class="label">Responsável</label><select><option>${a.assignee}</option><option>Yago</option><option>Alex</option><option>Dara</option><option>Uma</option></select></div>
+        </div>
+        <div class="field"><label class="label">Vincular no board</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <select><option>Sprint 8</option><option>Sprint 9</option><option>Backlog</option></select>
+            <select><option>Pagamentos</option><option>Cadastro</option><option>Sem épico</option></select>
+            <select><option>${a.due}</option><option>Sem prazo</option></select>
+          </div>
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--t3);margin-top:2px"><span>Sprint</span><span style="margin-left:56px">Épico</span><span style="margin-left:56px">Prazo</span></div>
+        </div>
+      </div>
+      <div class="modal-f">
+        <span class="banner" style="margin:0">${sv(I.link,2,13)} Vínculo com a reunião preservado.</span>
+        <button class="btn btn-ghost" style="margin-left:auto" data-close="1">Cancelar</button>
+        <button class="btn btn-primary" data-confirm="${mid}:${aid}">Criar demanda</button>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{const el=$('#it');if(el)el.focus();},30);
+}
+function closeModal(){$('#modal-root').innerHTML='';}
+
+/* ---------- COMPARTILHAR REUNIÃO ---------- */
+function openShareModal(mid){
+  const m=find(mid); if(!m)return;
+  const sharedIds=new Set((m.sharedWith||[]).map(s=>s.id));
+  const options=team.filter(u=>u.n!==m.owner);
+  const rows=options.map(u=>{
+    const on=sharedIds.has(u.id);
+    return `<button data-share-toggle="${mid}:${u.id}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:${on?'var(--accentDim)':'var(--surface2)'};border:1px solid ${on?'var(--accentBorder)':'var(--border)'};border-radius:10px;padding:10px 12px;cursor:pointer;font-family:inherit">
+      ${avatar(u.ag,30)}
+      <div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--t1)">${u.n}</div><div style="font-size:11.5px;color:var(--t3)">${u.role}</div></div>
+      <span style="width:22px;height:22px;border-radius:6px;border:1.5px solid ${on?'var(--accent)':'var(--border2)'};background:${on?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;color:#fff">${on?sv(I.check,2.4,14):''}</span>
+    </button>`;}).join('');
+  $('#modal-root').innerHTML=`
+  <div class="overlay" data-close="1"><div class="modal">
+    <div class="modal-h">
+      <span class="ai-badge" style="width:34px;height:34px;border-radius:9px;background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent)">${sv(I.share,1.8,17)}</span>
+      <div style="flex:1"><div style="font-size:15.5px;font-weight:700">Compartilhar reunião</div><div style="font-size:12.5px;color:var(--t2)">${m.title}</div></div>
+      <button class="tab" style="padding:4px" data-close="1">${sv(I.close,2,18).replace('stroke="currentColor"','stroke="var(--t3)"')}</button>
+    </div>
+    <div class="modal-b">
+      <div class="quote">${sv(I.shield,1.8,14)}<div>Quem receber <b>ouve a gravação, copia a transcrição e a ata, e adiciona notas</b> (campo compartilhado) — <b>sem gastar a própria cota</b>.</div></div>
+      <div class="field"><label class="label">Pessoas do workspace com o módulo</label>
+        <div style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto">${rows||'<div class="empty" style="padding:20px 0">Ninguém mais tem o módulo liberado.</div>'}</div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <span class="banner" style="margin:0">${sv(I.share,1.8,13)} ${(m.sharedWith||[]).length} pessoa(s) com acesso, além de você.</span>
+      <button class="btn btn-primary" style="margin-left:auto" data-close="1">Concluir</button>
+    </div>
+  </div></div>`;
+}
+function toggleShare(mid,uid){
+  const m=find(mid), u=team.find(x=>x.id===uid); if(!m||!u)return;
+  m.sharedWith=m.sharedWith||[];
+  const i=m.sharedWith.findIndex(s=>s.id===uid);
+  if(i>=0){ m.sharedWith.splice(i,1); }
+  else { m.sharedWith.push({id:u.id,n:u.n,ag:u.ag}); notifications.unshift({id:'nt'+(notifSeq++),audience:'user'+u.id,kind:'share',text:`<b>${curUser().n}</b> compartilhou a reunião <b>${m.title}</b> com você — sem gastar sua cota.`,when:'Agora',read:false}); }
+  openShareModal(mid); updateChrome();
+}
+function confirmIssue(mid,aid){
+  const m=find(mid),a=m.actionItems.find(x=>x.id===aid);
+  a.issue='RAU-'+(issueSeq++);closeModal();render();toast('Demanda '+a.issue+' criada no board.');
+}
+
+/* ---------- LIBERAR ACESSO AO MÓDULO (usuários existentes) ---------- */
+function openAddUsersModal(){
+  const rows = orgAvailable.length ? orgAvailable.map(u=>{
+    const on=addSel.has(u.id), q=ROLE_QUOTA[u.role]||1.5;
+    return `<button data-adduser-toggle="${u.id}" style="display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:${on?'var(--accentDim)':'var(--surface2)'};border:1px solid ${on?'var(--accentBorder)':'var(--border)'};border-radius:10px;padding:10px 12px;cursor:pointer;font-family:inherit">
+      ${avatar(u.ag,30)}
+      <div style="flex:1;min-width:0"><div style="font-weight:600;color:var(--t1)">${u.n}</div><div style="font-size:11.5px;color:var(--t3)">${u.role} · cota padrão ${fmtH(q)}</div></div>
+      <span style="width:22px;height:22px;border-radius:6px;border:1.5px solid ${on?'var(--accent)':'var(--border2)'};background:${on?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;color:#fff">${on?sv(I.check,2.4,14):''}</span>
+    </button>`;}).join('') : '<div class="empty" style="padding:24px 0">Todos os usuários do workspace já têm o módulo liberado.</div>';
+  $('#modal-root').innerHTML=`
+  <div class="overlay" data-close="1"><div class="modal">
+    <div class="modal-h">
+      <span class="ai-badge" style="width:34px;height:34px;border-radius:9px;background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent)">${sv(I.users,1.8,17)}</span>
+      <div style="flex:1"><div style="font-size:15.5px;font-weight:700">Liberar acesso ao módulo</div><div style="font-size:12.5px;color:var(--t2)">Usuários do workspace que ainda não têm o Meeting Intelligence</div></div>
+      <button class="tab" style="padding:4px" data-close="1">${sv(I.close,2,18).replace('stroke="currentColor"','stroke="var(--t3)"')}</button>
+    </div>
+    <div class="modal-b">
+      <div class="quote">${sv(I.shield,1.8,14)}<div>Ao liberar, cada usuário recebe a <b>cota padrão do cargo</b> (ajustável depois na tabela) e é avisado. O mesmo acesso também pode ser concedido pela tela de <b>Times</b>.</div></div>
+      <div class="field"><label class="label">Selecione quem terá o módulo</label>
+        <div style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow:auto">${rows}</div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <span class="banner" style="margin:0">${sv(I.users,1.8,13)} ${addSel.size} selecionado(s)</span>
+      <button class="btn btn-ghost" data-close="1" style="margin-left:auto">Cancelar</button>
+      <button class="btn btn-primary" data-adduser-confirm="1" ${addSel.size?'':'disabled'} style="${addSel.size?'':'opacity:.55;cursor:not-allowed'}">${sv(I.check,2.2,14)}Liberar acesso${addSel.size?` (${addSel.size})`:''}</button>
+    </div>
+  </div></div>`;
+}
+function toggleAddUser(uid){ if(addSel.has(uid))addSel.delete(uid); else addSel.add(uid); openAddUsersModal(); }
+function confirmAddUsers(){
+  const added=[];
+  orgAvailable.filter(u=>addSel.has(u.id)).forEach(u=>{
+    const q=ROLE_QUOTA[u.role]||1.5;
+    team.push({id:u.id,n:u.n,role:u.role,ag:u.ag,quota:q,used:0,meets:0});
+    notifications.unshift({id:'nt'+(notifSeq++),audience:'user'+u.id,kind:'module',text:`Seu acesso ao <b>Meeting Intelligence</b> foi liberado — cota de <b>${fmtH(q)}</b> por mês.`,when:'Agora',read:false});
+    added.push(u.n);
+  });
+  orgAvailable=orgAvailable.filter(u=>!addSel.has(u.id));
+  addSel=new Set();
+  closeModal(); render();
+  toast(added.length?`${added.length} usuário(s) liberado(s) no módulo.`:'Nenhum usuário selecionado.');
+}
+
+/* ---------- HELP / FAQ ---------- */
+function renderHelp(){
+  $('#crumb').innerHTML=`<span data-nav="list" style="cursor:pointer">Reuniões</span> ${sv(I.chevR,2,12)} <b>Ajuda</b>`;
+  const li=arr=>`<ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px">${arr.map(x=>`<li style="font-size:13.5px;line-height:1.6;color:var(--tc)">${x}</li>`).join('')}</ul>`;
+  const card=(icon,title,body)=>`<div class="card" style="padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+    <div class="sec-title" style="margin:0"><span class="ai-badge">${sv(icon,1.8,15)}</span>${title}</div>${body}</div>`;
+  const item=(icon,label,desc)=>`<div style="display:flex;gap:14px;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;width:158px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px">
+        <span class="ai-badge" style="width:24px;height:24px;border-radius:7px;background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent)">${icon?sv(icon,1.8,14):sparkFill(14)}</span>
+        <span style="font-size:12.5px;font-weight:600;color:var(--t1);line-height:1.25">${label}</span>
+      </div>
+      <span style="flex:1;min-width:0;font-size:13.5px;line-height:1.6;color:var(--tc);text-align:justify">${desc}</span>
+    </div>`;
+  const telas=rows=>`<div style="display:flex;flex-direction:column;gap:12px">${rows.map(r=>item(r[0],r[1],r[2])).join('')}</div>`;
+  const prov=(title,items)=>`<div style="display:flex;flex-direction:column;gap:8px"><div style="font-size:13.5px;font-weight:600;color:var(--t1)">${title}</div>${li(items)}</div>`;
+  $('#view').innerHTML=`
+    <div style="max-width:900px">
+      <div class="row-head" style="align-items:flex-start;gap:14px"><div style="flex:1">
+        <h1 class="page">Ajuda — Meeting Intelligence</h1>
+        <p class="sub">${isAdmin?'Todas as funcionalidades do módulo — a visão do usuário <b>e</b> a Gestão do módulo (administrador).':'Tudo o que o Meeting Intelligence oferece na sua visão, e como habilitar a gravação.'}</p>
+      </div>
+      <span class="pill" style="background:${isAdmin?'var(--goldDim)':'var(--accentDim)'};color:${isAdmin?'var(--gold)':'var(--accent)'};height:28px;flex-shrink:0">${sv(isAdmin?I.shield:I.users,1.8,13)} ${isAdmin?'Visão do administrador':'Visão do usuário'}</span></div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        ${card(I.spark||I.mic,'O que é Meeting Intelligence?',`<p style="margin:0;font-size:13.5px;line-height:1.7;color:var(--tc);text-align:justify">O Meeting Intelligence captura suas reuniões para dentro do ambiente Altech Project: ele grava (ou recebe a transcrição colada), gera <b>resumo, decisões e próximos passos</b> e transforma cada reunião em um material que poderá ser usado em seu <b>discovery</b> ou na abertura de <b>novos épicos e histórias</b>.</p>`)}
+
+        ${card(I.boards,'Telas e botões',telas([
+          [I.boards,'Lista de reuniões','Todas as reuniões do workspace, com projeto, data e status. Filtros Todas / Processando / Prontas e busca.'],
+          [I.mic,'Iniciar gravação','Abre a tela Nova reunião com dois caminhos: <b>Gravar agora</b> (na própria aba) e <b>Colar transcrição</b> (quando você já tem o texto).'],
+          [I.mic,'Gravar agora','Timer e botão Encerrar; toggle “capturar o áudio da call”. Ao encerrar, “Iniciar transcrição” manda para o Meeting Intelligence.'],
+          [I.spark,'Resumo','A ata gerada pelo Meeting Intelligence — objetivo, assunto, itens discutidos, decisões, pontos a definir e próximos passos (tabela). Botão <b>Copiar ata</b> leva tudo para a área de transferência.'],
+          [I.edit,'Notas','Apontamentos da equipe, compartilhados com quem tem acesso à reunião, com âncora de tempo opcional. Não alteram a transcrição.'],
+          [I.paste,'Transcrição','O texto fiel da reunião. <b>Copiar</b> exporta o texto; <b>Editar</b> torna as falas editáveis para você complementar ou corrigir.'],
+          [I.share,'Compartilhar','Só o <b>dono</b> da reunião compartilha. Numa reunião compartilhada com você o botão fica <b>desabilitado</b>. As bolinhas ao lado do dono mostram <b>com quem</b> a gravação está compartilhada.'],
+          [I.download,'Baixar áudio','Baixa a gravação no formato original (WEBM/Opus). Disponível <b>apenas para o dono</b> da reunião.'],
+          [I.refresh,'Reprocessar','Roda o Meeting Intelligence de novo sobre a transcrição (útil após editar).'],
+          [I.trash,'Arquivar (lixeira)','<b>Não exclui.</b> Tira a reunião da lista, mas ela fica <b>30 dias</b> no repositório antes da purga — recuperável nesse prazo (retenção anti-arrependimento).'],
+        ]))}
+
+        ${card(I.video,'Como gravar uma reunião',`
+          <p style="margin:0;font-size:13.5px;line-height:1.7;color:var(--tc);text-align:justify">Você grava direto pelo módulo — tanto reuniões <b>online</b> (Microsoft Teams, Zoom, Google Meet) quanto <b>presenciais</b>. Siga o passo a passo:</p>
+          <div style="display:flex;flex-direction:column;gap:13px">
+          ${[
+            ['Entre na reunião','Acesse a reunião normalmente pelo <b>Microsoft Teams, Zoom ou Google Meet</b>. Em reunião presencial, é só reunir os participantes.'],
+            ['Avise os participantes','Informe que a reunião será <b>transcrita</b> para gerar uma <b>ata e um resumo</b> que vão facilitar as próximas pautas — ou a explicação que preferir. É transparência e boa prática de LGPD.'],
+            ['Abra o Meeting Intelligence e clique em “Gravar reunião”','Na página do módulo, use <b>Iniciar gravação → Gravar agora</b>.'],
+            ['Autorize a captação do áudio (apenas na 1ª vez)','Na primeira gravação, o módulo pede permissão para captar o <b>áudio do seu microfone</b> + o <b>áudio que sai do fone de ouvido / caixa de som</b> (a voz dos outros participantes na call). Sua resposta fica <b>salva no módulo</b> — nas próximas gravações ele não pergunta de novo.'],
+            ['Fale normalmente e encerre ao final','A gravação capta tudo o que é falado, presencial ou online. Ao terminar, clique em <b>Encerrar</b> e depois em <b>Iniciar transcrição</b> — o Meeting Intelligence gera a ata, o resumo e os próximos passos.'],
+          ].map((s,i)=>`<div style="display:flex;gap:13px;align-items:flex-start">
+              <span style="flex-shrink:0;width:26px;height:26px;border-radius:99px;background:var(--accentDim);border:1px solid var(--accentBorder);color:var(--accent);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums">${i+1}</span>
+              <div style="flex:1;min-width:0;padding-top:1px"><div style="font-size:13.5px;font-weight:600;color:var(--t1);margin-bottom:3px">${s[0]}</div><div style="font-size:13px;line-height:1.6;color:var(--tc);text-align:justify">${s[1]}</div></div>
+            </div>`).join('')}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:2px">
+            <div class="banner" style="margin:0;padding:11px 13px;background:var(--surface3);border:1px solid var(--border);border-radius:10px;color:var(--t3);align-items:flex-start">${sv(I.shield,1.8,14)}<span style="line-height:1.55">Mantenha a reunião e o Meeting Intelligence abertos ao mesmo tempo. Para gravações online, recomendamos <b>Chrome ou Edge</b>.</span></div>
+            <div class="banner" style="margin:0;padding:11px 13px;background:var(--accentDim);border:1px solid var(--accentBorder);border-radius:10px;align-items:flex-start">${sv(I.help,1.8,14).replace('stroke="currentColor"','stroke="var(--accent)"')}<span style="line-height:1.55;color:var(--tc)"><b>Só em reuniões online pelo navegador:</b> ao iniciar cada gravação, o navegador pede para você <b>compartilhar a aba da reunião com o áudio</b> — é uma exigência de segurança dele, não do módulo. Em reunião <b>presencial</b>, basta o microfone.</span></div>
+          </div>`)}
+
+        ${card(I.clock,'Suas horas, cota e notificações',li([
+          '<b>Suas horas</b> (velocímetro no topo da lista): mostra o quanto você já usou da sua cota por cargo. Fica amarelo em 80% e vermelho em 100%.',
+          '<b>Solicitar mais horas</b>: no velocímetro, o botão “Solicitar mais” abre um pedido <b>temporário</b> ou <b>definitivo</b>, com justificativa, enviado à administração.',
+          '<b>Limite suave</b>: ao atingir 100% você não é cortado no meio de uma gravação — o consumo continua e a administração é avisada.',
+          '<b>Compartilhamento e cota</b>: o <b>dono</b> consome as horas da reunião; quem recebe a reunião compartilhada <b>não consome cota</b>.',
+          '<b>Notificações</b> (sino no topo): avisam quando o módulo é liberado, quando você atinge 100%, quando horas são liberadas pela administração e quando algo é compartilhado com você.',
+        ]))}
+
+        ${isAdmin?card(I.gear,'Gestão do módulo — visão do administrador',`
+          <p style="margin:0;font-size:13px;color:var(--t3);line-height:1.6">Aba <b>Gestão do módulo</b> (ao lado de “Minhas reuniões”), <b>visível apenas para administradores</b>. Reúne o controle de consumo e cotas do workspace.</p>
+          ${telas([
+            [I.gear,'Consumo do mês','Percentual e horas usadas do <b>pool do workspace</b>, com KPIs (contratadas, usadas, restantes) e <b>projeção</b> até a renovação — com alerta quando o ritmo deve estourar a cota.'],
+            [I.share,'Economia por compartilhamento','Quanto o workspace <b>economizou</b> no mês porque reuniões foram compartilhadas em vez de regravadas.'],
+            [I.bell,'Solicitações de horas','Fila dos pedidos dos usuários. Você pode <b>conceder mais ou menos</b> que o pedido, <b>Aprovar</b> ou <b>Negar</b> (com motivo obrigatório).'],
+            [I.users,'Cota por usuário','Tabela com todos os usuários que têm o módulo: reuniões, consumo (usado / cota) e % da cota — ordenada por quem está mais perto do limite.'],
+            [I.plus,'Liberar acesso ao módulo','Inclui usuários <b>já existentes</b> do workspace que ainda não tinham o módulo — cada um recebe a cota padrão do cargo. <b>Caminho duplo</b>: aqui, ou direto pela tela de <b>Times</b>.'],
+            [I.plus,'Contratar mais horas','Régua para aumentar o pool do workspace; preço calculado na hora e pagamento via <b>Pix ou cartão</b>. Só administradores contratam.'],
+          ])}
+          ${prov('Cotas padrão por cargo',[
+            'Gestão — <b>PMO, PM, P.O, SM</b>: 3h cada.',
+            'Desenvolvimento — <b>Tech Lead, Dev</b>: 1h30 cada.',
+            'O Admin master define e ajusta as cotas; todos os cargos recebem a permissão na criação do perfil.',
+          ])}`):''}
+
+        ${card(I.shield,'Consentimento e boas práticas',li([
+          'O consentimento do módulo (LGPD) é registrado uma vez, por workspace, na contratação.',
+          '<b>Avise sempre os participantes</b> antes de começar a gravar.',
+          'Revise o resumo antes de usar: ele é gerado pelo Meeting Intelligence.',
+          'A transcrição é a fonte das citações — ao editá-la, corrija apenas erros de fala.',
+        ]))}
+      </div>
+      <p class="banner" style="margin-top:18px">${star()} Módulo premium — ativo para este workspace.</p>
+    </div>`;
+}
+
+/* ---------- ADMIN / GESTÃO DO MÓDULO ---------- */
+function updateChrome(){
+  const b=$('#roleBtn'); if(b) b.innerHTML=`${isAdmin?sv(I.shield,1.8,15):sv(I.users,1.8,15)}${isAdmin?'Admin master':'Usuário'}`;
+  const dot=$('#notifDot'); const u=unreadNotif(); if(dot){dot.hidden=u===0;dot.textContent=u;}
+  renderNotif();
+}
+function renderNotif(){
+  const p=$('#notifPanel'); if(!p)return;
+  const aud=isAdmin?'admin':'user'+CURRENT_USER_ID;
+  const list=notifications.filter(n=>n.audience===aud);
+  p.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)">
+      <b style="font-size:14px">Notificações</b>
+      ${list.some(n=>!n.read)?`<button data-notif-readall="1" style="background:transparent;border:0;color:var(--accent);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">Marcar todas como lidas</button>`:''}
+    </div>
+    <div style="max-height:360px;overflow:auto">
+      ${list.length?list.map(n=>{
+        const K={request:{ic:I.plus,c:'var(--accent)',bg:'var(--accentDim)'},approved:{ic:I.check,c:'var(--success)',bg:'var(--successDim)'},denied:{ic:I.close,c:'var(--crit)',bg:'var(--critDim)'},share:{ic:I.share,c:'#9db6ff',bg:'var(--accentDim)'},usage:{ic:I.shield,c:'var(--warn)',bg:'var(--warnDim)'},module:{ic:I.mic,c:'var(--gold)',bg:'var(--goldDim)'}}[n.kind]||{ic:I.bell,c:'var(--t2)',bg:'var(--surface2)'};
+        return `<div style="display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-bottom:1px solid var(--border);${n.read?'':'background:rgba(59,130,246,.05)'}">
+        <span style="width:30px;height:30px;border-radius:9px;flex-shrink:0;background:${K.bg};color:${K.c};display:flex;align-items:center;justify-content:center">${sv(K.ic,1.9,15)}</span>
+        <div style="min-width:0;flex:1"><div style="font-size:13px;line-height:1.5;color:var(--tc)">${n.text}</div><div style="font-size:11px;color:var(--t3);margin-top:3px">${n.when}</div></div>
+        ${n.read?'':'<span style="width:8px;height:8px;border-radius:99px;background:var(--accent);margin-top:6px;flex-shrink:0"></span>'}
+      </div>`;}).join(''):'<div class="empty" style="padding:34px 0">Nenhuma notificação.</div>'}
+    </div>
+    ${isAdmin&&pendingReqs().length?`<div style="padding:12px 16px;border-top:1px solid var(--border)"><button class="btn btn-primary btn-sm" style="width:100%;justify-content:center" data-nav="admin">Ver solicitações na Gestão</button></div>`:''}`;
+  p.hidden=!notifOpen;
+}
+
+/* ---------- mini card de cota (topo direito da tela do usuário) ---------- */
+function userQuotaMini(){
+  const u=curUser(), p=userPct(u);
+  return `<div class="card" style="padding:8px 13px;display:flex;align-items:center;gap:11px;${p>=80?`border-color:${p>=100?'rgba(239,68,68,.4)':'rgba(245,158,11,.4)'}`:''}">
+    <div style="flex-shrink:0">${gauge(p,72)}</div>
+    <div style="min-width:0">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);font-weight:600;white-space:nowrap">Suas horas · ${u.role}</div>
+      <div style="font-size:13px;color:var(--tc);font-variant-numeric:tabular-nums;white-space:nowrap"><b style="color:var(--t1)">${fmtH(u.used)}</b> / ${fmtH(u.quota)}</div>
+      <button data-req-open="1" style="background:none;border:0;padding:0;margin-top:2px;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px">${sv(I.plus,2.2,11)}Solicitar mais</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- INÍCIO (card velocímetro) ---------- */
+function renderHome(){
+  notifOpen=false;
+  $('#crumb').innerHTML='Início';
+  let card;
+  if(isAdmin){
+    const pool=poolContratadas(), pUsed=poolUsed(), pPct=pool>0?pUsed/pool*100:0, pend=pendingReqs().length;
+    card=`<div class="card" style="padding:24px;display:flex;gap:28px;align-items:center;flex-wrap:wrap">
+      <div style="text-align:center;flex-shrink:0">${gauge(pPct,180)}<div style="font-size:12px;color:var(--t3)">consumo do workspace</div></div>
+      <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px">
+        <div class="sec-title" style="margin:0"><span class="ai-badge" style="background:var(--goldDim);border-color:rgba(245,179,1,.3);color:var(--gold)">${sv(I.shield,1.8,14)}</span>Meeting Intelligence — visão do workspace</div>
+        <div style="font-size:14.5px;color:var(--tc);line-height:1.6">A equipe usou <b>${fmtH(pUsed)}</b> de <b>${fmtH(pool)}</b> contratadas este mês.</div>
+        ${pend>0?`<div class="banner" style="margin:0;padding:11px 13px;border-radius:10px;background:var(--accentDim);color:#9db6ff;border:1px solid var(--accentBorder)">${sv(I.bell,1.8,14)} <b>${pend}</b> solicitaç${pend>1?'ões':'ão'} de horas aguardando aprovação.</div>`:`<div style="font-size:13px;color:var(--t3)">Nenhuma solicitação pendente.</div>`}
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" data-nav="admin">${sv(I.gear,1.8,14)}Abrir Gestão do módulo</button></div>
+      </div>
+    </div>`;
+  } else {
+    const u=curUser(), uPct=userPct(u), uColor=stateColor(uPct), restH=Math.max(0,u.quota-u.used);
+    card=`<div class="card" style="padding:24px;display:flex;gap:28px;align-items:center;flex-wrap:wrap">
+      <div style="text-align:center;flex-shrink:0">${gauge(uPct,180)}<div style="font-size:12px;color:var(--t3)">horas usadas no mês</div></div>
+      <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px">
+        <div class="sec-title" style="margin:0"><span class="ai-badge">${sv(I.mic,1.8,14)}</span>Suas horas — Meeting Intelligence</div>
+        <div style="font-size:14.5px;color:var(--tc);line-height:1.6">Você usou <b>${fmtH(u.used)}</b> de <b>${fmtH(u.quota)}</b> este mês${restH>0?` — faltam <b style="color:${uColor}">${fmtH(restH)}</b> para o limite.`:` — <b style="color:var(--crit)">cota atingida.</b>`}</div>
+        ${uPct>=80?`<div class="banner" style="margin:0;padding:11px 13px;border-radius:10px;background:${uPct>=100?'var(--critDim)':'var(--warnDim)'};color:${uColor};border:1px solid ${uPct>=100?'rgba(239,68,68,.3)':'rgba(245,158,11,.3)'}">${sv(I.shield,1.8,14)} ${uPct>=100?'Você atingiu 100%. Reuniões em andamento continuam; para novas, solicite mais horas.':'Você está chegando ao limite da sua cota.'}</div>`:''}
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" data-req-open="1">${sv(I.plus,2,14)}Solicitar mais horas</button>
+          <button class="btn btn-ghost btn-sm" data-nav="list">${sv(I.mic,1.8,14)}Abrir Reuniões</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--t3)">Cota do cargo <b style="color:var(--t2)">${u.role}</b> · renova em ${tenantUsage.renova}</div>
+      </div>
+    </div>`;
+  }
+  $('#view').innerHTML=`
+    <div class="row-head"><div><h1 class="page">Início</h1><p class="sub">Seu resumo do dia no Altech Project.</p></div></div>
+    ${card}
+    <p class="banner" style="margin-top:16px">${star()} Card do Meeting Intelligence — acompanhe o consumo sem abrir a Gestão.</p>`;
+}
+
+/* ---------- SOLICITAR HORAS (modal) ---------- */
+function openRequestModal(){
+  const u=curUser(), t=reqForm.tipo;
+  const opt=(val,title,desc,icon)=>`<button data-req-tipo="${val}" style="flex:1;min-width:180px;text-align:left;background:var(--surface2);border:1px solid ${t===val?'var(--accentBorder)':'var(--border)'};border-radius:12px;padding:13px 14px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;font-family:inherit">
+    <span class="ai-badge" style="width:26px;height:26px;background:${t===val?'var(--accentDim)':'var(--surface)'};border-color:${t===val?'var(--accentBorder)':'var(--border)'};color:${t===val?'var(--accent)':'var(--t3)'}">${sv(icon,1.8,14)}</span>
+    <span><span style="display:block;font-size:13.5px;font-weight:600;color:var(--t1)">${title}</span><span style="font-size:11.5px;color:var(--t3);line-height:1.4">${desc}</span></span></button>`;
+  $('#modal-root').innerHTML=`
+  <div class="overlay" data-close="1"><div class="modal">
+    <div class="modal-h">
+      <span class="ai-badge" style="width:34px;height:34px;border-radius:9px;background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent)">${sv(I.plus,2,17)}</span>
+      <div style="flex:1"><div style="font-size:15.5px;font-weight:700">Solicitar mais horas</div><div style="font-size:12.5px;color:var(--t2)">${u.n} · ${u.role} · usou ${fmtH(u.used)} de ${fmtH(u.quota)} (${Math.round(userPct(u))}%)</div></div>
+      <button class="tab" style="padding:4px" data-close="1">${sv(I.close,2,18).replace('stroke="currentColor"','stroke="var(--t3)"')}</button>
+    </div>
+    <div class="modal-b">
+      <div class="field"><label class="label">1. Tipo da solicitação</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${opt('temporaria','Temporária','Vale só para este mês. Zera na renovação.',I.clock)}
+          ${opt('definitiva','Definitiva','Aumenta a sua cota base todo mês.',I.refresh)}
+        </div>
+      </div>
+      <div class="field"><label class="label">2. Quantas horas ${t==='temporaria'?'(neste mês)':'(a mais por mês)'}</label>
+        <input type="range" class="rng" id="reqRange" min="0.5" max="10" step="0.5" value="${reqForm.horas}">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3)"><span>30 min</span><span id="reqHours" style="color:var(--t1);font-weight:700;font-variant-numeric:tabular-nums"></span><span>10 h</span></div>
+      </div>
+      <div class="field"><label class="label">3. Justificativa</label>
+        <textarea id="reqJust" class="transcript" style="min-height:88px" placeholder="Explique por que precisa de mais horas (ex.: semana de kickoff com clientes novos)…"></textarea>
+      </div>
+      <span class="banner" style="margin:0">${sv(I.shield,1.8,13)} Vai para a fila de aprovação do administrador. Você é avisado da decisão.</span>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" style="margin-left:auto" data-close="1">Cancelar</button>
+      <button class="btn btn-primary" data-req-submit="1">Enviar solicitação</button>
+    </div>
+  </div></div>`;
+  const r=$('#reqRange');
+  const sync=()=>{reqForm.horas=parseFloat(r.value);r.style.setProperty('--pct',((reqForm.horas-0.5)/(10-0.5)*100)+'%');$('#reqHours').textContent=fmtH(reqForm.horas);};
+  if(r){r.oninput=sync;sync();}
+  setTimeout(()=>{const el=$('#reqJust');if(el)el.focus();},40);
+}
+function submitRequest(){
+  const just=(($('#reqJust')||{}).value||'').trim();
+  if(!just){toast('Escreva uma justificativa.');return;}
+  const u=curUser();
+  requests.unshift({id:'rq'+(reqSeq++),userId:u.id,tipo:reqForm.tipo,horas:reqForm.horas,justificativa:just,status:'pending',when:'Agora'});
+  notifications.unshift({id:'nt'+(notifSeq++),audience:'admin',kind:'request',text:`<b>${u.n} (${u.role})</b> solicitou <b>+${fmtH(reqForm.horas)}</b> (${reqForm.tipo==='temporaria'?'temporária':'definitiva'}).`,when:'Agora',read:false});
+  closeModal();render();toast('Solicitação enviada para a gestão.');
+}
+function approveRequest(id){
+  const req=requests.find(r=>r.id===id); if(!req||req.status!=='pending')return;
+  const u=team.find(x=>x.id===req.userId);
+  const inp=document.querySelector('[data-req-hours="'+id+'"]');
+  let grant=inp?parseFloat(inp.value):req.horas; if(!(grant>0))grant=req.horas;
+  if(allocated()+grant>poolContratadas()){toast('Pool insuficiente — contrate mais horas antes de aprovar.');return;}
+  u.quota+=grant; req.status='approved'; req.granted=grant;
+  const diff=Math.abs(grant-req.horas)>1e-6;
+  notifications.unshift({id:'nt'+(notifSeq++),audience:'user'+u.id,kind:'approved',text:`Sua solicitação de <b>+${fmtH(req.horas)}</b> foi <b style="color:var(--success)">aprovada</b>${diff?` — concedido <b>+${fmtH(grant)}</b>`:''}.`,when:'Agora',read:false});
+  render();toast(`Aprovado: +${fmtH(grant)} para ${u.n}.`);
+}
+function openDenyModal(id){
+  const req=requests.find(r=>r.id===id); if(!req||req.status!=='pending')return;
+  const u=team.find(x=>x.id===req.userId);
+  $('#modal-root').innerHTML=`
+  <div class="overlay" data-close="1"><div class="modal" style="width:480px">
+    <div class="modal-h">
+      <span class="ai-badge" style="width:34px;height:34px;border-radius:9px;background:var(--critDim);border-color:rgba(239,68,68,.3);color:var(--crit)">${sv(I.close,2,17)}</span>
+      <div style="flex:1"><div style="font-size:15.5px;font-weight:700">Recusar solicitação</div><div style="font-size:12.5px;color:var(--t2)">${u.n} · ${u.role} · +${fmtH(req.horas)} (${req.tipo==='definitiva'?'definitiva':'temporária'})</div></div>
+      <button class="tab" style="padding:4px" data-close="1">${sv(I.close,2,18).replace('stroke="currentColor"','stroke="var(--t3)"')}</button>
+    </div>
+    <div class="modal-b">
+      <div class="quote">${sv(I.plus,1.8,14)}<div><span style="color:var(--t3)">Pedido:</span> “${req.justificativa}”</div></div>
+      <div class="field"><label class="label">Motivo da recusa <span style="color:var(--crit)">*</span></label>
+        <textarea id="denyReason" class="transcript" style="min-height:88px" placeholder="Explique por que a solicitação foi recusada — o usuário verá esta mensagem…"></textarea>
+      </div>
+      <span class="banner" style="margin:0">${sv(I.shield,1.8,13)} Campo obrigatório. O usuário é notificado com o motivo.</span>
+    </div>
+    <div class="modal-f">
+      <button class="btn btn-ghost" style="margin-left:auto" data-close="1">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--crit)" data-deny-confirm="${id}">Confirmar recusa</button>
+    </div>
+  </div></div>`;
+  setTimeout(()=>{const el=$('#denyReason');if(el)el.focus();},40);
+}
+function denyRequest(id,reason){
+  const req=requests.find(r=>r.id===id); if(!req||req.status!=='pending')return;
+  const u=team.find(x=>x.id===req.userId); req.status='denied'; req.reason=reason;
+  notifications.unshift({id:'nt'+(notifSeq++),audience:'user'+u.id,kind:'denied',text:`Sua solicitação de <b>+${fmtH(req.horas)}</b> foi <b style="color:var(--crit)">negada</b>. Motivo: “${reason}”`,when:'Agora',read:false});
+  render();toast(`Solicitação de ${u.n} negada.`);
+}
+
+/* ---------- GESTÃO DO MÓDULO (admin) ---------- */
+function renderAdmin(){
+  if(!isAdmin){route={name:'list'};return renderList();}
+  notifOpen=false;
+  $('#crumb').innerHTML=`<span data-nav="list" style="cursor:pointer">Reuniões</span> ${sv(I.chevR,2,12)} <b>Gestão do módulo</b>`;
+  const contratadas=poolContratadas(), usadas=poolUsed(), restantes=Math.max(0,contratadas-usadas);
+  const pct=contratadas>0?Math.min(100,usadas/contratadas*100):0, color=stateColor(pct);
+  const proj=usadas/tenantUsage.diaAtual*tenantUsage.diasMes, projOver=proj>contratadas;
+  const kpi=(kl,kv,ks,col)=>`<div class="kpi"><div class="kl">${kl}</div><div class="kv" ${col?`style="color:${col}"`:''}>${kv}</div>${ks?`<div class="ks">${ks}</div>`:''}</div>`;
+  const totMeets=team.reduce((s,u)=>s+u.meets,0);
+  const pend=pendingReqs();
+  const saved=savedHours();
+  const sharedMeetings=meetings.filter(m=>!m.archived&&(m.sharedWith||[]).length).length;
+  const savedCard=saved>0?`<div class="card" style="padding:13px 16px;display:flex;align-items:center;gap:11px;border-color:rgba(16,185,129,.3)">
+      <span style="color:var(--success);flex-shrink:0">${sv(I.share,1.8,17)}</span>
+      <div style="font-size:13px;color:var(--tc);line-height:1.5"><b style="color:var(--success)">≈ ${fmtH(saved)} economizadas</b> este mês por compartilhamento — ${sharedMeetings} ${sharedMeetings>1?'reuniões compartilhadas':'reunião compartilhada'} em vez de várias gravações do mesmo conteúdo.</div>
+    </div>`:'';
+
+  const reqCard = pend.length?`
+    <div class="card" style="padding:8px 8px 4px;border-color:var(--accentBorder)">
+      <div style="display:flex;align-items:center;gap:8px;padding:14px 16px 10px">
+        <div class="sec-title" style="margin:0">${sv(I.bell,1.8,15)} Solicitações de horas</div>
+        <span class="chip" style="background:var(--accentDim);color:var(--accent);border-color:var(--accentBorder)">${pend.length} pendente${pend.length>1?'s':''}</span>
+      </div>
+      ${pend.map(r=>{const u=team.find(x=>x.id===r.userId);return `<div style="display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-top:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:6px">
+            <b style="color:var(--t1)">${u.n}</b><span style="font-size:11.5px;color:var(--t3)">${u.role}</span>
+            <span class="chip" style="${r.tipo==='definitiva'?'color:var(--purple);border-color:rgba(167,139,250,.4)':'color:var(--t2)'}">${r.tipo==='definitiva'?'Definitiva':'Temporária'}</span>
+            <span class="chip" style="color:var(--accent);border-color:var(--accentBorder)">+${fmtH(r.horas)}</span>
+            <span style="font-size:11px;color:var(--t3)">${r.when}</span>
+          </div>
+          <div style="font-size:13px;color:var(--tc);line-height:1.5">“${r.justificativa}”</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;align-items:center;flex-wrap:wrap">
+          <label style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px" title="Ajuste para conceder mais ou menos que o pedido">Conceder<span class="inp" style="height:34px;min-width:0;width:82px"><input type="number" step="0.5" min="0.5" value="${r.horas}" data-req-hours="${r.id}" style="width:38px"><span>h</span></span></label>
+          <button class="btn btn-sm btn-ghost" data-deny-open="${r.id}">Negar</button>
+          <button class="btn btn-sm btn-primary" data-req-approve="${r.id}">${sv(I.check,2.2,14)}Aprovar</button>
+        </div>
+      </div>`;}).join('')}
+    </div>`:'';
+
+  const rows=team.slice().sort((a,b)=>userPct(b)-userPct(a)).map(u=>{
+    const p=userPct(u), c=stateColor(p);
+    return `<tr>
+      <td><div style="display:flex;align-items:center;gap:11px">${avatar(u.ag,30)}<div style="min-width:0"><div style="font-weight:600;color:var(--t1)">${u.n}</div><div style="font-size:11.5px;color:var(--t3)">${u.role}</div></div></div></td>
+      <td style="text-align:center;font-variant-numeric:tabular-nums;color:var(--t2)">${u.meets}</td>
+      <td style="min-width:210px"><div style="display:flex;align-items:center;gap:12px">
+        <div style="flex:1;height:8px;border-radius:5px;background:var(--surface2);overflow:hidden"><span style="display:block;height:100%;width:${p}%;background:${c};border-radius:5px"></span></div>
+        <span style="font-variant-numeric:tabular-nums;color:var(--t1);font-weight:600;white-space:nowrap">${fmtH(u.used)} / ${fmtH(u.quota)}</span></div></td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;color:${c};font-weight:600">${Math.round(p)}%</td>
+    </tr>`;}).join('');
+
+  $('#view').innerHTML=`
+    <div class="seg" style="margin-bottom:18px"><button data-nav="list">Minhas reuniões</button><button class="on">${sv(I.gear,1.8,14)}Gestão do módulo</button></div>
+    <div class="row-head" style="align-items:flex-start">
+      <div><h1 class="page">Gestão do Meeting Intelligence</h1>
+        <p class="sub">Consumo do workspace, cotas por usuário e solicitações — visível apenas para administradores.</p></div>
+      <span class="pill" style="margin-left:auto;background:var(--goldDim);color:var(--gold);height:30px">${sv(I.shield,1.8,14)} Admin master</span>
+    </div>
+
+    <div class="grid2" style="align-items:start">
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+
+        <div class="card" style="padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div class="sec-title" style="margin:0">Consumo do mês</div>
+            <div style="font-size:12.5px;color:var(--t3)">Renova em ${tenantUsage.renova}</div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:10px">
+            <span style="font-size:34px;font-weight:800;letter-spacing:-.02em;color:${color};font-variant-numeric:tabular-nums">${pct.toFixed(0)}%</span>
+            <span style="font-size:13.5px;color:var(--t2);padding-bottom:6px">${fmtH(usadas)} de ${fmtH(contratadas)} usadas</span>
+          </div>
+          <div style="height:14px;border-radius:8px;background:var(--surface2);overflow:hidden;border:1px solid var(--border)">
+            <span style="display:block;height:100%;width:${pct}%;background:${color};border-radius:8px 0 0 8px"></span>
+          </div>
+          <div class="kpi4">
+            ${kpi('Contratadas', fmtH(contratadas), `${tenantUsage.plano}h cotas + ${tenantUsage.extras}h extras`)}
+            ${kpi('Usadas', fmtH(usadas), `${totMeets} reuniões`)}
+            ${kpi('Restantes', fmtH(restantes), 'até a renovação', restantes<=0?'var(--crit)':'')}
+            ${kpi('Projeção', fmtH(proj), projOver?'acima do contratado':'dentro do plano', projOver?'var(--warn)':'var(--success)')}
+          </div>
+          ${projOver?`<div class="banner" style="margin:0;padding:11px 13px;background:var(--warnDim);border:1px solid rgba(245,158,11,.3);border-radius:10px;color:var(--warn)">${sv(I.shield,1.8,14)} No ritmo atual, a equipe deve passar da cota antes da renovação. Contrate horas ao lado para não interromper as gravações.</div>`:''}
+        </div>
+
+        ${savedCard}
+        ${reqCard}
+
+        <div class="card" style="padding:8px 8px 4px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 10px;flex-wrap:wrap">
+            <div class="sec-title" style="margin:0">Cota por usuário</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-size:12px;color:var(--t3)">${team.length} com o módulo liberado</span>
+              <button class="btn btn-sm btn-outline" data-adduser-open="1" style="height:32px">${sv(I.plus,2,14)}Liberar acesso</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto"><table class="utable">
+            <thead><tr><th>Usuário</th><th style="text-align:center">Reuniões</th><th>Consumo (usado / cota)</th><th style="text-align:right">% da cota</th></tr></thead>
+            <tbody>${rows}
+              <tr class="totrow"><td>Total da equipe</td><td style="text-align:center;font-variant-numeric:tabular-nums">${totMeets}</td><td style="font-variant-numeric:tabular-nums">${fmtH(usadas)} / ${fmtH(contratadas)}</td><td style="text-align:right">${Math.round(pct)}%</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- RECHARGE -->
+      <div class="card" style="padding:22px 22px;display:flex;flex-direction:column;gap:16px">
+        <div class="sec-title" style="margin:0"><span class="ai-badge" style="background:var(--accentDim);border-color:var(--accentBorder);color:var(--accent)">${sv(I.plus,2,15)}</span>Contratar mais horas</div>
+        <p style="margin:0;font-size:13px;color:var(--t2);line-height:1.55">Aumenta o pool do workspace. Use para liberar mais horas às cotas quando o pool estiver no limite.</p>
+        <input type="range" class="rng" id="rechargeRange" min="2" max="100" step="1" value="${rechargeHours}" aria-label="Horas a contratar">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums"><span>2h</span><span>25h</span><span>50h</span><span>100h</span></div>
+        <div style="background:var(--surface3);border:1px solid var(--border);border-radius:12px;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;color:var(--t2)">Horas</span><b id="rcHours" style="font-size:16px;font-variant-numeric:tabular-nums">${rechargeHours} h</b></div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
+            <span style="font-size:30px;font-weight:800;letter-spacing:-.02em;color:var(--accent);font-variant-numeric:tabular-nums" id="rcPrice"></span>
+            <span style="font-size:12px;color:var(--t3)">no total · R$ ${RECHARGE_RATE},00/h</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--t3);margin-top:6px">Novo total do mês: <b id="rcNew" style="color:var(--tc)"></b></div>
+        </div>
+        <button class="btn btn-primary" data-buy-hours="1" style="width:100%;justify-content:center;height:46px">${sv(I.plus,2,16)}Contratar horas</button>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-size:11.5px;color:var(--t3)">
+          <span class="chip">Pix</span><span class="chip">Cartão</span>
+        </div>
+        <p class="banner" style="margin:0">${sv(I.shield,1.8,13)} Só administradores contratam horas. Cobrança via Pix ou cartão.</p>
+      </div>
+    </div>`;
+
+  const rng=$('#rechargeRange');
+  const syncRecharge=()=>{
+    rechargeHours=parseInt(rng.value,10);
+    const total = poolContratadas() + rechargeHours;
+    rng.style.setProperty('--pct', ((rechargeHours-2)/(100-2)*100).toFixed(1)+'%');
+    $('#rcHours').textContent = rechargeHours+' h';
+    $('#rcPrice').textContent = 'R$ '+(rechargeHours*RECHARGE_RATE).toLocaleString('pt-BR');
+    $('#rcNew').textContent = fmtH(total);
+  };
+  if(rng){rng.oninput=syncRecharge;syncRecharge();}
+}
+
+/* ---------- router ---------- */
+function render(){
+  renderSidebar();
+  updateChrome();
+  if(route.name==='home') renderHome();
+  else if(route.name==='list') renderList();
+  else if(route.name==='new') renderNew();
+  else if(route.name==='record') renderRecord();
+  else if(route.name==='help') renderHelp();
+  else if(route.name==='admin') renderAdmin();
+  else renderDetail();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  if(notifOpen && !e.target.closest('#notifPanel') && !e.target.closest('#notifBtn')){notifOpen=false;const p=$('#notifPanel');if(p)p.hidden=true;}
+  const t=e.target.closest('[data-open],[data-nav],[data-filter],[data-tab],[data-issue],[data-confirm],[data-close],[data-reprocess],[data-archive],[data-rec-stop],[data-rec-toggle],[data-rec-transcribe],[data-rec-discard],[data-note-add],[data-note-cancel],[data-note-save],[data-note-del],[data-audio-toggle],[data-copy-resumo],[data-copy-transcript],[data-edit-transcript],[data-save-transcript],[data-cancel-transcript],[data-role],[data-buy-hours],[data-notif-toggle],[data-notif-readall],[data-req-open],[data-req-tipo],[data-req-submit],[data-req-approve],[data-deny-open],[data-deny-confirm],[data-share-open],[data-share-toggle],[data-dl-audio],[data-ask-share],[data-adduser-open],[data-adduser-toggle],[data-adduser-confirm]');
+  if(!t)return;
+  if(t.dataset.audioToggle){toggleAudio();return;}
+  if(t.dataset.notifToggle){notifOpen=!notifOpen;const p=$('#notifPanel');if(p)p.hidden=!notifOpen;return;}
+  if(t.dataset.notifReadall){const aud=isAdmin?'admin':'user'+CURRENT_USER_ID;notifications.forEach(n=>{if(n.audience===aud)n.read=true;});updateChrome();return;}
+  if(t.dataset.reqOpen){openRequestModal();return;}
+  if(t.dataset.reqTipo){reqForm.tipo=t.dataset.reqTipo;openRequestModal();return;}
+  if(t.dataset.reqSubmit){submitRequest();return;}
+  if(t.dataset.reqApprove){approveRequest(t.dataset.reqApprove);return;}
+  if(t.dataset.denyOpen){openDenyModal(t.dataset.denyOpen);return;}
+  if(t.dataset.denyConfirm){const reason=(($('#denyReason')||{}).value||'').trim();if(!reason){toast('Escreva o motivo da recusa.');return;}closeModal();denyRequest(t.dataset.denyConfirm,reason);return;}
+  if(t.dataset.shareOpen){openShareModal(t.dataset.shareOpen);return;}
+  if(t.dataset.shareToggle){const[mid,uid]=t.dataset.shareToggle.split(':');toggleShare(mid,uid);return;}
+  if(t.dataset.adduserOpen){addSel=new Set();openAddUsersModal();return;}
+  if(t.dataset.adduserToggle){toggleAddUser(t.dataset.adduserToggle);return;}
+  if(t.dataset.adduserConfirm){confirmAddUsers();return;}
+  if(t.dataset.dlAudio){toast('Baixando a gravação no formato original (WEBM/Opus)… (mock)');return;}
+  if(t.dataset.askShare){route={name:'list',id:null,tab:'resumo'};render();toast('Pedido de compartilhamento enviado (mock).');return;}
+  if(t.dataset.role){isAdmin=!isAdmin;notifOpen=false;if(!isAdmin&&route.name==='admin')route={name:'list',id:null,tab:'resumo'};render();toast(isAdmin?'Visão do Admin master.':'Visão do usuário do módulo.');return;}
+  if(t.dataset.buyHours){const h=rechargeHours;tenantUsage.extras+=h;const total=poolContratadas();render();toast(`Contratadas ${h} h por R$ ${(h*RECHARGE_RATE).toLocaleString('pt-BR')} (Pix/cartão — mock). Novo total: ${fmtH(total)}.`);return;}
+  if(t.dataset.open){stopRecTimer();clearAudio();notesAdding=false;transcriptEditing=false;notifOpen=false;route={name:'detail',id:t.dataset.open,tab:'resumo'};render();}
+  else if(t.dataset.nav){stopRecTimer();clearAudio();notesAdding=false;transcriptEditing=false;notifOpen=false;const n=t.dataset.nav;
+    if((n==='new'||n==='record')&&!isAdmin&&userPct(curUser())>=100){openRequestModal();toast('Cota do mês atingida — solicite mais horas para novas gravações.');return;}
+    if(n==='record'){rec={sec:0,timer:null,shareAudio:true,stopped:false,title:'Reunião — '+new Date().toLocaleDateString('pt-BR'),project:'Rautaki'};route={name:'record'};}
+    else route={name:(n==='new'||n==='help'||n==='admin'||n==='home')?n:'list',id:null,tab:'resumo'};
+    render();}
+  else if(t.dataset.filter){filter=t.dataset.filter;renderList();}
+  else if(t.dataset.tab){notesAdding=false;transcriptEditing=false;route.tab=t.dataset.tab;renderDetail();}
+  else if(t.dataset.archive){const m=find(t.dataset.archive);if(m)m.archived=true;stopRecTimer();clearAudio();notesAdding=false;transcriptEditing=false;route={name:'list',id:null,tab:'resumo'};render();toast('Reunião arquivada — fica 30 dias no repositório.');}
+  else if(t.dataset.copyResumo){const m=find(t.dataset.copyResumo);if(m)copyText(ataText(m),'Ata copiada para a área de transferência.');}
+  else if(t.dataset.copyTranscript){const m=find(t.dataset.copyTranscript);if(m)copyText(transcriptText(m),'Transcrição copiada.');}
+  else if(t.dataset.editTranscript){transcriptEditing=true;renderDetail();}
+  else if(t.dataset.cancelTranscript){transcriptEditing=false;renderDetail();}
+  else if(t.dataset.saveTranscript){const m=find(t.dataset.saveTranscript);
+    document.querySelectorAll('.tedit').forEach(el=>{const i=+el.dataset.tidx;if(m&&m.transcript[i])m.transcript[i].text=el.innerText.replace(/\s+/g,' ').trim();});
+    transcriptEditing=false;renderDetail();toast('Transcrição atualizada.');}
+  else if(t.dataset.recStop){rec.stopped=true;stopRecTimer();renderRecord();}
+  else if(t.dataset.recToggle){rec.shareAudio=!rec.shareAudio;renderRecord();if(rec.shareAudio)toast('No app real, aqui o navegador abriria o compartilhamento de aba.');}
+  else if(t.dataset.recTranscribe){stopRecTimer();generate(rec.title,rec.project,'record',fmtDur(rec.sec));}
+  else if(t.dataset.recDiscard){stopRecTimer();route={name:'new'};render();}
+  else if(t.dataset.noteAdd){notesAdding=true;renderDetail();}
+  else if(t.dataset.noteCancel){notesAdding=false;renderDetail();}
+  else if(t.dataset.noteSave){const m=find(t.dataset.noteSave);const body=($('#notebody')||{}).value?.trim();const ts=($('#notets')||{}).value?.trim();
+    if(!body){toast('Escreva o apontamento.');return;}
+    (m.notes||(m.notes=[])).unshift({id:'n'+Date.now(),ts:ts&&/^\d{1,2}:\d{2}$/.test(ts)?ts:null,author:'Você',ag:0,body});
+    notesAdding=false;renderDetail();toast('Apontamento salvo.');}
+  else if(t.dataset.noteDel){const[mid,nid]=t.dataset.noteDel.split(':');const m=find(mid);m.notes=(m.notes||[]).filter(x=>x.id!==nid);renderDetail();toast('Apontamento removido.');}
+  else if(t.dataset.issue){const[m,a]=t.dataset.issue.split(':');openIssueModal(m,a);}
+  else if(t.dataset.confirm){const[m,a]=t.dataset.confirm.split(':');confirmIssue(m,a);}
+  else if(t.dataset.close){closeModal();}
+  else if(t.dataset.createall){const m=find(t.dataset.createall);let n=0;m.actionItems.forEach(a=>{if(!a.issue){a.issue='RAU-'+(issueSeq++);n++;}});render();if(n)toast(n+' issue(s) criada(s) no board.');}
+  else if(t.dataset.reprocess){const m=find(t.dataset.reprocess);m.status='processing';render();setTimeout(()=>{m.status='ready';if(!m.summary){m.summary='Resumo gerado após reprocessamento.';m.objetivo='Revisar a sprint 7 e levantar melhorias.';m.assunto='Retrospectiva — o que manter, o que melhorar.';m.itensDiscutidos=['Pontos positivos da sprint.','Impedimentos recorrentes.'];m.pontosDefinir=['Ação para reduzir retrabalho.'];m.decisions=['Adotar revisão de código em par.'];m.actionItems=[{id:'r1',text:'Encaminhamento da retrospectiva',assignee:'Yago',ag:0,due:'esta semana',issue:null}];m.transcript=[{ts:'00:01',who:'Yago',text:'Reprocessado.'}];if(!m.people.length)m.people=[{n:'Você',g:0}];}render();toast('Reprocessado com sucesso.');},1600);}
+  else if(t.dataset.send){sendChat(t.dataset.send);}
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeModal();
+  if(e.key==='Enter'&&document.activeElement&&document.activeElement.id==='chatinput'){
+    const send=document.querySelector('[data-send]');if(send)sendChat(send.dataset.send);
+  }
+});
+function sendChat(mid){
+  const inp=$('#chatinput');if(!inp||!inp.value.trim())return;
+  const m=find(mid),q=inp.value.trim();
+  chatByMeeting[mid].push({role:'user',text:q});
+  renderDetail();
+  setTimeout(()=>{chatByMeeting[mid].push({role:'bot',text:botReply(m,q)});renderDetail();},450);
+}
+
+render();
+</script>
