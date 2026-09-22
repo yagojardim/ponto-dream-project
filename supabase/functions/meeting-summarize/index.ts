@@ -1,10 +1,9 @@
-// meeting-summarize: recebe um transcript de reunião e gera, via Claude,
-// resumo + decisões + action items — grava em meeting_summaries / meeting_action_items.
-// Chamada pelo FRONT AUTENTICADO (ou pelo pipeline do bot). Deriva tenant do JWT.
+// meeting-summarize (Fatia 1B): gera o RESUMO estruturado de uma reunião via Claude
+// e grava em meetings.summary (jsonb) + meeting_action_items. Chamada pelo FRONT
+// AUTENTICADO; deriva o tenant do JWT e lê o transcript do banco (não confia no client).
 //
-// IMPORTANTE (@devops): verify_jwt = TRUE (declarar em supabase/config.toml).
+// IMPORTANTE (@devops): verify_jwt = TRUE (já em supabase/config.toml).
 // Secrets: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY.
-// Gated pelo módulo premium mod_meeting_intel (checar no front; opcional checar aqui).
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
@@ -18,16 +17,24 @@ function json(body: unknown, status = 200): Response {
   })
 }
 
-interface AiResult {
-  summary: string
-  decisions: string[]
-  action_items: { text: string; assignee?: string | null; due_hint?: string | null }[]
+interface ActionItem { text: string; assignee: string | null; due: string | null }
+interface Summary {
+  objetivo: string
+  assunto: string
+  itens_discutidos: string[]
+  decisoes: string[]
+  pontos_definir: string[]
+  proximos_passos: ActionItem[]
 }
 
-async function summarize(apiKey: string, transcript: string): Promise<AiResult> {
-  const prompt = `Você é um assistente de gestão de projetos. Analise o transcript de reunião abaixo e responda SOMENTE com um JSON válido, sem texto fora do JSON, no formato:
-{"summary": "resumo executivo em português (2-5 frases)", "decisions": ["decisão 1", "..."], "action_items": [{"text": "tarefa acionável", "assignee": "nome citado ou null", "due_hint": "prazo citado ou null"}]}
-Regras: action_items devem ser tarefas concretas e acionáveis (para virar issues). Se não houver, use listas vazias.
+function strArr(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x) => typeof x === 'string') as string[] : []
+}
+
+async function summarize(apiKey: string, transcript: string): Promise<Summary> {
+  const prompt = `Você é um assistente de gestão de projetos. Analise o transcript de reunião e responda SOMENTE com um JSON válido (sem texto fora do JSON), no formato exato:
+{"objetivo":"1 frase","assunto":"1 frase","itens_discutidos":["..."],"decisoes":["..."],"pontos_definir":["..."],"proximos_passos":[{"text":"tarefa acionável","assignee":"nome citado ou null","due":"prazo citado ou null"}]}
+Regras: escreva em português; proximos_passos devem ser tarefas concretas (viram issues no board); se algo não existir, use lista vazia. NÃO invente dados que não estão no transcript.
 
 TRANSCRIPT:
 ${transcript}`
@@ -49,17 +56,21 @@ ${transcript}`
   const data = await res.json()
   const text: string = data?.content?.[0]?.text ?? ''
   const clean = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim()
-  const parsed = JSON.parse(clean)
+  const p = JSON.parse(clean)
   return {
-    summary: typeof parsed.summary === 'string' ? parsed.summary : '',
-    decisions: Array.isArray(parsed.decisions) ? parsed.decisions.filter((x: unknown) => typeof x === 'string') : [],
-    action_items: Array.isArray(parsed.action_items)
-      ? parsed.action_items.filter((x: unknown) => x && typeof (x as { text?: unknown }).text === 'string')
-        .map((x: { text: string; assignee?: unknown; due_hint?: unknown }) => ({
-          text: String(x.text).slice(0, 500),
-          assignee: typeof x.assignee === 'string' ? x.assignee : null,
-          due_hint: typeof x.due_hint === 'string' ? x.due_hint : null,
-        }))
+    objetivo: typeof p.objetivo === 'string' ? p.objetivo : '',
+    assunto: typeof p.assunto === 'string' ? p.assunto : '',
+    itens_discutidos: strArr(p.itens_discutidos),
+    decisoes: strArr(p.decisoes),
+    pontos_definir: strArr(p.pontos_definir),
+    proximos_passos: Array.isArray(p.proximos_passos)
+      ? p.proximos_passos
+          .filter((x: unknown) => x && typeof (x as { text?: unknown }).text === 'string')
+          .map((x: { text: string; assignee?: unknown; due?: unknown }): ActionItem => ({
+            text: String(x.text).slice(0, 500),
+            assignee: typeof x.assignee === 'string' ? x.assignee : null,
+            due: typeof x.due === 'string' ? x.due : null,
+          }))
       : [],
   }
 }
@@ -78,13 +89,10 @@ Deno.serve(async (req: Request) => {
   if (!supabaseUrl || !anonKey || !serviceKey) return json({ error: 'server_misconfigured' }, 500)
   if (!apiKey) return json({ error: 'ai_not_configured' }, 500)
 
-  let payload: { meeting_id?: unknown; transcript?: unknown }
+  let payload: { meeting_id?: unknown }
   try { payload = await req.json() } catch { return json({ error: 'invalid_json' }, 400) }
-
   const meetingId = typeof payload.meeting_id === 'string' ? payload.meeting_id : ''
-  const transcript = typeof payload.transcript === 'string' ? payload.transcript.trim().slice(0, MAX_TRANSCRIPT) : ''
   if (!meetingId) return json({ error: 'meeting_id_required' }, 400)
-  if (!transcript) return json({ error: 'transcript_required' }, 400)
 
   try {
     // Deriva o usuário/tenant do JWT.
@@ -103,30 +111,41 @@ Deno.serve(async (req: Request) => {
     const tenantId = (profile?.tenant_id as string | undefined) ?? null
     if (!tenantId) return json({ error: 'no_tenant' }, 403)
 
-    // A reunião precisa ser do mesmo tenant.
+    // Lê a reunião (mesmo tenant) e pega o transcript do banco.
     const { data: meeting } = await admin
-      .from('meetings').select('id, tenant_id').eq('id', meetingId).maybeSingle()
+      .from('meetings').select('id, tenant_id, transcript').eq('id', meetingId).maybeSingle()
     if (!meeting || (meeting.tenant_id as string) !== tenantId) return json({ error: 'meeting_not_found' }, 404)
+    const transcript = String(meeting.transcript ?? '').trim().slice(0, MAX_TRANSCRIPT)
+    if (!transcript) return json({ error: 'transcript_required' }, 400)
 
     await admin.from('meetings').update({ status: 'processing' }).eq('id', meetingId)
 
-    const ai = await summarize(apiKey, transcript)
+    let summary: Summary
+    try {
+      summary = await summarize(apiKey, transcript)
+    } catch (err) {
+      await admin.from('meetings').update({ status: 'failed' }).eq('id', meetingId)
+      console.error('meeting-summarize AI error', err instanceof Error ? err.message : 'unknown')
+      return json({ error: 'ai_failed' }, 502)
+    }
 
-    await admin.from('meeting_summaries').insert({
-      meeting_id: meetingId, tenant_id: tenantId,
-      summary: ai.summary, decisions: ai.decisions, model: MODEL,
-    })
-    if (ai.action_items.length) {
+    // Grava o resumo (jsonb) na própria reunião.
+    await admin.from('meetings')
+      .update({ summary, status: 'ready' })
+      .eq('id', meetingId)
+
+    // Substitui os action items (idempotente em reprocessamento).
+    await admin.from('meeting_action_items').delete().eq('meeting_id', meetingId)
+    if (summary.proximos_passos.length) {
       await admin.from('meeting_action_items').insert(
-        ai.action_items.map((a) => ({
+        summary.proximos_passos.map((a) => ({
           meeting_id: meetingId, tenant_id: tenantId,
-          text: a.text, assignee: a.assignee, due_hint: a.due_hint,
+          text: a.text, assignee: a.assignee, due: a.due,
         })),
       )
     }
-    await admin.from('meetings').update({ status: 'ready' }).eq('id', meetingId)
 
-    return json({ ok: true, summary: ai.summary, decisions: ai.decisions, action_items: ai.action_items })
+    return json({ ok: true, summary })
   } catch (err) {
     console.error('meeting-summarize failed', err instanceof Error ? err.message : 'unknown')
     return json({ error: 'internal' }, 500)
