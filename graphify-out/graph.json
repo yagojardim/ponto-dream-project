@@ -217,7 +217,7 @@
       "file_type": "code",
       "norm_label": "props",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L16"
+      "source_location": "L10"
     },
     {
       "id": "src_data_issues_epic",
@@ -8805,7 +8805,7 @@
       "file_type": "code",
       "norm_label": "atatext()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L384"
+      "source_location": "L378"
     },
     {
       "id": "src_pages_meetingspage_createmeetingmodal",
@@ -8816,7 +8816,7 @@
       "file_type": "code",
       "norm_label": "createmeetingmodal()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L300"
+      "source_location": "L294"
     },
     {
       "id": "src_pages_meetingspage_createmeetingmodal_save",
@@ -8827,7 +8827,7 @@
       "file_type": "code",
       "norm_label": "save()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L319"
+      "source_location": "L313"
     },
     {
       "id": "src_pages_meetingspage_formatdate",
@@ -8838,7 +8838,7 @@
       "file_type": "code",
       "norm_label": "formatdate()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L453"
+      "source_location": "L447"
     },
     {
       "id": "src_pages_meetingspage_meetingdetail",
@@ -8849,7 +8849,7 @@
       "file_type": "code",
       "norm_label": "meetingdetail()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L181"
+      "source_location": "L175"
     },
     {
       "id": "src_pages_meetingspage_meetingdetail_copytranscript",
@@ -8860,7 +8860,7 @@
       "file_type": "code",
       "norm_label": "copytranscript()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L215"
+      "source_location": "L209"
     },
     {
       "id": "src_pages_meetingspage_meetingdetail_generate",
@@ -8871,7 +8871,7 @@
       "file_type": "code",
       "norm_label": "generate()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L207"
+      "source_location": "L201"
     },
     {
       "id": "src_pages_meetingspage_meetingspage",
@@ -8882,7 +8882,7 @@
       "file_type": "code",
       "norm_label": "meetingspage()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L46"
+      "source_location": "L40"
     },
     {
       "id": "src_pages_meetingspage_statuspill",
@@ -8893,7 +8893,7 @@
       "file_type": "code",
       "norm_label": "statuspill()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L33"
+      "source_location": "L27"
     },
     {
       "id": "src_pages_meetingspage_summarysections",
@@ -8904,7 +8904,7 @@
       "file_type": "code",
       "norm_label": "summarysections()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L395"
+      "source_location": "L389"
     },
     {
       "id": "src_pages_meetingspage_summarysections_copyata",
@@ -8915,7 +8915,7 @@
       "file_type": "code",
       "norm_label": "copyata()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L407"
+      "source_location": "L401"
     },
     {
       "id": "src_pages_meetingspage_toast",
@@ -8926,7 +8926,7 @@
       "file_type": "code",
       "norm_label": "toast()",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L443"
+      "source_location": "L437"
     },
     {
       "id": "src_utils_copytoclipboard_copytoclipboard",
@@ -28653,7 +28653,7 @@
       "file_type": "code",
       "norm_label": "cardstyle",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L29"
+      "source_location": "L23"
     },
     {
       "id": "src_pages_meetingspage_status_meta",
@@ -28663,7 +28663,7 @@
       "file_type": "code",
       "norm_label": "status_meta",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L23"
+      "source_location": "L17"
     },
     {
       "id": "src_utils_copytoclipboard",
@@ -60609,7 +60609,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L303",
+      "source_location": "L297",
       "weight": 1.0
     },
     {
@@ -60621,7 +60621,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L313",
+      "source_location": "L307",
       "weight": 1.0
     },
     {
@@ -60633,7 +60633,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L322",
+      "source_location": "L316",
       "weight": 1.0
     },
     {
@@ -60645,7 +60645,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L322",
+      "source_location": "L316",
       "weight": 1.0
     },
     {
@@ -60657,7 +60657,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L196",
+      "source_location": "L190",
       "weight": 1.0
     },
     {
@@ -60669,7 +60669,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L209",
+      "source_location": "L203",
       "weight": 1.0
     },
     {
@@ -60681,7 +60681,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L217",
+      "source_location": "L211",
       "weight": 1.0
     },
     {
@@ -60693,7 +60693,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L242",
+      "source_location": "L236",
       "weight": 1.0
     },
     {
@@ -60705,7 +60705,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L217",
+      "source_location": "L211",
       "weight": 1.0
     },
     {
@@ -60717,7 +60717,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L209",
+      "source_location": "L203",
       "weight": 1.0
     },
     {
@@ -60729,7 +60729,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L159",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -60741,7 +60741,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L47",
+      "source_location": "L41",
       "weight": 1.0
     },
     {
@@ -60753,7 +60753,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L62",
+      "source_location": "L56",
       "weight": 1.0
     },
     {
@@ -60765,7 +60765,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L73",
+      "source_location": "L67",
       "weight": 1.0
     },
     {
@@ -60777,7 +60777,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L408",
+      "source_location": "L402",
       "weight": 1.0
     },
     {
@@ -60789,7 +60789,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L408",
+      "source_location": "L402",
       "weight": 1.0
     },
     {
@@ -60801,7 +60801,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L408",
+      "source_location": "L402",
       "weight": 1.0
     },
     {
@@ -82455,150 +82455,6 @@
     },
     {
       "source": "src_pages_meetingspage",
-      "target": "src_utils_copytoclipboard_copytoclipboard",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L10",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_createmeeting",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_fetchmeeting",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_fetchmeetings",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_fetchprojectoptions",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_ismeetingmoduleenabled",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_meetinglistitem",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_meetingprojectoption",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_meetingrow",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_meetingstatus",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_meetingsummary",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings_summarizemeeting",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
       "target": "src_components_ds_tokens_t",
       "relation": "imports",
       "_origin": "ast",
@@ -82606,7 +82462,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L8",
+      "source_location": "L2",
       "weight": 1.0
     },
     {
@@ -82618,7 +82474,151 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L9",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_utils_copytoclipboard_copytoclipboard",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_createmeeting",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_fetchmeeting",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_fetchmeetings",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_fetchprojectoptions",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_ismeetingmoduleenabled",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_meetinglistitem",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_meetingprojectoption",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_meetingrow",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_meetingstatus",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_meetingsummary",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings_summarizemeeting",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
       "weight": 1.0
     },
     {
@@ -93911,30 +93911,6 @@
     },
     {
       "source": "src_pages_meetingspage",
-      "target": "src_utils_copytoclipboard",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L10",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_data_db_meetings",
-      "relation": "imports_from",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L11",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
       "target": "ref_react",
       "relation": "imports_from",
       "_origin": "ast",
@@ -93942,7 +93918,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L5",
+      "source_location": "L1",
       "weight": 1.0
     },
     {
@@ -93954,7 +93930,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L8",
+      "source_location": "L2",
       "weight": 1.0
     },
     {
@@ -93966,7 +93942,31 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L9",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_utils_copytoclipboard",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_data_db_meetings",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L5",
       "weight": 1.0
     },
     {
@@ -121766,7 +121766,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L459",
+      "source_location": "L10",
       "weight": 1.0
     },
     {
@@ -121777,40 +121777,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L461",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_pages_meetingspage_cardstyle",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L467",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_pages_meetingspage_statuspill",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L471",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_meetingspage",
-      "target": "src_pages_meetingspage_meetingspage",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L484",
+      "source_location": "L17",
       "weight": 1.0
     },
     {
@@ -121821,7 +121788,29 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L619",
+      "source_location": "L175",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_pages_meetingspage_cardstyle",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_pages_meetingspage_statuspill",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L27",
       "weight": 1.0
     },
     {
@@ -121832,7 +121821,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L729",
+      "source_location": "L294",
       "weight": 1.0
     },
     {
@@ -121843,7 +121832,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L813",
+      "source_location": "L378",
       "weight": 1.0
     },
     {
@@ -121854,7 +121843,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L824",
+      "source_location": "L389",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_meetingspage",
+      "target": "src_pages_meetingspage_meetingspage",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/MeetingsPage.tsx",
+      "source_location": "L40",
       "weight": 1.0
     },
     {
@@ -121865,7 +121865,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L872",
+      "source_location": "L437",
       "weight": 1.0
     },
     {
@@ -121876,7 +121876,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L882",
+      "source_location": "L447",
       "weight": 1.0
     },
     {
@@ -121887,7 +121887,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L748",
+      "source_location": "L313",
       "weight": 1.0
     },
     {
@@ -121898,7 +121898,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L645",
+      "source_location": "L201",
       "weight": 1.0
     },
     {
@@ -121909,7 +121909,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L653",
+      "source_location": "L209",
       "weight": 1.0
     },
     {
@@ -121920,7 +121920,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/MeetingsPage.tsx",
-      "source_location": "L836",
+      "source_location": "L401",
       "weight": 1.0
     },
     {
@@ -127441,5 +127441,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2ff92d6fc369325a87d16264edd4bb858dcf04ad"
+  "built_at_commit": "97d28fe7627b47346ed9de2aac87ed8882d179b6"
 }
