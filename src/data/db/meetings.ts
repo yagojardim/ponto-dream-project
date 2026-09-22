@@ -19,6 +19,12 @@ export type MeetingSource = 'upload' | 'zoom' | 'meet' | 'teams' | 'record'
 /** Chave estável do módulo no catálogo (MODULE_CATALOG / tabela modules). */
 export const MEETING_MODULE_KEY = 'MEETING_INTELLIGENCE'
 
+export interface MeetingActionItem {
+  text: string
+  assignee?: string | null
+  due?: string | null
+}
+
 /** Resumo estruturado — preenchido na Fatia 1B (IA). Null enquanto não gerado. */
 export interface MeetingSummary {
   objetivo?: string
@@ -26,7 +32,7 @@ export interface MeetingSummary {
   itens_discutidos?: string[]
   decisoes?: string[]
   pontos_definir?: string[]
-  proximos_passos?: string[]
+  proximos_passos?: MeetingActionItem[]
 }
 
 export interface MeetingRow {
@@ -125,6 +131,21 @@ export async function fetchProjectOptions(): Promise<MeetingProjectOption[]> {
     if (error) throw error
     return ((data ?? []) as any[]).map(p => ({ id: p.id, name: p.name }))
   }, [])
+}
+
+/**
+ * Gera o resumo por IA (Edge Function meeting-summarize). O servidor lê o
+ * transcript do banco, chama o Claude e grava meetings.summary + action items.
+ * Retorna true em sucesso. A tela deve recarregar a reunião depois.
+ */
+export async function summarizeMeeting(meetingId: string): Promise<boolean> {
+  return safeCall('meetings.summarizeMeeting', async () => {
+    const { data, error } = await supabase.functions.invoke('meeting-summarize', {
+      body: { meeting_id: meetingId },
+    })
+    if (error) throw error
+    return !!(data && (data as { ok?: boolean }).ok)
+  }, false)
 }
 
 /**
