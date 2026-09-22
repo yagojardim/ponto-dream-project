@@ -3,8 +3,8 @@ import { T } from '@/components/ds/tokens'
 import { useSession } from '@/data/SessionContext'
 import { copyToClipboard } from '@/utils/copyToClipboard'
 import {
-  fetchMeetings, fetchMeeting, fetchProjectOptions, createMeeting, isMeetingModuleEnabled,
-  type MeetingListItem, type MeetingRow, type MeetingProjectOption, type MeetingStatus,
+  fetchMeetings, fetchMeeting, fetchProjectOptions, createMeeting, isMeetingModuleEnabled, summarizeMeeting,
+  type MeetingListItem, type MeetingRow, type MeetingProjectOption, type MeetingStatus, type MeetingSummary,
 } from '@/data/db/meetings'
 
 interface Props { onNav?: (view: string, targetId?: string) => void }
@@ -174,6 +174,8 @@ function MeetingDetail({ id, onBack, onToast, toast }: {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
   const [tab, setTab]         = useState<'resumo' | 'transcricao'>('resumo')
+  const [generating, setGenerating] = useState(false)
+  const [reloadKey, setReloadKey]   = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -189,7 +191,15 @@ function MeetingDetail({ id, onBack, onToast, toast }: {
       }
     })()
     return () => { alive = false }
-  }, [id])
+  }, [id, reloadKey])
+
+  async function generate() {
+    setGenerating(true)
+    const ok = await summarizeMeeting(id)
+    setGenerating(false)
+    if (ok) { setReloadKey(k => k + 1); onToast('Resumo gerado.') }
+    else onToast('Não foi possível gerar o resumo. Tente novamente.')
+  }
 
   async function copyTranscript() {
     if (!meeting?.transcript) return
@@ -228,9 +238,22 @@ function MeetingDetail({ id, onBack, onToast, toast }: {
           </div>
 
           {tab === 'resumo' ? (
-            <div style={{ ...cardStyle, padding: 40, textAlign: 'center', color: T.text3, fontSize: 14, lineHeight: 1.6 }}>
-              O resumo será gerado automaticamente (em breve).
-            </div>
+            meeting.summary ? (
+              <SummarySections summary={meeting.summary} onToast={onToast} />
+            ) : (
+              <div style={{ ...cardStyle, padding: 40, textAlign: 'center' }}>
+                <p style={{ margin: '0 0 16px', color: T.text3, fontSize: 14, lineHeight: 1.6 }}>
+                  {generating
+                    ? 'Gerando o resumo com o Meeting Intelligence… isso leva alguns segundos.'
+                    : 'Ainda não há resumo para esta reunião.'}
+                </p>
+                <button
+                  onClick={generate}
+                  disabled={generating}
+                  style={{ height: 40, padding: '0 18px', borderRadius: 8, border: 'none', background: T.accent, color: '#fff', fontWeight: 600, fontSize: 13.5, cursor: generating ? 'not-allowed' : 'pointer', opacity: generating ? 0.6 : 1, fontFamily: 'inherit' }}
+                >{generating ? 'Gerando…' : 'Gerar resumo com IA'}</button>
+              </div>
+            )
           ) : (
             <div style={{ ...cardStyle, padding: '8px 22px 18px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${T.border}` }}>
@@ -332,6 +355,65 @@ function CreateMeetingModal({ onClose, onCreated }: {
             style={{ height: 38, padding: '0 16px', borderRadius: 8, border: 'none', background: T.accent, color: '#fff', fontSize: 13.5, fontWeight: 600, cursor: canSave ? 'pointer' : 'not-allowed', opacity: canSave ? 1 : 0.55, fontFamily: 'inherit' }}
           >{saving ? 'Salvando…' : 'Salvar'}</button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Resumo (seções da ata) ─────────────────────────────────────────────────
+function ataText(s: MeetingSummary): string {
+  const L: string[] = []
+  if (s.objetivo) L.push(`OBJETIVO\n${s.objetivo}`)
+  if (s.assunto) L.push(`ASSUNTO\n${s.assunto}`)
+  if (s.itens_discutidos?.length) L.push('ITENS DISCUTIDOS\n' + s.itens_discutidos.map(x => `- ${x}`).join('\n'))
+  if (s.decisoes?.length) L.push('DECISÕES\n' + s.decisoes.map(x => `- ${x}`).join('\n'))
+  if (s.pontos_definir?.length) L.push('PONTOS A DEFINIR\n' + s.pontos_definir.map(x => `- ${x}`).join('\n'))
+  if (s.proximos_passos?.length) L.push('PRÓXIMOS PASSOS\n' + s.proximos_passos.map(a => `- ${a.text} (Responsável: ${a.assignee || '—'}; Data: ${a.due || '—'})`).join('\n'))
+  return L.join('\n\n')
+}
+
+function SummarySections({ summary, onToast }: { summary: MeetingSummary; onToast: (t: string) => void }) {
+  const label: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', color: T.text3, marginBottom: 6 }
+  const line: React.CSSProperties = { fontSize: 14, lineHeight: 1.55, color: T.text2 }
+  const bullets = (arr?: string[]) => (arr && arr.length)
+    ? <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>{arr.map((x, i) => <li key={i} style={line}>{x}</li>)}</ul>
+    : <div style={{ fontSize: 13, color: T.text3 }}>—</div>
+  const sec = (t: string, node: React.ReactNode) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><div style={label}>{t}</div>{node}</div>
+  )
+  const th: React.CSSProperties = { textAlign: 'left', padding: '8px 10px', borderBottom: `1px solid ${T.border}`, color: T.text3, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', fontWeight: 600 }
+  const td: React.CSSProperties = { padding: '9px 10px', borderBottom: `1px solid ${T.border}`, color: T.text2, verticalAlign: 'top', fontSize: 13.5 }
+
+  async function copyAta() {
+    const ok = await copyToClipboard(ataText(summary))
+    onToast(ok ? 'Ata copiada.' : 'Não foi possível copiar.')
+  }
+
+  return (
+    <div style={{ ...cardStyle, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: T.text1 }}>Resumo da reunião</div>
+        <button onClick={copyAta} style={{ height: 32, padding: '0 12px', borderRadius: 8, border: `1px solid ${T.border}`, background: 'transparent', color: T.text1, fontSize: 12.5, cursor: 'pointer', fontFamily: 'inherit' }}>Copiar ata</button>
+      </div>
+      {sec('Objetivo', <div style={line}>{summary.objetivo || '—'}</div>)}
+      {sec('Assunto', <div style={line}>{summary.assunto || '—'}</div>)}
+      {sec('Itens discutidos', bullets(summary.itens_discutidos))}
+      {sec('Decisões', bullets(summary.decisoes))}
+      {sec('Pontos a definir', bullets(summary.pontos_definir))}
+      {sec('Próximos passos', (summary.proximos_passos && summary.proximos_passos.length)
+        ? (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+              <thead><tr><th style={th}>Descrição</th><th style={{ ...th, whiteSpace: 'nowrap' }}>Responsável</th><th style={{ ...th, whiteSpace: 'nowrap' }}>Data</th></tr></thead>
+              <tbody>{summary.proximos_passos.map((a, i) => (
+                <tr key={i}><td style={td}>{a.text}</td><td style={{ ...td, whiteSpace: 'nowrap' }}>{a.assignee || '—'}</td><td style={{ ...td, whiteSpace: 'nowrap' }}>{a.due || '—'}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )
+        : <div style={{ fontSize: 13, color: T.text3 }}>—</div>)}
+      <div style={{ fontSize: 12, color: T.text3, borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
+        Gerado pelo Meeting Intelligence — revise o conteúdo.
       </div>
     </div>
   )
