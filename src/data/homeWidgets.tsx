@@ -34,6 +34,8 @@ import {
 } from '@/components/home/panelBodyCards'
 import { AdminUsersCard, AdminModulesCard, AdminAuditCard, ClientFeedCard } from '@/pages/DashboardHomePage'
 import { MOCK_TENANT } from '@/data/session'
+import { MEETING_FLAGS } from '@/config/meetingFlags'
+import { MeetingHoursWidget } from '@/components/meetings/MeetingHoursWidget'
 
 export type { WidgetCtx }
 
@@ -214,7 +216,17 @@ const REPORTS: WidgetDef[] = REPORT_CARDS_LIST.map(entry => ({
 
 }))
 
-export const HOME_WIDGETS: WidgetDef[] = [...NATIVE, ...REPORTS]
+// Widget de horas do Meeting Intelligence — entra no catálogo só quando a cota de
+// horas estiver ligada (fica invisível até HOURS_QUOTA_ENABLED). Ver FASE-2-SPEC.
+const MEETING_WIDGETS: WidgetDef[] = MEETING_FLAGS.HOURS_QUOTA_ENABLED
+  ? [{
+      id: 'native.meeting-hours', title: 'Meeting Intelligence · Horas', group: 'Início',
+      kind: 'card', defaultW: 4, overflow: 'fit', minW: 3, minH: 3, framed: true,
+      render: c => <MeetingHoursWidget ctx={c} />,
+    }]
+  : []
+
+export const HOME_WIDGETS: WidgetDef[] = [...NATIVE, ...MEETING_WIDGETS, ...REPORTS]
 
 export function getWidget(id: string): WidgetDef | undefined {
   return HOME_WIDGETS.find(w => w.id === id)

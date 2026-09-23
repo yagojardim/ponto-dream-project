@@ -47,6 +47,8 @@ export interface MeetingRow {
   owner_id: string
   transcript: string | null
   summary: MeetingSummary | null
+  audio_url: string | null
+  archived_at: string | null
   created_at: string
   updated_at: string
 }
@@ -87,13 +89,20 @@ export async function isMeetingModuleEnabled(): Promise<boolean> {
  * Lista as reuniões visíveis. Usuário padrão vê só as próprias; o admin
  * (dono do tenant) vê todas. A RLS já garante o isolamento por tenant.
  */
-export async function fetchMeetings(opts: { ownerId: string; isAdmin: boolean }): Promise<MeetingListItem[]> {
+export async function fetchMeetings(opts: { ownerId: string; isAdmin: boolean; sharedIds?: string[] }): Promise<MeetingListItem[]> {
   return safeCall('meetings.fetchMeetings', async () => {
     let query = tbl('meetings')
       .select('id, title, project_id, source, status, meeting_date, owner_id, created_at, projects(name)')
       .eq('tenant_id', getActiveTenantId())
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
-    if (!opts.isAdmin) query = query.eq('owner_id', opts.ownerId)
+    // Não-admin vê as próprias + as compartilhadas com ele.
+    if (!opts.isAdmin) {
+      const shared = opts.sharedIds ?? []
+      query = shared.length
+        ? query.or(`owner_id.eq.${opts.ownerId},id.in.(${shared.join(',')})`)
+        : query.eq('owner_id', opts.ownerId)
+    }
     const { data, error } = await query
     if (error) throw error
     return ((data ?? []) as any[]).map((r): MeetingListItem => {
@@ -167,4 +176,19 @@ export async function createMeeting(input: CreateMeetingInput, ownerId: string):
     if (error) throw error
     return (data?.id as string) ?? null
   }, null)
+}
+
+/**
+ * Arquiva a reunião: sai da lista (fetchMeetings filtra archived_at is null), mas
+ * fica no repositório até a purga automática de 30 dias (app.purge_archived_meetings,
+ * agendada por pg_cron). Recuperável nesse prazo direto no banco.
+ */
+export async function archiveMeeting(id: string): Promise<boolean> {
+  return safeCall('meetings.archiveMeeting', async () => {
+    const { error } = await tbl('meetings')
+      .update({ archived_at: new Date().toISOString() })
+      .eq('id', id).eq('tenant_id', getActiveTenantId())
+    if (error) throw error
+    return true
+  }, false)
 }
