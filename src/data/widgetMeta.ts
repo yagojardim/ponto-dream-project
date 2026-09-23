@@ -33,6 +33,7 @@ export const WIDGET_META: Record<string, WidgetMeta> = {
   'native.kpi-sprint':    { category: 'Visão geral', viz: 'burndown', summary: '% de conclusão da sprint atual.' },
   'native.kpi-projects':  { category: 'Visão geral', viz: 'number', summary: 'Quantos projetos estão no seu escopo.' },
   'native.kpi-delivered': { category: 'Visão geral', viz: 'bars',   summary: 'Demandas entregues no período.' },
+  'native.meeting-hours': { category: 'Visão geral', viz: 'donut',  summary: 'Suas horas / consumo do Meeting Intelligence.' },
 
   // ── Minha fila ──
   'native.kpi-my-items':   { category: 'Minha fila', viz: 'number', summary: 'Suas demandas ativas no momento.' },
