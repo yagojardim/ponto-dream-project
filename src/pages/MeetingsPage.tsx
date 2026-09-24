@@ -9,7 +9,6 @@ import {
 import {
   SourceIcon, IcPaste, IcSearch, IcChevronRight, IcStar, IcCopy, IcShare, IcTrash, IcHelp, Icon,
 } from '@/components/meetings/icons'
-import { NotificationsBell } from '@/components/meetings/NotificationsBell'
 import { MeetingHelpScreen } from '@/components/meetings/MeetingHelpScreen'
 import { MeetingNotesTab } from '@/components/meetings/MeetingNotesTab'
 import { ShareMeetingModal } from '@/components/meetings/ShareMeetingModal'
@@ -181,10 +180,7 @@ export default function MeetingsPage({ onNav: _onNav }: Props) {
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => setComposing('help')} title="Ajuda do Meeting Intelligence" style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${T.border}`, background: T.bgSurface2, color: T.text1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IcHelp size={17} /></button>
-            <NotificationsBell currentUser={{ id: activeUser.user_id, isAdmin }} />
-          </div>
+          <button onClick={() => setComposing('help')} title="Ajuda do Meeting Intelligence" style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${T.border}`, background: T.bgSurface2, color: T.text1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IcHelp size={17} /></button>
           {MEETING_FLAGS.HOURS_QUOTA_ENABLED && !isAdmin && myQuota && (
             <div style={{ width: 260, maxWidth: '100%' }}>
               <QuotaMeter quota={myQuota} onRequest={() => setRequestOpen(true)} />
