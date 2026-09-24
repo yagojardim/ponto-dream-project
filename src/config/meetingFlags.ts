@@ -8,6 +8,13 @@
 // nascem ligados. Todo o resto nasce desligado e oculto na navegação.
 
 export const MEETING_FLAGS = {
+  /**
+   * Módulo inteiro. `false` = OCULTO para todos (não contratado): some do Sidebar
+   * (admin master incluso) e a tela bloqueia, ignorando a ativação por tenant.
+   * `true` = passa a respeitar a ativação do módulo por tenant (tenant_modules).
+   * Ligar quando o Meeting Intelligence for efetivamente contratado/lançado.
+   */
+  MODULE_ENABLED: false,
   /** Resumo por IA (Edge Function meeting-summarize + Claude). Liga com o secret ANTHROPIC_API_KEY. */
   AI_SUMMARY_ENABLED: false,
   /** Chat sobre a reunião (RAG). Depende do Claude. */

@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { safeCall } from '@/utils/logger'
 import { getActiveTenantId } from '@/data/session'
 import { listModules } from '@/data/db/modules'
+import { MEETING_FLAGS } from '@/config/meetingFlags'
 
 function tbl(name: string): any {
   return (supabase as unknown as { from: (t: string) => any }).from(name)
@@ -78,6 +79,9 @@ export interface CreateMeetingInput {
 
 /** Módulo liberado para o tenant? (operational / implemented / preview) */
 export async function isMeetingModuleEnabled(): Promise<boolean> {
+  // Trava mestra: enquanto o módulo não for contratado, fica oculto para todos
+  // (Sidebar + tela), independentemente da ativação de teste por tenant.
+  if (!MEETING_FLAGS.MODULE_ENABLED) return false
   return safeCall('meetings.isMeetingModuleEnabled', async () => {
     const mods = await listModules()
     const m = mods.find(x => x.key === MEETING_MODULE_KEY)
