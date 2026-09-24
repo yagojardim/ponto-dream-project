@@ -38,7 +38,7 @@ import {
 } from '../data/dashboardAssignments'
 import { listSquads, type SquadOption } from '../data/db/timesheets'
 import { safeCall, logger } from '../utils/logger'
-import { fetchAdminKpis, computeDeliveryMetrics, fetchPoCardMetrics, type AdminKpis, type PoCardMetrics } from '../data/db/dashboards'
+import { fetchAdminKpis, computeDeliveryMetrics, fetchPoCardMetrics, type AdminKpis, type PoCardMetrics, type DashboardAggregates, type RagProject } from '../data/db/dashboards'
 import {
   REPORT_REGISTRY, REPORT_CARDS_LIST, ReportChartModal, useChartModal,
   ReportsDataProvider, ReportKpiPreview, ReportMiniViz, navigateToReport,
@@ -276,11 +276,13 @@ export function AdminUsersCard({ onNav, onInvite, actorName, canManage = true }:
   }
 
   // Inativos/suspensos não somem: vão para o fim da fila, com opacidade menor.
+  // Mostra todos (o container rola) — assim reativar um usuário sempre o traz de
+  // volta à vista, em vez de ficar cortado por um limite fixo de 5.
   const ordered = [...(rows ?? [])].sort((a, b) => {
     const rank = (s: string) => (s === 'active' ? 0 : 1)
     return rank(a.status) - rank(b.status)
   })
-  const displayedUsers = ordered.slice(0, 5)
+  const displayedUsers = ordered
 
   return (
     <SCard title="Gestão de Usuários" action={
@@ -537,6 +539,68 @@ function AdminPanel({ onNav, onInvite }: { onNav: (v: string, targetId?: string)
 }
 
 // ─── 2. PMO ───────────────────────────────────────────────────────────────────
+
+/** Mini "planejado × concluído": committed (contorno) com completed (preenchido) dentro, por sprint. */
+function MiniPlannedDone({ committed, completed }: { committed: number[]; completed: number[] }) {
+  const n = committed.length
+  if (n === 0) return null
+  const W = 92, H = 40, P = 3, gap = 2
+  const max = Math.max(1, ...committed, ...completed)
+  const bw = Math.max(3, (W - P * 2 - gap * (n - 1)) / n)
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+      {committed.map((cv, i) => {
+        const x = P + i * (bw + gap)
+        const ch = Math.max(1, (cv / max) * (H - P * 2))
+        const dh = Math.max(0, ((completed[i] ?? 0) / max) * (H - P * 2))
+        return (
+          <g key={i}>
+            <rect x={x} y={H - P - ch} width={bw} height={ch} rx={1.5} fill="none" stroke={T.success} strokeWidth={1} opacity={0.5} />
+            <rect x={x} y={H - P - dh} width={bw} height={dh} rx={1.5} fill={T.success} opacity={0.9} />
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+/**
+ * Cards do PMO com mini-gráficos das séries reais dos Relatórios (velocity.byProject):
+ * quantidade (barras) para projetos/risco, linha para previsibilidade e barras
+ * aninhadas para planejado × concluído. Fica dentro de um ReportsDataProvider.
+ */
+function PmoCards({ agg, rags, onNav, openChart }: {
+  agg: DashboardAggregates | null
+  rags: RagProject[]
+  onNav: (v: string, targetId?: string) => void
+  openChart: (id: string) => void
+}) {
+  const { data } = useReportsData()
+  const byP = data?.velocity.byProject ?? []
+  const sprintCount = byP.reduce((m, b) => Math.max(m, b.committed.length), 0)
+  const committedSeries = Array.from({ length: sprintCount }, (_, i) => byP.reduce((a, b) => a + (b.committed[i] ?? 0), 0))
+  const completedSeries = Array.from({ length: sprintCount }, (_, i) => byP.reduce((a, b) => a + (b.completed[i] ?? 0), 0))
+  const predSeries = committedSeries.map((cv, i) => (cv > 0 ? Math.round((completedSeries[i] / cv) * 100) : 0))
+
+  const healthy = rags.filter(r => r.rag === 'healthy').length
+  const blocked = rags.filter(r => r.rag === 'blocked').length
+  const atRisk = Math.max(0, rags.length - healthy - blocked)
+  const c = agg?.counts
+
+  const nativeCards: MuralNativeCard[] = [
+    { id: 'pmo:projects', value: String(c?.activeProjects ?? 0), label: 'Projetos Ativos', sub: `${healthy} no prazo`, disclaimer: 'projetos por saúde: saudáveis / em risco / bloqueados',
+      miniViz: rags.length ? <ReportMiniViz viz={{ kind: 'bars', values: [healthy, atRisk, blocked], color: T.accent }} /> : undefined, onClick: () => onNav('projects-list') },
+    { id: 'pmo:risk', value: String(c?.atRisk ?? 0), label: 'Em Risco / Atrasados', sub: `${blocked} crítico(s)`, disclaimer: 'projetos com RAG amarelo ou vermelho', color: T.warn, alert: (c?.atRisk ?? 0) > 0,
+      miniViz: rags.length ? <ReportMiniViz viz={{ kind: 'bars', values: [atRisk, blocked], color: T.warn }} /> : undefined, onClick: () => onNav('reports') },
+    { id: 'pmo:predictability', value: `${agg?.predictability ?? 0}%`, label: 'Previsibilidade', help: 'Percentual do planejado que foi efetivamente entregue, sprint a sprint.', sub: 'meta: 80%', disclaimer: '% do planejado efetivamente entregue',
+      miniViz: predSeries.length > 1 ? <ReportMiniViz viz={{ kind: 'line', values: predSeries, color: T.success }} /> : undefined, onClick: () => openChart('velocity') },
+    { id: 'pmo:delivery', value: `${agg?.consolidatedPct ?? 0}%`, label: 'Planejado × Concluído', sub: `${agg?.done ?? 0}/${agg?.planned ?? 0} itens`, disclaimer: 'concluído (preenchido) dentro do planejado (contorno), por sprint',
+      miniViz: committedSeries.length ? <MiniPlannedDone committed={committedSeries} completed={completedSeries} /> : undefined, onClick: () => openChart('criados') },
+  ]
+
+  return <UnifiedMural dashId="pmo" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+}
+
 function PmoPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
   const { drawerItem, openDrawer: openPmoDrawer, closeDrawer } = useDrawer()
   const [filters, setFilters] = useFilters()
@@ -548,12 +612,6 @@ function PmoPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
   const rags = (agg?.rag ?? []).filter(r => selProj.size === 0 || selProj.has(r.id))
   const c    = agg?.counts
 
-  const nativeCards: MuralNativeCard[] = [
-    { id: 'pmo:projects', value: String(c?.activeProjects ?? 0), label: 'Projetos Ativos', sub: `${rags.filter(r => r.rag === 'healthy').length} no prazo`, disclaimer: 'projetos ativos no tenant', onClick: () => onNav('projects-list') },
-    { id: 'pmo:risk', value: String(c?.atRisk ?? 0), label: 'Em Risco / Atrasados', sub: `${rags.filter(r => r.rag === 'blocked').length} crítico(s)`, disclaimer: 'projetos com RAG amarelo ou vermelho', color: T.warn, alert: (c?.atRisk ?? 0) > 0, onClick: () => onNav('reports') },
-    { id: 'pmo:predictability', value: `${agg?.predictability ?? 0}%`, label: 'Previsibilidade', help: 'Percentual do planejado que foi efetivamente entregue.', sub: 'meta: 80%', disclaimer: '% do planejado efetivamente entregue', onClick: () => openChart('velocity') },
-    { id: 'pmo:delivery', value: `${agg?.consolidatedPct ?? 0}%`, label: 'Planejado × Concluído', sub: `${agg?.done ?? 0}/${agg?.planned ?? 0} itens`, disclaimer: 'itens concluídos sobre o total planejado', onClick: () => openChart('criados') },
-  ]
 
 
   return (
@@ -561,7 +619,9 @@ function PmoPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
       {chartModal}
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="pmo" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <ReportsDataProvider projectIds={selProj.size ? [...selProj] : undefined}>
+        <PmoCards agg={agg} rags={rags} onNav={onNav} openChart={openChart} />
+      </ReportsDataProvider>
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />

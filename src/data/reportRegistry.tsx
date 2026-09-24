@@ -243,8 +243,8 @@ function VelocityGrid({ items }: { items: VelItem[] }) {
   const totD = items.reduce((a, it) => a + it.completed.reduce((x, y) => x + y, 0), 0)
   const prev = totC ? Math.round((totD / totC) * 100) : 0
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: px(10), height: '100%', minHeight: 0 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: px(14), padding: `${px(8)} ${px(10)}`, background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: px(10), height: '100%', minHeight: 0, overflowY: 'auto', paddingRight: 2 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: px(14), padding: `${px(8)} ${px(10)}`, background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 10, flexShrink: 0 }}>
         <div><div style={{ fontSize: 18, fontWeight: 750 }}>{avgAll}</div><div style={{ fontSize: 10, color: T.text3 }}>Velocity média (pts)</div></div>
         <div><div style={{ fontSize: 18, fontWeight: 750, color: prev >= 80 ? T.success : T.warn }}>{prev}%</div><div style={{ fontSize: 10, color: T.text3 }}>Previsibilidade</div></div>
         <div><div style={{ fontSize: 18, fontWeight: 750 }}>{items.length}</div><div style={{ fontSize: 10, color: T.text3 }}>Projeto{items.length !== 1 ? 's' : ''}</div></div>
