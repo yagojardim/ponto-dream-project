@@ -2773,7 +2773,7 @@
       "file_type": "code",
       "norm_label": "createmeetinginput",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L73"
+      "source_location": "L74"
     },
     {
       "id": "src_data_db_meetings_meetingactionitem",
@@ -2785,7 +2785,7 @@
       "file_type": "code",
       "norm_label": "meetingactionitem",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L22"
+      "source_location": "L23"
     },
     {
       "id": "src_data_db_meetings_meetinglistitem",
@@ -2797,7 +2797,7 @@
       "file_type": "code",
       "norm_label": "meetinglistitem",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L56"
+      "source_location": "L57"
     },
     {
       "id": "src_data_db_meetings_meetingprojectoption",
@@ -2809,7 +2809,7 @@
       "file_type": "code",
       "norm_label": "meetingprojectoption",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L68"
+      "source_location": "L69"
     },
     {
       "id": "src_data_db_meetings_meetingrow",
@@ -2821,7 +2821,7 @@
       "file_type": "code",
       "norm_label": "meetingrow",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L38"
+      "source_location": "L39"
     },
     {
       "id": "src_data_db_meetings_meetingsource",
@@ -2833,7 +2833,7 @@
       "file_type": "code",
       "norm_label": "meetingsource",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L17"
+      "source_location": "L18"
     },
     {
       "id": "src_data_db_meetings_meetingstatus",
@@ -2845,7 +2845,7 @@
       "file_type": "code",
       "norm_label": "meetingstatus",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L16"
+      "source_location": "L17"
     },
     {
       "id": "src_data_db_meetings_meetingsummary",
@@ -2857,7 +2857,7 @@
       "file_type": "code",
       "norm_label": "meetingsummary",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L29"
+      "source_location": "L30"
     },
     {
       "id": "src_data_db_meetingshares_meetingsharetarget",
@@ -6337,7 +6337,7 @@
       "file_type": "code",
       "norm_label": "meetingflag",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L29"
+      "source_location": "L36"
     },
     {
       "id": "src_config_meetingflags_paymentmethod",
@@ -6349,7 +6349,7 @@
       "file_type": "code",
       "norm_label": "paymentmethod",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L51"
+      "source_location": "L58"
     },
     {
       "id": "src_data_db_meetingbilling_hourpurchase",
@@ -15706,7 +15706,7 @@
       "file_type": "code",
       "norm_label": "quotaminutesforrole()",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L78"
+      "source_location": "L85"
     },
     {
       "id": "src_data_db_meetingquotas_adjustquota",
@@ -16322,7 +16322,7 @@
       "file_type": "code",
       "norm_label": "archivemeeting()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L186"
+      "source_location": "L190"
     },
     {
       "id": "src_data_db_meetings_createmeeting",
@@ -16333,7 +16333,7 @@
       "file_type": "code",
       "norm_label": "createmeeting()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L164"
+      "source_location": "L168"
     },
     {
       "id": "src_data_db_meetings_fetchmeeting",
@@ -16344,7 +16344,7 @@
       "file_type": "code",
       "norm_label": "fetchmeeting()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L126"
+      "source_location": "L130"
     },
     {
       "id": "src_data_db_meetings_fetchmeetings",
@@ -16355,7 +16355,7 @@
       "file_type": "code",
       "norm_label": "fetchmeetings()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L92"
+      "source_location": "L96"
     },
     {
       "id": "src_data_db_meetings_fetchprojectoptions",
@@ -16366,7 +16366,7 @@
       "file_type": "code",
       "norm_label": "fetchprojectoptions()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L136"
+      "source_location": "L140"
     },
     {
       "id": "src_data_db_meetings_ismeetingmoduleenabled",
@@ -16377,7 +16377,7 @@
       "file_type": "code",
       "norm_label": "ismeetingmoduleenabled()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L80"
+      "source_location": "L81"
     },
     {
       "id": "src_data_db_meetings_summarizemeeting",
@@ -16388,7 +16388,7 @@
       "file_type": "code",
       "norm_label": "summarizemeeting()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L150"
+      "source_location": "L154"
     },
     {
       "id": "src_data_db_meetings_tbl",
@@ -16399,7 +16399,7 @@
       "file_type": "code",
       "norm_label": "tbl()",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L12"
+      "source_location": "L13"
     },
     {
       "id": "src_data_db_meetingshares_meetingidssharedwith",
@@ -25419,7 +25419,7 @@
       "file_type": "code",
       "norm_label": "ismeetingfeatureon()",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L32"
+      "source_location": "L39"
     },
     {
       "id": "src_data_db_meetingbilling_listpurchases",
@@ -32923,7 +32923,7 @@
       "file_type": "code",
       "norm_label": "meeting_module_key",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L20"
+      "source_location": "L21"
     },
     {
       "id": "src_pages_meetingspage",
@@ -35663,7 +35663,7 @@
       "file_type": "code",
       "norm_label": "default_quota_minutes",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L72"
+      "source_location": "L79"
     },
     {
       "id": "src_config_meetingflags_meeting_archive_retention_days",
@@ -35673,7 +35673,7 @@
       "file_type": "code",
       "norm_label": "meeting_archive_retention_days",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L75"
+      "source_location": "L82"
     },
     {
       "id": "src_config_meetingflags_meeting_flags",
@@ -35693,7 +35693,7 @@
       "file_type": "code",
       "norm_label": "meeting_pricing",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L40"
+      "source_location": "L47"
     },
     {
       "id": "src_config_meetingflags_role_quota_minutes",
@@ -35703,7 +35703,7 @@
       "file_type": "code",
       "norm_label": "role_quota_minutes",
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L59"
+      "source_location": "L66"
     },
     {
       "id": "src_data_db_meetingbilling",
@@ -50919,7 +50919,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L187",
+      "source_location": "L191",
       "weight": 1.0
     },
     {
@@ -50931,7 +50931,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L188",
+      "source_location": "L192",
       "weight": 1.0
     },
     {
@@ -50943,7 +50943,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L190",
+      "source_location": "L194",
       "weight": 1.0
     },
     {
@@ -50955,7 +50955,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L165",
+      "source_location": "L169",
       "weight": 1.0
     },
     {
@@ -50967,7 +50967,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L166",
+      "source_location": "L170",
       "weight": 1.0
     },
     {
@@ -50979,7 +50979,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L167",
+      "source_location": "L171",
       "weight": 1.0
     },
     {
@@ -50991,7 +50991,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L127",
+      "source_location": "L131",
       "weight": 1.0
     },
     {
@@ -51003,7 +51003,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L128",
+      "source_location": "L132",
       "weight": 1.0
     },
     {
@@ -51015,31 +51015,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L129",
-      "weight": 1.0
-    },
-    {
-      "source": "src_data_db_meetings_fetchmeetings",
-      "target": "src_utils_logger_safecall",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/data/db/meetings.ts",
-      "source_location": "L93",
-      "weight": 1.0
-    },
-    {
-      "source": "src_data_db_meetings_fetchmeetings",
-      "target": "src_data_db_meetings_tbl",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "src/data/db/meetings.ts",
-      "source_location": "L94",
+      "source_location": "L133",
       "weight": 1.0
     },
     {
@@ -51051,7 +51027,31 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L96",
+      "source_location": "L100",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_db_meetings_fetchmeetings",
+      "target": "src_utils_logger_safecall",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/data/db/meetings.ts",
+      "source_location": "L97",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_db_meetings_fetchmeetings",
+      "target": "src_data_db_meetings_tbl",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "src/data/db/meetings.ts",
+      "source_location": "L98",
       "weight": 1.0
     },
     {
@@ -51063,7 +51063,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L137",
+      "source_location": "L141",
       "weight": 1.0
     },
     {
@@ -51075,7 +51075,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L138",
+      "source_location": "L142",
       "weight": 1.0
     },
     {
@@ -51087,7 +51087,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L139",
+      "source_location": "L143",
       "weight": 1.0
     },
     {
@@ -51099,7 +51099,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L81",
+      "source_location": "L85",
       "weight": 1.0
     },
     {
@@ -51111,7 +51111,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L82",
+      "source_location": "L86",
       "weight": 1.0
     },
     {
@@ -51123,7 +51123,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L151",
+      "source_location": "L155",
       "weight": 1.0
     },
     {
@@ -80205,6 +80205,18 @@
     },
     {
       "source": "src_data_db_meetings",
+      "target": "src_config_meetingflags_meeting_flags",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/data/db/meetings.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_db_meetings",
       "target": "src_integrations_supabase_client_supabase",
       "relation": "imports",
       "_origin": "ast",
@@ -97574,6 +97586,18 @@
     },
     {
       "source": "src_data_db_meetings",
+      "target": "src_config_meetingflags",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/data/db/meetings.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_db_meetings",
       "target": "src_integrations_supabase_client",
       "relation": "imports_from",
       "_origin": "ast",
@@ -110738,7 +110762,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L29",
+      "source_location": "L36",
       "weight": 1.0
     },
     {
@@ -110749,7 +110773,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L32",
+      "source_location": "L39",
       "weight": 1.0
     },
     {
@@ -110760,7 +110784,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L40",
+      "source_location": "L47",
       "weight": 1.0
     },
     {
@@ -110771,7 +110795,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L51",
+      "source_location": "L58",
       "weight": 1.0
     },
     {
@@ -110782,7 +110806,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L59",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
@@ -110793,7 +110817,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L72",
+      "source_location": "L79",
       "weight": 1.0
     },
     {
@@ -110804,7 +110828,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L75",
+      "source_location": "L82",
       "weight": 1.0
     },
     {
@@ -110815,7 +110839,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/config/meetingFlags.ts",
-      "source_location": "L78",
+      "source_location": "L85",
       "weight": 1.0
     },
     {
@@ -117701,7 +117725,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0
     },
     {
@@ -117712,7 +117736,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L126",
+      "source_location": "L130",
       "weight": 1.0
     },
     {
@@ -117723,7 +117747,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L136",
+      "source_location": "L140",
       "weight": 1.0
     },
     {
@@ -117734,18 +117758,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L150",
-      "weight": 1.0
-    },
-    {
-      "source": "src_data_db_meetings",
-      "target": "src_data_db_meetings_meetingstatus",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/data/db/meetings.ts",
-      "source_location": "L16",
+      "source_location": "L154",
       "weight": 1.0
     },
     {
@@ -117756,12 +117769,12 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L164",
+      "source_location": "L168",
       "weight": 1.0
     },
     {
       "source": "src_data_db_meetings",
-      "target": "src_data_db_meetings_meetingsource",
+      "target": "src_data_db_meetings_meetingstatus",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -117772,13 +117785,24 @@
     },
     {
       "source": "src_data_db_meetings",
+      "target": "src_data_db_meetings_meetingsource",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/data/db/meetings.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "src_data_db_meetings",
       "target": "src_data_db_meetings_archivemeeting",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L186",
+      "source_location": "L190",
       "weight": 1.0
     },
     {
@@ -117789,7 +117813,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L20",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
@@ -117800,7 +117824,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L22",
+      "source_location": "L23",
       "weight": 1.0
     },
     {
@@ -117811,7 +117835,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L29",
+      "source_location": "L30",
       "weight": 1.0
     },
     {
@@ -117822,7 +117846,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L38",
+      "source_location": "L39",
       "weight": 1.0
     },
     {
@@ -117833,7 +117857,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L56",
+      "source_location": "L57",
       "weight": 1.0
     },
     {
@@ -117844,7 +117868,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L68",
+      "source_location": "L69",
       "weight": 1.0
     },
     {
@@ -117855,7 +117879,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L73",
+      "source_location": "L74",
       "weight": 1.0
     },
     {
@@ -117866,7 +117890,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L80",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -117877,7 +117901,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/data/db/meetings.ts",
-      "source_location": "L92",
+      "source_location": "L96",
       "weight": 1.0
     },
     {
@@ -136114,5 +136138,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2f0882b45974ac4ff024c6e5a1fe913faef8b3c1"
+  "built_at_commit": "e8827c6743873a2d3cda29cb6e3baa8b29ae2e0f"
 }
