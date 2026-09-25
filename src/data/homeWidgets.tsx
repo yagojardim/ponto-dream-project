@@ -239,7 +239,7 @@ export function getWidget(id: string): WidgetDef | undefined {
 const ROLE_DEFAULTS: Record<string, string[]> = {
   admin: [
     'native.kpi-admin-projects', 'native.kpi-admin-boards', 'native.kpi-admin-modules',
-    'native.kpi-admin-users', 'native.kpi-admin-invites',
+    'native.kpi-admin-users',
     'native.admin-users', 'native.admin-modules', 'native.admin-audit',
     'report.health', 'native.pmo-rag',
   ],

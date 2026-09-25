@@ -842,11 +842,14 @@ function ProductManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
 export function ClientFeedCard({ poId, tenantId }: { poId?: string; tenantId: string }) {
   useClientPortal()
   const { activeUser } = useSession()
-  if (!can(activeUser.permissions, 'access:client-messages')) return null
   const [tick,       setTick]       = useState(0)
   const [openReply,  setOpenReply]  = useState<string | null>(null)
   const [replyText,  setReplyText]  = useState('')
   const [toast,      setToast]      = useState<string | null>(null)
+
+  // Guard APÓS os hooks (nunca antes) — retornar cedo aqui quebra a ordem de
+  // hooks quando o mesmo card é reusado por um perfil sem esta permissão (ex.: Dev).
+  if (!can(activeUser.permissions, 'access:client-messages')) return null
 
   void tick
 

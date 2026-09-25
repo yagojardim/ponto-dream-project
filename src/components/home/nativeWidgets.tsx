@@ -18,11 +18,13 @@ import {
   getBlockedItems, getSprintItems, getReadyItems, getTestingItems, getBacklogWithAlerts,
 } from '@/data/db/homeLive'
 import {
-  fetchAdminKpis, fetchPoCardMetrics, computeDeliveryMetrics,
-  type AdminKpis, type PoCardMetrics,
+  fetchAdminKpis, fetchAdminInicioData, fetchPoCardMetrics, computeDeliveryMetrics,
+  type AdminKpis, type AdminInicioData, type PoCardMetrics,
 } from '@/data/db/dashboards'
+import { listModules } from '@/data/db/modules'
 import { logger } from '@/utils/logger'
 import { setListPrefilter } from '@/data/listPrefilter'
+import { setMyTasksFocus } from '@/data/myTasksPrefilter'
 
 export interface WidgetCtx {
   /** Navigates to another screen of the app (optionally focusing an entity). */
@@ -483,61 +485,117 @@ function useAdminKpis(): AdminKpis | null {
   return kpis
 }
 
+function useAdminInicio(): AdminInicioData | null {
+  const [data, setData] = useState<AdminInicioData | null>(null)
+  useEffect(() => {
+    let alive = true
+    fetchAdminInicioData()
+      .then(d => { if (alive) setData(d) })
+      .catch(err => { logger.error('home.admin-inicio', err) })
+    return () => { alive = false }
+  }, [])
+  return data
+}
+
+const ACTIVE_MODULE_STATUSES = ['operational', 'implemented', 'preview', 'trial', 'active']
+
+/** Carrossel dos módulos ativos do tenant: alterna o nome a cada 3s, com rodapé
+ *  que leva à Central de Módulos. Usado no card "Módulos ativos" do Admin. */
+function ModuleCarousel({ onOpen }: { onOpen: () => void }) {
+  const [names, setNames] = useState<string[]>([])
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    let alive = true
+    listModules()
+      .then(mods => { if (alive) setNames(mods.filter(m => ACTIVE_MODULE_STATUSES.includes((m.status ?? '').toLowerCase())).map(m => m.name)) })
+      .catch(err => { logger.error('home.admin-modules', err) })
+    return () => { alive = false }
+  }, [])
+  useEffect(() => {
+    if (names.length <= 1) return
+    const t = setInterval(() => setI(n => (n + 1) % names.length), 3000)
+    return () => clearInterval(t)
+  }, [names.length])
+  const cur = names[i % Math.max(1, names.length)]
+  return (
+    <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 6, paddingTop: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 20 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: T.text1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {cur ?? 'Nenhum módulo ativo'}
+        </span>
+      </div>
+      {names.length > 1 && (
+        <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+          {names.map((_, j) => <span key={j} style={{ width: 5, height: 5, borderRadius: 99, background: j === i ? T.accent : T.border2 }} />)}
+        </div>
+      )}
+      <button onClick={e => { e.stopPropagation(); onOpen() }}
+        style={{ fontSize: 11, color: T.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, alignSelf: 'flex-start' }}>
+        Abrir central de módulos →
+      </button>
+    </div>
+  )
+}
+
 export function KpiAdminProjectsWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
-  const k = useAdminKpis()
+  const d = useAdminInicio()
+  const p = d?.projects
+  const total = p ? p.active + p.finished + p.archived : 0
   return (
     <KpiCard
-      value={k ? String(k.projects.total) : '—'} label="Projetos"
-      sub={k ? `${k.projects.active} ativo${k.projects.active !== 1 ? 's' : ''}` : 'carregando…'}
-      disclaimer="projetos do tenant (não arquivados)"
-      miniViz={k ? ratioViz(k.projects.active, k.projects.total, T.accent) : undefined}
+      value={p ? String(total) : '—'} label="Projetos"
+      sub={p ? `${p.active} ativo${p.active !== 1 ? 's' : ''}` : 'carregando…'}
+      disclaimer="quantidade: ativos / finalizados / arquivados"
+      miniViz={p ? qtyBars([{ value: p.active, color: T.accent }, { value: p.finished, color: T.success }, { value: p.archived, color: T.text3 }]) : undefined}
       onClick={() => doNav(ctx, 'projects-list')}
     />
   )
 }
 
 export function KpiAdminBoardsWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
-  const k = useAdminKpis()
+  const d = useAdminInicio()
+  const b = d?.boards
+  const total = b ? b.active + b.archived : 0
   return (
     <KpiCard
-      value={k ? String(k.boards.total) : '—'} label="Boards"
-      sub={k ? `${k.boards.active} ativo${k.boards.active !== 1 ? 's' : ''}` : 'carregando…'}
-      disclaimer="boards de Kanban do tenant"
-      miniViz={k ? ratioViz(k.boards.active, k.boards.total, T.indigo) : undefined}
+      value={b ? String(total) : '—'} label="Boards"
+      sub={b ? `${b.active} ativo${b.active !== 1 ? 's' : ''}` : 'carregando…'}
+      disclaimer="quantidade: ativos / arquivados"
+      miniViz={b ? qtyBars([{ value: b.active, color: T.indigo }, { value: b.archived, color: T.text3 }]) : undefined}
       onClick={() => doNav(ctx, 'boards-list')}
     />
   )
 }
 
 export function KpiAdminModulesWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
   const k = useAdminKpis()
   return (
     <KpiCard
       value={k ? String(k.modules.active) : '—'} label="Módulos ativos"
-      sub={k ? `de ${k.modules.total}` : 'carregando…'}
+      sub={k ? `de ${k.modules.total} no catálogo` : 'carregando…'}
       disclaimer="módulos habilitados para este tenant"
-      miniViz={k ? ratioViz(k.modules.active, k.modules.total, T.purple) : undefined}
+      miniViz={<ModuleCarousel onOpen={() => doNav(ctx, 'modules')} />}
       onClick={() => doNav(ctx, 'modules')}
     />
   )
 }
 
 export function KpiAdminUsersWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
   const k = useAdminKpis()
+  const d = useAdminInicio()
+  const series = d?.signupsWeekly ?? []
   return (
     <KpiCard
       value={k ? String(k.users.total) : '—'} label="Usuários"
       sub={k ? `${k.users.active} ativo${k.users.active !== 1 ? 's' : ''}${k.users.blocked ? ` · ${k.users.blocked} bloqueado(s)` : ''}` : 'carregando…'}
-      disclaimer="perfis registrados no tenant"
-      miniViz={k ? ratioViz(k.users.active, k.users.total, T.success) : undefined}
+      disclaimer="crescimento de cadastros por semana"
+      miniViz={series.length > 1
+        ? <ReportMiniViz viz={{ kind: 'line', values: series, color: T.success }} />
+        : (k ? ratioViz(k.users.active, k.users.total, T.success) : undefined)}
       onClick={() => doNav(ctx, 'team:membros')}
     />
   )
@@ -960,53 +1018,63 @@ export function KpiReworkWidget(props: WidgetCtx) {
 
 // ─── KPIs · Dev ───────────────────────────────────────────────────────────────
 
+/** Abre a Minha Fila já focada no recorte do card (respeita o modo edição). */
+function doMyFocus(ctx: WidgetCtx, focus: 'active' | 'late' | 'blocked') {
+  if (!ctx.interactive) return
+  setMyTasksFocus(focus)
+  ctx.onNav('my-tasks')
+}
+
 export function KpiMyItemsWidget(props: WidgetCtx) {
-  const { onNav, userName } = props
+  const { userName } = props
   const ctx = props
   const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
-  const blocked = mine.filter(w => w.status === 'blocked').length
+  const active = mine.filter(w => w.status !== 'done' && w.status !== 'cancelled').length
   const done = mine.filter(w => w.status === 'done').length
+  const blocked = mine.filter(w => w.status === 'blocked').length
   return (
     <KpiCard
       value={String(mine.length)} label="Meus Itens Ativos"
       sub={`${blocked} bloqueado${blocked !== 1 ? 's' : ''}`}
-      disclaimer="tarefas atribuídas a mim nesta sprint"
-      miniViz={ratioViz(done, mine.length, T.accent)}
-      onClick={() => doNav(ctx, 'list')}
+      disclaimer="quantidade: em andamento / concluídos"
+      miniViz={qtyBars([{ value: active, color: T.accent }, { value: done, color: T.success }])}
+      onClick={() => doMyFocus(ctx, 'active')}
     />
   )
 }
 
 export function KpiMyLateWidget(props: WidgetCtx) {
-  const { onNav, userName } = props
+  const { userName } = props
   const ctx = props
   const today = new Date().toISOString().slice(0, 10)
-  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
-  const late = mine.filter(w => w.due_date && w.due_date <= today && w.status !== 'done')
+  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName && w.status !== 'done')
+  const late = mine.filter(w => w.due_date && w.due_date <= today).length
+  const onTime = Math.max(0, mine.length - late)
   return (
     <KpiCard
-      value={String(late.length)} label="Atrasados"
-      sub={late.length ? 'prazo vencido ou hoje' : 'nenhum atrasado'}
-      disclaimer="itens com prazo hoje ou já vencido"
-      color={late.length ? T.crit : undefined} alert={late.length > 0}
-      miniViz={ratioViz(late.length, mine.length, T.crit)}
-      onClick={() => doNav(ctx, 'list')}
+      value={String(late)} label="Atrasados"
+      sub={late ? 'prazo vencido ou hoje' : 'nenhum atrasado'}
+      disclaimer="quantidade: atrasados / no prazo"
+      color={late ? T.crit : undefined} alert={late > 0}
+      miniViz={qtyBars([{ value: late, color: T.crit }, { value: onTime, color: T.success }])}
+      onClick={() => doMyFocus(ctx, 'late')}
     />
   )
 }
 
 export function KpiMyBlockedWidget(props: WidgetCtx) {
-  const { onNav, userName } = props
+  const { userName } = props
   const ctx = props
-  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName)
-  const blocked = scopedItems(getBlockedItems()).filter(w => w.assignee?.name === userName)
+  const mine = scopedItems(liveItems()).filter(w => w.assignee?.name === userName && w.status !== 'done')
+  const blocked = mine.filter(w => w.status === 'blocked').length
+  const flowing = Math.max(0, mine.length - blocked)
   return (
     <KpiCard
-      value={String(blocked.length)} label="Meus Bloqueados" sub="aguardando desbloqueio"
-      disclaimer="minhas tarefas aguardando desbloqueio externo"
-      color={T.warn} alert={blocked.length > 0}
-      miniViz={ratioViz(blocked.length, mine.length, T.warn)}
-      onClick={() => doNav(ctx, 'list')}
+      value={String(blocked)} label="Meus Bloqueados" sub="aguardando desbloqueio"
+      disclaimer="quantidade: bloqueados / fluindo"
+      color={T.warn} alert={blocked > 0}
+      miniViz={qtyBars([{ value: blocked, color: T.warn }, { value: flowing, color: T.accent }])}
+      onClick={() => doMyFocus(ctx, 'blocked')}
     />
   )
 }
