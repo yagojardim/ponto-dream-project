@@ -10,7 +10,7 @@ import { T } from '@/components/ds/tokens'
 import {
   KpiCard, RagCard, WorkQueue, SprintDonutCard, EmptyState,
   MiniBarChart, MiniSparkline, SCard, ConditionalTag, Av,
-  type WorkItem,
+  type WorkItem, type ProjectOption,
 } from '@/components/ds/DashboardKit'
 import { BurndownChart, ReportMiniViz, useReportsData } from '@/data/reportRegistry'
 import {
@@ -25,6 +25,7 @@ import { listModules } from '@/data/db/modules'
 import { logger } from '@/utils/logger'
 import { setListPrefilter } from '@/data/listPrefilter'
 import { setMyTasksFocus } from '@/data/myTasksPrefilter'
+import type { KpiDetailConfig } from '@/components/home/KpiDetailModal'
 
 export interface WidgetCtx {
   /** Navigates to another screen of the app (optionally focusing an entity). */
@@ -39,6 +40,8 @@ export interface WidgetCtx {
   openBoard: () => void
   /** Abre o detalhe ampliado (modal) de um relatório, sem trocar de tela. */
   openDetail: (reportId: string) => void
+  /** Abre o modal de detalhe do KPI (framework declarativo por perfil). */
+  openKpiDetail: (config: KpiDetailConfig) => void
   /** false durante edição do painel: widgets devem ignorar cliques de navegação. */
   interactive: boolean
 }
@@ -66,6 +69,10 @@ function doOpenDetail(ctx: WidgetCtx, reportId: string) {
 function doOpenItem(ctx: WidgetCtx, item: WorkItem) {
   if (!ctx.interactive) return
   ctx.onOpenItem(item)
+}
+function doKpiDetail(ctx: WidgetCtx, config: KpiDetailConfig) {
+  if (!ctx.interactive) return
+  ctx.openKpiDetail(config)
 }
 
 /**
@@ -1135,8 +1142,59 @@ export function KpiUxHandoffWidget(props: WidgetCtx) {
 
 // ─── KPIs · QA ────────────────────────────────────────────────────────────────
 
+/** Projeto (id/nome/cor) de um item, para as linhas do modal. */
+function itemProject(w: WorkItem): ProjectOption | undefined {
+  const p = liveProjects().find(x => x.id === w.project_id)
+  return p ? { id: p.id, name: p.name, color: p.color } : undefined
+}
+function sevLabel(w: WorkItem): string {
+  return w.priority === 'critical' ? 'Crítico' : w.priority === 'high' ? 'Alto' : w.priority === 'medium' ? 'Médio' : 'Baixo'
+}
+
+/** Config do modal de detalhe do QA (abas com dado REAL: fila de teste + bugs). */
+function buildQaDetail(initialTab: number, onNav: (v: string, t?: string) => void): KpiDetailConfig {
+  const testing = scopedItems(getTestingItems())
+  const bugs = scopedItems(liveItems()).filter(w => w.type === 'bug' && w.status !== 'done' && (w.priority === 'critical' || w.priority === 'high'))
+  return {
+    title: 'QA', subtitle: 'detalhe dos indicadores', initialTab,
+    footerAction: { label: 'Abrir board →', onClick: () => onNav('boards-list') },
+    tabs: [
+      {
+        id: 'fila', label: 'Aguardando teste', count: testing.length,
+        intro: 'Itens na fila de QA (prontos para teste ou em homologação). Clique numa linha para abrir a demanda no board.',
+        table: {
+          columns: [
+            { key: 'key', header: 'Item', kind: 'mono' },
+            { key: 't', header: 'Demanda' },
+            { key: 'proj', header: 'Projeto', kind: 'project' },
+            { key: 'st', header: 'Status', kind: 'pill' },
+            { key: 'who', header: 'Responsável', kind: 'muted' },
+          ],
+          rows: testing.map(w => ({ item: w, project: itemProject(w), cells: { key: w.key, t: w.title, st: w.status, who: w.assignee?.name ?? '—' } })),
+          emptyText: 'Nada aguardando teste neste escopo.',
+        },
+        note: testing.length > 0 ? { text: 'Ordene pelos que estão parados há mais tempo — abrir a demanda pelo item leva direto ao board.' } : undefined,
+      },
+      {
+        id: 'bugs', label: 'Bugs críticos', count: bugs.length,
+        intro: 'Bugs abertos com severidade crítica ou alta. Clique para abrir no board.',
+        table: {
+          columns: [
+            { key: 'key', header: 'Item', kind: 'mono' },
+            { key: 't', header: 'Bug' },
+            { key: 'proj', header: 'Projeto', kind: 'project' },
+            { key: 'sev', header: 'Severidade', kind: 'pill' },
+            { key: 'st', header: 'Status', kind: 'pill' },
+          ],
+          rows: bugs.map(w => ({ item: w, project: itemProject(w), cells: { key: w.key, t: w.title, sev: sevLabel(w), st: w.status } })),
+          emptyText: 'Nenhum bug crítico aberto neste escopo. 🟢',
+        },
+      },
+    ],
+  }
+}
+
 export function KpiQaQueueWidget(props: WidgetCtx) {
-  const { openBoard } = props
   const ctx = props
   const testing = scopedItems(getTestingItems())
   return (
@@ -1144,13 +1202,12 @@ export function KpiQaQueueWidget(props: WidgetCtx) {
       value={String(testing.length)} label="Aguardando Teste" sub="Ready for QA"
       disclaimer="itens em fila de QA ou em homologação ativa"
       miniViz={<MiniBarChart data={[{ label: 'S10', value: 8 }, { label: 'S11', value: 10 }, { label: 'S12', value: 7 }, { label: 'S13', value: testing.length, current: true }]} showAvg={false} />}
-      onClick={() => doOpenBoard(ctx)}
+      onClick={() => doKpiDetail(ctx, buildQaDetail(0, ctx.onNav))}
     />
   )
 }
 
 export function KpiQaBugsWidget(props: WidgetCtx) {
-  const { openBoard } = props
   const ctx = props
   const crit = scopedItems(liveItems()).filter(w => w.type === 'bug' && (w.priority === 'critical' || w.priority === 'high')).length
   return (
@@ -1158,7 +1215,7 @@ export function KpiQaBugsWidget(props: WidgetCtx) {
       value={String(crit)} label="Bugs Críticos" sub={crit > 0 ? 'requer atenção' : 'tudo ok'}
       disclaimer="bugs P0/P1 bloqueando entrega da sprint" color={T.crit} alert={crit > 0}
       miniViz={<MiniSparkline data={[{ label: 'S8', value: 9 }, { value: 7 }, { value: 8 }, { value: 6 }, { value: 5 }, { label: 'S13', value: crit }]} color="#ef4444" />}
-      onClick={() => doOpenBoard(ctx)}
+      onClick={() => doKpiDetail(ctx, buildQaDetail(1, ctx.onNav))}
     />
   )
 }
