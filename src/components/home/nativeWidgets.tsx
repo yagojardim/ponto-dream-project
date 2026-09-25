@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { T } from '@/components/ds/tokens'
 import {
   KpiCard, RagCard, WorkQueue, SprintDonutCard, EmptyState,
-  MiniBarChart, MiniSparkline, SCard, ConditionalTag, Av,
+  MiniBarChart, MiniSparkline, SCard, ConditionalTag, Av, statusConfig,
   type WorkItem, type ProjectOption,
 } from '@/components/ds/DashboardKit'
 import { BurndownChart, ReportMiniViz, useReportsData } from '@/data/reportRegistry'
@@ -400,7 +400,7 @@ export function KpiBlockedWidget(props: WidgetCtx) {
       sub={n > 0 ? 'Precisam de desbloqueio' : 'Nenhum impedimento'}
       color={n > 0 ? T.crit : T.success} alert={n > 0}
       miniViz={ratioViz(n, total, n > 0 ? T.crit : T.success)}
-      onClick={() => doOpenScopedList(ctx, 'blocked')}
+      onClick={() => doKpiDetail(ctx, buildBlockedDetail(ctx.onNav))}
     />
   )
 }
@@ -415,7 +415,7 @@ export function KpiWipWidget(props: WidgetCtx) {
       value={String(wip)} label="Trabalho em andamento" sub="Em progresso, revisão ou teste"
       color={T.accent}
       miniViz={ratioViz(wip, all.length, T.accent)}
-      onClick={() => doOpenBoard(ctx)}
+      onClick={() => doKpiDetail(ctx, buildScrumDetail(3, ctx.onNav))}
     />
   )
 }
@@ -683,7 +683,7 @@ export function KpiPredictabilityWidget(props: WidgetCtx) {
       miniViz={predictability.length > 1
         ? <ReportMiniViz viz={{ kind: 'line', values: predictability, color }} />
         : ratioViz(pct, 100, color)}
-      onClick={() => doOpenDetail(ctx, 'velocity')}
+      onClick={() => doKpiDetail(ctx, buildPredictabilityDetail())}
     />
   )
 }
@@ -822,7 +822,7 @@ export function KpiPoReadyWidget(props: WidgetCtx) {
       sub={sprintPts > 0 ? 'pts prontos ÷ velocity' : 'sem sprint ativa'}
       disclaimer="pontos prontos ÷ velocidade média da sprint"
       miniViz={ratioViz(pct ?? 0, 100, T.accent)}
-      onClick={() => doNav(ctx, 'list')}
+      onClick={() => doKpiDetail(ctx, buildBacklogDetail(0, ctx.onNav))}
     />
   )
 }
@@ -839,7 +839,7 @@ export function KpiBacklogHealthWidget(props: WidgetCtx) {
       disclaimer="itens saudáveis ÷ total de itens avaliáveis"
       color={pct < 60 ? T.warn : T.success} alert={pct < 60}
       miniViz={ratioViz(pct, 100, pct < 60 ? T.warn : T.success)}
-      onClick={() => doNav(ctx, 'list')}
+      onClick={() => doKpiDetail(ctx, buildBacklogDetail(1, ctx.onNav))}
     />
   )
 }
@@ -855,7 +855,7 @@ export function KpiCreatedVsFinalizedWidget(props: WidgetCtx) {
       disclaimer="itens finalizados vs criados no(s) projeto(s) selecionado(s)"
       color={T.success}
       miniViz={<MiniBarChart data={m?.createdVsFinalized.weekly ?? []} showAvg={false} />}
-      onClick={() => doOpenBoard(ctx)}
+      onClick={() => doKpiDetail(ctx, buildBacklogDetail(2, ctx.onNav))}
     />
   )
 }
@@ -895,7 +895,7 @@ export function KpiSprintHealthWidget(props: WidgetCtx) {
       color={health != null && health < 60 ? T.warn : T.success}
       alert={health != null && health < 60}
       miniViz={active ? <BurndownChart variant="thumbnail" /> : undefined}
-      onClick={() => doOpenDetail(ctx, 'burndown')}
+      onClick={() => doKpiDetail(ctx, buildScrumDetail(0, ctx.onNav))}
     />
   )
 }
@@ -910,7 +910,7 @@ export function KpiImpedimentsWidget(props: WidgetCtx) {
       disclaimer="impedimentos formais sem resolução registrada"
       color={T.crit} alert={blocked.length > 0}
       miniViz={ratioViz(blocked.length, scopedItems(liveItems()).length, T.crit)}
-      onClick={() => doOpenScopedList(ctx, 'blocked')}
+      onClick={() => doKpiDetail(ctx, buildScrumDetail(1, ctx.onNav))}
     />
   )
 }
@@ -929,7 +929,7 @@ export function KpiSprintGoalWidget(props: WidgetCtx) {
       disclaimer="itens que ameaçam atingir o objetivo da sprint"
       color={critical.length > 0 ? T.warn : T.success} alert={critical.length > 0}
       miniViz={ratioViz(critical.length, sprint.length, T.warn)}
-      onClick={() => doNav(ctx, 'project')}
+      onClick={() => doKpiDetail(ctx, buildScrumDetail(2, ctx.onNav))}
     />
   )
 }
@@ -971,7 +971,7 @@ export function KpiCriticalBugsWidget(props: WidgetCtx) {
       disclaimer="bugs P0/P1 bloqueando entrega ou em produção"
       color={T.crit} alert={bugs > 0}
       miniViz={ratioViz(bugs, all.filter(w => w.type === 'bug').length, T.crit)}
-      onClick={() => doOpenBoard(ctx)}
+      onClick={() => doKpiDetail(ctx, buildEngDetail(0, ctx.onNav))}
     />
   )
 }
@@ -987,7 +987,7 @@ export function KpiLeadTimeWidget(props: WidgetCtx) {
       color={dm.leadTimeDias != null && dm.leadTimeDias > 14 ? T.warn : undefined}
       alert={dm.leadTimeDias != null && dm.leadTimeDias > 14}
       miniViz={ratioViz(Math.min(dm.leadTimeDias ?? 0, 30), 30, dm.leadTimeDias != null && dm.leadTimeDias > 14 ? T.warn : T.accent)}
-      onClick={() => doOpenDetail(ctx, 'leadtime')}
+      onClick={() => doKpiDetail(ctx, buildEngDetail(1, ctx.onNav))}
     />
   )
 }
@@ -1002,7 +1002,7 @@ export function KpiThroughputWidget(props: WidgetCtx) {
       sub="Concluídos por semana" disclaimer="demandas concluídas por semana no escopo"
       alert={dm.vazaoSemana != null && dm.vazaoSemana < 1}
       miniViz={<MiniBarChart data={weeklyThroughput()} />}
-      onClick={() => doOpenDetail(ctx, 'velocity')}
+      onClick={() => doKpiDetail(ctx, buildEngDetail(2, ctx.onNav))}
     />
   )
 }
@@ -1018,7 +1018,7 @@ export function KpiReworkWidget(props: WidgetCtx) {
       color={dm.taxaBugsPct != null && dm.taxaBugsPct > 20 ? T.warn : undefined}
       alert={dm.taxaBugsPct != null && dm.taxaBugsPct > 20}
       miniViz={ratioViz(dm.taxaBugsPct ?? 0, 100, dm.taxaBugsPct != null && dm.taxaBugsPct > 20 ? T.warn : T.accent)}
-      onClick={() => doOpenDetail(ctx, 'leadtime')}
+      onClick={() => doKpiDetail(ctx, buildEngDetail(3, ctx.onNav))}
     />
   )
 }
@@ -1191,6 +1191,155 @@ function buildQaDetail(initialTab: number, onNav: (v: string, t?: string) => voi
         },
       },
     ],
+  }
+}
+
+/** Linha de tabela do modal a partir de um item do board. */
+function itemRow(w: WorkItem, cells: Record<string, string>): { item: WorkItem; project: ProjectOption | undefined; cells: Record<string, string> } {
+  return { item: w, project: itemProject(w), cells }
+}
+const COL_ITEM = { key: 'key', header: 'Item', kind: 'mono' as const }
+const COL_PROJ = { key: 'proj', header: 'Projeto', kind: 'project' as const }
+const COL_ST = { key: 'st', header: 'Status', kind: 'pill' as const }
+const num = (v: number | null | undefined, suf = ''): string => (v == null ? '—' : `${v}${suf}`)
+
+/** Modal do Scrum Master (título neutro "Sprint" — o card pode ser reusado por outros papéis). */
+function buildScrumDetail(initialTab: number, onNav: (v: string, t?: string) => void): KpiDetailConfig {
+  const agg = liveAggregates()
+  const sprint = scopedItems(getSprintItems())
+  const notDone = sprint.filter(w => w.status !== 'done' && w.status !== 'cancelled')
+  const blocked = scopedItems(getBlockedItems())
+  const wip = scopedItems(liveItems()).filter(w => ['in-progress', 'in-review', 'testing'].includes(w.status))
+  const inReview = wip.filter(w => w.status === 'in-review').length
+  const sprints = agg?.currentSprints ?? []
+  const tDone = sprints.reduce((a, s) => a + s.done, 0)
+  const tTotal = sprints.reduce((a, s) => a + s.total, 0)
+  const pct = tTotal ? Math.round((tDone / tTotal) * 100) : (agg?.consolidatedPct ?? 0)
+  return {
+    title: 'Sprint', subtitle: 'detalhe dos indicadores', initialTab,
+    footerAction: { label: 'Abrir board →', onClick: () => onNav('boards-list') },
+    tabs: [
+      { id: 'saude', label: 'Saúde da sprint', count: `${pct}%`,
+        intro: 'Progresso da sprint e o que ainda não fechou. Clique num item para abri-lo no board.',
+        metrics: [{ v: `${pct}%`, k: 'Concluído', c: T.success }, { v: `${tDone}/${tTotal}`, k: 'Itens' }, { v: String(notDone.length), k: 'Em aberto', c: notDone.length ? T.warn : T.text2 }],
+        table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_ST, { key: 'pts', header: 'Pts', kind: 'muted' }],
+          rows: notDone.map(w => itemRow(w, { key: w.key, t: w.title, st: statusConfig(w.status).label, pts: w.points != null ? String(w.points) : '—' })),
+          emptyText: 'Sprint fechada — nada em aberto. 🟢' } },
+      { id: 'imped', label: 'Impedimentos', count: blocked.length,
+        intro: 'Itens bloqueados: com quem estão e há quanto tempo. Clique para abrir no board.',
+        table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, { key: 'who', header: 'Com quem', kind: 'muted' }, { key: 'age', header: 'Parado há', kind: 'pill' }],
+          rows: blocked.map(w => itemRow(w, { key: w.key, t: w.title, who: w.assignee?.name ?? '—', age: `${w.days_blocked ?? 0}d` })),
+          emptyText: 'Nenhum impedimento aberto. 🟢' },
+        note: blocked.length ? { text: 'Acompanhe de perto os que dependem de áreas externas ao time — costumam ser os que mais atrasam.' } : undefined },
+      { id: 'goal', label: 'Sprint Goal', count: `${agg?.consolidatedPct ?? 0}%`,
+        intro: 'Andamento consolidado em relação ao planejado da sprint.',
+        metrics: [{ v: `${agg?.consolidatedPct ?? 0}%`, k: 'Progresso', c: T.accent }, { v: `${agg?.done ?? 0}/${agg?.planned ?? 0}`, k: 'Itens planejados' }],
+        note: { text: 'Se o goal já está perto, os itens de fora dele podem entrar como extra, sem pressão.' } },
+      { id: 'wip', label: 'WIP', count: wip.length,
+        intro: 'Trabalho em andamento agora (em dev, revisão ou teste).',
+        metrics: [{ v: String(wip.length), k: 'Em andamento', c: T.accent }, { v: String(inReview), k: 'Em revisão' }],
+        table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_ST, { key: 'who', header: 'Responsável', kind: 'muted' }],
+          rows: wip.map(w => itemRow(w, { key: w.key, t: w.title, st: statusConfig(w.status).label, who: w.assignee?.name ?? '—' })) },
+        note: inReview >= 3 ? { text: 'Vários itens em revisão ao mesmo tempo — se começar a acumular, talvez valha um limite só para revisão.' } : undefined },
+    ],
+  }
+}
+
+/** Modal do Tech Lead (título neutro "Engenharia"). */
+function buildEngDetail(initialTab: number, onNav: (v: string, t?: string) => void): KpiDetailConfig {
+  const agg = liveAggregates()
+  const d = agg?.delivery
+  const items = scopedItems(liveItems())
+  const bugs = items.filter(w => w.type === 'bug' && w.status !== 'done' && (w.priority === 'critical' || w.priority === 'high'))
+  const review = items.filter(w => w.status === 'in-review')
+  const done = items.filter(w => w.status === 'done')
+  const allBugs = items.filter(w => w.type === 'bug')
+  return {
+    title: 'Engenharia', subtitle: 'detalhe dos indicadores', initialTab,
+    footerAction: { label: 'Abrir board →', onClick: () => onNav('boards-list') },
+    tabs: [
+      { id: 'bugs', label: 'Bugs críticos', count: bugs.length,
+        intro: 'Bugs abertos com severidade crítica ou alta. Clique para abrir no board.',
+        table: { columns: [COL_ITEM, { key: 't', header: 'Bug' }, COL_PROJ, { key: 'sev', header: 'Severidade', kind: 'pill' }, COL_ST],
+          rows: bugs.map(w => itemRow(w, { key: w.key, t: w.title, sev: sevLabel(w), st: statusConfig(w.status).label })),
+          emptyText: 'Nenhum bug crítico aberto. 🟢' } },
+      { id: 'lead', label: 'Lead Time', count: num(d?.leadTimeDias, 'd'),
+        intro: 'Tempo médio do início à conclusão. Abaixo, os itens em revisão — onde o tempo costuma ficar preso.',
+        metrics: [{ v: num(d?.leadTimeDias, 'd'), k: 'Lead time', c: T.accent }, { v: num(d?.cycleTimeDias, 'd'), k: 'Cycle time' }, { v: String(review.length), k: 'Em revisão' }],
+        table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, { key: 'who', header: 'Responsável', kind: 'muted' }, { key: 'age', header: 'Parado há', kind: 'muted' }],
+          rows: review.map(w => itemRow(w, { key: w.key, t: w.title, who: w.assignee?.name ?? '—', age: `${w.days_blocked ?? 0}d` })),
+          emptyText: 'Nada preso em revisão. 🟢' },
+        note: review.length ? { text: 'Boa parte do tempo fica no code review. Se rolar limitar quantas revisões acontecem ao mesmo tempo, o lead time tende a cair.' } : undefined },
+      { id: 'vazao', label: 'Vazão', count: num(d?.vazaoSemana, '/sem'),
+        intro: 'Itens concluídos por semana e os já entregues no escopo.',
+        metrics: [{ v: num(d?.vazaoSemana, '/sem'), k: 'Vazão', c: T.accent }, { v: String(done.length), k: 'Concluídos (escopo)' }],
+        table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, { key: 'pts', header: 'Pts', kind: 'muted' }],
+          rows: done.slice(0, 30).map(w => itemRow(w, { key: w.key, t: w.title, pts: w.points != null ? String(w.points) : '—' })),
+          emptyText: 'Nada concluído ainda neste escopo.' } },
+      { id: 'rework', label: '% Retrabalho', count: num(d?.taxaBugsPct, '%'),
+        intro: 'Percentual de esforço em bugs. Abaixo, os bugs do escopo.',
+        metrics: [{ v: num(d?.taxaBugsPct, '%'), k: 'Retrabalho (bugs)', c: (d?.taxaBugsPct ?? 0) > 20 ? T.warn : T.accent }, { v: String(allBugs.length), k: 'Bugs no escopo' }],
+        table: { columns: [COL_ITEM, { key: 't', header: 'Bug' }, COL_PROJ, { key: 'sev', header: 'Severidade', kind: 'pill' }, COL_ST],
+          rows: allBugs.map(w => itemRow(w, { key: w.key, t: w.title, sev: sevLabel(w), st: statusConfig(w.status).label })),
+          emptyText: 'Sem bugs no escopo. 🟢' },
+        note: { text: 'O retrabalho costuma subir quando o requisito muda no meio da sprint — fechar o escopo logo após o planning ajuda a segurar.' } },
+    ],
+  }
+}
+
+/** Modal do Product Owner (título neutro "Backlog & Entregas"). */
+function buildBacklogDetail(initialTab: number, onNav: (v: string, t?: string) => void): KpiDetailConfig {
+  const agg = liveAggregates()
+  const ready = scopedItems(getReadyItems())
+  const backlog = scopedItems(getBacklogWithAlerts())
+  return {
+    title: 'Backlog & Entregas', subtitle: 'detalhe dos indicadores', initialTab,
+    footerAction: { label: 'Abrir backlog →', onClick: () => onNav('list') },
+    tabs: [
+      { id: 'ready', label: 'Cobertura Ready', count: ready.length,
+        intro: 'Histórias prontas para desenvolvimento (refinadas). Clique para abrir no board.',
+        metrics: [{ v: String(ready.length), k: 'Prontas', c: T.success }],
+        table: { columns: [COL_ITEM, { key: 't', header: 'História' }, COL_PROJ, COL_ST, { key: 'pts', header: 'Pts', kind: 'muted' }],
+          rows: ready.map(w => itemRow(w, { key: w.key, t: w.title, st: statusConfig(w.status).label, pts: w.points != null ? String(w.points) : '—' })),
+          emptyText: 'Nada pronto para iniciar neste escopo.' } },
+      { id: 'backlog', label: 'Saúde do backlog', count: backlog.length,
+        intro: 'Itens do backlog com algum alerta (sem estimativa, sem critério ou parados). Clique para abrir.',
+        table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_ST],
+          rows: backlog.map(w => itemRow(w, { key: w.key, t: w.title, st: statusConfig(w.status).label })),
+          emptyText: 'Backlog sem itens em alerta. 🟢' },
+        note: backlog.length ? { text: 'Um refino focado nos itens em alerta deixa o backlog bem mais previsível.' } : undefined },
+      { id: 'cf', label: 'Criado × Finalizado', count: `${agg?.consolidatedPct ?? 0}%`,
+        intro: 'Volume planejado vs. concluído no escopo carregado.',
+        metrics: [{ v: String(agg?.planned ?? 0), k: 'Planejado' }, { v: String(agg?.done ?? 0), k: 'Concluído', c: T.success }, { v: `${agg?.consolidatedPct ?? 0}%`, k: 'Aderência' }],
+        note: { insight: true, text: 'Para stakeholders: o time conclui a maior parte do que entra no escopo. O gráfico por sprint/projeto entra numa próxima fatia.' } },
+    ],
+  }
+}
+
+/** Modal genérico "Bloqueados" (card compartilhado por vários papéis). */
+function buildBlockedDetail(onNav: (v: string, t?: string) => void): KpiDetailConfig {
+  const blocked = scopedItems(getBlockedItems())
+  return {
+    title: 'Bloqueados', subtitle: 'itens aguardando desbloqueio', initialTab: 0,
+    footerAction: { label: 'Abrir board →', onClick: () => onNav('boards-list') },
+    tabs: [{ id: 'blk', label: 'Bloqueados', count: blocked.length,
+      intro: 'Itens parados aguardando desbloqueio: com quem estão e há quanto tempo. Clique para abrir no board.',
+      table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, { key: 'who', header: 'Com quem', kind: 'muted' }, { key: 'age', header: 'Parado há', kind: 'pill' }],
+        rows: blocked.map(w => itemRow(w, { key: w.key, t: w.title, who: w.assignee?.name ?? '—', age: `${w.days_blocked ?? 0}d` })),
+        emptyText: 'Nenhum item bloqueado. 🟢' },
+      note: blocked.length ? { text: 'Os que dependem de áreas externas merecem acompanhamento mais de perto.' } : undefined }],
+  }
+}
+
+/** Modal genérico "Previsibilidade" (card compartilhado PMO/PM). */
+function buildPredictabilityDetail(): KpiDetailConfig {
+  const agg = liveAggregates()
+  return {
+    title: 'Previsibilidade', subtitle: 'planejado vs. entregue', initialTab: 0,
+    tabs: [{ id: 'prev', label: 'Previsibilidade', count: `${agg?.predictability ?? 0}%`,
+      intro: 'Percentual do planejado que o time efetivamente entregou.',
+      metrics: [{ v: `${agg?.predictability ?? 0}%`, k: 'Previsibilidade', c: (agg?.predictability ?? 0) < 80 ? T.warn : T.success }, { v: `${agg?.consolidatedPct ?? 0}%`, k: 'Consolidado' }, { v: String(agg?.velocityAvg ?? 0), k: 'Velocity média' }],
+      note: { insight: true, text: 'Para stakeholders: acima de 80% indica estimativas confiáveis. A tendência por sprint (linha) entra numa próxima fatia.' } }],
   }
 }
 
