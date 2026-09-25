@@ -12,7 +12,7 @@ import {
   MiniBarChart, MiniSparkline, SCard, ConditionalTag, Av,
   type WorkItem,
 } from '@/components/ds/DashboardKit'
-import { BurndownChart } from '@/data/reportRegistry'
+import { BurndownChart, ReportMiniViz, useReportsData } from '@/data/reportRegistry'
 import {
   liveItems, liveProjects, liveAggregates, liveCurrentSprintName,
   getBlockedItems, getSprintItems, getReadyItems, getTestingItems, getBacklogWithAlerts,
@@ -115,6 +115,77 @@ function ratioViz(part: number, total: number, color: string) {
       <span style={{ fontSize: 11, fontWeight: 600, color: T.text2, minWidth: 30, textAlign: 'right' }}>{pct}%</span>
     </div>
   )
+}
+
+/**
+ * Barras de QUANTIDADE (não %) — uma barra colorida por categoria com o número no
+ * topo. Usada nos KPIs do PMO para ler o volume por saúde (verde / âmbar / vermelho).
+ */
+function qtyBars(items: { value: number; color: string }[]) {
+  const max = Math.max(1, ...items.map(i => i.value))
+  const W = 96, H = 44, P = 3, labelH = 13
+  const n = items.length
+  const gap = 10
+  const bw = Math.max(10, (W - P * 2 - gap * (n - 1)) / n)
+  const chartH = H - labelH
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+      {items.map((it, i) => {
+        const x = P + i * (bw + gap)
+        const h = Math.max(2, (it.value / max) * (chartH - P))
+        const y = P + labelH + (chartH - P - h)
+        return (
+          <g key={i}>
+            <text x={x + bw / 2} y={y - 3} textAnchor="middle" fontSize={11} fontWeight={700}
+              fill={it.value === 0 ? T.text3 : T.text1}>{it.value}</text>
+            <rect x={x} y={y} width={bw} height={h} rx={2}
+              fill={it.color} fillOpacity={it.value === 0 ? 0.22 : 0.9} />
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+/**
+ * Mini "planejado × concluído": o contorno é o planejado (committed) e o
+ * preenchido é o concluído (completed), um dentro do outro, por sprint.
+ */
+function plannedDoneViz(committed: number[], completed: number[]) {
+  const n = committed.length
+  if (n === 0) return null
+  const W = 96, H = 44, P = 3, gap = 2
+  const max = Math.max(1, ...committed, ...completed)
+  const bw = Math.max(3, (W - P * 2 - gap * (n - 1)) / n)
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+      {committed.map((cv, i) => {
+        const x = P + i * (bw + gap)
+        const ch = Math.max(1, (cv / max) * (H - P * 2))
+        const dh = Math.max(0, ((completed[i] ?? 0) / max) * (H - P * 2))
+        return (
+          <g key={i}>
+            <rect x={x} y={H - P - ch} width={bw} height={ch} rx={1.5} fill="none" stroke={T.accent} strokeWidth={1} opacity={0.5} />
+            <rect x={x} y={H - P - dh} width={bw} height={dh} rx={1.5} fill={T.accent} opacity={0.9} />
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+/**
+ * Agrega as séries reais de velocity (planejado/concluído por sprint) já no
+ * escopo do ReportsDataProvider do board. Sem provider → séries vazias (fallback).
+ */
+function useDeliverySeries() {
+  const { data } = useReportsData()
+  const byP = data?.velocity.byProject ?? []
+  const sprintCount = byP.reduce((m, b) => Math.max(m, b.committed.length), 0)
+  const committed = Array.from({ length: sprintCount }, (_, i) => byP.reduce((a, b) => a + (b.committed[i] ?? 0), 0))
+  const completed = Array.from({ length: sprintCount }, (_, i) => byP.reduce((a, b) => a + (b.completed[i] ?? 0), 0))
+  const predictability = committed.map((cv, i) => (cv > 0 ? Math.round((completed[i] / cv) * 100) : 0))
+  return { committed, completed, predictability }
 }
 
 // ─── Queues ───────────────────────────────────────────────────────────────────
@@ -498,67 +569,73 @@ export function KpiAdminInvitesWidget(props: WidgetCtx) {
 // ─── KPIs · PMO ───────────────────────────────────────────────────────────────
 
 export function KpiPmoActiveProjectsWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
   const agg = liveAggregates()
   const rags = scopedProjects(agg?.rag ?? [])
   const healthy = rags.filter(r => r.rag === 'healthy').length
+  const blocked = rags.filter(r => r.rag === 'blocked').length
+  const atRisk = Math.max(0, rags.length - healthy - blocked)
   return (
     <KpiCard
       value={String(scopedOr(agg?.counts?.activeProjects ?? 0, rags.length))} label="Projetos Ativos"
-      sub={`${healthy} no prazo`} disclaimer="projetos ativos no tenant"
-      miniViz={ratioViz(healthy, rags.length, T.success)}
+      sub={`${healthy} no prazo`} disclaimer="projetos por saúde: no prazo / em risco / bloqueados"
+      miniViz={qtyBars([{ value: healthy, color: T.success }, { value: atRisk, color: T.warn }, { value: blocked, color: T.crit }])}
       onClick={() => doNav(ctx, 'projects-list')}
     />
   )
 }
 
 export function KpiPmoAtRiskWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
   const agg = liveAggregates()
   const rags = scopedProjects(agg?.rag ?? [])
   const atRisk = scopedOr(agg?.counts?.atRisk ?? 0, rags.filter(r => r.rag !== 'healthy').length)
   const blocked = rags.filter(r => r.rag === 'blocked').length
+  const warnOnly = Math.max(0, atRisk - blocked)
   return (
     <KpiCard
       value={String(atRisk)} label="Em Risco / Atrasados"
-      sub={`${blocked} crítico(s)`} disclaimer="projetos com RAG amarelo ou vermelho"
+      sub={`${blocked} crítico(s)`} disclaimer="quantidade: em risco (âmbar) / crítico (vermelho)"
       color={T.warn} alert={atRisk > 0}
-      miniViz={ratioViz(atRisk, rags.length, T.warn)}
+      miniViz={qtyBars([{ value: warnOnly, color: T.warn }, { value: blocked, color: T.crit }])}
       onClick={() => doNav(ctx, 'projects-list')}
     />
   )
 }
 
 export function KpiPredictabilityWidget(props: WidgetCtx) {
-  const { openDetail } = props
   const ctx = props
+  const { predictability } = useDeliverySeries()
   const agg = liveAggregates()
   const pct = agg?.predictability ?? 0
+  const color = pct < 80 ? T.warn : T.success
   return (
     <KpiCard
       value={`${pct}%`} label="Previsibilidade"
-      help="Percentual do planejado que foi efetivamente entregue."
-      sub="meta: 80%" disclaimer="% do planejado efetivamente entregue"
-      color={pct < 80 ? T.warn : T.success} alert={pct < 80}
-      miniViz={ratioViz(pct, 100, pct < 80 ? T.warn : T.success)}
+      help="Percentual do planejado que foi efetivamente entregue, sprint a sprint."
+      sub="meta: 80%" disclaimer="tendência do % planejado entregue por sprint"
+      color={color} alert={pct < 80}
+      miniViz={predictability.length > 1
+        ? <ReportMiniViz viz={{ kind: 'line', values: predictability, color }} />
+        : ratioViz(pct, 100, color)}
       onClick={() => doOpenDetail(ctx, 'velocity')}
     />
   )
 }
 
 export function KpiPlannedVsDoneWidget(props: WidgetCtx) {
-  const { openDetail } = props
   const ctx = props
+  const { committed, completed } = useDeliverySeries()
   const agg = liveAggregates()
   const pct = agg?.consolidatedPct ?? 0
   return (
     <KpiCard
       value={`${pct}%`} label="Planejado × Concluído"
       sub={`${agg?.done ?? 0}/${agg?.planned ?? 0} itens`}
-      disclaimer="itens concluídos sobre o total planejado"
-      miniViz={ratioViz(pct, 100, T.accent)}
+      disclaimer="concluído (preenchido) dentro do planejado (contorno), por sprint"
+      miniViz={committed.length > 0
+        ? plannedDoneViz(committed, completed)
+        : ratioViz(pct, 100, T.accent)}
       onClick={() => doOpenDetail(ctx, 'velocity')}
     />
   )

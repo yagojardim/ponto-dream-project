@@ -208,13 +208,13 @@ function VelocityMini({ item }: { item: VelItem }) {
   const totC = item.committed.reduce((a, b) => a + b, 0), totD = item.completed.reduce((a, b) => a + b, 0)
   const prev = totC ? Math.round((totD / totC) * 100) : 0
   return (
-    <div style={{ border: `1px solid ${T.border}`, borderRadius: 11, overflow: 'hidden', background: T.bgSurface }}>
-      <div style={{ padding: `${px(9)} ${px(11)} ${px(3)}` }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-        <div style={{ fontSize: 10.5, color: T.text3 }}>média {avg} pts · previsib. <b style={{ color: prev >= 80 ? T.success : T.warn }}>{prev}%</b></div>
+    <div style={{ border: `1px solid ${T.border}`, borderRadius: 11, overflow: 'hidden', background: T.bgSurface, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
+      <div style={{ padding: `${px(7)} ${px(10)} ${px(2)}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+        <div style={{ fontSize: 10, color: T.text3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>média {avg} pts · previsib. <b style={{ color: prev >= 80 ? T.success : T.warn }}>{prev}%</b></div>
       </div>
-      <div style={{ padding: `${px(2)} ${px(8)} ${px(8)}` }}>
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+      <div style={{ padding: `${px(2)} ${px(8)} ${px(6)}`, flex: '1 1 auto', minHeight: 0, display: 'flex' }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
           {[0, Math.round(max / 1.15 / 2)].map(t => <line key={t} x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} stroke={T.border} strokeWidth={0.4} />)}
           <line x1={PAD.left} x2={W - PAD.right} y1={y(avg)} y2={y(avg)} stroke={T.text3} strokeDasharray="4,3" />
           <text x={W - PAD.right} y={y(avg) - 2} textAnchor="end" fontSize={7} fill={T.text3}>méd {avg}</text>
@@ -243,16 +243,16 @@ function VelocityGrid({ items }: { items: VelItem[] }) {
   const totD = items.reduce((a, it) => a + it.completed.reduce((x, y) => x + y, 0), 0)
   const prev = totC ? Math.round((totD / totC) * 100) : 0
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: px(10), height: '100%', minHeight: 0, overflowY: 'auto', paddingRight: 2 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: px(14), padding: `${px(8)} ${px(10)}`, background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 10, flexShrink: 0 }}>
-        <div><div style={{ fontSize: 18, fontWeight: 750 }}>{avgAll}</div><div style={{ fontSize: 10, color: T.text3 }}>Velocity média (pts)</div></div>
-        <div><div style={{ fontSize: 18, fontWeight: 750, color: prev >= 80 ? T.success : T.warn }}>{prev}%</div><div style={{ fontSize: 10, color: T.text3 }}>Previsibilidade</div></div>
-        <div><div style={{ fontSize: 18, fontWeight: 750 }}>{items.length}</div><div style={{ fontSize: 10, color: T.text3 }}>Projeto{items.length !== 1 ? 's' : ''}</div></div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: px(8), height: '100%', minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: px(14), padding: `${px(6)} ${px(10)}`, background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 10, flexShrink: 0 }}>
+        <div><div style={{ fontSize: 16, fontWeight: 750 }}>{avgAll}</div><div style={{ fontSize: 9.5, color: T.text3 }}>Velocity média (pts)</div></div>
+        <div><div style={{ fontSize: 16, fontWeight: 750, color: prev >= 80 ? T.success : T.warn }}>{prev}%</div><div style={{ fontSize: 9.5, color: T.text3 }}>Previsibilidade</div></div>
+        <div><div style={{ fontSize: 16, fontWeight: 750 }}>{items.length}</div><div style={{ fontSize: 9.5, color: T.text3 }}>Projeto{items.length !== 1 ? 's' : ''}</div></div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: px(12) }}>
+      <div style={{ flex: '1 1 auto', minHeight: 0, overflow: 'hidden', display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${px(150)}, 1fr))`, gridAutoRows: '1fr', gap: px(8) }}>
         {items.map(it => <VelocityMini key={it.name} item={it} />)}
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', fontSize: 10.5, color: T.text3 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', fontSize: 10.5, color: T.text3, flexShrink: 0 }}>
         <span><span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: 2, background: T.accent, marginRight: 5, verticalAlign: 'middle' }} />Entregue</span>
         <span><span style={{ display: 'inline-block', width: 9, height: 9, border: `1.5px solid ${T.text3}`, borderRadius: 2, marginRight: 5, verticalAlign: 'middle' }} />Comprometido</span>
         <span><span style={{ display: 'inline-block', width: 14, borderTop: `2px dashed ${T.text3}`, marginRight: 5, verticalAlign: 'middle' }} />Média</span>
