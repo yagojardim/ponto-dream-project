@@ -626,6 +626,59 @@ export async function fetchAdminKpis(projectIds?: string[]): Promise<AdminKpis> 
 }
 
 
+// ─── Admin Master · Início (quantidades + crescimento de usuários) ────────────
+export interface AdminInicioData {
+  /** Projetos por situação (exclusivas: arquivado tem prioridade sobre status). */
+  projects: { active: number; finished: number; archived: number }
+  /** Boards por situação. */
+  boards: { active: number; archived: number }
+  /** Curva ACUMULADA de perfis cadastrados por semana (8 semanas, do mais antigo ao atual). */
+  signupsWeekly: number[]
+}
+
+/**
+ * Dados dos cards da Início do Admin (visão de quantidade, não de %).
+ * Lê projetos/boards SEM filtrar arquivados (para contá-los) e o created_at dos
+ * perfis para montar a curva de crescimento. Sempre por tenant, nunca cross-tenant.
+ */
+export async function fetchAdminInicioData(): Promise<AdminInicioData> {
+  const tid = getActiveTenantId()
+  const [projects, boards, profiles] = await Promise.all([
+    supabase.from('projects').select('status, archived_at').eq('tenant_id', tid),
+    supabase.from('boards').select('status, archived_at').eq('tenant_id', tid),
+    supabase.from('profiles').select('created_at').eq('tenant_id', tid).is('archived_at', null),
+  ])
+  const failed = [
+    ['projects', projects.error], ['boards', boards.error], ['profiles', profiles.error],
+  ].find(([, e]) => e) as [string, { message: string }] | undefined
+  if (failed) throw new Error(missingTableMessage(failed[0], failed[1].message))
+
+  const pr = (projects.data ?? []) as { status: string | null; archived_at: string | null }[]
+  const br = (boards.data ?? []) as { status: string | null; archived_at: string | null }[]
+  const st = (r: { status: string | null }) => (r.status ?? '').toLowerCase()
+
+  const proj = {
+    active: pr.filter(p => !p.archived_at && ['active', 'in_progress', 'em_andamento', 'planned'].includes(st(p))).length,
+    finished: pr.filter(p => !p.archived_at && ['completed', 'done', 'finished'].includes(st(p))).length,
+    archived: pr.filter(p => !!p.archived_at).length,
+  }
+  const brd = {
+    active: br.filter(b => !b.archived_at && st(b) !== 'archived').length,
+    archived: br.filter(b => !!b.archived_at || st(b) === 'archived').length,
+  }
+
+  const N = 8, wk = 7 * 86400000, now = Date.now()
+  const created = (profiles.data ?? [])
+    .map(p => new Date((p as { created_at: string }).created_at).getTime())
+    .filter(t => !Number.isNaN(t))
+  const signupsWeekly = Array.from({ length: N }, (_, i) => {
+    const weekEnd = now - (N - 1 - i) * wk
+    return created.filter(t => t <= weekEnd).length
+  })
+
+  return { projects: proj, boards: brd, signupsWeekly }
+}
+
 // ─── Product Owner mural cards ───────────────────────────────────────────────
 export interface PoCardMetrics {
   createdVsFinalized: {

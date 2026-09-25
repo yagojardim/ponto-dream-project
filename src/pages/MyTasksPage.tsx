@@ -9,6 +9,7 @@ import {
 import { WorkItemDetail } from '../components/WorkItemDetail'
 import { listMyQueue, type QueueItem } from '../data/db/myQueue'
 import { getActiveUser } from '../data/session'
+import { takeMyTasksFocus, type MyTasksFocus } from '../data/myTasksPrefilter'
 
 // ─── DB → UI mapping ─────────────────────────────────────────────────────────
 const DB_STATUS_TO_UI: Record<string, WorkStatus> = {
@@ -416,6 +417,7 @@ export default function MyTasksPage({ onNav }: { onNav?: (view: string, targetId
   const [sortBy, setSortBy]       = useState<SortBy>('priority')
   const [hideCompleted, setHide]  = useState(true)
   const [query, setQuery]         = useState('')
+  const [focus, setFocus]         = useState<MyTasksFocus | null>(() => takeMyTasksFocus())
 
   const user = getActiveUser()
 
@@ -448,8 +450,16 @@ export default function MyTasksPage({ onNav }: { onNav?: (view: string, targetId
     )
   }
 
+  if (focus === 'late') {
+    const today = new Date().toISOString().slice(0, 10)
+    filtered = filtered.filter(i => i.due_date && i.due_date <= today && i.status !== 'done')
+  } else if (focus === 'blocked') {
+    filtered = filtered.filter(i => i.status === 'blocked')
+  }
+
   const sorted = sortItems(filtered, sortBy)
   const groups = groupItems(sorted, groupBy, projectNames)
+  const FOCUS_LABEL: Record<MyTasksFocus, string> = { active: 'Em andamento', late: 'Atrasados', blocked: 'Bloqueados' }
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1100, margin: '0 auto' }}>
@@ -517,6 +527,17 @@ export default function MyTasksPage({ onNav }: { onNav?: (view: string, targetId
         hideCompleted={hideCompleted} onHideCompleted={setHide}
         query={query} onQuery={setQuery}
       />
+
+      {focus && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px' }}>
+          <span style={{ fontSize: 12, color: T.text2 }}>Foco:</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 500, color: T.text1, background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 20, padding: '4px 6px 4px 12px' }}>
+            {FOCUS_LABEL[focus]}
+            <button onClick={() => setFocus(null)} aria-label="Limpar foco"
+              style={{ width: 18, height: 18, borderRadius: '50%', border: 'none', background: 'transparent', color: T.text3, cursor: 'pointer', fontSize: 13, lineHeight: 1 }}>✕</button>
+          </span>
+        </div>
+      )}
 
       {/* Content */}
       <div style={{
