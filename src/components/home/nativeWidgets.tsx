@@ -14,6 +14,7 @@ import {
 } from '@/components/ds/DashboardKit'
 import { BurndownChart, ReportMiniViz, useReportsData } from '@/data/reportRegistry'
 import { PredictabilityChartLive, CreatedFinalizedChartLive } from '@/components/home/ModalCharts'
+import { RejectionTabLive, EvidenceTabLive, ReleasesTabLive, DeadlinesTabLive } from '@/components/home/InicioDetailLive'
 import {
   liveItems, liveProjects, liveAggregates, liveCurrentSprintName,
   getBlockedItems, getSprintItems, getReadyItems, getTestingItems, getBacklogWithAlerts,
@@ -722,7 +723,7 @@ export function KpiPmProgressWidget(props: WidgetCtx) {
       sub={`${done}/${sprint.length} itens concluídos`}
       disclaimer="% de tarefas concluídas na sprint ativa"
       miniViz={<BurndownChart variant="thumbnail" />}
-      onClick={() => doNav(ctx, 'project')}
+      onClick={() => doKpiDetail(ctx, buildPmDetail(0, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
@@ -737,7 +738,7 @@ export function KpiPmDeadlineWidget(props: WidgetCtx) {
       sub={rag?.periodEnd ? `Entrega: ${rag.periodEnd}` : 'sem data definida'}
       disclaimer="dias até a data de entrega planejada"
       miniViz={rag ? ratioViz(rag.pct, 100, T.accent) : undefined}
-      onClick={() => doNav(ctx, 'gantt')}
+      onClick={() => doKpiDetail(ctx, buildPmDetail(1, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
@@ -823,7 +824,7 @@ export function KpiPoReadyWidget(props: WidgetCtx) {
       sub={sprintPts > 0 ? 'pts prontos ÷ velocity' : 'sem sprint ativa'}
       disclaimer="pontos prontos ÷ velocidade média da sprint"
       miniViz={ratioViz(pct ?? 0, 100, T.accent)}
-      onClick={() => doKpiDetail(ctx, buildBacklogDetail(0, ctx.onNav))}
+      onClick={() => doKpiDetail(ctx, buildBacklogDetail(0, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
@@ -840,7 +841,7 @@ export function KpiBacklogHealthWidget(props: WidgetCtx) {
       disclaimer="itens saudáveis ÷ total de itens avaliáveis"
       color={pct < 60 ? T.warn : T.success} alert={pct < 60}
       miniViz={ratioViz(pct, 100, pct < 60 ? T.warn : T.success)}
-      onClick={() => doKpiDetail(ctx, buildBacklogDetail(1, ctx.onNav))}
+      onClick={() => doKpiDetail(ctx, buildBacklogDetail(1, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
@@ -856,7 +857,7 @@ export function KpiCreatedVsFinalizedWidget(props: WidgetCtx) {
       disclaimer="itens finalizados vs criados no(s) projeto(s) selecionado(s)"
       color={T.success}
       miniViz={<MiniBarChart data={m?.createdVsFinalized.weekly ?? []} showAvg={false} />}
-      onClick={() => doKpiDetail(ctx, buildBacklogDetail(2, ctx.onNav))}
+      onClick={() => doKpiDetail(ctx, buildBacklogDetail(2, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
@@ -873,7 +874,7 @@ export function KpiReleasesHealthWidget(props: WidgetCtx) {
       color={m?.releasesHealth.overdue ? T.warn : (m && m.releasesHealth.healthPct >= 70 ? T.success : T.warn)}
       alert={m?.releasesHealth.overdue ?? false}
       miniViz={<MiniBarChart data={m?.releasesHealth.perRelease ?? []} showAvg={false} />}
-      onClick={() => doNav(ctx, 'releases')}
+      onClick={() => doKpiDetail(ctx, buildBacklogDetail(3, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
@@ -1153,7 +1154,7 @@ function sevLabel(w: WorkItem): string {
 }
 
 /** Config do modal de detalhe do QA (abas com dado REAL: fila de teste + bugs). */
-function buildQaDetail(initialTab: number, onNav: (v: string, t?: string) => void): KpiDetailConfig {
+function buildQaDetail(initialTab: number, onNav: (v: string, t?: string) => void, projIds: string[]): KpiDetailConfig {
   const testing = scopedItems(getTestingItems())
   const bugs = scopedItems(liveItems()).filter(w => w.type === 'bug' && w.status !== 'done' && (w.priority === 'critical' || w.priority === 'high'))
   return {
@@ -1190,6 +1191,16 @@ function buildQaDetail(initialTab: number, onNav: (v: string, t?: string) => voi
           rows: bugs.map(w => ({ item: w, project: itemProject(w), cells: { key: w.key, t: w.title, sev: sevLabel(w), st: w.status } })),
           emptyText: 'Nenhum bug crítico aberto neste escopo. 🟢',
         },
+      },
+      {
+        id: 'rejeicao', label: 'Taxa de rejeição',
+        intro: 'Itens devolvidos do QA para o dev (do histórico de status). Quanto mais devoluções, mais vale refinar o combinado antes.',
+        live: <RejectionTabLive projectIds={projIds} />,
+      },
+      {
+        id: 'evidencias', label: 'Evidências pendentes',
+        intro: 'Bugs abertos ainda sem evidência (anexo). Anexar antes de fechar facilita a auditoria da release.',
+        live: <EvidenceTabLive projectIds={projIds} />,
       },
     ],
   }
@@ -1291,7 +1302,7 @@ function buildEngDetail(initialTab: number, onNav: (v: string, t?: string) => vo
 }
 
 /** Modal do Product Owner (título neutro "Backlog & Entregas"). */
-function buildBacklogDetail(initialTab: number, onNav: (v: string, t?: string) => void): KpiDetailConfig {
+function buildBacklogDetail(initialTab: number, onNav: (v: string, t?: string) => void, projIds: string[]): KpiDetailConfig {
   const agg = liveAggregates()
   const ready = scopedItems(getReadyItems())
   const backlog = scopedItems(getBacklogWithAlerts())
@@ -1316,6 +1327,10 @@ function buildBacklogDetail(initialTab: number, onNav: (v: string, t?: string) =
         metrics: [{ v: String(agg?.planned ?? 0), k: 'Planejado' }, { v: String(agg?.done ?? 0), k: 'Concluído', c: T.success }, { v: `${agg?.consolidatedPct ?? 0}%`, k: 'Aderência' }],
         chart: <CreatedFinalizedChartLive />, chartTitle: 'Criado (contorno) × Finalizado (preenchido) por sprint',
         note: { insight: true, text: 'Para stakeholders: o time conclui a maior parte do que entra por sprint. Quando o preenchido acompanha o contorno, o fluxo está saudável.' } },
+      { id: 'releases', label: 'Saúde das releases',
+        intro: 'Conclusão média das releases ativas e quais estão atrasadas.',
+        live: <ReleasesTabLive projectIds={projIds} />,
+        note: { insight: true, text: 'Para stakeholders: um atraso costuma vir de dependência externa, não de capacidade do time — vale explicar o motivo junto do número.' } },
     ],
   }
 }
@@ -1348,6 +1363,31 @@ function buildPredictabilityDetail(): KpiDetailConfig {
   }
 }
 
+function ragLabel(r: string): string { return r === 'healthy' ? 'Saudável' : r === 'blocked' ? 'Bloqueado' : 'Em risco' }
+
+/** Modal do Project Manager (título neutro "Projeto"): Progresso + Prazo. */
+function buildPmDetail(initialTab: number, onNav: (v: string, t?: string) => void, projIds: string[]): KpiDetailConfig {
+  const agg = liveAggregates()
+  const rags = scopedProjects(agg?.rag ?? [])
+  return {
+    title: 'Projeto', subtitle: 'detalhe dos indicadores', initialTab,
+    footerAction: { label: 'Abrir Gantt →', onClick: () => onNav('gantt') },
+    tabs: [
+      { id: 'prog', label: 'Progresso', count: `${agg?.consolidatedPct ?? 0}%`,
+        intro: 'Andamento do projeto em itens concluídos, a evolução por sprint e a saúde por projeto.',
+        metrics: [{ v: `${agg?.consolidatedPct ?? 0}%`, k: 'Concluído', c: T.accent }, { v: `${agg?.done ?? 0}/${agg?.planned ?? 0}`, k: 'Itens' }, { v: String(rags.length), k: 'Projetos' }],
+        chart: <CreatedFinalizedChartLive />, chartTitle: 'Criado (contorno) × Finalizado (preenchido) por sprint',
+        table: { columns: [{ key: 't', header: 'Projeto', kind: 'project' }, { key: 'st', header: 'Saúde', kind: 'pill' }, { key: 'pct', header: 'Progresso', kind: 'muted' }],
+          rows: rags.map(r => ({ project: { id: r.id, name: r.name, color: r.color }, cells: { t: r.name, st: ragLabel(r.rag), pct: `${r.pct}%` } })),
+          emptyText: 'Nenhum projeto no escopo.' } },
+      { id: 'prazo', label: 'Prazo',
+        intro: 'Prazo por projeto: dias restantes e % decorrido, das datas de início/fim cadastradas no projeto.',
+        live: <DeadlinesTabLive projectIds={projIds} />,
+        note: { text: 'Projetos sem data de fim não aparecem aqui — vale cadastrar o período para acompanhar o prazo.' } },
+    ],
+  }
+}
+
 export function KpiQaQueueWidget(props: WidgetCtx) {
   const ctx = props
   const testing = scopedItems(getTestingItems())
@@ -1356,7 +1396,7 @@ export function KpiQaQueueWidget(props: WidgetCtx) {
       value={String(testing.length)} label="Aguardando Teste" sub="Ready for QA"
       disclaimer="itens em fila de QA ou em homologação ativa"
       miniViz={<MiniBarChart data={[{ label: 'S10', value: 8 }, { label: 'S11', value: 10 }, { label: 'S12', value: 7 }, { label: 'S13', value: testing.length, current: true }]} showAvg={false} />}
-      onClick={() => doKpiDetail(ctx, buildQaDetail(0, ctx.onNav))}
+      onClick={() => doKpiDetail(ctx, buildQaDetail(0, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
@@ -1369,33 +1409,31 @@ export function KpiQaBugsWidget(props: WidgetCtx) {
       value={String(crit)} label="Bugs Críticos" sub={crit > 0 ? 'requer atenção' : 'tudo ok'}
       disclaimer="bugs P0/P1 bloqueando entrega da sprint" color={T.crit} alert={crit > 0}
       miniViz={<MiniSparkline data={[{ label: 'S8', value: 9 }, { value: 7 }, { value: 8 }, { value: 6 }, { value: 5 }, { label: 'S13', value: crit }]} color="#ef4444" />}
-      onClick={() => doKpiDetail(ctx, buildQaDetail(1, ctx.onNav))}
+      onClick={() => doKpiDetail(ctx, buildQaDetail(1, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
 
 export function KpiQaRejectionWidget(props: WidgetCtx) {
-  const { openDetail } = props
   const ctx = props
   return (
     <KpiCard
       value="28%" label="Taxa de Rejeição" sub="meta: <15%"
       disclaimer="% de itens devolvidos ao Dev pelo QA" color={T.warn} alert
       miniViz={<MiniSparkline data={[{ label: 'S8', value: 18 }, { value: 20 }, { value: 22 }, { value: 25 }, { value: 26 }, { label: 'S13', value: 28 }]} color="#f5a524" />}
-      onClick={() => doOpenDetail(ctx, 'leadtime')}
+      onClick={() => doKpiDetail(ctx, buildQaDetail(2, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }
 
 export function KpiQaEvidenceWidget(props: WidgetCtx) {
-  const { openBoard } = props
   const ctx = props
   return (
     <KpiCard
       value="6" label="Evidências Pendentes" sub="dev não submeteu"
       disclaimer="bugs sem evidência de reprodução registrada" color={T.warn}
       miniViz={<MiniBarChart data={[{ label: 'S10', value: 4 }, { label: 'S11', value: 7 }, { label: 'S12', value: 5 }, { label: 'S13', value: 6, current: true }]} showAvg={false} />}
-      onClick={() => doOpenBoard(ctx)}
+      onClick={() => doKpiDetail(ctx, buildQaDetail(3, ctx.onNav, [...ctx.projectIds]))}
     />
   )
 }

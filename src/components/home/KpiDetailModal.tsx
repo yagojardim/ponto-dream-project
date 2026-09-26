@@ -35,6 +35,8 @@ export interface KpiDetailTab {
   chart?: ReactNode
   chartTitle?: string
   table?: KpiDetailTable
+  /** Conteúdo assíncrono (carrega do banco de dentro do modal). Renderizado após métricas/gráfico. */
+  live?: ReactNode
   /** Sugestão (💡) ou insight (📈), sempre em tom não-impositivo. */
   note?: { text: string; insight?: boolean }
 }
@@ -157,6 +159,8 @@ export function KpiDetailModal({ config, projects, onOpenItem, onClose }: KpiDet
           )}
 
           {t.table && <DetailTable table={t.table} filterRows={filterRows} onOpenItem={item => { onClose(); onOpenItem(item) }} />}
+
+          {t.live}
 
           {t.note && (
             <div style={{
