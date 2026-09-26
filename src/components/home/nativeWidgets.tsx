@@ -13,6 +13,7 @@ import {
   type WorkItem, type ProjectOption,
 } from '@/components/ds/DashboardKit'
 import { BurndownChart, ReportMiniViz, useReportsData } from '@/data/reportRegistry'
+import { PredictabilityChartLive, CreatedFinalizedChartLive } from '@/components/home/ModalCharts'
 import {
   liveItems, liveProjects, liveAggregates, liveCurrentSprintName,
   getBlockedItems, getSprintItems, getReadyItems, getTestingItems, getBacklogWithAlerts,
@@ -1222,6 +1223,7 @@ function buildScrumDetail(initialTab: number, onNav: (v: string, t?: string) => 
       { id: 'saude', label: 'Saúde da sprint', count: `${pct}%`,
         intro: 'Progresso da sprint e o que ainda não fechou. Clique num item para abri-lo no board.',
         metrics: [{ v: `${pct}%`, k: 'Concluído', c: T.success }, { v: `${tDone}/${tTotal}`, k: 'Itens' }, { v: String(notDone.length), k: 'Em aberto', c: notDone.length ? T.warn : T.text2 }],
+        chart: <BurndownChart variant="full" />, chartTitle: 'Burndown da sprint',
         table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_ST, { key: 'pts', header: 'Pts', kind: 'muted' }],
           rows: notDone.map(w => itemRow(w, { key: w.key, t: w.title, st: statusConfig(w.status).label, pts: w.points != null ? String(w.points) : '—' })),
           emptyText: 'Sprint fechada — nada em aberto. 🟢' } },
@@ -1273,6 +1275,7 @@ function buildEngDetail(initialTab: number, onNav: (v: string, t?: string) => vo
       { id: 'vazao', label: 'Vazão', count: num(d?.vazaoSemana, '/sem'),
         intro: 'Itens concluídos por semana e os já entregues no escopo.',
         metrics: [{ v: num(d?.vazaoSemana, '/sem'), k: 'Vazão', c: T.accent }, { v: String(done.length), k: 'Concluídos (escopo)' }],
+        chart: <MiniBarChart data={weeklyThroughput()} />, chartTitle: 'Concluídos por semana',
         table: { columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, { key: 'pts', header: 'Pts', kind: 'muted' }],
           rows: done.slice(0, 30).map(w => itemRow(w, { key: w.key, t: w.title, pts: w.points != null ? String(w.points) : '—' })),
           emptyText: 'Nada concluído ainda neste escopo.' } },
@@ -1311,7 +1314,8 @@ function buildBacklogDetail(initialTab: number, onNav: (v: string, t?: string) =
       { id: 'cf', label: 'Criado × Finalizado', count: `${agg?.consolidatedPct ?? 0}%`,
         intro: 'Volume planejado vs. concluído no escopo carregado.',
         metrics: [{ v: String(agg?.planned ?? 0), k: 'Planejado' }, { v: String(agg?.done ?? 0), k: 'Concluído', c: T.success }, { v: `${agg?.consolidatedPct ?? 0}%`, k: 'Aderência' }],
-        note: { insight: true, text: 'Para stakeholders: o time conclui a maior parte do que entra no escopo. O gráfico por sprint/projeto entra numa próxima fatia.' } },
+        chart: <CreatedFinalizedChartLive />, chartTitle: 'Criado (contorno) × Finalizado (preenchido) por sprint',
+        note: { insight: true, text: 'Para stakeholders: o time conclui a maior parte do que entra por sprint. Quando o preenchido acompanha o contorno, o fluxo está saudável.' } },
     ],
   }
 }
@@ -1339,7 +1343,8 @@ function buildPredictabilityDetail(): KpiDetailConfig {
     tabs: [{ id: 'prev', label: 'Previsibilidade', count: `${agg?.predictability ?? 0}%`,
       intro: 'Percentual do planejado que o time efetivamente entregou.',
       metrics: [{ v: `${agg?.predictability ?? 0}%`, k: 'Previsibilidade', c: (agg?.predictability ?? 0) < 80 ? T.warn : T.success }, { v: `${agg?.consolidatedPct ?? 0}%`, k: 'Consolidado' }, { v: String(agg?.velocityAvg ?? 0), k: 'Velocity média' }],
-      note: { insight: true, text: 'Para stakeholders: acima de 80% indica estimativas confiáveis. A tendência por sprint (linha) entra numa próxima fatia.' } }],
+      chart: <PredictabilityChartLive />, chartTitle: '% do planejado entregue, por sprint',
+      note: { insight: true, text: 'Para stakeholders: acima de 80% indica estimativas confiáveis. A linha mostra a evolução sprint a sprint.' } }],
   }
 }
 
