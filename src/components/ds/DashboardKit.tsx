@@ -19,7 +19,7 @@ import { MOCK_USERS } from '../../data/session'
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type RagStatus = 'healthy' | 'risk' | 'blocked'
 export type WorkStatus =
-  | 'backlog' | 'todo' | 'in-progress' | 'in-review' | 'done'
+  | 'backlog' | 'todo' | 'ux-ui' | 'in-progress' | 'in-review' | 'done'
   | 'blocked' | 'ready' | 'testing' | 'cancelled'
 
 export interface WorkItem {
@@ -48,6 +48,7 @@ export function statusConfig(s: WorkStatus): { label: string; color: string } {
   const map: Record<WorkStatus, { label: string; color: string }> = {
     backlog:     { label: 'Backlog',        color: T.neutral },
     todo:        { label: 'A fazer',        color: T.text3 },
+    'ux-ui':     { label: 'UX/UI',          color: T.purple },
     'in-progress':{ label: 'Em Dev',        color: T.accent },
     'in-review': { label: 'Em Revisão',     color: T.indigo },
     done:        { label: 'Concluído',      color: T.success },

@@ -349,15 +349,14 @@ export function ReviewQueueWidget(props: WidgetCtx) {
 export function DesignQueueWidget(props: WidgetCtx) {
   const { openBoard, onOpenItem } = props
   const ctx = props
-  const items = scopedItems(liveItems()).filter(w =>
-    w.squad_id === 'squad_design' || (w.tags ?? []).some(t => ['design', 'handoff', 'frontend'].includes(t))
-  )
+  // Itens na coluna UX/UI do board (o P.O. move as demandas de design para lá).
+  const items = scopedItems(liveItems()).filter(w => w.status === 'ux-ui')
   return (
     <WorkQueue
       title={`Fila de design ativa (${items.length})`}
       items={items}
       maxItems={20}
-      emptyMsg="Fila de design vazia."
+      emptyMsg="Nenhum item na coluna UX/UI. O P.O. move as demandas de design para essa coluna."
       onOpen={item => doOpenItem(ctx, item)}
       onViewAll={() => doOpenBoard(ctx)}
       style={{ border: 'none', background: 'transparent' }}
@@ -1090,54 +1089,69 @@ export function KpiMyBlockedWidget(props: WidgetCtx) {
 
 // ─── KPIs · UX/UI (mesmos thumbnails do painel original) ──────────────────────
 
+/** Itens atualmente na coluna UX/UI do board, já recortados pelo escopo. */
+function uxScoped(): WorkItem[] {
+  return scopedItems(liveItems()).filter(w => w.status === 'ux-ui')
+}
+
 export function KpiUxFlowsWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
+  const ux = uxScoped()
+  const assigned = ux.filter(w => w.assignee).length
+  const projCount = new Set(ux.map(w => w.project_id)).size
   return (
     <KpiCard
-      value="8" label="Fluxos em Design" sub="3 projetos"
-      disclaimer="fluxos com trabalho de design em progresso"
-      miniViz={<MiniBarChart data={[{ label: 'S10', value: 5 }, { label: 'S11', value: 7 }, { label: 'S12', value: 6 }, { label: 'S13', value: 8, current: true }]} showAvg={false} />}
-      onClick={() => doNav(ctx, 'list')}
+      value={String(ux.length)} label="Fluxos em Design"
+      sub={projCount ? `${projCount} projeto(s)` : 'coluna UX/UI'}
+      disclaimer="itens atualmente na coluna UX/UI do board" color={T.purple}
+      miniViz={qtyBars([{ value: assigned, color: T.purple }, { value: Math.max(0, ux.length - assigned), color: T.warn }])}
+      onClick={() => doKpiDetail(ctx, buildUxDetail(0, ctx.onNav))}
     />
   )
 }
 
 export function KpiUxPrototypesWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
+  const ux = uxScoped()
+  const semResp = ux.filter(w => !w.assignee).length
   return (
     <KpiCard
-      value="3" label="Protótipos p/ Val." sub="aguardando PO/usuário"
-      disclaimer="protótipos aguardando feedback de usuário ou PO" color={T.accent}
-      miniViz={<MiniSparkline data={[{ label: 'S10', value: 1 }, { value: 2 }, { value: 4 }, { label: 'S13', value: 3 }]} color="#3b82f6" />}
-      onClick={() => doNav(ctx, 'list')}
+      value={String(semResp)} label="Sem responsável" sub="precisam de designer"
+      disclaimer="itens em UX/UI ainda sem um designer apontado"
+      color={semResp > 0 ? T.warn : T.success} alert={semResp > 0}
+      miniViz={ratioViz(semResp, ux.length, semResp > 0 ? T.warn : T.success)}
+      onClick={() => doKpiDetail(ctx, buildUxDetail(1, ctx.onNav))}
     />
   )
 }
 
 export function KpiUxPendingWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
+  const ux = uxScoped()
+  const now = Date.now()
+  const overdue = ux.filter(w => w.due_date && new Date(w.due_date).getTime() < now).length
   return (
     <KpiCard
-      value="4" label="Pendências Críticas" sub="1 acessibilidade"
-      disclaimer="fluxos sem spec, protótipo ou validação completa" color={T.crit} alert
-      miniViz={<MiniSparkline data={[{ label: 'S10', value: 6 }, { value: 5 }, { value: 5 }, { label: 'S13', value: 4 }]} color="#ef4444" />}
-      onClick={() => doNav(ctx, 'list')}
+      value={String(overdue)} label="Prazo vencido" sub="atrasados em design"
+      disclaimer="itens em UX/UI com prazo (due date) já vencido"
+      color={overdue > 0 ? T.crit : T.success} alert={overdue > 0}
+      miniViz={ratioViz(overdue, ux.length, overdue > 0 ? T.crit : T.success)}
+      onClick={() => doKpiDetail(ctx, buildUxDetail(2, ctx.onNav))}
     />
   )
 }
 
 export function KpiUxHandoffWidget(props: WidgetCtx) {
-  const { onNav } = props
   const ctx = props
+  const ux = uxScoped()
+  const critical = ux.filter(w => w.priority === 'critical').length
   return (
     <KpiCard
-      value="1" label="Handoff Pronto" sub="Dashboard por Papel"
-      disclaimer="entregas de design prontas para implementação" color={T.success}
-      miniViz={<MiniBarChart data={[{ label: 'S10', value: 0 }, { label: 'S11', value: 2 }, { label: 'S12', value: 1 }, { label: 'S13', value: 1, current: true }]} showAvg={false} />}
-      onClick={() => doNav(ctx, 'list')}
+      value={String(critical)} label="Prioridade crítica" sub="em design"
+      disclaimer="itens em UX/UI marcados como prioridade crítica"
+      color={critical > 0 ? T.crit : T.purple} alert={critical > 0}
+      miniViz={ratioViz(critical, ux.length, critical > 0 ? T.crit : T.purple)}
+      onClick={() => doKpiDetail(ctx, buildUxDetail(3, ctx.onNav))}
     />
   )
 }
@@ -1297,6 +1311,63 @@ function buildEngDetail(initialTab: number, onNav: (v: string, t?: string) => vo
           rows: allBugs.map(w => itemRow(w, { key: w.key, t: w.title, sev: sevLabel(w), st: statusConfig(w.status).label })),
           emptyText: 'Sem bugs no escopo. 🟢' },
         note: { text: 'O retrabalho costuma subir quando o requisito muda no meio da sprint — fechar o escopo logo após o planning ajuda a segurar.' } },
+    ],
+  }
+}
+
+/** Modal do perfil UX/UI (título neutro "Design"). Itens na coluna UX/UI do board. */
+function buildUxDetail(initialTab: number, onNav: (v: string, t?: string) => void): KpiDetailConfig {
+  const ux = uxScoped()
+  const now = Date.now()
+  const semResp = ux.filter(w => !w.assignee)
+  const overdue = ux.filter(w => w.due_date && new Date(w.due_date).getTime() < now)
+  const critical = ux.filter(w => w.priority === 'critical')
+  const projCount = new Set(ux.map(w => w.project_id)).size
+  const COL_WHO = { key: 'who', header: 'Responsável', kind: 'muted' as const }
+  const fmtDue = (d?: string) => (d ? d.slice(0, 10).split('-').reverse().join('/') : '—')
+  return {
+    title: 'Design', subtitle: 'detalhe dos indicadores', initialTab,
+    footerAction: { label: 'Abrir board →', onClick: () => onNav('boards-list') },
+    tabs: [
+      {
+        id: 'design', label: 'Em design', count: ux.length,
+        intro: `Itens na coluna UX/UI do board${projCount ? ` — ${projCount} projeto(s)` : ''}. Clique numa linha para abrir a demanda no board.`,
+        table: {
+          columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_WHO, { key: 'pts', header: 'Pts', kind: 'muted' }],
+          rows: ux.map(w => itemRow(w, { key: w.key, t: w.title, who: w.assignee?.name ?? '—', pts: w.points != null ? String(w.points) : '—' })),
+          emptyText: 'Nenhum item na coluna UX/UI do escopo. O P.O. move as demandas de design para essa coluna.',
+        },
+        note: ux.length ? { text: 'Quando um item entra em UX/UI, vale já apontar o designer responsável — assim a fila de design fica clara para o time todo.' } : undefined,
+      },
+      {
+        id: 'sem-resp', label: 'Sem responsável', count: semResp.length,
+        intro: 'Itens em UX/UI que ainda não têm um designer apontado.',
+        table: {
+          columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_ST],
+          rows: semResp.map(w => itemRow(w, { key: w.key, t: w.title, st: statusConfig(w.status).label })),
+          emptyText: 'Todo item em UX/UI já tem responsável. 🟢',
+        },
+        note: semResp.length ? { text: 'Apontar o responsável cedo ajuda a distribuir a carga de design sem sobrecarregar uma pessoa só.' } : undefined,
+      },
+      {
+        id: 'prazo', label: 'Prazo vencido', count: overdue.length,
+        intro: 'Itens em UX/UI cujo prazo (due date) já passou.',
+        table: {
+          columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_WHO, { key: 'due', header: 'Prazo', kind: 'muted' }],
+          rows: overdue.map(w => itemRow(w, { key: w.key, t: w.title, who: w.assignee?.name ?? '—', due: fmtDue(w.due_date) })),
+          emptyText: 'Nenhum item de design com prazo vencido. 🟢',
+        },
+        note: overdue.length ? { text: 'Design atrasado às vezes é falta de contexto do produto — uma conversa rápida com o P.O. costuma destravar.' } : undefined,
+      },
+      {
+        id: 'critico', label: 'Prioridade crítica', count: critical.length,
+        intro: 'Itens em UX/UI marcados como prioridade crítica.',
+        table: {
+          columns: [COL_ITEM, { key: 't', header: 'Demanda' }, COL_PROJ, COL_WHO],
+          rows: critical.map(w => itemRow(w, { key: w.key, t: w.title, who: w.assignee?.name ?? '—' })),
+          emptyText: 'Nenhum item crítico em design. 🟢',
+        },
+      },
     ],
   }
 }
