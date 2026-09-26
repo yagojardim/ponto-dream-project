@@ -24,6 +24,7 @@ import {
   type AdminKpis, type AdminInicioData, type PoCardMetrics, type MauMetrics,
 } from '@/data/db/dashboards'
 import { getActiveTenantId } from '@/data/session'
+import { useProductMetrics } from '@/data/db/engagement'
 import { listModules } from '@/data/db/modules'
 import { logger } from '@/utils/logger'
 import { setListPrefilter } from '@/data/listPrefilter'
@@ -776,39 +777,54 @@ export function KpiMauWidget(props: WidgetCtx) {
 }
 
 export function KpiStickinessWidget(props: WidgetCtx) {
-  const { openDetail } = props
   const ctx = props
+  const m = useProductMetrics()
+  const has = m?.hasData ?? false
+  const e = m?.engagement
+  const pct = e?.stickinessPct ?? 0
   return (
     <KpiCard
-      value="7.5%" label="Stickiness" sub="DAU/MAU — meta 10-20%"
-      disclaimer="frequência de uso: ativos diários ÷ mensais" color={T.warn}
-      miniViz={<MiniSparkline data={[{ label: 'Jan', value: 6.1 }, { value: 6.4 }, { value: 6.8 }, { value: 7.0 }, { value: 7.2 }, { label: 'Jun', value: 7.5 }]} color="#f5a524" />}
+      value={has ? `${pct}%` : '—'} label="Stickiness"
+      sub={has ? `DAU ${e?.averageDau ?? 0} · MAU ${e?.mau ?? 0} — meta 10-20%` : 'sem dados de uso ainda'}
+      disclaimer="frequência de uso: média de ativos diários ÷ ativos mensais (DAU/MAU, 30d)"
+      color={has && pct < 10 ? T.warn : T.success}
+      miniViz={ratioViz(pct, 100, has && pct < 10 ? T.warn : T.success)}
       onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
 }
 
 export function KpiChurnWidget(props: WidgetCtx) {
-  const { openDetail } = props
   const ctx = props
+  const m = useProductMetrics()
+  const has = m?.hasData ?? false
+  const churn = m?.engagement.churnPct ?? null
+  const alert = has && churn != null && churn > 2
   return (
     <KpiCard
-      value="3.2%" label="Churn Rate" sub="meta: <2%"
-      disclaimer="taxa de abandono por tenant — sem impacto billing" color={T.crit} alert
-      miniViz={<MiniSparkline data={[{ label: 'Jan', value: 2.8 }, { value: 2.9 }, { value: 3.0 }, { value: 3.1 }, { value: 3.2 }, { label: 'Jun', value: 3.2 }]} color="#ef4444" />}
+      value={has && churn != null ? `${churn}%` : '—'} label="Churn Rate"
+      sub={has ? (churn != null ? 'ativos do mês anterior que não voltaram' : 'sem base do mês anterior') : 'sem dados de uso ainda'}
+      disclaimer="usuários ativos no mês anterior que não voltaram ÷ ativos no mês anterior"
+      color={alert ? T.crit : T.success} alert={alert}
+      miniViz={ratioViz(churn ?? 0, 100, alert ? T.crit : T.success)}
       onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
 }
 
 export function KpiAdoptionWidget(props: WidgetCtx) {
-  const { openDetail } = props
   const ctx = props
+  const m = useProductMetrics()
+  const has = m?.hasData ?? false
+  const feats = m?.adoption.features ?? []
+  const avg = feats.length ? Math.round(feats.reduce((s, f) => s + f.pct, 0) / feats.length) : 0
   return (
     <KpiCard
-      value="52%" label="Adoção de Features" sub="base elegível"
-      disclaimer="% médio de adoção sobre base elegível por feature"
-      miniViz={<MiniBarChart data={[{ label: 'Jan', value: 38 }, { label: 'Feb', value: 42 }, { label: 'Mar', value: 46 }, { label: 'Abr', value: 49 }, { label: 'Mai', value: 51 }, { label: 'Jun', value: 52, current: true }]} />}
+      value={has && feats.length ? `${avg}%` : '—'} label="Adoção de Features"
+      sub={has ? `${feats.length} áreas · base ${m?.adoption.base ?? 0}` : 'sem dados de uso ainda'}
+      disclaimer="% médio de usuários que usaram cada área nos últimos 30d (÷ base do tenant)"
+      color={avg >= 60 ? T.success : avg >= 30 ? T.accent : T.warn}
+      miniViz={ratioViz(avg, 100, avg >= 60 ? T.success : avg >= 30 ? T.accent : T.warn)}
       onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
