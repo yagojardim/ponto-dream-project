@@ -75,7 +75,14 @@ export const COLUMN_CATEGORY_COLOR: Record<string, string> = {
   blocked: T.crit,
 }
 
-export function columnColor(column: BoardColumnRow): string {
+/** Colunas de UX/UI usam categoria 'in_progress' no banco, mas cor própria (roxo). */
+export function isUxColumn(column: Pick<BoardColumnRow, 'name'> & { statuses?: string[] }): boolean {
+  const name = (column.name ?? '').toLowerCase()
+  return name === 'ux/ui' || name === 'ux' || (column.statuses ?? []).includes('ux_ui')
+}
+
+export function columnColor(column: BoardColumnRow & { statuses?: string[] }): string {
+  if (isUxColumn(column)) return T.purple
   return COLUMN_CATEGORY_COLOR[(column.category ?? '').toLowerCase()] ?? T.text3
 }
 

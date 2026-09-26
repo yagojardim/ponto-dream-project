@@ -85,7 +85,7 @@ export const TOUR_STEPS: Record<string, TourStep[]> = {
       selector: '[data-tour="nb-columns"]',
       placement: 'right',
       title: 'Base de colunas',
-      body: 'Use um template pronto (Scrum com 5 colunas ou Kanban com 3) ou monte colunas personalizadas — os status são distribuídos pela ordem.',
+      body: 'Use um template pronto (Scrum com 6 colunas, incluindo UX/UI, ou Kanban com 4) ou monte colunas personalizadas — os status são distribuídos pela ordem.',
       optional: true,
     },
     {

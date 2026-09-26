@@ -15,6 +15,7 @@ import { HOME_WIDGETS, getWidget, defaultWidgetIds, type WidgetCtx, type WidgetD
 import { AddWidgetModal, type WidgetFormat } from '@/components/home/AddWidgetModal'
 import { ProjFilterRow, useProjSel, useAllowedProjects } from '@/pages/DashboardHomePage'
 import { setWidgetScope } from '@/components/home/nativeWidgets'
+import { KpiDetailModal, type KpiDetailConfig } from '@/components/home/KpiDetailModal'
 import { ReportChartModal, ReportsDataProvider } from '@/data/reportRegistry'
 
 
@@ -121,6 +122,8 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const [drawerItem, setDrawerItem] = useState<WorkItem | null>(null)
   // Detalhe ampliado de um relatório (modal) — cards de velocidade/desempenho.
   const [chartId, setChartId] = useState<string | null>(null)
+  // Modal de detalhe do KPI por perfil (framework declarativo).
+  const [kpiDetail, setKpiDetail] = useState<KpiDetailConfig | null>(null)
   // Modo edição: mudanças ficam só em estado; Salvar persiste, Cancelar volta ao snapshot.
   const [editing, setEditing] = useState(false)
   const [snapshot, setSnapshot] = useState<StoredState | null>(null)
@@ -224,6 +227,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
 
   // Cards de velocidade/desempenho abrem o detalhe ampliado, sem trocar de tela.
   const openDetail = useCallback((reportId: string) => setChartId(reportId), [])
+  const openKpiDetail = useCallback((cfg: KpiDetailConfig) => setKpiDetail(cfg), [])
 
   const ctx: WidgetCtx = useMemo(() => ({
     onNav,
@@ -232,8 +236,9 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     projectIds: scope,
     openBoard,
     openDetail,
+    openKpiDetail,
     interactive: !editing,
-  }), [onNav, userName, scope, openBoard, openDetail, editing])
+  }), [onNav, userName, scope, openBoard, openDetail, openKpiDetail, editing])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     // Fora do modo edição o grid não é interativo (isDraggable/isResizable = editing):
@@ -411,6 +416,16 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
       )}
       {drawerItem && (
         <WorkItemDetailDrawer item={drawerItem} onClose={() => setDrawerItem(null)} onNav={onNav} />
+      )}
+      {kpiDetail && (
+        <ReportsDataProvider projectIds={scope.size > 0 ? [...scope] : undefined}>
+          <KpiDetailModal
+            config={kpiDetail}
+            projects={allowedProjects.map(p => ({ id: p.id, name: p.name, color: (p as { color?: string }).color }))}
+            onOpenItem={setDrawerItem}
+            onClose={() => setKpiDetail(null)}
+          />
+        </ReportsDataProvider>
       )}
     </div>
   )

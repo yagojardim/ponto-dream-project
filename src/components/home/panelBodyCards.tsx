@@ -16,6 +16,7 @@ import {
 } from '@/data/db/homeLive'
 import { updateWorkItemField, addComment } from '@/data/db/workItem'
 import { listEpics, type EpicsData } from '@/data/db/epics'
+import { useProductMetrics } from '@/data/db/engagement'
 import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@/data/db/adminActivity'
 import {
   listCalendarEvents, EVENT_TYPE_LABEL, EVENT_TYPE_ICON,
@@ -145,30 +146,28 @@ export function TeamWorkloadCard() {
 
 // ─── Product Manager ──────────────────────────────────────────────────────────
 
-const FUNNEL = [
-  { stage: 'Visitantes',   value: 12400 },
-  { stage: 'Cadastros',    value: 3100 },
-  { stage: 'Ativação',     value: 1860 },
-  { stage: 'Engajamento',  value: 930 },
-  { stage: 'Retenção D30', value: 560 },
-]
-const FEATURES = [
-  { name: 'Board Kanban',   adocao: 84 },
-  { name: 'Relatórios',     adocao: 52 },
-  { name: 'Portal Cliente', adocao: 31 },
-  { name: 'Automações',     adocao: 12 },
-]
 export function ConversionFunnelCard() {
+  const m = useProductMetrics()
+  if (!m) return <SCard title="Funil de Conversão / Ativação"><LoadingState rows={4} /></SCard>
+  const funnel = m.funnel
+  const top = funnel[0]?.value || 0
+  if (funnel.length === 0 || top === 0) {
+    return (
+      <SCard title="Funil de Conversão / Ativação">
+        <EmptyState message="Sem dados de uso ainda — o funil acende conforme os usuários acessam o produto." />
+      </SCard>
+    )
+  }
   return (
     <SCard title="Funil de Conversão / Ativação">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {FUNNEL.map((f, i) => (
+        {funnel.map((f, i) => (
           <div key={f.stage}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontSize: 11, color: T.text2 }}>{f.stage}</span>
               <span style={{ fontSize: 11, color: T.text1 }}>{f.value.toLocaleString('pt-BR')}</span>
             </div>
-            <ProgressBar pct={i === 0 ? 100 : (f.value / FUNNEL[0].value) * 100} color={T.accent} />
+            <ProgressBar pct={i === 0 ? 100 : (f.value / top) * 100} color={T.accent} />
           </div>
         ))}
       </div>
@@ -177,16 +176,26 @@ export function ConversionFunnelCard() {
 }
 
 export function FeatureAdoptionCard() {
+  const m = useProductMetrics()
+  if (!m) return <SCard title="Adoção de Features (base elegível)"><LoadingState rows={4} /></SCard>
+  const feats = m.adoption.features
+  if (feats.length === 0) {
+    return (
+      <SCard title="Adoção de Features (base elegível)">
+        <EmptyState message="Sem dados de uso ainda — a adoção por área aparece quando o time começa a navegar." />
+      </SCard>
+    )
+  }
   return (
     <SCard title="Adoção de Features (base elegível)">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {FEATURES.map(f => (
-          <div key={f.name}>
+        {feats.slice(0, 8).map(f => (
+          <div key={f.key}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 12, color: T.text1 }}>{f.name}</span>
-              <span style={{ fontSize: 11, color: f.adocao >= 60 ? T.success : f.adocao >= 30 ? T.warn : T.crit }}>{f.adocao}%</span>
+              <span style={{ fontSize: 12, color: T.text1 }}>{f.label}</span>
+              <span style={{ fontSize: 11, color: f.pct >= 60 ? T.success : f.pct >= 30 ? T.warn : T.crit }}>{f.pct}%</span>
             </div>
-            <ProgressBar pct={f.adocao} color={f.adocao >= 60 ? T.success : f.adocao >= 30 ? T.accent : T.crit} />
+            <ProgressBar pct={f.pct} color={f.pct >= 60 ? T.success : f.pct >= 30 ? T.accent : T.crit} />
           </div>
         ))}
       </div>

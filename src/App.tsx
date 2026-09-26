@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Shell, type View } from "./components/Shell"
 import { SessionProvider, useSession } from "./data/SessionContext"
+import { captureEvent } from "./data/db/usageEvents"
 import FoundationsPage from "./pages/FoundationsPage"
 import DashboardPage from "./pages/DashboardPage"
 import ProjectPage from "./pages/ProjectPage"
@@ -186,6 +187,16 @@ function AppInner() {
   const { setActiveUser, status, enterInspection, mustChangePassword, activeUser } =
     useSession()
   const [view, setView] = useState<View>("home")
+  // Telemetria de uso (Fatia 5c): registra a visita de cada tela como screen_view.
+  // Só em sessão REAL (nunca inspeção); fire-and-forget e deduplica repetição imediata.
+  const lastTrackedRef = useRef<string>("")
+  useEffect(() => {
+    if (status !== "authenticated" || !activeUser?.user_id) return
+    const key = `${activeUser.user_id}:${view}`
+    if (lastTrackedRef.current === key) return
+    lastTrackedRef.current = key
+    void captureEvent({ userId: activeUser.user_id, eventType: "screen_view", featureKey: view })
+  }, [view, status, activeUser?.user_id])
   const [showSignup, setShowSignup] = useState(false)
   const [loginEmail, setLoginEmail] = useState("")
   const [onboardingPending, setOnboardingPending] = useState(() => {

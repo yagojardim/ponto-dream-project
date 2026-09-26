@@ -30,7 +30,7 @@ type LabelJoinRow = { work_item_id: string; labels: { name: string } | { name: s
 
 /** DB statuses (snake_case) → DashboardKit statuses (kebab-case). */
 export const STATUS_FROM_DB: Record<string, WorkStatus> = {
-  backlog: 'backlog', todo: 'todo', ready: 'ready',
+  backlog: 'backlog', todo: 'todo', ready: 'ready', ux_ui: 'ux-ui',
   in_progress: 'in-progress', in_review: 'in-review', testing: 'testing',
   blocked: 'blocked', done: 'done', cancelled: 'cancelled',
 }
@@ -677,6 +677,41 @@ export async function fetchAdminInicioData(): Promise<AdminInicioData> {
   })
 
   return { projects: proj, boards: brd, signupsWeekly }
+}
+
+// ─── MAU / atividade de usuários (Product Manager) ───────────────────────────
+export interface MauMetrics {
+  /** Usuários únicos com login nos últimos 30 dias. */
+  mau: number
+  /** Usuários únicos com login nos últimos 7 dias. */
+  wau: number
+  /** Total de perfis ativos (não arquivados) do tenant. */
+  total: number
+  /** Perfis que nunca fizeram login (last_login_at nulo). */
+  neverLogged: number
+}
+
+/**
+ * MAU/WAU reais a partir de profiles.last_login_at, sempre por tenant.
+ * Obs.: last_login_at guarda apenas o ÚLTIMO login (não há histórico), então
+ * dá para medir "ativos nos últimos N dias", mas não uma série mês a mês.
+ */
+export async function fetchMauMetrics(): Promise<MauMetrics> {
+  const tid = getActiveTenantId()
+  const { data, error } = await supabase.from('profiles')
+    .select('last_login_at').eq('tenant_id', tid).is('archived_at', null)
+  if (error) throw new Error(missingTableMessage('profiles', error.message))
+  const rows = (data ?? []) as { last_login_at: string | null }[]
+  const now = Date.now(), d30 = now - 30 * 86400000, d7 = now - 7 * 86400000
+  let mau = 0, wau = 0, neverLogged = 0
+  for (const r of rows) {
+    if (!r.last_login_at) { neverLogged++; continue }
+    const t = new Date(r.last_login_at).getTime()
+    if (Number.isNaN(t)) continue
+    if (t >= d30) mau++
+    if (t >= d7) wau++
+  }
+  return { mau, wau, total: rows.length, neverLogged }
 }
 
 // ─── Product Owner mural cards ───────────────────────────────────────────────
