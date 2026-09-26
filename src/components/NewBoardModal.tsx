@@ -3,7 +3,7 @@ import { T } from './ds/tokens'
 import { Modal } from './ds/Modal'
 import { FilterBuilder } from './FilterBuilder'
 import { createBoard, type BoardFilter } from '@/data/db/board'
-import type { BoardColumnDef } from '@/data/db/boardColumnDefs'
+import { SCRUM_COLUMNS, KANBAN_COLUMNS, type BoardColumnDef } from '@/data/db/boardColumnDefs'
 import { listProjects, type ProjectRow } from '@/data/db/projects'
 import { fetchBoardFilterOptions, type BoardFilterOptions } from '@/data/db/filterOptions'
 
@@ -255,7 +255,7 @@ export function NewBoardModal({ open, onClose, onCreated, fixedProjectId, actorN
                     cursor: 'pointer',
                   }}
                 >
-                  {bt === 'scrum' ? 'Scrum (5 colunas)' : 'Kanban (3 colunas)'}
+                  {bt === 'scrum' ? `Scrum (${SCRUM_COLUMNS.length} colunas)` : `Kanban (${KANBAN_COLUMNS.length} colunas)`}
                 </button>
               ))}
             </div>

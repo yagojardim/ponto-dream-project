@@ -30,7 +30,7 @@ type LabelJoinRow = { work_item_id: string; labels: { name: string } | { name: s
 
 /** DB statuses (snake_case) → DashboardKit statuses (kebab-case). */
 export const STATUS_FROM_DB: Record<string, WorkStatus> = {
-  backlog: 'backlog', todo: 'todo', ready: 'ready',
+  backlog: 'backlog', todo: 'todo', ready: 'ready', ux_ui: 'ux-ui',
   in_progress: 'in-progress', in_review: 'in-review', testing: 'testing',
   blocked: 'blocked', done: 'done', cancelled: 'cancelled',
 }
