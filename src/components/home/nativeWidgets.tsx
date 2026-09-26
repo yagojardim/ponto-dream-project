@@ -20,9 +20,10 @@ import {
   getBlockedItems, getSprintItems, getReadyItems, getTestingItems, getBacklogWithAlerts,
 } from '@/data/db/homeLive'
 import {
-  fetchAdminKpis, fetchAdminInicioData, fetchPoCardMetrics, computeDeliveryMetrics,
-  type AdminKpis, type AdminInicioData, type PoCardMetrics,
+  fetchAdminKpis, fetchAdminInicioData, fetchPoCardMetrics, fetchMauMetrics, computeDeliveryMetrics,
+  type AdminKpis, type AdminInicioData, type PoCardMetrics, type MauMetrics,
 } from '@/data/db/dashboards'
+import { getActiveTenantId } from '@/data/session'
 import { listModules } from '@/data/db/modules'
 import { logger } from '@/utils/logger'
 import { setListPrefilter } from '@/data/listPrefilter'
@@ -744,14 +745,31 @@ export function KpiPmDeadlineWidget(props: WidgetCtx) {
 
 // ─── KPIs · Product Manager (métricas de produto do painel original) ──────────
 
+/** MAU/WAU reais do tenant (profiles.last_login_at); tenant-wide, sem recorte por projeto. */
+function useMauMetrics(): MauMetrics | null {
+  const [m, setM] = useState<MauMetrics | null>(null)
+  const tid = getActiveTenantId()
+  useEffect(() => {
+    let alive = true
+    fetchMauMetrics()
+      .then(v => { if (alive) setM(v) })
+      .catch(err => { logger.error('home.mau-metrics', err) })
+    return () => { alive = false }
+  }, [tid])
+  return m
+}
+
 export function KpiMauWidget(props: WidgetCtx) {
   const { openDetail } = props
   const ctx = props
+  const m = useMauMetrics()
+  const pct = m && m.total > 0 ? Math.round((m.mau / m.total) * 100) : 0
   return (
     <KpiCard
-      value="930" label="MAU" sub="+8% vs mês ant."
-      disclaimer="usuários únicos ativos nos últimos 30 dias" color={T.success}
-      miniViz={<MiniSparkline data={[{ label: 'Jan', value: 720 }, { value: 750 }, { value: 800 }, { value: 860 }, { value: 900 }, { label: 'Jun', value: 930 }]} color="#34d399" />}
+      value={m ? String(m.mau) : '—'} label="MAU"
+      sub={m ? `${pct}% da base · ${m.wau} na semana` : 'ativos nos últimos 30 dias'}
+      disclaimer="usuários únicos com login nos últimos 30 dias (base do tenant)" color={T.success}
+      miniViz={ratioViz(m?.mau ?? 0, m?.total ?? 0, T.success)}
       onClick={() => doOpenDetail(ctx, 'health')}
     />
   )
