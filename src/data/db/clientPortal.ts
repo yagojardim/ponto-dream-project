@@ -10,6 +10,8 @@ import { readPortalSession } from '@/lib/portalSession'
 import { sortSprintsByStartDate } from './sprints'
 import { safeCall, logger } from '../../utils/logger'
 import { writeAudit as writeMilestone } from '@/data/db/audit'
+import { getActiveTenantId } from '@/data/session'
+import { listModules } from '@/data/db/modules'
 
 export { DEFAULT_TENANT_ID }
 
@@ -1161,3 +1163,126 @@ export const markClientRepliesRead = (ctx: ClientPortalContext | null): Promise<
 
 export const getPortalScope = (projectIds: string[]): Promise<PortalScope> =>
   safeCall('clientPortal.getPortalScope', () => getPortalScope__raw(projectIds), EMPTY_PORTAL_SCOPE)
+
+// ─── Fatia 6a — Gestão do Dash View (visão geral administrativa) ──────────────
+// Tela de GESTÃO (Admin/PMO/PM/PO), não o portal do cliente: usa o tenant da
+// sessão do app (getActiveTenantId), nunca portalTenantId().
+export const CLIENT_PORTAL_MODULE_KEY = 'CLIENT_PORTAL'
+
+/** Módulo liberado para o tenant? (operational / implemented / preview). */
+export function isClientPortalModuleEnabled(): Promise<boolean> {
+  return safeCall('clientPortal.isClientPortalModuleEnabled', async () => {
+    const mods = await listModules()
+    const m = mods.find(x => x.key === CLIENT_PORTAL_MODULE_KEY)
+    return !!m && (m.status === 'operational' || m.status === 'implemented' || m.status === 'preview')
+  }, false)
+}
+
+/**
+ * client_portal_users não guarda timestamp de último acesso (só `status` e
+ * `created_at`) — não há como calcular "sem acesso há N dias" sem inventar
+ * dado. Em vez disso, sinalizamos convites (invited/pending) parados há mais
+ * de STALE_INVITE_DAYS sem 1º acesso, que é o que os campos reais permitem.
+ */
+const STALE_INVITE_DAYS = 14
+const PENDING_STATUSES = new Set(['invited', 'pending'])
+
+export interface DashViewRow {
+  projectId: string
+  projectName: string
+  clientName: string | null
+  usersTotal: number
+  portalAdmins: number
+  viewers: number
+  invitesPending: number
+  invitesStale: number
+  /** Rollup do dash: 'active' se houver ao menos 1 usuário ativo, senão 'invited'. */
+  status: 'active' | 'invited'
+  createdAt: string
+}
+
+export interface DashViewOverview {
+  dashesTotal: number
+  projectsTotal: number
+  usersTotal: number
+  usersActive: number
+  usersInvited: number
+  usersBlocked: number
+  invitesPending: number
+  invitesStale: number
+  dashes: DashViewRow[]
+}
+
+export const EMPTY_DASHVIEW_OVERVIEW: DashViewOverview = {
+  dashesTotal: 0, projectsTotal: 0, usersTotal: 0, usersActive: 0,
+  usersInvited: 0, usersBlocked: 0, invitesPending: 0, invitesStale: 0, dashes: [],
+}
+
+type DashViewUserRow = Pick<ClientPortalUserRow, 'project_id' | 'portal_role' | 'status' | 'created_at'>
+
+async function fetchDashViewOverview__raw(): Promise<DashViewOverview> {
+  const tid = getActiveTenantId()
+
+  const [usersRes, projectsCountRes] = await Promise.all([
+    tbl('client_portal_users')
+      .select('project_id, portal_role, status, created_at')
+      .eq('tenant_id', tid).is('archived_at', null),
+    supabase.from('projects').select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tid).is('archived_at', null),
+  ])
+  if (usersRes.error) throw tenantError('client_portal_users', usersRes.error.message)
+  if (projectsCountRes.error) throw tenantError('projects', projectsCountRes.error.message)
+
+  const rows = (usersRes.data ?? []) as DashViewUserRow[]
+  const projectsTotal = projectsCountRes.count ?? 0
+  if (rows.length === 0) return { ...EMPTY_DASHVIEW_OVERVIEW, projectsTotal }
+
+  const projectIds = [...new Set(rows.map(r => r.project_id))]
+  const { data: projects, error: pErr } = await supabase.from('projects')
+    .select('id, name, client_name')
+    .eq('tenant_id', tid).in('id', projectIds)
+  if (pErr) throw tenantError('projects', pErr.message)
+  const projectById = new Map((projects ?? []).map((p: any) => [p.id, p]))
+
+  const staleBefore = Date.now() - STALE_INVITE_DAYS * 86400000
+  const byProject = new Map<string, DashViewUserRow[]>()
+  for (const r of rows) {
+    const list = byProject.get(r.project_id) ?? []
+    list.push(r)
+    byProject.set(r.project_id, list)
+  }
+
+  const dashes: DashViewRow[] = [...byProject.entries()].map(([projectId, us]): DashViewRow => {
+    const proj = projectById.get(projectId) as { name?: string; client_name?: string | null } | undefined
+    const pending = us.filter(u => PENDING_STATUSES.has(u.status))
+    const stale = pending.filter(u => new Date(u.created_at).getTime() < staleBefore)
+    const createdAt = us.reduce((min, u) => (u.created_at < min ? u.created_at : min), us[0].created_at)
+    return {
+      projectId,
+      projectName: proj?.name ?? 'Projeto',
+      clientName: proj?.client_name ?? null,
+      usersTotal: us.length,
+      portalAdmins: us.filter(u => u.portal_role === 'portal-admin').length,
+      viewers: us.filter(u => u.portal_role === 'viewer').length,
+      invitesPending: pending.length,
+      invitesStale: stale.length,
+      status: us.some(u => u.status === 'active') ? 'active' : 'invited',
+      createdAt,
+    }
+  }).sort((a, b) => a.projectName.localeCompare(b.projectName))
+
+  return {
+    dashesTotal: dashes.length,
+    projectsTotal,
+    usersTotal: rows.length,
+    usersActive: rows.filter(r => r.status === 'active').length,
+    usersInvited: rows.filter(r => PENDING_STATUSES.has(r.status)).length,
+    usersBlocked: rows.filter(r => r.status === 'blocked').length,
+    invitesPending: rows.filter(r => PENDING_STATUSES.has(r.status)).length,
+    invitesStale: rows.filter(r => PENDING_STATUSES.has(r.status) && new Date(r.created_at).getTime() < staleBefore).length,
+    dashes,
+  }
+}
+
+export const fetchDashViewOverview = (): Promise<DashViewOverview> =>
+  safeCall('clientPortal.fetchDashViewOverview', fetchDashViewOverview__raw, EMPTY_DASHVIEW_OVERVIEW)

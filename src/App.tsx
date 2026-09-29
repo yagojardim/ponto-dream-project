@@ -58,6 +58,9 @@ import ProfilePage from "./pages/ProfilePage"
 import PreferencesPage from "./pages/PreferencesPage"
 import StoragePage from "./pages/StoragePage"
 import MeetingsPage from "./pages/MeetingsPage"
+import DashViewManagementPage from "./pages/DashViewManagementPage"
+import { isClientPortalModuleEnabled } from "./data/db/clientPortal"
+import { can } from "./data/permissions"
 import FeedbackPage from "./pages/FeedbackPage"
 import OAuthGoogleReturn from "./pages/OAuthGoogleReturn"
 import { initAppPrefs } from "./lib/appPrefs"
@@ -104,6 +107,7 @@ const ALL_VIEWS: View[] = [
   "storage",
   "feedback",
   "meetings",
+  "dashview-management",
 ]
 
 export const VIEW_LABELS: Record<View, string> = {
@@ -143,6 +147,7 @@ export const VIEW_LABELS: Record<View, string> = {
   storage: "Armazenamento",
   meetings: "Reuniões",
   feedback: "Feedback & Suporte",
+  "dashview-management": "Gestão do Dash View",
 }
 
 initAppPrefs()
@@ -790,11 +795,45 @@ function ShellWithRole({
                 <ModulesPortfolioPage onNav={navTo} />
               </div>
             )}
+            {view === "dashview-management" && (
+              <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
+                <DashViewManagementRouteGuard onNav={navTo} />
+              </div>
+            )}
           </ErrorBoundary>
         </Shell>
       </>
     </ErrorBoundary>
   )
+}
+
+// Rota "Gestão do Dash View": exige a capability access:client-portal + módulo
+// CLIENT_PORTAL ativo no tenant (Fatia 6a).
+function DashViewManagementRouteGuard({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
+  const { activeUser } = useSession()
+  const [moduleEnabled, setModuleEnabled] = useState<boolean | null>(null)
+  useEffect(() => {
+    let alive = true
+    void isClientPortalModuleEnabled().then(v => { if (alive) setModuleEnabled(v) })
+    return () => { alive = false }
+  }, [])
+
+  if (!can(activeUser.permissions, "access:client-portal")) {
+    return (
+      <div style={{ padding: 48, color: '#94a3b8', fontSize: 14 }}>
+        Você não tem acesso à Gestão do Dash View. Peça liberação ao Admin Master do tenant.
+      </div>
+    )
+  }
+  if (moduleEnabled === null) return null
+  if (!moduleEnabled) {
+    return (
+      <div style={{ padding: 48, color: '#94a3b8', fontSize: 14 }}>
+        O módulo Client Portal não está ativo neste tenant.
+      </div>
+    )
+  }
+  return <DashViewManagementPage onNav={onNav} />
 }
 
 // Rota "Relatórios e Insights": apenas Admin Master + papéis liberados por ele.

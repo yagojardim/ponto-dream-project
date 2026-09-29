@@ -12,7 +12,7 @@ import { searchGlobal, type SearchResult } from '../data/db/globalSearch'
 type View =
   | 'boards-list' | 'modules' | 'timesheet' | 'hours-approval' | 'client-messages' | 'tenant-settings'
   | 'home' | 'foundations' | 'dashboard' | 'project' | 'issue' | 'client' | 'task-drawer' | 'projects-list' | 'gantt' | 'calendar' | 'list' | 'timeline' | 'epics' | 'releases' | 'filters' | 'navigator' | 'reports' | 'automations' | 'config' | 'team' | 'my-tasks' | 'login' | 'role-dashboard' | 'client-access' | 'client-login'
-  | 'profile' | 'preferences' | 'storage' | 'feedback' | 'meetings'
+  | 'profile' | 'preferences' | 'storage' | 'feedback' | 'meetings' | 'dashview-management'
 
 interface HeaderProps {
   onCreateIssue?: () => void
@@ -48,6 +48,7 @@ const viewLabels: Partial<Record<View, string>> = {
   'task-drawer':   'Detalhe da Tarefa',
   'issue':         'Detalhe da Demanda',
   'meetings':      'Reuniões',
+  'dashview-management': 'Gestão do Dash View',
 }
 
 const ROLE_CONTEXT_LABEL: Record<string, string> = {
