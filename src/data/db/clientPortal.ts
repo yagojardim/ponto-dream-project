@@ -12,6 +12,7 @@ import { safeCall, logger } from '../../utils/logger'
 import { writeAudit as writeMilestone } from '@/data/db/audit'
 import { getActiveTenantId } from '@/data/session'
 import { listModules } from '@/data/db/modules'
+import { generateTempPassword } from '@/data/security'
 
 export { DEFAULT_TENANT_ID }
 
@@ -1286,3 +1287,148 @@ async function fetchDashViewOverview__raw(): Promise<DashViewOverview> {
 
 export const fetchDashViewOverview = (): Promise<DashViewOverview> =>
   safeCall('clientPortal.fetchDashViewOverview', fetchDashViewOverview__raw, EMPTY_DASHVIEW_OVERVIEW)
+
+// ─── Fatia 6b — Detalhe do dash + gestão de usuários ──────────────────────────
+export interface DashDetail {
+  projectId: string
+  projectName: string
+  clientName: string | null
+  createdAt: string | null
+  users: ClientPortalUserRow[]
+}
+
+async function fetchDashDetail__raw(projectId: string): Promise<DashDetail | null> {
+  const tid = getActiveTenantId()
+  const [projRes, users] = await Promise.all([
+    supabase.from('projects').select('id, name, client_name')
+      .eq('tenant_id', tid).eq('id', projectId).maybeSingle(),
+    listClientPortalUsers__raw(projectId),
+  ])
+  if (projRes.error) throw tenantError('projects', projRes.error.message)
+  if (!projRes.data) return null
+  const proj = projRes.data as { name: string; client_name: string | null }
+  const createdAt = users.length
+    ? users.reduce((min, u) => (u.created_at < min ? u.created_at : min), users[0].created_at)
+    : null
+  return { projectId, projectName: proj.name ?? 'Projeto', clientName: proj.client_name ?? null, createdAt, users }
+}
+
+export const fetchDashDetail = (projectId: string): Promise<DashDetail | null> =>
+  safeCall('clientPortal.fetchDashDetail', () => fetchDashDetail__raw(projectId), null, { projectId })
+
+/** Bloqueia o acesso — reativável, não apaga histórico. */
+async function blockPortalUser__raw(userId: string, actorName?: string): Promise<boolean> {
+  const tid = getActiveTenantId()
+  const { data, error } = await tbl('client_portal_users')
+    .update({ status: 'blocked' })
+    .eq('tenant_id', tid).eq('id', userId).is('archived_at', null)
+    .select('id, email, project_id').maybeSingle()
+  if (error) throw tenantError('client_portal_users', error.message)
+  if (!data) return false
+  const row = data as { id: string; email: string; project_id: string }
+  await writeAudit('client_portal_user', row.id, 'portal.access_blocked', actorName ?? 'Sistema',
+    null, { email: row.email, project_id: row.project_id })
+  return true
+}
+
+export const blockPortalUser = (userId: string, actorName?: string): Promise<boolean> =>
+  safeCall('clientPortal.blockPortalUser', () => blockPortalUser__raw(userId, actorName), false, { userId })
+
+/** Reativa um usuário bloqueado — volta a 'invited' se nunca chegou a trocar a senha, senão 'active'. */
+async function reactivatePortalUser__raw(userId: string, actorName?: string): Promise<boolean> {
+  const tid = getActiveTenantId()
+  const { data: current, error: getErr } = await tbl('client_portal_users')
+    .select('id, email, project_id, password_must_change')
+    .eq('tenant_id', tid).eq('id', userId).is('archived_at', null).maybeSingle()
+  if (getErr) throw tenantError('client_portal_users', getErr.message)
+  if (!current) return false
+  const row = current as { id: string; email: string; project_id: string; password_must_change: boolean }
+  const nextStatus = row.password_must_change ? 'invited' : 'active'
+  const { error } = await tbl('client_portal_users').update({ status: nextStatus })
+    .eq('tenant_id', tid).eq('id', userId)
+  if (error) throw tenantError('client_portal_users', error.message)
+  await writeAudit('client_portal_user', row.id, 'portal.access_reactivated', actorName ?? 'Sistema',
+    null, { email: row.email, project_id: row.project_id })
+  return true
+}
+
+export const reactivatePortalUser = (userId: string, actorName?: string): Promise<boolean> =>
+  safeCall('clientPortal.reactivatePortalUser', () => reactivatePortalUser__raw(userId, actorName), false, { userId })
+
+/** Remove o usuário do dash (soft-delete via archived_at — preserva o histórico/auditoria). */
+async function removePortalUser__raw(userId: string, actorName?: string): Promise<boolean> {
+  const tid = getActiveTenantId()
+  const { data, error } = await tbl('client_portal_users')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('tenant_id', tid).eq('id', userId).is('archived_at', null)
+    .select('id, email, project_id').maybeSingle()
+  if (error) throw tenantError('client_portal_users', error.message)
+  if (!data) return false
+  const row = data as { id: string; email: string; project_id: string }
+  await writeAudit('client_portal_user', row.id, 'portal.access_removed', actorName ?? 'Sistema',
+    { email: row.email, project_id: row.project_id }, null)
+  return true
+}
+
+export const removePortalUser = (userId: string, actorName?: string): Promise<boolean> =>
+  safeCall('clientPortal.removePortalUser', () => removePortalUser__raw(userId, actorName), false, { userId })
+
+export interface UpdatePortalUserInput {
+  name?: string
+  portalRole?: PortalRole
+  canApprove?: boolean
+  canPreview?: boolean
+  canComment?: boolean
+}
+
+async function updatePortalUser__raw(
+  userId: string, input: UpdatePortalUserInput, actorName?: string,
+): Promise<boolean> {
+  const tid = getActiveTenantId()
+  const patch: Record<string, unknown> = {}
+  if (input.name !== undefined) patch.name = input.name
+  if (input.portalRole !== undefined) patch.portal_role = input.portalRole
+  if (input.canApprove !== undefined) patch.can_approve = input.canApprove
+  if (input.canPreview !== undefined) patch.can_preview = input.canPreview
+  if (input.canComment !== undefined) patch.can_comment = input.canComment
+  if (Object.keys(patch).length === 0) return true
+
+  const { data, error } = await tbl('client_portal_users').update(patch)
+    .eq('tenant_id', tid).eq('id', userId).is('archived_at', null)
+    .select('id, email, project_id').maybeSingle()
+  if (error) throw tenantError('client_portal_users', error.message)
+  if (!data) return false
+  const row = data as { id: string; email: string; project_id: string }
+  await writeAudit('client_portal_user', row.id, 'portal.user_updated', actorName ?? 'Sistema',
+    null, { email: row.email, project_id: row.project_id, ...patch as AuditPayload })
+  return true
+}
+
+export const updatePortalUser = (
+  userId: string, input: UpdatePortalUserInput, actorName?: string,
+): Promise<boolean> =>
+  safeCall('clientPortal.updatePortalUser', () => updatePortalUser__raw(userId, input, actorName), false, { userId })
+
+/**
+ * Gera uma nova senha temporária e marca password_must_change=true. Não há
+ * envio de e-mail real ainda (mesmo estágio do restante do produto — ver
+ * ClientAccessPage/InviteMemberModal: senha é exibida na tela para o gestor
+ * copiar e repassar). Retorna a senha gerada para exibição única na UI.
+ */
+async function resetPortalUserPassword__raw(userId: string, actorName?: string): Promise<string | null> {
+  const tid = getActiveTenantId()
+  const tempPassword = generateTempPassword()
+  const { data, error } = await tbl('client_portal_users')
+    .update({ password_must_change: true })
+    .eq('tenant_id', tid).eq('id', userId).is('archived_at', null)
+    .select('id, email, project_id').maybeSingle()
+  if (error) throw tenantError('client_portal_users', error.message)
+  if (!data) return null
+  const row = data as { id: string; email: string; project_id: string }
+  await writeAudit('client_portal_user', row.id, 'portal.password_reset', actorName ?? 'Sistema',
+    null, { email: row.email, project_id: row.project_id })
+  return tempPassword
+}
+
+export const resetPortalUserPassword = (userId: string, actorName?: string): Promise<string | null> =>
+  safeCall('clientPortal.resetPortalUserPassword', () => resetPortalUserPassword__raw(userId, actorName), null, { userId })

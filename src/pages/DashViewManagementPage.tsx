@@ -123,7 +123,13 @@ export default function DashViewManagementPage({ onNav }: Props) {
                 </thead>
                 <tbody>
                   {overview.dashes.map((d, i) => (
-                    <tr key={d.projectId} style={{ borderBottom: i === overview.dashes.length - 1 ? 'none' : `1px solid ${T.border}` }}>
+                    <tr
+                      key={d.projectId}
+                      onClick={() => onNav?.('dashview-detail', d.projectId)}
+                      style={{ borderBottom: i === overview.dashes.length - 1 ? 'none' : `1px solid ${T.border}`, cursor: onNav ? 'pointer' : 'default' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = `${T.text3}0A` }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent' }}
+                    >
                       <td style={{ padding: '11px 16px', fontSize: 12.5, fontWeight: 600, color: T.text1 }}>{d.projectName}</td>
                       <td style={{ padding: '11px 16px', fontSize: 12.5, color: T.text2 }}>{d.clientName ?? '—'}</td>
                       <td style={{ padding: '11px 16px', fontSize: 12.5, color: T.text2 }}>
@@ -163,7 +169,7 @@ export default function DashViewManagementPage({ onNav }: Props) {
           )}
 
           <p style={{ fontSize: 11, color: T.text3, marginTop: 14 }}>
-            Detalhe por dash, gestão de usuários e criação de novo Dash View chegam nas próximas fatias.
+            Clique em um dash para ver e gerenciar os usuários. Criação de novo Dash View chega numa próxima fatia.
             Para criar acesso de cliente hoje, use{' '}
             <a onClick={() => onNav?.('client-access')} style={{ color: T.accent, cursor: 'pointer' }}>
               Criar acesso cliente

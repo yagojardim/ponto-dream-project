@@ -59,6 +59,7 @@ import PreferencesPage from "./pages/PreferencesPage"
 import StoragePage from "./pages/StoragePage"
 import MeetingsPage from "./pages/MeetingsPage"
 import DashViewManagementPage from "./pages/DashViewManagementPage"
+import DashViewDetailPage from "./pages/DashViewDetailPage"
 import { isClientPortalModuleEnabled } from "./data/db/clientPortal"
 import { can } from "./data/permissions"
 import FeedbackPage from "./pages/FeedbackPage"
@@ -108,6 +109,7 @@ const ALL_VIEWS: View[] = [
   "feedback",
   "meetings",
   "dashview-management",
+  "dashview-detail",
 ]
 
 export const VIEW_LABELS: Record<View, string> = {
@@ -148,6 +150,7 @@ export const VIEW_LABELS: Record<View, string> = {
   meetings: "Reuniões",
   feedback: "Feedback & Suporte",
   "dashview-management": "Gestão do Dash View",
+  "dashview-detail": "Detalhe do Dash View",
 }
 
 initAppPrefs()
@@ -478,6 +481,7 @@ function ShellWithRole({
   // Demanda recém-criada: abre no drawer lateral direito (não em tela cheia).
   const [createdIssueId, setCreatedIssueId] = useState<string | undefined>()
   const [dashboardProjectId, setDashboardProjectId] = useState<string | undefined>()
+  const [selectedDashProjectId, setSelectedDashProjectId] = useState<string | undefined>()
   const [teamInitialTab, setTeamInitialTab] =
     useState<"membros" | "convites" | "permissoes" | "dashboards">("membros")
   const [feedbackInitialTab, setFeedbackInitialTab] =
@@ -564,6 +568,11 @@ function ShellWithRole({
     if (v === "dashboard") {
       setDashboardProjectId(targetId)
       setView("dashboard")
+      return
+    }
+    if (v === "dashview-detail" && targetId) {
+      setSelectedDashProjectId(targetId)
+      setView("dashview-detail")
       return
     }
     if (v === "project" && targetId) {
@@ -800,6 +809,15 @@ function ShellWithRole({
                 <DashViewManagementRouteGuard onNav={navTo} />
               </div>
             )}
+            {view === "dashview-detail" && (
+              <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
+                <DashViewManagementRouteGuard
+                  onNav={navTo}
+                  detailProjectId={selectedDashProjectId}
+                  onBackFromDetail={() => setView("dashview-management")}
+                />
+              </div>
+            )}
           </ErrorBoundary>
         </Shell>
       </>
@@ -807,9 +825,13 @@ function ShellWithRole({
   )
 }
 
-// Rota "Gestão do Dash View": exige a capability access:client-portal + módulo
-// CLIENT_PORTAL ativo no tenant (Fatia 6a).
-function DashViewManagementRouteGuard({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
+// Rota "Gestão do Dash View" (visão geral + detalhe do dash): exige a
+// capability access:client-portal + módulo CLIENT_PORTAL ativo no tenant.
+function DashViewManagementRouteGuard({ onNav, detailProjectId, onBackFromDetail }: {
+  onNav: (v: string, targetId?: string) => void
+  detailProjectId?: string
+  onBackFromDetail?: () => void
+}) {
   const { activeUser } = useSession()
   const [moduleEnabled, setModuleEnabled] = useState<boolean | null>(null)
   useEffect(() => {
@@ -832,6 +854,9 @@ function DashViewManagementRouteGuard({ onNav }: { onNav: (v: string, targetId?:
         O módulo Client Portal não está ativo neste tenant.
       </div>
     )
+  }
+  if (detailProjectId) {
+    return <DashViewDetailPage projectId={detailProjectId} onBack={onBackFromDetail ?? (() => onNav("dashview-management"))} onNav={onNav} />
   }
   return <DashViewManagementPage onNav={onNav} />
 }
