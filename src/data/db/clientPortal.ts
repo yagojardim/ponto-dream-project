@@ -1488,3 +1488,58 @@ async function resetPortalUserPassword__raw(userId: string, actorName?: string):
 
 export const resetPortalUserPassword = (userId: string, actorName?: string): Promise<string | null> =>
   safeCall('clientPortal.resetPortalUserPassword', () => resetPortalUserPassword__raw(userId, actorName), null, { userId })
+
+// ─── Fatia 6d — Edição livre do Dash View (board de widgets por dash) ─────────
+// Catálogo FECHADO: só os cards client-safe que o ClientPortalPage já renderiza
+// hoje (sem dado interno nenhum). Editar um dash = escolher quais destes
+// aparecem e onde — nunca adiciona um widget novo.
+export interface DashWidgetCatalogEntry { id: string; title: string }
+
+export const DASH_WIDGET_CATALOG: DashWidgetCatalogEntry[] = [
+  { id: 'progress',          title: 'Progresso do projeto' },
+  { id: 'sprint-deliveries', title: 'Sprint & Entregas' },
+  { id: 'project-count',     title: 'Projetos no portal' },
+  { id: 'active-sprint',     title: 'Sprint ativa' },
+  { id: 'risks',             title: 'Riscos abertos' },
+  { id: 'validation',        title: 'Aguardando validação' },
+  { id: 'roadmap',           title: 'Roadmap publicado' },
+  { id: 'recent-deliveries', title: 'Entregas recentes' },
+]
+
+export interface DashLayoutItem { i: string; x: number; y: number; w: number; h: number }
+
+async function fetchDashLayout__raw(projectId: string): Promise<DashLayoutItem[] | null> {
+  const tid = getActiveTenantId()
+  const { data, error } = await supabase.from('projects')
+    .select('client_dashboard_layout')
+    .eq('tenant_id', tid).eq('id', projectId).is('archived_at', null).maybeSingle()
+  if (error) {
+    if (/does not exist|schema cache|could not find/i.test(error.message)) return null
+    throw tenantError('projects', error.message)
+  }
+  const raw = (data as { client_dashboard_layout: unknown } | null)?.client_dashboard_layout
+  return Array.isArray(raw) ? (raw as DashLayoutItem[]) : null
+}
+
+export const fetchDashLayout = (projectId: string): Promise<DashLayoutItem[] | null> =>
+  safeCall('clientPortal.fetchDashLayout', () => fetchDashLayout__raw(projectId), null, { projectId })
+
+async function saveDashLayout__raw(
+  projectId: string, layout: DashLayoutItem[] | null, actorName?: string,
+): Promise<boolean> {
+  const tid = getActiveTenantId()
+  // client_dashboard_layout ainda não está nos tipos gerados (coluna nova) —
+  // mesmo cast untyped já usado para tabelas/colunas novas neste arquivo.
+  const { error } = await (supabase.from('projects') as any)
+    .update({ client_dashboard_layout: layout })
+    .eq('tenant_id', tid).eq('id', projectId)
+  if (error) throw tenantError('projects', error.message)
+  await writeAudit('project', projectId, 'dashview.layout_updated', actorName ?? 'Sistema',
+    null, { project_id: projectId, widget_count: layout?.length ?? 0 } as AuditPayload)
+  return true
+}
+
+export const saveDashLayout = (
+  projectId: string, layout: DashLayoutItem[] | null, actorName?: string,
+): Promise<boolean> =>
+  safeCall('clientPortal.saveDashLayout', () => saveDashLayout__raw(projectId, layout, actorName), false, { projectId })

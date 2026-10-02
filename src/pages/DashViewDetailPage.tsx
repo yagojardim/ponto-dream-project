@@ -305,15 +305,23 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
               </p>
             </div>
             {onNav && (
-              <button
-                onClick={() => users[0] && onNav('dashview-preview', users[0].id)}
-                disabled={users.length === 0}
-                title={users.length === 0 ? 'Inclua um usuário para poder visualizar o DashView' : undefined}
-                style={{
-                  fontSize: 12.5, padding: '7px 13px', borderRadius: 9, border: `1px solid ${T.border2}`,
-                  background: T.bgSurface2, color: users.length === 0 ? T.text3 : T.text1,
-                  cursor: users.length === 0 ? 'not-allowed' : 'pointer', opacity: users.length === 0 ? 0.6 : 1,
-                }}>👁 Visualizar DashView</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => onNav('dashview-editor', projectId)}
+                  style={{
+                    fontSize: 12.5, padding: '7px 13px', borderRadius: 9, border: `1px solid ${T.border2}`,
+                    background: T.bgSurface2, color: T.text1, cursor: 'pointer',
+                  }}>✎ Editar dash</button>
+                <button
+                  onClick={() => users[0] && onNav('dashview-preview', users[0].id)}
+                  disabled={users.length === 0}
+                  title={users.length === 0 ? 'Inclua um usuário para poder visualizar o DashView' : undefined}
+                  style={{
+                    fontSize: 12.5, padding: '7px 13px', borderRadius: 9, border: `1px solid ${T.border2}`,
+                    background: T.bgSurface2, color: users.length === 0 ? T.text3 : T.text1,
+                    cursor: users.length === 0 ? 'not-allowed' : 'pointer', opacity: users.length === 0 ? 0.6 : 1,
+                  }}>👁 Visualizar DashView</button>
+              </div>
             )}
           </div>
 

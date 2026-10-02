@@ -62,6 +62,7 @@ import DashViewManagementPage from "./pages/DashViewManagementPage"
 import DashViewDetailPage from "./pages/DashViewDetailPage"
 import NewDashViewPage from "./pages/NewDashViewPage"
 import InactiveDashesPage from "./pages/InactiveDashesPage"
+import DashViewEditorPage from "./pages/DashViewEditorPage"
 import { isClientPortalModuleEnabled } from "./data/db/clientPortal"
 import { can } from "./data/permissions"
 import FeedbackPage from "./pages/FeedbackPage"
@@ -115,6 +116,7 @@ const ALL_VIEWS: View[] = [
   "dashview-new",
   "dashview-preview",
   "dashview-inactive",
+  "dashview-editor",
 ]
 
 export const VIEW_LABELS: Record<View, string> = {
@@ -159,6 +161,7 @@ export const VIEW_LABELS: Record<View, string> = {
   "dashview-new": "Novo Dash View",
   "dashview-preview": "Visualizar Dash View",
   "dashview-inactive": "Dashes Inativos",
+  "dashview-editor": "Editar Dash",
 }
 
 initAppPrefs()
@@ -627,6 +630,11 @@ function ShellWithRole({
       setView("dashview-detail")
       return
     }
+    if (v === "dashview-editor" && targetId) {
+      onSelectDashProjectId(targetId)
+      setView("dashview-editor")
+      return
+    }
     if (v === "client-access") {
       onPreselectClientAccess(targetId ? targetId.split(",").filter(Boolean) : [])
       setView("client-access")
@@ -898,6 +906,15 @@ function ShellWithRole({
                 />
               </div>
             )}
+            {view === "dashview-editor" && (
+              <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
+                <DashViewManagementRouteGuard
+                  onNav={navTo}
+                  editorProjectId={selectedDashProjectId}
+                  onBackFromEditor={() => setView("dashview-detail")}
+                />
+              </div>
+            )}
           </ErrorBoundary>
         </Shell>
       </>
@@ -909,6 +926,7 @@ function ShellWithRole({
 // capability access:client-portal + módulo CLIENT_PORTAL ativo no tenant.
 function DashViewManagementRouteGuard({
   onNav, detailProjectId, onBackFromDetail, showNew, onBackFromNew, showInactive, onBackFromInactive,
+  editorProjectId, onBackFromEditor,
 }: {
   onNav: (v: string, targetId?: string) => void
   detailProjectId?: string
@@ -917,6 +935,8 @@ function DashViewManagementRouteGuard({
   onBackFromNew?: () => void
   showInactive?: boolean
   onBackFromInactive?: () => void
+  editorProjectId?: string
+  onBackFromEditor?: () => void
 }) {
   const { activeUser } = useSession()
   const [moduleEnabled, setModuleEnabled] = useState<boolean | null>(null)
@@ -946,6 +966,9 @@ function DashViewManagementRouteGuard({
   }
   if (showInactive) {
     return <InactiveDashesPage onBack={onBackFromInactive ?? (() => onNav("dashview-management"))} onNav={onNav} />
+  }
+  if (editorProjectId) {
+    return <DashViewEditorPage projectId={editorProjectId} onBack={onBackFromEditor ?? (() => onNav("dashview-management"))} />
   }
   if (detailProjectId) {
     return <DashViewDetailPage projectId={detailProjectId} onBack={onBackFromDetail ?? (() => onNav("dashview-management"))} onNav={onNav} />
