@@ -14,6 +14,8 @@ import { listProjects } from '../data/db/projects'
 
 interface Props {
   onBack: () => void
+  /** Pré-seleciona projeto(s) no Passo 2 — ex.: vindo do "Novo Dash View" (dash-first). */
+  initialProjectIds?: string[]
 }
 
 const PROJ_PALETTE = ['#7d92ff', '#35c9ae', '#a78bfa', '#e6b23c', '#f0805c']
@@ -28,13 +30,13 @@ interface ProjectItem {
   color: string
 }
 
-export default function ClientAccessPage({ onBack }: Props) {
+export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
   const { activeUser } = useSession()
   const [projects, setProjects] = useState<ProjectItem[]>([])
   const [step, setStep] = useState(1)
   const [clientName, setClientName] = useState('')
   const [clientEmail, setClientEmail] = useState('')
-  const [selectedProjects, setSelectedProjects] = useState<string[]>([])
+  const [selectedProjects, setSelectedProjects] = useState<string[]>(initialProjectIds ?? [])
   const [permission, setPermission] = useState<'viewer' | 'admin'>('viewer')
   const [clientCanApprove, setClientCanApprove] = useState(false)
   const [clientCanPreview, setClientCanPreview] = useState(false)
@@ -341,6 +343,18 @@ export default function ClientAccessPage({ onBack }: Props) {
     <div style={{ background: T.bgPage, minHeight: '100vh', padding: '40px 24px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <Stepper />
+
+        {!done && (initialProjectIds?.length ?? 0) > 0 && (
+          <div style={{
+            marginBottom: 20, padding: '12px 16px', borderRadius: 8,
+            background: `${T.accent}14`, border: `1px solid ${T.accent}40`, color: T.text2, fontSize: 13,
+          }}>
+            ➡️ Criando o 1º acesso do dash{' '}
+            <strong style={{ color: T.text1 }}>
+              {projects.filter(p => initialProjectIds?.includes(p.id)).map(p => p.name).join(', ') || '— projeto selecionado'}
+            </strong>.
+          </div>
+        )}
 
         {submitError && (
           <div style={{
