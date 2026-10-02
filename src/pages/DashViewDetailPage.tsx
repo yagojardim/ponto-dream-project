@@ -395,7 +395,7 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
               </p>
             </div>
             {onNav && (
-              <button onClick={() => onNav('client-access')} style={{
+              <button onClick={() => onNav('client-access', projectId)} style={{
                 fontSize: 12.5, padding: '7px 13px', borderRadius: 9, border: `1px solid ${T.border2}`,
                 background: T.bgSurface2, color: T.text1, cursor: 'pointer',
               }}>+ Criar acesso (jornada padrão)</button>

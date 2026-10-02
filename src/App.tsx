@@ -60,6 +60,7 @@ import StoragePage from "./pages/StoragePage"
 import MeetingsPage from "./pages/MeetingsPage"
 import DashViewManagementPage from "./pages/DashViewManagementPage"
 import DashViewDetailPage from "./pages/DashViewDetailPage"
+import NewDashViewPage from "./pages/NewDashViewPage"
 import { isClientPortalModuleEnabled } from "./data/db/clientPortal"
 import { can } from "./data/permissions"
 import FeedbackPage from "./pages/FeedbackPage"
@@ -110,6 +111,7 @@ const ALL_VIEWS: View[] = [
   "meetings",
   "dashview-management",
   "dashview-detail",
+  "dashview-new",
 ]
 
 export const VIEW_LABELS: Record<View, string> = {
@@ -151,6 +153,7 @@ export const VIEW_LABELS: Record<View, string> = {
   feedback: "Feedback & Suporte",
   "dashview-management": "Gestão do Dash View",
   "dashview-detail": "Detalhe do Dash View",
+  "dashview-new": "Novo Dash View",
 }
 
 initAppPrefs()
@@ -195,6 +198,10 @@ function AppInner() {
   const { setActiveUser, status, enterInspection, mustChangePassword, activeUser } =
     useSession()
   const [view, setView] = useState<View>("home")
+  // Pré-seleção de projeto ao entrar em "Criar acesso cliente" vindo do
+  // "Novo Dash View" (dash-first) — ClientAccessPage é renderizada fora do
+  // Shell (tela cheia), então o estado precisa viver aqui.
+  const [clientAccessInitialProjectIds, setClientAccessInitialProjectIds] = useState<string[]>([])
   // Telemetria de uso (Fatia 5c): registra a visita de cada tela como screen_view.
   // Só em sessão REAL (nunca inspeção); fire-and-forget e deduplica repetição imediata.
   const lastTrackedRef = useRef<string>("")
@@ -390,7 +397,12 @@ function AppInner() {
   }
 
   if (view === "client-access") {
-    return <ClientAccessPage onBack={() => setView("home")} />
+    return (
+      <ClientAccessPage
+        onBack={() => { setClientAccessInitialProjectIds([]); setView("home") }}
+        initialProjectIds={clientAccessInitialProjectIds}
+      />
+    )
   }
 
   if (view === "foundations") {
@@ -455,7 +467,11 @@ function AppInner() {
             }}
           />
         )}
-        <ShellWithRole view={view} setView={setView} />
+        <ShellWithRole
+          view={view}
+          setView={setView}
+          onPreselectClientAccess={setClientAccessInitialProjectIds}
+        />
       </CatalogProvider>
     </ErrorBoundary>
   )
@@ -464,9 +480,11 @@ function AppInner() {
 function ShellWithRole({
   view,
   setView,
+  onPreselectClientAccess,
 }: {
   view: View
   setView: (v: View) => void
+  onPreselectClientAccess: (projectIds: string[]) => void
 }) {
   const { activeUser } = useSession()
   const [createOpen, setCreate] = useState(false)
@@ -573,6 +591,11 @@ function ShellWithRole({
     if (v === "dashview-detail" && targetId) {
       setSelectedDashProjectId(targetId)
       setView("dashview-detail")
+      return
+    }
+    if (v === "client-access") {
+      onPreselectClientAccess(targetId ? [targetId] : [])
+      setView("client-access")
       return
     }
     if (v === "project" && targetId) {
@@ -818,6 +841,15 @@ function ShellWithRole({
                 />
               </div>
             )}
+            {view === "dashview-new" && (
+              <div className="h-full min-w-0 w-full overflow-y-auto dark-shell">
+                <DashViewManagementRouteGuard
+                  onNav={navTo}
+                  showNew
+                  onBackFromNew={() => setView("dashview-management")}
+                />
+              </div>
+            )}
           </ErrorBoundary>
         </Shell>
       </>
@@ -827,10 +859,12 @@ function ShellWithRole({
 
 // Rota "Gestão do Dash View" (visão geral + detalhe do dash): exige a
 // capability access:client-portal + módulo CLIENT_PORTAL ativo no tenant.
-function DashViewManagementRouteGuard({ onNav, detailProjectId, onBackFromDetail }: {
+function DashViewManagementRouteGuard({ onNav, detailProjectId, onBackFromDetail, showNew, onBackFromNew }: {
   onNav: (v: string, targetId?: string) => void
   detailProjectId?: string
   onBackFromDetail?: () => void
+  showNew?: boolean
+  onBackFromNew?: () => void
 }) {
   const { activeUser } = useSession()
   const [moduleEnabled, setModuleEnabled] = useState<boolean | null>(null)
@@ -854,6 +888,9 @@ function DashViewManagementRouteGuard({ onNav, detailProjectId, onBackFromDetail
         O módulo Client Portal não está ativo neste tenant.
       </div>
     )
+  }
+  if (showNew) {
+    return <NewDashViewPage onBack={onBackFromNew ?? (() => onNav("dashview-management"))} onNav={onNav} />
   }
   if (detailProjectId) {
     return <DashViewDetailPage projectId={detailProjectId} onBack={onBackFromDetail ?? (() => onNav("dashview-management"))} onNav={onNav} />

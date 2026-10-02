@@ -103,6 +103,10 @@ export default function DashViewManagementPage({ onNav }: Props) {
             }}>
               <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: T.text1 }}>Dashes compartilhados</h2>
               <span style={{ fontSize: 11, color: T.text3 }}>({overview.dashesTotal})</span>
+              <button onClick={() => onNav?.('dashview-new')} style={{
+                marginLeft: 'auto', fontSize: 12, padding: '6px 12px', borderRadius: 7,
+                background: T.accent, border: 'none', color: '#fff', cursor: 'pointer',
+              }}>+ Novo Dash View</button>
             </div>
 
             {overview.dashes.length === 0 ? (
@@ -169,8 +173,9 @@ export default function DashViewManagementPage({ onNav }: Props) {
           )}
 
           <p style={{ fontSize: 11, color: T.text3, marginTop: 14 }}>
-            Clique em um dash para ver e gerenciar os usuários. Criação de novo Dash View chega numa próxima fatia.
-            Para criar acesso de cliente hoje, use{' '}
+            Clique em um dash para ver e gerenciar os usuários, ou use{' '}
+            <a onClick={() => onNav?.('dashview-new')} style={{ color: T.accent, cursor: 'pointer' }}>Novo Dash View</a>
+            {' '}para compartilhar outro projeto. Para incluir um usuário em um projeto já existente, use{' '}
             <a onClick={() => onNav?.('client-access')} style={{ color: T.accent, cursor: 'pointer' }}>
               Criar acesso cliente
             </a>.
