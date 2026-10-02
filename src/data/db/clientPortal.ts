@@ -1200,6 +1200,12 @@ export interface DashViewRow {
   /** Rollup do dash: 'active' se houver ao menos 1 usuário ativo, senão 'invited'. */
   status: 'active' | 'invited'
   createdAt: string
+  /** Último acesso real de qualquer usuário do dash (null = nunca acessado). */
+  lastAccessAt: string | null
+  /** Dias desde o último acesso (ou desde a criação, se nunca acessado). */
+  inactiveDays: number
+  /** true quando inactiveDays > INACTIVE_DASH_DAYS. */
+  inactive: boolean
 }
 
 export interface DashViewOverview {
@@ -1211,53 +1217,87 @@ export interface DashViewOverview {
   usersBlocked: number
   invitesPending: number
   invitesStale: number
+  dashesInactive: number
   dashes: DashViewRow[]
 }
 
 export const EMPTY_DASHVIEW_OVERVIEW: DashViewOverview = {
   dashesTotal: 0, projectsTotal: 0, usersTotal: 0, usersActive: 0,
-  usersInvited: 0, usersBlocked: 0, invitesPending: 0, invitesStale: 0, dashes: [],
+  usersInvited: 0, usersBlocked: 0, invitesPending: 0, invitesStale: 0, dashesInactive: 0, dashes: [],
 }
 
-type DashViewUserRow = Pick<ClientPortalUserRow, 'project_id' | 'portal_role' | 'status' | 'created_at'>
+export const INACTIVE_DASH_DAYS = 30
+
+type DashViewUserRow = Pick<ClientPortalUserRow, 'project_id' | 'portal_role' | 'status' | 'created_at'> & {
+  last_access_at: string | null
+}
+
+/**
+ * Seleciona os usuários de portal com `last_access_at` quando a coluna já
+ * existe (migração supabase/sql/client_portal_last_access.sql aplicada);
+ * caso contrário, degrada para null em todas as linhas — o cálculo de
+ * inatividade cai de volta para `created_at`, sem quebrar a tela inteira.
+ */
+async function selectDashViewUsers(tid: string): Promise<DashViewUserRow[]> {
+  const { data, error } = await tbl('client_portal_users')
+    .select('project_id, portal_role, status, created_at, last_access_at')
+    .eq('tenant_id', tid).is('archived_at', null)
+  if (!error) return (data ?? []) as DashViewUserRow[]
+  if (!/does not exist|schema cache|could not find/i.test(error.message)) {
+    throw tenantError('client_portal_users', error.message)
+  }
+  const retry = await tbl('client_portal_users')
+    .select('project_id, portal_role, status, created_at')
+    .eq('tenant_id', tid).is('archived_at', null)
+  if (retry.error) throw tenantError('client_portal_users', retry.error.message)
+  return ((retry.data ?? []) as Omit<DashViewUserRow, 'last_access_at'>[])
+    .map(r => ({ ...r, last_access_at: null }))
+}
 
 async function fetchDashViewOverview__raw(): Promise<DashViewOverview> {
   const tid = getActiveTenantId()
 
-  const [usersRes, projectsCountRes] = await Promise.all([
-    tbl('client_portal_users')
-      .select('project_id, portal_role, status, created_at')
-      .eq('tenant_id', tid).is('archived_at', null),
+  const [rows, projectsCountRes] = await Promise.all([
+    selectDashViewUsers(tid),
     supabase.from('projects').select('id', { count: 'exact', head: true })
       .eq('tenant_id', tid).is('archived_at', null),
   ])
-  if (usersRes.error) throw tenantError('client_portal_users', usersRes.error.message)
   if (projectsCountRes.error) throw tenantError('projects', projectsCountRes.error.message)
 
-  const rows = (usersRes.data ?? []) as DashViewUserRow[]
   const projectsTotal = projectsCountRes.count ?? 0
   if (rows.length === 0) return { ...EMPTY_DASHVIEW_OVERVIEW, projectsTotal }
 
   const projectIds = [...new Set(rows.map(r => r.project_id))]
   const { data: projects, error: pErr } = await supabase.from('projects')
     .select('id, name, client_name')
-    .eq('tenant_id', tid).in('id', projectIds)
+    .eq('tenant_id', tid).in('id', projectIds).is('archived_at', null)
   if (pErr) throw tenantError('projects', pErr.message)
   const projectById = new Map((projects ?? []).map((p: any) => [p.id, p]))
 
   const staleBefore = Date.now() - STALE_INVITE_DAYS * 86400000
   const byProject = new Map<string, DashViewUserRow[]>()
   for (const r of rows) {
+    // Projeto arquivado/excluído: o dash não existe mais de verdade, mesmo
+    // que o client_portal_users ainda não tenha sido limpo.
+    if (!projectById.has(r.project_id)) continue
     const list = byProject.get(r.project_id) ?? []
     list.push(r)
     byProject.set(r.project_id, list)
   }
 
+  const now = Date.now()
   const dashes: DashViewRow[] = [...byProject.entries()].map(([projectId, us]): DashViewRow => {
     const proj = projectById.get(projectId) as { name?: string; client_name?: string | null } | undefined
     const pending = us.filter(u => PENDING_STATUSES.has(u.status))
     const stale = pending.filter(u => new Date(u.created_at).getTime() < staleBefore)
     const createdAt = us.reduce((min, u) => (u.created_at < min ? u.created_at : min), us[0].created_at)
+    const lastAccessAt = us.reduce<string | null>((max, u) => {
+      if (!u.last_access_at) return max
+      if (!max || u.last_access_at > max) return u.last_access_at
+      return max
+    }, null)
+    const reference = lastAccessAt ?? createdAt
+    const inactiveDays = Math.floor((now - new Date(reference).getTime()) / 86400000)
     return {
       projectId,
       projectName: proj?.name ?? 'Projeto',
@@ -1269,6 +1309,9 @@ async function fetchDashViewOverview__raw(): Promise<DashViewOverview> {
       invitesStale: stale.length,
       status: us.some(u => u.status === 'active') ? 'active' : 'invited',
       createdAt,
+      lastAccessAt,
+      inactiveDays,
+      inactive: inactiveDays > INACTIVE_DASH_DAYS,
     }
   }).sort((a, b) => a.projectName.localeCompare(b.projectName))
 
@@ -1281,12 +1324,25 @@ async function fetchDashViewOverview__raw(): Promise<DashViewOverview> {
     usersBlocked: rows.filter(r => r.status === 'blocked').length,
     invitesPending: rows.filter(r => PENDING_STATUSES.has(r.status)).length,
     invitesStale: rows.filter(r => PENDING_STATUSES.has(r.status) && new Date(r.created_at).getTime() < staleBefore).length,
+    dashesInactive: dashes.filter(d => d.inactive).length,
     dashes,
   }
 }
 
 export const fetchDashViewOverview = (): Promise<DashViewOverview> =>
   safeCall('clientPortal.fetchDashViewOverview', fetchDashViewOverview__raw, EMPTY_DASHVIEW_OVERVIEW)
+
+/** Grava o acesso real do cliente (nunca chamar em preview da gestão). */
+async function touchPortalAccess__raw(userIds: string[]): Promise<void> {
+  if (userIds.length === 0) return
+  const { error } = await tbl('client_portal_users')
+    .update({ last_access_at: new Date().toISOString() })
+    .in('id', userIds)
+  if (error && !/does not exist|schema cache|could not find/i.test(error.message)) throw error
+}
+
+export const touchPortalAccess = (userIds: string[]): Promise<void> =>
+  safeCall('clientPortal.touchPortalAccess', () => touchPortalAccess__raw(userIds), undefined, { count: userIds.length })
 
 // ─── Fatia 6b — Detalhe do dash + gestão de usuários ──────────────────────────
 export interface DashDetail {
@@ -1301,7 +1357,7 @@ async function fetchDashDetail__raw(projectId: string): Promise<DashDetail | nul
   const tid = getActiveTenantId()
   const [projRes, users] = await Promise.all([
     supabase.from('projects').select('id, name, client_name')
-      .eq('tenant_id', tid).eq('id', projectId).maybeSingle(),
+      .eq('tenant_id', tid).eq('id', projectId).is('archived_at', null).maybeSingle(),
     listClientPortalUsers__raw(projectId),
   ])
   if (projRes.error) throw tenantError('projects', projRes.error.message)

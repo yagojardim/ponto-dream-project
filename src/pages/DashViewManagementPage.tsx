@@ -87,11 +87,12 @@ export default function DashViewManagementPage({ onNav }: Props) {
               color={T.warn}
             />
             <KpiCard
-              label="Convites parados"
-              value={String(overview.invitesStale)}
-              sub={`sem 1º acesso há ${14}+ dias`}
+              label="Dashes inativos"
+              value={String(overview.dashesInactive)}
+              sub="sem acesso do cliente há 30+ dias"
               color={T.crit}
-              alert={overview.invitesStale > 0}
+              alert={overview.dashesInactive > 0}
+              onClick={() => onNav?.('dashview-inactive')}
             />
           </div>
 
@@ -175,10 +176,7 @@ export default function DashViewManagementPage({ onNav }: Props) {
           <p style={{ fontSize: 11, color: T.text3, marginTop: 14 }}>
             Clique em um dash para ver e gerenciar os usuários, ou use{' '}
             <a onClick={() => onNav?.('dashview-new')} style={{ color: T.accent, cursor: 'pointer' }}>Novo Dash View</a>
-            {' '}para compartilhar outro projeto. Para incluir um usuário em um projeto já existente, use{' '}
-            <a onClick={() => onNav?.('client-access')} style={{ color: T.accent, cursor: 'pointer' }}>
-              Criar acesso cliente
-            </a>.
+            {' '}para compartilhar outro projeto.
           </p>
         </>
       )}

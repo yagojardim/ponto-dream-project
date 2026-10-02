@@ -4,11 +4,10 @@ import { LoadingState, EmptyState } from '@/components/ds/DashboardKit'
 import { useSession } from '@/data/SessionContext'
 import { copyToClipboard } from '@/utils/copyToClipboard'
 import {
-  fetchDashDetail, createClientPortalUsers, blockPortalUser, reactivatePortalUser,
+  fetchDashDetail, blockPortalUser, reactivatePortalUser,
   removePortalUser, updatePortalUser, resetPortalUserPassword,
   type DashDetail, type ClientPortalUserRow, type PortalRole,
 } from '@/data/db/clientPortal'
-import { generateTempPassword } from '@/data/security'
 
 interface Props {
   projectId: string
@@ -145,94 +144,6 @@ function PasswordReveal({ password }: { password: string }) {
   )
 }
 
-// ─── Modal: incluir usuário ────────────────────────────────────────────────
-function AddUserModal({ projectId, actorName, onClose, onCreated }: {
-  projectId: string; actorName?: string; onClose: () => void; onCreated: () => void
-}) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState<PortalRole>('viewer')
-  const [canApprove, setCanApprove] = useState(false)
-  const [canPreview, setCanPreview] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [tempPassword, setTempPassword] = useState<string | null>(null)
-
-  async function submit() {
-    if (!name.trim() || !email.trim()) { setError('Preencha nome e e-mail.'); return }
-    setSaving(true); setError('')
-    const pwd = generateTempPassword()
-    try {
-      const created = await createClientPortalUsers({
-        projectIds: [projectId],
-        name: name.trim(),
-        email: email.trim(),
-        portalRole: role,
-        canApprove,
-        canPreview,
-        canComment: true,
-        tempPassword: pwd,
-        actorName,
-      })
-      if (created.length === 0) throw new Error('Não foi possível incluir o usuário. Verifique os dados e tente novamente.')
-      setTempPassword(pwd)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao incluir usuário.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(9,9,11,0.80)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 14, boxShadow: T.shadowModal, width: 440, maxHeight: '90vh', overflow: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '15px 18px', borderBottom: `1px solid ${T.border}` }}>
-          <h3 style={{ margin: 0, fontSize: 14.5, color: T.text1 }}>Incluir usuário no dash</h3>
-          <span onClick={onClose} style={{ marginLeft: 'auto', cursor: 'pointer', color: T.text3, fontSize: 18, lineHeight: 1 }}>✕</span>
-        </div>
-        <div style={{ padding: 18 }}>
-          {tempPassword ? (
-            <>
-              <div style={{ fontSize: 13, color: T.text2, marginBottom: 10 }}>
-                Usuário <strong style={{ color: T.text1 }}>{name}</strong> incluído com sucesso.
-              </div>
-              <PasswordReveal password={tempPassword} />
-            </>
-          ) : (
-            <>
-              <Field label="Nome"><input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="Nome do usuário" /></Field>
-              <Field label="E-mail"><input style={inputStyle} value={email} onChange={e => setEmail(e.target.value)} placeholder="email@cliente.com" /></Field>
-              <Field label="Papel">
-                <select style={inputStyle} value={role} onChange={e => setRole(e.target.value as PortalRole)}>
-                  <option value="viewer">Visualizador — só acompanha</option>
-                  <option value="portal-admin">Admin do portal — gerencia e aprova</option>
-                </select>
-              </Field>
-              <Switch on={canApprove} onToggle={() => setCanApprove(v => !v)} label="Permitir aprovar entregas" />
-              <Switch on={canPreview} onToggle={() => setCanPreview(v => !v)} label="Permitir ver preview" />
-              <div style={{ fontSize: 11, color: T.text3, marginTop: -4 }}>Comentar: sempre habilitado para todo cliente.</div>
-              {error && <div style={{ marginTop: 12, fontSize: 12, color: T.crit }}>{error}</div>}
-            </>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: 9, justifyContent: 'flex-end', padding: '14px 18px', borderTop: `1px solid ${T.border}` }}>
-          {tempPassword ? (
-            <button onClick={onCreated} style={{ background: T.accent, border: 'none', color: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>Concluir</button>
-          ) : (
-            <>
-              <button onClick={onClose} style={{ background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={() => void submit()} disabled={saving} style={{ background: T.accent, border: 'none', color: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-                {saving ? 'Enviando…' : 'Incluir usuário'}
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─── Modal: editar usuário ─────────────────────────────────────────────────
 function EditUserModal({ user, actorName, onClose, onSaved }: {
   user: ClientPortalUserRow; actorName?: string; onClose: () => void; onSaved: () => void
@@ -321,7 +232,6 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
   const [toast, setToast] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
-  const [addOpen, setAddOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<ClientPortalUserRow | null>(null)
 
   useEffect(() => {
@@ -395,10 +305,15 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
               </p>
             </div>
             {onNav && (
-              <button onClick={() => onNav('client-access', projectId)} style={{
-                fontSize: 12.5, padding: '7px 13px', borderRadius: 9, border: `1px solid ${T.border2}`,
-                background: T.bgSurface2, color: T.text1, cursor: 'pointer',
-              }}>+ Criar acesso (jornada padrão)</button>
+              <button
+                onClick={() => users[0] && onNav('dashview-preview', users[0].id)}
+                disabled={users.length === 0}
+                title={users.length === 0 ? 'Inclua um usuário para poder visualizar o DashView' : undefined}
+                style={{
+                  fontSize: 12.5, padding: '7px 13px', borderRadius: 9, border: `1px solid ${T.border2}`,
+                  background: T.bgSurface2, color: users.length === 0 ? T.text3 : T.text1,
+                  cursor: users.length === 0 ? 'not-allowed' : 'pointer', opacity: users.length === 0 ? 0.6 : 1,
+                }}>👁 Visualizar DashView</button>
             )}
           </div>
 
@@ -422,7 +337,7 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
           <div style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '13px 16px', borderBottom: `1px solid ${T.border}` }}>
               <h2 style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: T.text1 }}>Usuários deste dash</h2>
-              <button onClick={() => setAddOpen(true)} style={{
+              <button onClick={() => onNav?.('client-access', projectId)} style={{
                 marginLeft: 'auto', fontSize: 12, padding: '6px 12px', borderRadius: 7,
                 background: T.accent, border: 'none', color: '#fff', cursor: 'pointer',
               }}>+ Incluir usuário</button>
@@ -490,14 +405,6 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
         }}>{toast}</div>
       )}
 
-      {addOpen && (
-        <AddUserModal
-          projectId={projectId}
-          actorName={activeUser.name}
-          onClose={() => setAddOpen(false)}
-          onCreated={() => { setAddOpen(false); reload() }}
-        />
-      )}
       {editingUser && (
         <EditUserModal
           user={editingUser}

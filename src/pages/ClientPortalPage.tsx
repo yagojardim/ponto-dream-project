@@ -4,7 +4,7 @@ import {
   markSignalReadByPo, markReplyReadByClient, setPortalPasswordChanged,
   getClientPortalContext, listClientUnreadReplies, countClientUnreadReplies,
   markClientRepliesRead, getPortalScope, EMPTY_PORTAL_SCOPE,
-  listProjectResponsibleProfiles,
+  listProjectResponsibleProfiles, touchPortalAccess,
   type ClientChatMessage, type ClientPortalContext, type ClientReplyNotice,
   type MentionProfile,
   type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
@@ -2035,11 +2035,18 @@ export default function ClientPortalPage({
   mustChangePassword = false,
   onPasswordChanged,
   onLogout,
+  previewUserId,
+  onExitPreview,
 }: {
   mustChangePassword?: boolean
   onPasswordChanged?: () => void
   onLogout?: () => void
+  /** Modo preview da gestão: carrega o escopo deste client_portal_users.id
+   *  diretamente, sem sessão real de portal, e nunca registra acesso real. */
+  previewUserId?: string
+  onExitPreview?: () => void
 }) {
+  const isPreview = !!previewUserId
   const { toasts, add: showToast } = useLocalToast()
   const [notifTick, setNotifTick] = useState(0)
   const [scope, setScope] = useState<PortalScope>(EMPTY_PORTAL_SCOPE)
@@ -2053,9 +2060,10 @@ export default function ClientPortalPage({
     let alive = true
     ;(async () => {
       const session = readPortalSession()
-      const ctx = await getClientPortalContext(
-        session ? { id: session.id, email: session.email } : null,
-      )
+      const ident = previewUserId
+        ? { id: previewUserId }
+        : (session ? { id: session.id, email: session.email } : null)
+      const ctx = await getClientPortalContext(ident)
       if (!alive) return
       CLIENT = ctx
       const s = await getPortalScope(ctx?.projectIds ?? [])
@@ -2064,9 +2072,11 @@ export default function ClientPortalPage({
       setScope(s)
       setUnreadCount(await countClientUnreadReplies(ctx))
       setReady(true)
+      // Preview da gestão nunca conta como acesso real do cliente.
+      if (!previewUserId && ctx) void touchPortalAccess(ctx.userIds)
     })()
     return () => { alive = false }
-  }, [])
+  }, [previewUserId])
 
   // Recontagem de não-lidas a cada interação com notificações.
   useEffect(() => {
@@ -2086,7 +2096,7 @@ export default function ClientPortalPage({
 
 
 
-  const [showPwdModal, setShowPwdModal] = useState(mustChangePassword)
+  const [showPwdModal, setShowPwdModal] = useState(mustChangePassword && !isPreview)
   const [showVoluntaryPwdModal, setShowVoluntaryPwdModal] = useState(false)
   const [portalView, setPortalView] = useState<'dashboard' | 'chat'>('dashboard')
   const [chatProjectId, setChatProjectId] = useState<string | null>(null)
@@ -2126,6 +2136,24 @@ export default function ClientPortalPage({
       className="flex flex-col h-full overflow-hidden"
       style={{ background: C.bg, fontFamily: 'system-ui, -apple-system, sans-serif' }}
     >
+      {isPreview && (
+        <div
+          className="flex items-center gap-2 px-8 py-2 flex-shrink-0"
+          style={{ background: `${C.accent}14`, borderBottom: `1px solid ${C.border}` }}
+        >
+          <span className="text-[11px] font-semibold" style={{ color: C.accent }}>
+            👁 Modo visualização (gestão) — somente leitura
+          </span>
+          <span className="flex-1" />
+          <span
+            onClick={onExitPreview}
+            className="text-[11px] cursor-pointer"
+            style={{ color: C.accent }}
+          >
+            ← Voltar para a gestão
+          </span>
+        </div>
+      )}
       <PortalHeader
         selected={selected}
         onToggle={toggleProject}
@@ -2135,7 +2163,7 @@ export default function ClientPortalPage({
         onOpenChat={openChatFor}
         isChatMode={portalView === 'chat'}
         onChatToggle={() => setPortalView(v => v === 'chat' ? 'dashboard' : 'chat')}
-        onLogout={onLogout ?? (() => {})}
+        onLogout={isPreview ? (onExitPreview ?? (() => {})) : (onLogout ?? (() => {}))}
         onChangePasswordRequest={() => setShowVoluntaryPwdModal(true)}
       />
 
