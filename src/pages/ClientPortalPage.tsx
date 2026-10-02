@@ -750,12 +750,18 @@ function ValidationCard({ onComment }: { onComment: (msg: string) => void }) {
                 <div className="flex items-center gap-2 flex-wrap">
                   {perms.client_can_preview && (
                     <button
-                      className="h-7 px-3 rounded-lg text-xs font-medium transition-all"
-                      style={{ background: C.surface, border: `1px solid ${C.border2}`, color: C.txt2 }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = C.accent }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = C.border2 }}
+                      disabled
+                      title="Em breve — ainda estamos definindo como a prévia vai funcionar aqui."
+                      className="h-7 px-3 rounded-lg text-xs font-medium flex items-center gap-1.5"
+                      style={{ background: C.surface2, border: `1px solid ${C.border}`, color: C.txt3, cursor: 'not-allowed', opacity: 0.6 }}
                     >
                       Ver preview
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ background: `${C.txt3}22`, color: C.txt3 }}
+                      >
+                        EM BREVE
+                      </span>
                     </button>
                   )}
                   {perms.client_can_approve && (
