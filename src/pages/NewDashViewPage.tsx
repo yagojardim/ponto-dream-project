@@ -33,7 +33,7 @@ export default function NewDashViewPage({ onBack, onNav }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [eligible, setEligible] = useState<ProjectRow[]>([])
-  const [selectedId, setSelectedId] = useState('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [clientName, setClientName] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -47,10 +47,6 @@ export default function NewDashViewPage({ onBack, onNav }: Props) {
         const already = new Set(overview.dashes.map(d => d.projectId))
         const open = projects.filter(p => !already.has(p.id) && p.status !== 'archived')
         setEligible(open)
-        if (open.length > 0) {
-          setSelectedId(open[0].id)
-          setClientName(open[0].client_name ?? '')
-        }
       } catch {
         if (alive) setError('Não foi possível carregar os projetos.')
       } finally {
@@ -60,22 +56,34 @@ export default function NewDashViewPage({ onBack, onNav }: Props) {
     return () => { alive = false }
   }, [])
 
-  function selectProject(id: string) {
-    setSelectedId(id)
-    const proj = eligible.find(p => p.id === id)
-    setClientName(proj?.client_name ?? '')
+  function toggleProject(id: string) {
+    setSelectedIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      // Com 1 projeto selecionado, sugere o cliente responsável já cadastrado nele.
+      if (next.length === 1) {
+        const proj = eligible.find(p => p.id === next[0])
+        setClientName(proj?.client_name ?? '')
+      } else {
+        setClientName('')
+      }
+      return next
+    })
   }
 
   async function handleContinue() {
-    const proj = eligible.find(p => p.id === selectedId)
-    if (!proj) return
+    const selected = eligible.filter(p => selectedIds.includes(p.id))
+    if (selected.length === 0) return
     setSubmitting(true); setError('')
     try {
       const trimmed = clientName.trim()
-      if (trimmed !== (proj.client_name ?? '')) {
-        await updateProject(proj, { clientName: trimmed || null }, activeUser.name)
+      if (trimmed) {
+        await Promise.all(
+          selected
+            .filter(p => (p.client_name ?? '') !== trimmed)
+            .map(p => updateProject(p, { clientName: trimmed }, activeUser.name)),
+        )
       }
-      onNav('client-access', proj.id)
+      onNav('client-access', selectedIds.join(','))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao preparar o dash.')
       setSubmitting(false)
@@ -90,8 +98,7 @@ export default function NewDashViewPage({ onBack, onNav }: Props) {
 
       <h1 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: T.text1 }}>Novo Dash View</h1>
       <p style={{ margin: '6px 0 20px', fontSize: 13, color: T.text2, maxWidth: 620 }}>
-        Primeiro você escolhe qual projeto o cliente vai ver. No fim, o 1º acesso é cadastrado pela
-        mesma jornada padrão de criação de acesso do cliente — processo idêntico em todo o produto.
+        Escolha o(s) projeto(s) que o cliente vai ver. No próximo passo você cadastra o 1º usuário.
       </p>
 
       {loading && <LoadingState rows={3} />}
@@ -109,11 +116,44 @@ export default function NewDashViewPage({ onBack, onNav }: Props) {
 
       {!loading && eligible.length > 0 && (
         <div style={{ ...cardStyle, padding: 22, maxWidth: 560 }}>
-          <Field label="Projeto a compartilhar">
-            <select style={inputStyle} value={selectedId} onChange={e => selectProject(e.target.value)}>
-              {eligible.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+          <Field label="Projeto(s) a compartilhar">
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ background: T.accentDim, border: `1px solid ${T.accentBorder}`, color: T.accent, borderRadius: 20, padding: '3px 12px', fontSize: 12 }}>
+                {selectedIds.length} projeto(s) selecionado(s)
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {eligible.map(p => {
+                const selected = selectedIds.includes(p.id)
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => toggleProject(p.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                      background: selected ? T.accentDim : T.bgSurface2,
+                      border: `1px solid ${selected ? T.accentBorder : T.border}`,
+                      borderRadius: 9, cursor: 'pointer', transition: 'all 0.15s',
+                    }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: 5, border: `2px solid ${selected ? T.accent : T.border2}`,
+                      background: selected ? T.accent : 'transparent', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#fff',
+                    }}>
+                      {selected && '✓'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: T.text1 }}>{p.name}</div>
+                      <div style={{ fontSize: 11, color: T.text3, marginTop: 1 }}>
+                        {p.client_name ? `Cliente atual: ${p.client_name}` : 'Sem cliente definido'} · {p.status}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </Field>
+
           <Field label="Cliente responsável">
             <input
               style={inputStyle}
@@ -125,22 +165,14 @@ export default function NewDashViewPage({ onBack, onNav }: Props) {
 
           {error && <div style={{ fontSize: 12, color: T.crit, marginBottom: 12 }}>{error}</div>}
 
-          <div style={{
-            display: 'flex', gap: 10, padding: '11px 14px', borderRadius: 10,
-            background: T.accentDim, border: `1px solid ${T.accentBorder}`, fontSize: 12, color: T.text2, marginBottom: 16,
-          }}>
-            <span>➡️</span>
-            <div>Ao continuar, você vai para a jornada de criação de acesso do cliente com este projeto já selecionado, para cadastrar o 1º usuário. O dash sobe ativo assim que esse primeiro acesso é concluído.</div>
-          </div>
-
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button onClick={onBack} style={{ background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, borderRadius: 8, padding: '9px 16px', fontSize: 13, cursor: 'pointer' }}>
               Cancelar
             </button>
             <button
               onClick={() => void handleContinue()}
-              disabled={submitting || !selectedId}
-              style={{ background: T.accent, border: 'none', color: '#fff', borderRadius: 8, padding: '9px 16px', fontSize: 13, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.7 : 1 }}
+              disabled={submitting || selectedIds.length === 0}
+              style={{ background: T.accent, border: 'none', color: '#fff', borderRadius: 8, padding: '9px 16px', fontSize: 13, cursor: submitting ? 'default' : 'pointer', opacity: submitting || selectedIds.length === 0 ? 0.6 : 1 }}
             >
               {submitting ? 'Preparando…' : 'Criar dash e cadastrar 1º acesso →'}
             </button>

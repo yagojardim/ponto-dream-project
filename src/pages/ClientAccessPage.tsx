@@ -396,7 +396,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button
                   disabled={!clientName.trim() || !clientEmail.trim()}
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep((initialProjectIds?.length ?? 0) > 0 ? 3 : 2)}
                   style={{
                     background: (!clientName.trim() || !clientEmail.trim()) ? T.border2 : T.accent,
                     border: 'none', color: '#fff', borderRadius: 8, padding: '10px 24px',
@@ -666,7 +666,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
               </div>
 
               <div style={{ display: 'flex', gap: 12 }}>
-                <button onClick={() => setStep(2)} style={{ background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer' }}>
+                <button onClick={() => setStep((initialProjectIds?.length ?? 0) > 0 ? 1 : 2)} style={{ background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer' }}>
                   ← Voltar
                 </button>
                 <button
