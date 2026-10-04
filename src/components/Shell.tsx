@@ -21,7 +21,7 @@ export type View =
   | 'reports' | 'automations' | 'config' | 'team' | 'my-tasks'
   | 'login' | 'role-dashboard' | 'client-access' | 'client-login' | 'client-messages'
   | 'timesheet' | 'hours-approval' | 'boards-list' | 'modules' | 'tenant-settings'
-  | 'profile' | 'preferences' | 'storage' | 'feedback' | 'meetings' | 'dashview-management' | 'dashview-detail' | 'dashview-new' | 'dashview-preview' | 'dashview-inactive'
+  | 'profile' | 'preferences' | 'storage' | 'feedback' | 'meetings' | 'dashview-management' | 'dashview-detail' | 'dashview-new' | 'dashview-preview' | 'dashview-inactive' | 'dashview-editor'
 
 interface ShellProps {
   children:     ReactNode
@@ -37,7 +37,7 @@ const VALID_VIEWS: View[] = [
   'reports','automations','config','team','my-tasks',
   'login','role-dashboard','client-access','client-login','client-messages',
   'timesheet','hours-approval','boards-list','modules','tenant-settings',
-  'profile','preferences','storage','feedback','meetings','dashview-management','dashview-detail','dashview-new','dashview-preview','dashview-inactive',
+  'profile','preferences','storage','feedback','meetings','dashview-management','dashview-detail','dashview-new','dashview-preview','dashview-inactive','dashview-editor',
 ]
 
 export function Shell({ children, currentView, onViewChange, onCreateIssue, onOpenClientMessages }: ShellProps) {

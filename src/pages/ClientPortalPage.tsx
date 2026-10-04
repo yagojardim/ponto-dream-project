@@ -4,12 +4,16 @@ import {
   markSignalReadByPo, markReplyReadByClient, setPortalPasswordChanged,
   getClientPortalContext, listClientUnreadReplies, countClientUnreadReplies,
   markClientRepliesRead, getPortalScope, EMPTY_PORTAL_SCOPE,
-  listProjectResponsibleProfiles, touchPortalAccess,
+  listProjectResponsibleProfiles, touchPortalAccess, fetchDashLayout,
   type ClientChatMessage, type ClientPortalContext, type ClientReplyNotice,
-  type MentionProfile,
+  type MentionProfile, type DashLayoutItem,
   type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
 } from '../data/db/clientPortal'
 import { readPortalSession } from '../lib/portalSession'
+import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout'
+import 'react-grid-layout/css/styles.css'
+
+const StaticGridLayout = WidthProvider(GridLayout)
 
 
 /** Identidade real do cliente logado no portal (resolvida do banco). */
@@ -879,6 +883,31 @@ function RecentDeliveriesCard() {
       </div>
     </CardShell>
   )
+}
+
+// ─── Fatia 6d — catálogo client-safe (mesmos 8 cards acima, agora opcionais) ──
+/** Renderiza o card real para um id do DASH_WIDGET_CATALOG. Catálogo fechado —
+ *  nenhum widget novo aqui, só os já existentes acima ficando configuráveis. */
+function renderDashWidget(
+  id: string,
+  project: ScopeProject,
+  selected: Set<string>,
+  onComment: (msg: string) => void,
+  bumpNotifTick: (fn: (t: number) => number) => void,
+): ReactNode {
+  switch (id) {
+    case 'progress': return <ProgressCard project={project} />
+    case 'sprint-deliveries': return (
+      <SprintDeliveriesCard projectFilter={selected} onComment={msg => { onComment(msg); bumpNotifTick(t => t + 1) }} />
+    )
+    case 'project-count': return <ProjectCountCard count={PROJECTS.length} />
+    case 'active-sprint': return <ActiveSprintCard />
+    case 'risks': return <RisksCard />
+    case 'validation': return <ValidationCard onComment={onComment} />
+    case 'roadmap': return <RoadmapCard />
+    case 'recent-deliveries': return <RecentDeliveriesCard />
+    default: return null
+  }
 }
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
@@ -2137,6 +2166,16 @@ export default function ClientPortalPage({
   const singleProject = isSingle ? PROJECTS.find(p => selected.has(p.id)) : null
   const isEmpty = selected.size === 0
 
+  // Layout customizado do dash (Fatia 6d) — só existe para a visão de 1 projeto.
+  // Null = layout padrão (todos os cards, ordem atual), sem precisar de dado novo.
+  const [dashLayout, setDashLayout] = useState<DashLayoutItem[] | null>(null)
+  useEffect(() => {
+    let alive = true
+    if (!singleProject) { setDashLayout(null); return }
+    void fetchDashLayout(singleProject.id).then(l => { if (alive) setDashLayout(l) })
+    return () => { alive = false }
+  }, [singleProject?.id])
+
   return (
     <div
       className="flex flex-col h-full overflow-hidden"
@@ -2203,6 +2242,23 @@ export default function ClientPortalPage({
             {isEmpty ? (
 
               <EmptyState />
+            ) : isSingle && singleProject && dashLayout && dashLayout.length > 0 ? (
+              // Layout customizado pelo gestor (Fatia 6d) — só os cards escolhidos, na posição escolhida.
+              <StaticGridLayout
+                className="layout"
+                layout={dashLayout as unknown as Layout[]}
+                cols={12}
+                rowHeight={90}
+                margin={[20, 20]}
+                isDraggable={false}
+                isResizable={false}
+              >
+                {dashLayout.map(item => (
+                  <div key={item.i}>
+                    {renderDashWidget(item.i, singleProject, selected, showToast, setNotifTick)}
+                  </div>
+                ))}
+              </StaticGridLayout>
             ) : (
               <div className="grid gap-5 items-stretch" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
                 {isSingle && singleProject && (
