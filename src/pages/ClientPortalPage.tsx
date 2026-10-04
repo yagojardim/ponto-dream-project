@@ -378,7 +378,7 @@ let RECENT_DELIVERIES: { id: string; title: string; project: string; date: strin
 let RISKS: { id: string; title: string; sev: 'high' | 'medium' | 'low'; project: string; days: number; detail: string }[] = []
 
 /** Projects the current portal client is allowed to see, mapped to view models. */
-function applyScope(scope: PortalScope) {
+export function applyScope(scope: PortalScope) {
   PROJECTS  = scope.projects
   SPRINTS   = scope.sprints
   ROADMAP   = scope.roadmap
@@ -888,7 +888,7 @@ function RecentDeliveriesCard() {
 // ─── Fatia 6d — catálogo client-safe (mesmos 8 cards acima, agora opcionais) ──
 /** Renderiza o card real para um id do DASH_WIDGET_CATALOG. Catálogo fechado —
  *  nenhum widget novo aqui, só os já existentes acima ficando configuráveis. */
-function renderDashWidget(
+export function renderDashWidget(
   id: string,
   project: ScopeProject,
   selected: Set<string>,

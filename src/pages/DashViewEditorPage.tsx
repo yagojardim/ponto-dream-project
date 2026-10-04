@@ -6,8 +6,12 @@ import { T } from '@/components/ds/tokens'
 import { LoadingState } from '@/components/ds/DashboardKit'
 import { useSession } from '@/data/SessionContext'
 import {
-  fetchDashLayout, saveDashLayout, fetchDashDetail, DASH_WIDGET_CATALOG, type DashLayoutItem,
+  fetchDashLayout, saveDashLayout, fetchDashDetail, getPortalScope, DASH_WIDGET_CATALOG,
+  type DashLayoutItem, type ScopeProject,
 } from '@/data/db/clientPortal'
+import { applyScope, renderDashWidget } from '@/pages/ClientPortalPage'
+
+function noop() { /* editor: widgets renderizados somente leitura, sem efeito real */ }
 
 const GridLayoutWithWidth = WidthProvider(GridLayout)
 const COLS = 12
@@ -38,15 +42,22 @@ export default function DashViewEditorPage({ projectId, onBack }: Props) {
   const [layout, setLayout] = useState<DashLayoutItem[]>([])
   const [isCustom, setIsCustom] = useState(false)
   const [projectName, setProjectName] = useState('')
+  const [previewProject, setPreviewProject] = useState<ScopeProject | null>(null)
 
   useEffect(() => {
     let alive = true
     ;(async () => {
       setLoading(true)
       try {
-        const [saved, detail] = await Promise.all([fetchDashLayout(projectId), fetchDashDetail(projectId)])
+        const [saved, detail, scope] = await Promise.all([
+          fetchDashLayout(projectId), fetchDashDetail(projectId), getPortalScope([projectId]),
+        ])
         if (!alive) return
         setProjectName(detail?.projectName ?? 'Projeto')
+        // Mesmo escopo client-safe que o ClientPortalPage usa de verdade — a
+        // prévia do editor fica idêntica ao que o cliente realmente vê.
+        applyScope(scope)
+        setPreviewProject(scope.projects.find(p => p.id === projectId) ?? null)
         if (saved && saved.length > 0) { setLayout(saved); setIsCustom(true) }
         else { setLayout(defaultLayout()); setIsCustom(false) }
       } finally {
@@ -95,8 +106,8 @@ export default function DashViewEditorPage({ projectId, onBack }: Props) {
 
       <h1 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: T.text1 }}>Editar dash — {projectName}</h1>
       <p style={{ margin: '6px 0 20px', fontSize: 13, color: T.text2, maxWidth: 640 }}>
-        Escolha quais cards o cliente vê neste dash e arraste para organizar. Os cards mostram dados reais
-        do projeto para o cliente — nada daqui expõe informação interna.
+        Escolha quais cards o cliente vê neste dash e arraste para organizar. A prévia abaixo já é a visão
+        real — mesmos dados que o cliente vê no portal dele, só que somente leitura aqui.
       </p>
 
       {loading ? <LoadingState rows={4} /> : (
@@ -168,8 +179,14 @@ export default function DashViewEditorPage({ projectId, onBack }: Props) {
                           title="Remover deste dash"
                         >✕</button>
                       </div>
-                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text3, fontSize: 11 }}>
-                        Prévia — o cliente verá o card real aqui
+                      <div style={{ flex: 1, overflow: 'auto', pointerEvents: 'none' }}>
+                        {previewProject
+                          ? renderDashWidget(item.i, previewProject, new Set([projectId]), noop, noop)
+                          : (
+                            <div style={{ padding: 16, textAlign: 'center', color: T.text3, fontSize: 11 }}>
+                              Sem dado ainda para este projeto.
+                            </div>
+                          )}
                       </div>
                     </div>
                   )
