@@ -5509,7 +5509,7 @@
       "file_type": "code",
       "norm_label": "chatbubble",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1433"
+      "source_location": "L1439"
     },
     {
       "id": "src_pages_clientportalpage_livedelivery",
@@ -5557,7 +5557,7 @@
       "file_type": "code",
       "norm_label": "mentionmenuitem",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1449"
+      "source_location": "L1455"
     },
     {
       "id": "src_data_db_clientportal_responsiblecandidate",
@@ -15127,7 +15127,7 @@
       "file_type": "code",
       "norm_label": "handlesend()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1593"
+      "source_location": "L1599"
     },
     {
       "id": "src_pages_clientportalpage_clientcommentinput_send",
@@ -15149,7 +15149,7 @@
       "file_type": "code",
       "norm_label": "resolvementions()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1469"
+      "source_location": "L1475"
     },
     {
       "id": "src_components_meetings_addusersmodal_addusersmodal",
@@ -22299,7 +22299,7 @@
       "file_type": "code",
       "norm_label": "changepasswordmodal()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1095"
+      "source_location": "L1101"
     },
     {
       "id": "src_pages_clientportalpage_changepasswordmodal_handlesave",
@@ -22310,7 +22310,7 @@
       "file_type": "code",
       "norm_label": "handlesave()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1107"
+      "source_location": "L1113"
     },
     {
       "id": "src_pages_clientportalpage_clientchatpanel",
@@ -22321,7 +22321,7 @@
       "file_type": "code",
       "norm_label": "clientchatpanel()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1511"
+      "source_location": "L1517"
     },
     {
       "id": "src_pages_clientportalpage_clientchatpanel_handledraftchange",
@@ -22332,7 +22332,7 @@
       "file_type": "code",
       "norm_label": "handledraftchange()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1576"
+      "source_location": "L1582"
     },
     {
       "id": "src_pages_clientportalpage_clientchatpanel_pickmention",
@@ -22343,7 +22343,7 @@
       "file_type": "code",
       "norm_label": "pickmention()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1582"
+      "source_location": "L1588"
     },
     {
       "id": "src_pages_clientportalpage_clientcommentinput",
@@ -22387,7 +22387,7 @@
       "file_type": "code",
       "norm_label": "clientportalpage()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2034"
+      "source_location": "L2040"
     },
     {
       "id": "src_pages_clientportalpage_clientportalpage_handlenotifread",
@@ -22398,7 +22398,7 @@
       "file_type": "code",
       "norm_label": "handlenotifread()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2125"
+      "source_location": "L2131"
     },
     {
       "id": "src_pages_clientportalpage_clientportalpage_handlepasswordsaved",
@@ -22409,7 +22409,7 @@
       "file_type": "code",
       "norm_label": "handlepasswordsaved()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2110"
+      "source_location": "L2116"
     },
     {
       "id": "src_pages_clientportalpage_clientportalpage_openchatfor",
@@ -22420,7 +22420,7 @@
       "file_type": "code",
       "norm_label": "openchatfor()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2104"
+      "source_location": "L2110"
     },
     {
       "id": "src_pages_clientportalpage_clientportalpage_toggleproject",
@@ -22431,7 +22431,7 @@
       "file_type": "code",
       "norm_label": "toggleproject()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2117"
+      "source_location": "L2123"
     },
     {
       "id": "src_pages_clientportalpage_clientsignalthread",
@@ -22453,7 +22453,7 @@
       "file_type": "code",
       "norm_label": "emptystate()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L879"
+      "source_location": "L885"
     },
     {
       "id": "src_pages_clientportalpage_fmtday",
@@ -22464,7 +22464,7 @@
       "file_type": "code",
       "norm_label": "fmtday()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1505"
+      "source_location": "L1511"
     },
     {
       "id": "src_pages_clientportalpage_fmttime",
@@ -22475,7 +22475,7 @@
       "file_type": "code",
       "norm_label": "fmttime()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1499"
+      "source_location": "L1505"
     },
     {
       "id": "src_pages_clientportalpage_localtoaststack",
@@ -22497,7 +22497,7 @@
       "file_type": "code",
       "norm_label": "matchpeople()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1462"
+      "source_location": "L1468"
     },
     {
       "id": "src_pages_clientportalpage_mentionquery",
@@ -22508,7 +22508,7 @@
       "file_type": "code",
       "norm_label": "mentionquery()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1451"
+      "source_location": "L1457"
     },
     {
       "id": "src_pages_clientportalpage_pill",
@@ -22563,7 +22563,7 @@
       "file_type": "code",
       "norm_label": "recentdeliveriescard()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L840"
+      "source_location": "L846"
     },
     {
       "id": "src_pages_clientportalpage_rendermentionbody",
@@ -22574,7 +22574,7 @@
       "file_type": "code",
       "norm_label": "rendermentionbody()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1475"
+      "source_location": "L1481"
     },
     {
       "id": "src_pages_clientportalpage_riskoverlay",
@@ -22607,7 +22607,7 @@
       "file_type": "code",
       "norm_label": "roadmapcard()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L808"
+      "source_location": "L814"
     },
     {
       "id": "src_pages_clientportalpage_sevbadge",
@@ -22651,7 +22651,7 @@
       "file_type": "code",
       "norm_label": "validatenewpassword()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1086"
+      "source_location": "L1092"
     },
     {
       "id": "src_pages_clientportalpage_validationcard",
@@ -23883,7 +23883,7 @@
       "file_type": "code",
       "norm_label": "clientnotifbell()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L906"
+      "source_location": "L912"
     },
     {
       "id": "src_pages_clientportalpage_clientnotifbell_close",
@@ -23894,7 +23894,7 @@
       "file_type": "code",
       "norm_label": "close()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L920"
+      "source_location": "L926"
     },
     {
       "id": "src_pages_clientportalpage_clientnotifbell_handleclick",
@@ -23905,7 +23905,7 @@
       "file_type": "code",
       "norm_label": "handleclick()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L935"
+      "source_location": "L941"
     },
     {
       "id": "src_pages_clientportalpage_clientnotifbell_handlemarkall",
@@ -23916,7 +23916,7 @@
       "file_type": "code",
       "norm_label": "handlemarkall()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L945"
+      "source_location": "L951"
     },
     {
       "id": "src_pages_clientportalpage_clientprofilemenu",
@@ -23927,7 +23927,7 @@
       "file_type": "code",
       "norm_label": "clientprofilemenu()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1275"
+      "source_location": "L1281"
     },
     {
       "id": "src_pages_clientportalpage_clientprofilemenu_close",
@@ -23938,7 +23938,7 @@
       "file_type": "code",
       "norm_label": "close()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1284"
+      "source_location": "L1290"
     },
     {
       "id": "src_pages_clientportalpage_portalheader",
@@ -23949,7 +23949,7 @@
       "file_type": "code",
       "norm_label": "portalheader()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1940"
+      "source_location": "L1946"
     },
     {
       "id": "src_pages_clientportalpage_projectselector",
@@ -23960,7 +23960,7 @@
       "file_type": "code",
       "norm_label": "projectselector()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1864"
+      "source_location": "L1870"
     },
     {
       "id": "src_pages_clientportalpage_projectselector_close",
@@ -23971,7 +23971,7 @@
       "file_type": "code",
       "norm_label": "close()",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1868"
+      "source_location": "L1874"
     },
     {
       "id": "src_utils_logger_safecall",
@@ -36528,7 +36528,7 @@
       "file_type": "code",
       "norm_label": "todos_mention",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1446"
+      "source_location": "L1452"
     },
     {
       "id": "src_pages_clientportalpage_validation_items",
@@ -69540,7 +69540,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1103",
+      "source_location": "L1109",
       "weight": 1.0
     },
     {
@@ -69552,7 +69552,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1110",
+      "source_location": "L1116",
       "weight": 1.0
     },
     {
@@ -69564,7 +69564,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1110",
+      "source_location": "L1116",
       "weight": 1.0
     },
     {
@@ -69576,7 +69576,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1531",
+      "source_location": "L1537",
       "weight": 1.0
     },
     {
@@ -69588,7 +69588,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1547",
+      "source_location": "L1553",
       "weight": 1.0
     },
     {
@@ -69600,7 +69600,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1556",
+      "source_location": "L1562",
       "weight": 1.0
     },
     {
@@ -69612,7 +69612,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1600",
+      "source_location": "L1606",
       "weight": 1.0
     },
     {
@@ -69624,7 +69624,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1776",
+      "source_location": "L1782",
       "weight": 1.0
     },
     {
@@ -69636,7 +69636,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1778",
+      "source_location": "L1784",
       "weight": 1.0
     },
     {
@@ -69648,7 +69648,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1578",
+      "source_location": "L1584",
       "weight": 1.0
     },
     {
@@ -69660,7 +69660,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1579",
+      "source_location": "L1585",
       "weight": 1.0
     },
     {
@@ -69672,7 +69672,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1596",
+      "source_location": "L1602",
       "weight": 1.0
     },
     {
@@ -69684,7 +69684,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1600",
+      "source_location": "L1606",
       "weight": 1.0
     },
     {
@@ -69792,7 +69792,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L931",
+      "source_location": "L937",
       "weight": 1.0
     },
     {
@@ -69804,7 +69804,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L936",
+      "source_location": "L942",
       "weight": 1.0
     },
     {
@@ -69816,7 +69816,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L946",
+      "source_location": "L952",
       "weight": 1.0
     },
     {
@@ -69828,7 +69828,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L936",
+      "source_location": "L942",
       "weight": 1.0
     },
     {
@@ -69840,7 +69840,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L946",
+      "source_location": "L952",
       "weight": 1.0
     },
     {
@@ -69852,7 +69852,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2050",
+      "source_location": "L2056",
       "weight": 1.0
     },
     {
@@ -69864,7 +69864,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2055",
+      "source_location": "L2061",
       "weight": 1.0
     },
     {
@@ -69876,7 +69876,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2062",
+      "source_location": "L2068",
       "weight": 1.0
     },
     {
@@ -69888,7 +69888,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2066",
+      "source_location": "L2072",
       "weight": 1.0
     },
     {
@@ -69900,7 +69900,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2069",
+      "source_location": "L2075",
       "weight": 1.0
     },
     {
@@ -69912,7 +69912,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2073",
+      "source_location": "L2079",
       "weight": 1.0
     },
     {
@@ -69924,7 +69924,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2076",
+      "source_location": "L2082",
       "weight": 1.0
     },
     {
@@ -69936,7 +69936,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2157",
+      "source_location": "L2163",
       "weight": 1.0
     },
     {
@@ -69948,7 +69948,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2172",
+      "source_location": "L2178",
       "weight": 1.0
     },
     {
@@ -69960,7 +69960,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2199",
+      "source_location": "L2205",
       "weight": 1.0
     },
     {
@@ -69972,7 +69972,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2204",
+      "source_location": "L2210",
       "weight": 1.0
     },
     {
@@ -69984,7 +69984,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2205",
+      "source_location": "L2211",
       "weight": 1.0
     },
     {
@@ -69996,7 +69996,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2211",
+      "source_location": "L2217",
       "weight": 1.0
     },
     {
@@ -70008,7 +70008,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2212",
+      "source_location": "L2218",
       "weight": 1.0
     },
     {
@@ -70020,7 +70020,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2213",
+      "source_location": "L2219",
       "weight": 1.0
     },
     {
@@ -70032,7 +70032,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2214",
+      "source_location": "L2220",
       "weight": 1.0
     },
     {
@@ -70044,7 +70044,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2215",
+      "source_location": "L2221",
       "weight": 1.0
     },
     {
@@ -70056,7 +70056,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2216",
+      "source_location": "L2222",
       "weight": 1.0
     },
     {
@@ -70068,7 +70068,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2223",
+      "source_location": "L2229",
       "weight": 1.0
     },
     {
@@ -70080,7 +70080,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2226",
+      "source_location": "L2232",
       "weight": 1.0
     },
     {
@@ -70128,7 +70128,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1977",
+      "source_location": "L1983",
       "weight": 1.0
     },
     {
@@ -70140,7 +70140,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2024",
+      "source_location": "L2030",
       "weight": 1.0
     },
     {
@@ -70152,7 +70152,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2026",
+      "source_location": "L2032",
       "weight": 1.0
     },
     {
@@ -70236,7 +70236,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L842",
+      "source_location": "L848",
       "weight": 1.0
     },
     {
@@ -70248,7 +70248,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L843",
+      "source_location": "L849",
       "weight": 1.0
     },
     {
@@ -70320,7 +70320,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L810",
+      "source_location": "L816",
       "weight": 1.0
     },
     {
@@ -70332,7 +70332,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L811",
+      "source_location": "L817",
       "weight": 1.0
     },
     {
@@ -70416,7 +70416,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L765",
+      "source_location": "L771",
       "weight": 1.0
     },
     {
@@ -70428,7 +70428,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L767",
+      "source_location": "L773",
       "weight": 1.0
     },
     {
@@ -70440,7 +70440,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L784",
+      "source_location": "L790",
       "weight": 1.0
     },
     {
@@ -70452,7 +70452,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L798",
+      "source_location": "L804",
       "weight": 1.0
     },
     {
@@ -86064,7 +86064,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1576",
+      "source_location": "L1582",
       "weight": 1.0
     },
     {
@@ -86076,7 +86076,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1582",
+      "source_location": "L1588",
       "weight": 1.0
     },
     {
@@ -86088,7 +86088,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1593",
+      "source_location": "L1599",
       "weight": 1.0
     },
     {
@@ -86112,7 +86112,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L935",
+      "source_location": "L941",
       "weight": 1.0
     },
     {
@@ -147550,7 +147550,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1086",
+      "source_location": "L1092",
       "weight": 1.0
     },
     {
@@ -147561,7 +147561,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1095",
+      "source_location": "L1101",
       "weight": 1.0
     },
     {
@@ -147583,7 +147583,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1275",
+      "source_location": "L1281",
       "weight": 1.0
     },
     {
@@ -147605,7 +147605,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1433",
+      "source_location": "L1439",
       "weight": 1.0
     },
     {
@@ -147627,7 +147627,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1446",
+      "source_location": "L1452",
       "weight": 1.0
     },
     {
@@ -147638,7 +147638,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1449",
+      "source_location": "L1455",
       "weight": 1.0
     },
     {
@@ -147649,7 +147649,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1451",
+      "source_location": "L1457",
       "weight": 1.0
     },
     {
@@ -147660,7 +147660,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1462",
+      "source_location": "L1468",
       "weight": 1.0
     },
     {
@@ -147671,7 +147671,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1469",
+      "source_location": "L1475",
       "weight": 1.0
     },
     {
@@ -147682,23 +147682,12 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1475",
+      "source_location": "L1481",
       "weight": 1.0
     },
     {
       "source": "src_pages_clientportalpage",
       "target": "src_pages_clientportalpage_fmttime",
-      "relation": "contains",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1499",
-      "weight": 1.0
-    },
-    {
-      "source": "src_pages_clientportalpage",
-      "target": "src_pages_clientportalpage_fmtday",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -147720,7 +147709,7 @@
     },
     {
       "source": "src_pages_clientportalpage",
-      "target": "src_pages_clientportalpage_clientchatpanel",
+      "target": "src_pages_clientportalpage_fmtday",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -147731,13 +147720,24 @@
     },
     {
       "source": "src_pages_clientportalpage",
+      "target": "src_pages_clientportalpage_clientchatpanel",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pages/ClientPortalPage.tsx",
+      "source_location": "L1517",
+      "weight": 1.0
+    },
+    {
+      "source": "src_pages_clientportalpage",
       "target": "src_pages_clientportalpage_projectselector",
       "relation": "contains",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1864",
+      "source_location": "L1870",
       "weight": 1.0
     },
     {
@@ -147748,7 +147748,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1940",
+      "source_location": "L1946",
       "weight": 1.0
     },
     {
@@ -147759,7 +147759,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2034",
+      "source_location": "L2040",
       "weight": 1.0
     },
     {
@@ -148045,7 +148045,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L808",
+      "source_location": "L814",
       "weight": 1.0
     },
     {
@@ -148056,7 +148056,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L840",
+      "source_location": "L846",
       "weight": 1.0
     },
     {
@@ -148078,7 +148078,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L879",
+      "source_location": "L885",
       "weight": 1.0
     },
     {
@@ -148089,7 +148089,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L906",
+      "source_location": "L912",
       "weight": 1.0
     },
     {
@@ -148111,7 +148111,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1107",
+      "source_location": "L1113",
       "weight": 1.0
     },
     {
@@ -148144,7 +148144,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L920",
+      "source_location": "L926",
       "weight": 1.0
     },
     {
@@ -148155,7 +148155,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L945",
+      "source_location": "L951",
       "weight": 1.0
     },
     {
@@ -148166,7 +148166,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2104",
+      "source_location": "L2110",
       "weight": 1.0
     },
     {
@@ -148177,7 +148177,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2110",
+      "source_location": "L2116",
       "weight": 1.0
     },
     {
@@ -148188,7 +148188,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2117",
+      "source_location": "L2123",
       "weight": 1.0
     },
     {
@@ -148199,7 +148199,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L2125",
+      "source_location": "L2131",
       "weight": 1.0
     },
     {
@@ -148210,7 +148210,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1284",
+      "source_location": "L1290",
       "weight": 1.0
     },
     {
@@ -156218,7 +156218,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L923",
+      "source_location": "L929",
       "weight": 1.0
     },
     {
@@ -156230,7 +156230,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1287",
+      "source_location": "L1293",
       "weight": 1.0
     },
     {
@@ -156242,7 +156242,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/pages/ClientPortalPage.tsx",
-      "source_location": "L1869",
+      "source_location": "L1875",
       "weight": 1.0
     },
     {
@@ -157075,5 +157075,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "20a8b26fae47dfeb5b8e2c79435a9076c620af14"
+  "built_at_commit": "3aa177bd525dae6198d716ff4245c572f01ecfb4"
 }
