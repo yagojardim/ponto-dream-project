@@ -18,7 +18,7 @@ import {
 import { listSprints, normalizeState } from '@/data/db/sprints'
 import { useSession } from '@/data/SessionContext'
 import { can } from '@/data/permissions'
-import { MOCK_TENANT, getActiveTenantId } from '@/data/session'
+import { getActiveTenantId } from '@/data/session'
 import { getMembers, type MemberRow } from '@/data/db/members'
 
 /** Maps a persisted calendar_events row into the shape the calendar views render. */
@@ -397,7 +397,7 @@ function EventComposer({ initial, onSave, onClose }: ComposerProps) {
     const start = allDay ? `${date}T00:00:00.000Z` : parseDateTime(date, startT).toISOString()
     const end   = allDay ? `${date}T23:59:00.000Z` : parseDateTime(date, endT).toISOString()
     onSave({
-      tenant_id: MOCK_TENANT.tenant_id,
+      tenant_id: getActiveTenantId(),
       title: title.trim(), start, end, allDay, guests,
       meetLink: meetLink || undefined,
       location: location || undefined,

@@ -20,16 +20,21 @@ let LOADED_TENANT: string | null = null
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach(l => l())
 
+// Sequência da última busca: resposta de uma busca antiga (ex.: tenant #1 do
+// Inspection, que termina DEPOIS da do tenant real) nunca pode sobrescrever o cache.
+let seq = 0
+
 function load(force = false): Promise<void> {
   const tid = getActiveTenantId()
   if (inflight && !force && LOADED_TENANT === tid) return inflight
+  const mySeq = ++seq
   LOADING = true
   ERROR = null
   emit()
   inflight = fetchDashboardAggregates()
-    .then(d => { LIVE = d; LOADED_TENANT = tid; ERROR = null })
-    .catch((e: Error) => { ERROR = e.message })
-    .finally(() => { LOADING = false; inflight = null; emit() })
+    .then(d => { if (mySeq === seq) { LIVE = d; LOADED_TENANT = tid; ERROR = null } })
+    .catch((e: Error) => { if (mySeq === seq) ERROR = e.message })
+    .finally(() => { if (mySeq === seq) { LOADING = false; inflight = null; emit() } })
   return inflight
 }
 

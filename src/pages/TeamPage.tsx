@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { T } from '../components/ds/tokens'
 import {
-  MOCK_USERS, MOCK_TENANT, DASHBOARD_CATALOG, buildPersona,
+  MOCK_USERS, getActiveTenantId, DASHBOARD_CATALOG, buildPersona,
   deactivateMockUser, blockMockUser,
   type MockUser, type RoleContext, type DashboardType, type UserDashboard,
 } from '../data/session'
@@ -95,7 +95,7 @@ const STATUS_LABEL: Record<'active'|'inactive'|'blocked', string> = {
 
 function ud(user_id: string, dashboard_id: DashboardType, is_default: boolean): UserDashboard {
   return {
-    id:`ud_${user_id}_${dashboard_id}`, tenant_id:MOCK_TENANT.tenant_id,
+    id:`ud_${user_id}_${dashboard_id}`, tenant_id:getActiveTenantId(),
     user_id, dashboard_id, is_default, status:'active',
     created_at:'2025-01-10T09:00:00Z', created_by:'sys',
     updated_at:new Date().toISOString(), updated_by:'sys',
@@ -1281,7 +1281,7 @@ function InvitesTab({ onInvite, canManage, tenantId, inviterName }: {
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function TeamPage({ onInvite, initialTab }: { onInvite?: () => void; initialTab?: Tab }) {
-  const { activeUser } = useSession()
+  const { activeUser, tenantName, tenantId } = useSession()
   const canManage = can(activeUser.permissions, 'users:manage')
   const [tab, setTab] = useState<Tab>(initialTab ?? 'membros')
   const pendingCount = countPendingInvites(activeUser.tenant_id)
@@ -1306,14 +1306,14 @@ export default function TeamPage({ onInvite, initialTab }: { onInvite?: () => vo
         <div>
           <h1 style={{ fontSize:22, fontWeight:700, color:T.text1, margin:0, lineHeight:1.2 }}>Time &amp; Permissões</h1>
           <p style={{ fontSize:13, color:T.text2, margin:'6px 0 0' }}>
-            Gerencie membros, papéis e permissões do tenant <strong style={{ color:T.text1 }}>Altech Agency</strong>.
+            Gerencie membros, papéis e permissões do tenant <strong style={{ color:T.text1 }}>{tenantName || "seu workspace"}</strong>.
           </p>
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6 }}>
           <div style={{ padding:'8px 14px', borderRadius:10, background:T.bgSurface2, border:`1px solid ${T.border}`, display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
             <span style={{ fontSize:10, color:T.text3, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em' }}>Tenant</span>
-            <span style={{ fontSize:13, fontWeight:700, color:T.text1 }}>{MOCK_TENANT.name}</span>
-            <span style={{ fontSize:10, color:T.text3 }}>{MOCK_TENANT.tenant_id}</span>
+            <span style={{ fontSize:13, fontWeight:700, color:T.text1 }}>{tenantName || "—"}</span>
+            <span style={{ fontSize:10, color:T.text3 }}>{tenantId}</span>
           </div>
           {!canManage && (
             <span style={{ fontSize:11, color:T.warn, background:T.warnDim, border:`1px solid ${T.warn}40`, borderRadius:6, padding:'3px 10px' }}>
