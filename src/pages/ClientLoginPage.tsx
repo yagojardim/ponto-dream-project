@@ -1,16 +1,14 @@
 import { useState } from 'react'
 import { T } from '../components/ds/tokens'
-import { portalLogin, type PortalLoginUser } from '../data/db/clientPortal'
-import { savePortalSession } from '../lib/portalSession'
+import { signIn } from '../lib/auth'
 import { requestPasswordReset } from '../lib/passwordReset'
 
 
 interface Props {
-  onSuccess: (permission: 'viewer' | 'admin', mustChangePassword: boolean) => void
   onBack?: () => void
 }
 
-type PortalLoginState = 'idle' | 'loading' | 'error' | 'success-viewer' | 'success-admin'
+type PortalLoginState = 'idle' | 'loading' | 'error'
 
 const PA = '#34d399'
 const PADim = 'rgba(52,211,153,0.12)'
@@ -54,16 +52,12 @@ function LogoMark({ size = 32 }: { size?: number }) {
   )
 }
 
-function CheckCircle() {
-  return (
-    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-      <circle cx="32" cy="32" r="31" fill={PADim} stroke={PA} strokeWidth="1.5"/>
-      <path d="M20 32 L28 40 L44 24" stroke={PA} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  )
-}
-
-export default function ClientLoginPage({ onSuccess }: Props) {
+/**
+ * Login do Portal do Cliente: e-mail + senha validados pelo Supabase Auth. Em
+ * sucesso a sessão muda para status 'portal' (SessionContext) e o App assume —
+ * a resolução dos acessos (client-portal-login) acontece no PortalGate.
+ */
+export default function ClientLoginPage(_props: Props) {
 
   const [loginState, setLoginState] = useState<PortalLoginState>('idle')
   const [email, setEmail] = useState('')
@@ -71,7 +65,6 @@ export default function ClientLoginPage({ onSuccess }: Props) {
   const [showPass, setShowPass] = useState(false)
 
   const [errorMsg, setErrorMsg] = useState('')
-  const [portalUser, setPortalUser] = useState<PortalLoginUser | null>(null)
 
   const [forgotOpen, setForgotOpen] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
@@ -92,20 +85,12 @@ export default function ClientLoginPage({ onSuccess }: Props) {
     setLoginState('loading')
     setErrorMsg('')
     try {
-      const res = await portalLogin(email)
-      if (!res.ok || !res.user) {
-        setErrorMsg(res.error === 'unavailable' || res.error === 'server_error'
-          ? 'Não foi possível validar o acesso agora. Tente novamente em instantes.'
-          : 'Acesso não encontrado. Verifique suas credenciais ou entre em contato com a empresa que lhe concedeu acesso.')
+      const res = await signIn(email, password)
+      if (!res.ok) {
+        setErrorMsg('E-mail ou senha incorretos. Se for seu primeiro acesso, use o link de convite que você recebeu para definir a senha.')
         setLoginState('error')
-        return
       }
-      setPortalUser(res.user)
-      savePortalSession({
-        id: res.user.id, name: res.user.name, email: res.user.email, tenantId: res.user.tenantId,
-      })
-
-      setLoginState(res.user.permission === 'admin' ? 'success-admin' : 'success-viewer')
+      // Sucesso: o App troca para o portal pelo status da sessão.
     } catch {
       setErrorMsg('Não foi possível validar o acesso agora. Tente novamente em instantes.')
       setLoginState('error')
@@ -113,13 +98,7 @@ export default function ClientLoginPage({ onSuccess }: Props) {
   }
 
   const isLoading = loginState === 'loading'
-  const isSuccess = loginState === 'success-viewer' || loginState === 'success-admin'
-  const isAdmin = loginState === 'success-admin'
   const canSubmit = email.length > 0 && password.length > 0 && !isLoading
-
-  function handleEnterPortal() {
-    onSuccess(isAdmin ? 'admin' : 'viewer', portalUser?.mustChangePassword ?? false)
-  }
 
   const inputStyle = (error: boolean): React.CSSProperties => ({
     width: '100%',
@@ -259,14 +238,13 @@ export default function ClientLoginPage({ onSuccess }: Props) {
             </div>
           </div>
 
-          {!isSuccess ? (
-            <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate>
               <div style={{ marginBottom: 28 }}>
                 <h2 style={{ fontSize: 24, fontWeight: 700, color: T.text1, margin: '0 0 4px 0' }}>
                   Acesse o portal do seu projeto
                 </h2>
                 <p style={{ fontSize: 13, color: T.text3, margin: 0 }}>
-                  Entre com as credenciais enviadas por e-mail.
+                  Entre com seu e-mail e a senha que você definiu pelo link de convite.
                 </p>
               </div>
 
@@ -359,38 +337,6 @@ export default function ClientLoginPage({ onSuccess }: Props) {
                 </button>
               </div>
             </form>
-          ) : (
-            /* SUCCESS STATE */
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                <CheckCircle />
-              </div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: T.text1, margin: '0 0 8px 0' }}>
-                Bem-vindo ao portal!
-              </h2>
-              <div style={{ marginBottom: 24 }}>
-                <span style={{
-                  background: isAdmin ? PADim : T.bgSurface2,
-                  border: `1px solid ${isAdmin ? PA : T.border2}`,
-                  color: isAdmin ? PA : T.text2,
-                  borderRadius: 20, padding: '3px 14px', fontSize: 12,
-                }}>
-                  Perfil carregado: {isAdmin ? 'Administrador do portal' : 'Visualizador'}
-                </span>
-              </div>
-              <button
-                onClick={handleEnterPortal}
-                style={{
-                  width: '100%', height: 44,
-                  background: PA, color: 'white',
-                  border: 'none', borderRadius: 8,
-                  fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                }}
-              >
-                {isAdmin ? 'Abrir portal (Administrador)' : 'Abrir portal (Visualizador)'}
-              </button>
-            </div>
-          )}
 
           {/* Bottom */}
           <div style={{ marginTop: 28, textAlign: 'center' }}>

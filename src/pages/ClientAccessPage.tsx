@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { T } from '../components/ds/tokens'
-import { generateTempPassword } from '../data/security'
 import { ROLE_LABEL, roleChoiceLabel, type RoleChoice, type RoleContext } from '../data/session'
 import { useSession } from '../data/SessionContext'
 import { copyToClipboard } from '../utils/copyToClipboard'
 import {
   createClientPortalUsers,
+  portalInvite,
   listProjectResponsibleCandidates,
   setProjectResponsibles,
   type ResponsibleCandidate,
@@ -44,9 +44,10 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
   const [responsibles, setResponsibles] = useState<string[]>([])
   const [done, setDone] = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState('')
-  const [generatedPwd, setGeneratedPwd] = useState('')
+  const [inviteLink, setInviteLink] = useState('')
+  const [inviteFailed, setInviteFailed] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [pwdCopied, setPwdCopied] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [copyErr, setCopyErr] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -105,10 +106,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
     setSubmitError('')
     setIsSubmitting(true)
 
-    const pwd = generateTempPassword()
-    const hash = Math.random().toString(36).slice(2, 10)
-    setGeneratedPwd(pwd)
-    setGeneratedUrl(`https://altechproject.com/portal/${hash}`)
+    setGeneratedUrl(`${window.location.origin}/portal`)
 
     try {
       const created = await createClientPortalUsers({
@@ -119,7 +117,6 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
         canApprove: clientCanApprove,
         canPreview: clientCanPreview,
         canComment: true,
-        tempPassword: pwd,
         actorName: activeUser?.name,
       })
 
@@ -137,6 +134,12 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
           )
         }),
       )
+
+      // Link para o cliente definir a própria senha (Supabase Auth). Falha aqui não
+      // desfaz o acesso: o gestor pode gerar um novo link em Gestão do Dash View.
+      const invite = await portalInvite(clientEmail.trim())
+      setInviteLink(invite.ok && invite.link ? invite.link : '')
+      setInviteFailed(!invite.ok)
 
       setDone(true)
     } catch (err) {
@@ -159,9 +162,10 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
     setClientCanPreview(false)
     setDone(false)
     setGeneratedUrl('')
-    setGeneratedPwd('')
+    setInviteLink('')
+    setInviteFailed(false)
     setCopied(false)
-    setPwdCopied(false)
+    setLinkCopied(false)
     setCopyErr('')
     setSubmitError('')
   }
@@ -172,10 +176,10 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
     else { setCopyErr('Não foi possível copiar a URL. Selecione e copie manualmente.'); setTimeout(() => setCopyErr(''), 4000) }
   }
 
-  async function copyPwd() {
-    const ok = await copyToClipboard(generatedPwd)
-    if (ok) { setPwdCopied(true); setTimeout(() => setPwdCopied(false), 2000) }
-    else { setCopyErr('Não foi possível copiar a senha. Selecione e copie manualmente.'); setTimeout(() => setCopyErr(''), 4000) }
+  async function copyInviteLink() {
+    const ok = await copyToClipboard(inviteLink)
+    if (ok) { setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }
+    else { setCopyErr('Não foi possível copiar o link. Selecione e copie manualmente.'); setTimeout(() => setCopyErr(''), 4000) }
   }
 
   const selectedProjectObjs = projects.filter(p => selectedProjects.includes(p.id))
@@ -268,8 +272,8 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
               </div>
             </div>
 
-            {/* Password section — shown once */}
-            {generatedPwd && (
+            {/* Invite link — o cliente define a própria senha */}
+            {inviteLink && (
               <div style={{
                 background: T.bgSurface2,
                 borderTop:    `1px solid ${T.border}`,
@@ -279,24 +283,23 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
                 borderRadius: 10, padding: 20, marginBottom: 16, textAlign: 'left',
               }}>
                 <div style={{ fontSize: 11, color: T.text3, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                  Senha temporária — exibida uma única vez
+                  Link para o cliente definir a senha — exibido uma única vez
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: 18, color: T.accent, letterSpacing: '0.12em', userSelect: 'all', flex: 1 }}>
-                    {generatedPwd}
+                  <span style={{ fontFamily: 'monospace', fontSize: 11, color: T.accent, userSelect: 'all', flex: 1, wordBreak: 'break-all', maxHeight: 64, overflow: 'auto' }}>
+                    {inviteLink}
                   </span>
-                  <button onClick={copyPwd} style={{
-                    background: pwdCopied ? T.successDim : T.accentDim,
-                    border: `1px solid ${pwdCopied ? T.success : T.accentBorder}`,
-                    color: pwdCopied ? T.success : T.accent,
+                  <button onClick={copyInviteLink} style={{
+                    background: linkCopied ? T.successDim : T.accentDim,
+                    border: `1px solid ${linkCopied ? T.success : T.accentBorder}`,
+                    color: linkCopied ? T.success : T.accent,
                     borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
                   }}>
-                    {pwdCopied ? '✓ Copiado!' : '📋 Copiar senha'}
+                    {linkCopied ? '✓ Copiado!' : '📋 Copiar link'}
                   </button>
                 </div>
                 <div style={{ fontSize: 11, color: T.warn, marginTop: 12, lineHeight: 1.5 }}>
-                  ⚠ Copie agora. O cliente deverá alterar no primeiro acesso. Após sair desta tela, a senha não será reexibida.
-                  <span style={{ color: T.text3, display: 'block', marginTop: 4 }}>Inspection Mode — senha demonstrativa, sem hash real.</span>
+                  ⚠ Copie agora e envie ao cliente. O link é pessoal e expira; depois de usado, o cliente entra com e-mail e a senha que ele mesmo definiu.
                 </div>
                 {copyErr && (
                   <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 7, background: `${T.crit}14`, border: `1px solid ${T.crit}50`, fontSize: 11, color: T.crit }}>
@@ -308,7 +311,9 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
 
             {/* Notice box */}
             <div style={{ background: T.warnDim, border: `1px solid ${T.warn}`, borderRadius: 10, padding: 16, marginBottom: 28, textAlign: 'left', fontSize: 13, color: T.text2, lineHeight: 1.6 }}>
-              📨 <strong style={{ color: T.warn }}>Credenciais enviadas automaticamente:</strong> login e senha temporária foram enviados para <strong style={{ color: T.text1 }}>{clientEmail}</strong>. O cliente deve alterar a senha no primeiro acesso. O e-mail é enviado pelo sistema do tenant Altech Agency.
+              {inviteFailed
+                ? <>⚠️ <strong style={{ color: T.warn }}>Acesso criado, mas o link de senha não pôde ser gerado agora.</strong> Em Gestão do Dash View, abra o usuário <strong style={{ color: T.text1 }}>{clientEmail}</strong> e use “Gerar novo link”.</>
+                : <>📨 <strong style={{ color: T.warn }}>Envio por e-mail ainda não está ativo.</strong> Repasse ao cliente <strong style={{ color: T.text1 }}>{clientEmail}</strong> o link acima; depois ele acessa o portal pela URL do portal com e-mail e a senha que definiu.</>}
             </div>
 
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -391,7 +396,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
                 />
               </div>
               <div style={{ fontSize: 12, color: T.text3, marginBottom: 32, lineHeight: 1.6 }}>
-                Um e-mail com login e senha temporária será enviado ao cliente automaticamente pelo sistema.
+                Ao concluir, você recebe um link para o cliente definir a própria senha. Nenhuma senha é criada ou exibida por nós.
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button
@@ -679,7 +684,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
                     cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     opacity: isSubmitting ? 0.6 : 1,
                   }}>
-                  {isSubmitting ? 'Criando acesso...' : 'Criar acesso e enviar convite'}
+                  {isSubmitting ? 'Criando acesso...' : 'Criar acesso e gerar link de convite'}
                 </button>
               </div>
             </div>

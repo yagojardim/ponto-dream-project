@@ -110,10 +110,10 @@ function Switch({ on, onToggle, label, desc }: { on: boolean; onToggle: () => vo
   )
 }
 
-function PasswordReveal({ password }: { password: string }) {
+function InviteLinkReveal({ link }: { link: string }) {
   const [copied, setCopied] = useState(false)
   async function copy() {
-    const ok = await copyToClipboard(password)
+    const ok = await copyToClipboard(link)
     if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000) }
   }
   return (
@@ -122,11 +122,11 @@ function PasswordReveal({ password }: { password: string }) {
       borderRadius: 10, padding: 16, marginTop: 4,
     }}>
       <div style={{ fontSize: 10.5, color: T.text3, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-        Senha temporária — exibida uma única vez
+        Link para definir a senha — exibido uma única vez
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: 'monospace', fontSize: 16, color: T.accent, letterSpacing: '0.1em', userSelect: 'all', flex: 1 }}>
-          {password}
+        <span style={{ fontFamily: 'monospace', fontSize: 11, color: T.accent, userSelect: 'all', flex: 1, wordBreak: 'break-all', maxHeight: 64, overflow: 'auto' }}>
+          {link}
         </span>
         <button onClick={copy} style={{
           background: copied ? T.successDim : T.accentDim,
@@ -138,7 +138,7 @@ function PasswordReveal({ password }: { password: string }) {
         </button>
       </div>
       <div style={{ fontSize: 10.5, color: T.text3, marginTop: 8, lineHeight: 1.5 }}>
-        Copie e repasse ao usuário. Ele deve trocá-la no próximo acesso.
+        Copie e envie ao usuário. O link é pessoal e expira; ele define a nova senha ao abri-lo.
       </div>
     </div>
   )
@@ -168,10 +168,10 @@ function EditUserModal({ user, actorName, onClose, onSaved }: {
 
   async function resetPassword() {
     setResetting(true); setError('')
-    const pwd = await resetPortalUserPassword(user.id, actorName)
+    const link = await resetPortalUserPassword(user.id, actorName)
     setResetting(false)
-    if (pwd) setResetPwd(pwd)
-    else setError('Não foi possível gerar a nova senha agora.')
+    if (link) setResetPwd(link)
+    else setError('Não foi possível gerar o link agora.')
   }
 
   return (
@@ -196,17 +196,17 @@ function EditUserModal({ user, actorName, onClose, onSaved }: {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0 4px', borderTop: `1px solid ${T.border}`, marginTop: 4 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.text1 }}>Reset de senha</div>
-              <div style={{ fontSize: 11, color: T.text3 }}>Gera uma nova senha temporária para este usuário</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.text1 }}>Redefinir senha</div>
+              <div style={{ fontSize: 11, color: T.text3 }}>Gera um link para o usuário definir uma nova senha</div>
             </div>
             <button onClick={() => void resetPassword()} disabled={resetting} style={{
               fontSize: 12, padding: '6px 12px', borderRadius: 7, background: 'transparent',
               border: `1px solid ${T.border2}`, color: T.text2, cursor: resetting ? 'default' : 'pointer', whiteSpace: 'nowrap',
             }}>
-              {resetting ? 'Gerando…' : '↻ Resetar senha'}
+              {resetting ? 'Gerando…' : '↻ Gerar novo link'}
             </button>
           </div>
-          {resetPwd && <PasswordReveal password={resetPwd} />}
+          {resetPwd && <InviteLinkReveal link={resetPwd} />}
 
           {error && <div style={{ marginTop: 12, fontSize: 12, color: T.crit }}>{error}</div>}
         </div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   MOCK_USERS, type MockUser,
   ACTIVE_USER_ID,
@@ -20,7 +20,11 @@ import { fetchTenantPersonas } from './db/tenantPersonas'
 import { getTenantName } from './db/tenant'
 import { logger, safeCall } from '../utils/logger'
 
-export type SessionStatus = 'loading' | 'authenticated' | 'inspection' | 'anonymous'
+/**
+ * 'portal' = sessão REAL do Supabase Auth sem profile de staff (cliente do Portal).
+ * O App roteia esse status para o portal; nunca para o shell interno.
+ */
+export type SessionStatus = 'loading' | 'authenticated' | 'inspection' | 'anonymous' | 'portal'
 
 const BOOT_READ_TIMEOUT_MS = 2500
 const BOOT_WATCHDOG_MS = 1500
@@ -74,6 +78,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   )
   const [authUser, setAuthUser] = useState<AuthUser | null>(null)
   const [dbUser, setDbUser] = useState<MockUser | null>(null)
+  // Staff que já teve profile carregado nesta sessão: um refresh de token com leitura
+  // lenta do profile não pode rebaixá-lo para 'portal'.
+  const hadProfileRef = useRef(false)
   const [mustChangePassword, setMustChange] = useState(false)
   const [, setPersonasVersion] = useState(0)
   const [tenantName, setTenantName] = useState('')
@@ -139,7 +146,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setStatus(nextStatus)
     }
 
-    async function hydrateProfile(u: AuthUser) {
+    /** Retorna true quando o usuário autenticado tem profile de staff. */
+    async function hydrateProfile(u: AuthUser): Promise<boolean> {
       const profile = await safeCall(
         'SessionContext.loadProfileByAuthUserId',
         () => withTimeout(
@@ -149,8 +157,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         ),
         null,
       )
-      if (!alive || !profile) return
+      if (!alive || !profile) return false
 
+      hadProfileRef.current = true
       setDbUser(profile)
       setActiveTenantId(profile.tenant_id)  // fonte única no cliente (módulo)
       setActiveTenant(profile.tenant_id)    // re-dispara os fetches escopados por tenant
@@ -160,6 +169,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         () => touchAccess(profile.user_id, profile.tenant_id, null),
         undefined,
       )
+      return true
     }
 
     function resolve(u: AuthUser | null) {
@@ -172,12 +182,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         // (#1) e exibirem dados de OUTRO tenant. hydrateProfile é limitado por
         // BOOT_READ_TIMEOUT_MS e nunca lança, então o loading continua curto;
         // o watchdog é desarmado para não cair no fallback durante a espera.
+        // Sem profile de staff = cliente do Portal (status 'portal').
         bootSettled = true
         window.clearTimeout(watchdogId)
-        void hydrateProfile(u).finally(() => { if (alive) setStatus('authenticated') })
+        void hydrateProfile(u).then(hasProfile => {
+          if (alive) setStatus(hasProfile || hadProfileRef.current ? 'authenticated' : 'portal')
+        })
         return
       }
 
+      hadProfileRef.current = false
       setDbUser(null)
       setMustChange(false)
       // Fallback de desenvolvimento: Inspection Mode atrás da flag,
@@ -214,6 +228,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await authSignOut()
+    hadProfileRef.current = false
     setDbUser(null)
     setAuthUser(null)
     setMustChange(false)

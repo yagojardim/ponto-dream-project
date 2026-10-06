@@ -10,6 +10,7 @@ import {
   type PortalScope, type ScopeProject, type ScopeSprint, type ScopeDelivery, type ScopeMilestone,
 } from '../data/db/clientPortal'
 import { readPortalSession } from '../lib/portalSession'
+import { supabase } from '../integrations/supabase/client'
 import GridLayout, { WidthProvider, type Layout } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
 
@@ -1118,13 +1119,16 @@ function ClientNotifBell({
 }
 
 // ─── FIRST-ACCESS CHANGE PASSWORD MODAL ──────────────────────────────────────
+const PASSWORD_RULES = [
+  { label: 'Mínimo de 12 caracteres', test: (v: string) => v.length >= 12 },
+  { label: 'Uma letra maiúscula',     test: (v: string) => /[A-Z]/.test(v) },
+  { label: 'Uma letra minúscula',     test: (v: string) => /[a-z]/.test(v) },
+  { label: 'Um número',               test: (v: string) => /[0-9]/.test(v) },
+  { label: 'Um caractere especial',   test: (v: string) => /[^A-Za-z0-9]/.test(v) },
+] as const
+
 function validateNewPassword(pwd: string): string[] {
-  const errors: string[] = []
-  if (pwd.length < 8 || pwd.length > 16)  errors.push('Entre 8 e 16 caracteres')
-  if (!/[a-zA-Z]/.test(pwd))              errors.push('Pelo menos uma letra')
-  if (!/\d/.test(pwd))                    errors.push('Pelo menos um número')
-  if (!/[@#$%!^&*_\-+=]/.test(pwd))       errors.push('Pelo menos um caractere especial (@#$%!^&*_-+=)')
-  return errors
+  return PASSWORD_RULES.filter(r => !r.test(pwd)).map(r => r.label)
 }
 
 function ChangePasswordModal({ onSaved, onClose, voluntary = false }: { onSaved: () => void; onClose?: () => void; voluntary?: boolean }) {
@@ -1134,20 +1138,30 @@ function ChangePasswordModal({ onSaved, onClose, voluntary = false }: { onSaved:
   const [show2, setShow2]     = useState(false)
   const [touched, setTouched] = useState(false)
   const [saving, setSaving]   = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const errors1  = validateNewPassword(pwd1)
   const mismatch = pwd1 !== pwd2 && pwd2.length > 0
   const valid    = errors1.length === 0 && pwd1 === pwd2 && pwd2.length > 0
 
-  function handleSave() {
-    if (!valid) return
+  async function handleSave() {
+    if (!valid || saving) return
     setSaving(true)
-    if (CLIENT) void setPortalPasswordChanged(CLIENT.id)
-
-    setTimeout(() => {
+    setSaveError('')
+    const { error } = await supabase.auth.updateUser({ password: pwd1 })
+    if (error) {
       setSaving(false)
-      onSaved()
-    }, 600)
+      const m = (error.message || '').toLowerCase()
+      setSaveError(
+        m.includes('different') || m.includes('same')
+          ? 'A nova senha deve ser diferente da senha atual.'
+          : 'Não foi possível atualizar a senha agora. Entre novamente e tente de novo.',
+      )
+      return
+    }
+    if (CLIENT) void setPortalPasswordChanged(CLIENT.id)
+    setSaving(false)
+    onSaved()
   }
 
   const fieldBase: React.CSSProperties = {
@@ -1233,12 +1247,7 @@ function ChangePasswordModal({ onSaved, onClose, voluntary = false }: { onSaved:
           {/* Inline requirements */}
           {touched && (
             <div className="mt-2 space-y-1">
-              {[
-                { label: 'Entre 8 e 16 caracteres', ok: pwd1.length >= 8 && pwd1.length <= 16 },
-                { label: 'Pelo menos uma letra',    ok: /[a-zA-Z]/.test(pwd1) },
-                { label: 'Pelo menos um número',    ok: /\d/.test(pwd1) },
-                { label: 'Caractere especial (@#$%!^&*_-+=)', ok: /[@#$%!^&*_\-+=]/.test(pwd1) },
-              ].map(req => (
+              {PASSWORD_RULES.map(r => ({ label: r.label, ok: r.test(pwd1) })).map(req => (
                 <div key={req.label} className="flex items-center gap-1.5">
                   <span className="text-[10px] font-bold flex-shrink-0" style={{ color: req.ok ? C.success : C.crit }}>
                     {req.ok ? '✓' : '✗'}
@@ -1282,9 +1291,13 @@ function ChangePasswordModal({ onSaved, onClose, voluntary = false }: { onSaved:
           )}
         </div>
 
+        {saveError && (
+          <p className="text-xs mb-3" style={{ color: C.crit }}>✗ {saveError}</p>
+        )}
+
         {/* Save button */}
         <button
-          onClick={handleSave}
+          onClick={() => void handleSave()}
           disabled={!valid || saving}
           className="w-full h-11 rounded-xl text-sm font-semibold transition-all"
           style={{
@@ -1297,10 +1310,6 @@ function ChangePasswordModal({ onSaved, onClose, voluntary = false }: { onSaved:
           {saving ? 'Salvando…' : 'Salvar nova senha'}
         </button>
 
-        {/* Inspection Mode notice */}
-        <p className="text-[9px] text-center mt-4" style={{ color: C.txt3 }}>
-          Inspection Mode — senha demonstrativa, sem hash real. Não utilize senhas reais.
-        </p>
       </div>
     </div>
   )

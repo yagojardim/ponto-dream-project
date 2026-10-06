@@ -8,6 +8,7 @@ import ProjectPage from "./pages/ProjectPage"
 import IssueDetailPage from "./pages/IssueDetailPage"
 import { WorkItemDetail } from "./components/WorkItemDetail"
 import ClientPortalPage from "./pages/ClientPortalPage"
+import PortalGate from "./pages/PortalGate"
 import TaskDrawerPage from "./pages/TaskDrawerPage"
 import ProjectsListPage from "./pages/ProjectsListPage"
 import GanttPage from "./pages/GanttPage"
@@ -203,9 +204,12 @@ export default function App() {
 }
 
 function AppInner() {
-  const { setActiveUser, status, enterInspection, mustChangePassword, activeUser, tenantId } =
+  const { setActiveUser, status, enterInspection, mustChangePassword, activeUser, tenantId, signOut } =
     useSession()
-  const [view, setView] = useState<View>("home")
+  // /portal = entrada pública do Portal do Cliente (login com e-mail + senha reais).
+  const [view, setView] = useState<View>(() =>
+    typeof window !== "undefined" && window.location.pathname === "/portal" ? "client-login" : "home",
+  )
   // Pré-seleção de projeto ao entrar em "Criar acesso cliente" vindo do
   // "Novo Dash View" (dash-first) — ClientAccessPage é renderizada fora do
   // Shell (tela cheia), então o estado precisa viver aqui.
@@ -244,7 +248,9 @@ function AppInner() {
     if (typeof window === "undefined") return false
     return (
       window.location.pathname === RESET_PATH ||
-      window.location.hash.includes("type=recovery")
+      window.location.hash.includes("type=recovery") ||
+      // Convite do Portal do Cliente: o link entra logado, mas sem senha definida.
+      window.location.hash.includes("type=invite")
     )
   })
 
@@ -266,6 +272,18 @@ function AppInner() {
       /* noop */
     }
   }
+
+  // Staff autenticado não precisa do login do portal (ex.: entrou pela rota /portal):
+  // sai da tela de login do portal e volta ao início do shell.
+  useEffect(() => {
+    if (status !== "authenticated" || view !== "client-login") return
+    setView("home")
+    try {
+      window.history.replaceState({}, "", "/")
+    } catch {
+      /* noop */
+    }
+  }, [status, view])
 
   const handleLoginSuccess = (roleStr?: string) => {
     if (roleStr) {
@@ -364,6 +382,24 @@ function AppInner() {
     )
   }
 
+  // Cliente do Portal: sessão real do Supabase Auth SEM profile de staff. Nunca vê o shell interno.
+  if (status === "portal") {
+    return (
+      <PortalGate
+        onLogout={async () => {
+          clearPortalSession()
+          await signOut()
+          setView("client-login")
+        }}
+      />
+    )
+  }
+
+  // Login do Portal do Cliente (rota pública /portal; antes do gate de staff).
+  if (view === "client-login") {
+    return <ClientLoginPage onBack={() => setView("home")} />
+  }
+
   // Sem sessão real e sem Inspection Mode → login obrigatório (ou auto-cadastro).
   if (status === "anonymous" || view === "login") {
     if (showSignup) {
@@ -394,18 +430,6 @@ function AppInner() {
           leaveActivate()
           setView("home")
         }}
-      />
-    )
-  }
-
-  if (view === "client-login") {
-    return (
-      <ClientLoginPage
-        onSuccess={(_permission, mustChangePassword) => {
-          setClientMustChangePwd(mustChangePassword)
-          setView("client")
-        }}
-        onBack={() => setView("home")}
       />
     )
   }
