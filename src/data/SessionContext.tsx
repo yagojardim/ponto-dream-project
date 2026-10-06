@@ -46,6 +46,8 @@ interface SessionCtx {
   inspectionEnabled: boolean
   /** Nome do workspace/tenant real (tenants.name). */
   tenantName:    string
+  /** Tenant ativo — usado como key para remontar a árvore quando ele muda. */
+  tenantId:      string
   signOut:       () => Promise<void>
   enterInspection: () => void
   mustChangePassword: boolean
@@ -165,10 +167,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setAuthUser(u)
 
       if (u) {
-        // Session readiness depends only on Supabase Auth. Profile and feature
-        // data hydrate after rendering and can never hold the app in loading.
-        settleStatus('authenticated')
-        void hydrateProfile(u)
+        // O tenant ativo só é conhecido depois do perfil. Liberar o app antes
+        // faz os componentes buscarem dados uma única vez com o tenant padrão
+        // (#1) e exibirem dados de OUTRO tenant. hydrateProfile é limitado por
+        // BOOT_READ_TIMEOUT_MS e nunca lança, então o loading continua curto;
+        // o watchdog é desarmado para não cair no fallback durante a espera.
+        bootSettled = true
+        window.clearTimeout(watchdogId)
+        void hydrateProfile(u).finally(() => { if (alive) setStatus('authenticated') })
         return
       }
 
@@ -240,7 +246,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   return (
     <SessionContext.Provider value={{
       activeUser, setActiveUser, status, authUser,
-      inspectionEnabled: INSPECTION_MODE_ENABLED, tenantName, signOut, enterInspection,
+      inspectionEnabled: INSPECTION_MODE_ENABLED, tenantName, tenantId: activeTenant, signOut, enterInspection,
       mustChangePassword, clearMustChangePassword: () => setMustChange(false),
       availableRoles, roleChoice, setRoleChoice: setRoleOverride, isTenantOwner,
     }}>

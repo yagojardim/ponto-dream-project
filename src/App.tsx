@@ -203,7 +203,7 @@ export default function App() {
 }
 
 function AppInner() {
-  const { setActiveUser, status, enterInspection, mustChangePassword, activeUser } =
+  const { setActiveUser, status, enterInspection, mustChangePassword, activeUser, tenantId } =
     useSession()
   const [view, setView] = useState<View>("home")
   // Pré-seleção de projeto ao entrar em "Criar acesso cliente" vindo do
@@ -467,7 +467,9 @@ function AppInner() {
   }
 
   return (
-    <ErrorBoundary scope="Shell">
+    // key=tenantId: ao trocar de tenant (Inspection→login real, signup) o shell
+    // remonta e todo componente que busca dados uma vez só refaz a busca no tenant certo.
+    <ErrorBoundary scope="Shell" key={tenantId}>
       <CatalogProvider>
         <ErrorBoundary scope="AdminMasterOverlay" fallback={null}>
           <AdminMasterOverlay />

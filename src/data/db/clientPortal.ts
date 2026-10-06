@@ -19,11 +19,13 @@ export { DEFAULT_TENANT_ID }
 /**
  * Tenant do Portal do Cliente = o tenant da sessão do portal (retornado pela
  * Edge Function client-portal-login). O portal tem autenticação própria e NÃO
- * usa o tenant do app principal (getActiveTenantId). Fallback DEFAULT_TENANT_ID
- * para dev/single-tenant quando não há sessão de portal.
+ * usa o tenant do app principal (getActiveTenantId) — mas as telas de GESTÃO
+ * (Mensagens do Cliente, preview/editor do Dash View) também passam por aqui sem
+ * sessão de portal; nesse caso vale o tenant ativo da gestão. O fallback antigo
+ * (DEFAULT_TENANT_ID) fazia qualquer tenant ler os dados do tenant #1.
  */
 function portalTenantId(): string {
-  return readPortalSession()?.tenantId ?? DEFAULT_TENANT_ID
+  return readPortalSession()?.tenantId ?? getActiveTenantId()
 }
 
 type PortalTable =

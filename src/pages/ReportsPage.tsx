@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, type CSSProperties } from 'react'
 import { takeReportNav } from '@/lib/reportNav'
 import { T } from '../components/ds/tokens'
 import { can } from '../data/permissions'
-import { getActiveUser, MOCK_TENANT, DEFAULT_DASHBOARD_BY_ROLE, type MockUser } from '../data/session'
+import { getActiveUser, getActiveTenantId, DEFAULT_DASHBOARD_BY_ROLE, type MockUser } from '../data/session'
 import {
   ASSIGNMENT_TARGETS, getAssignment, getAllAssignments,
   upsertAssignment, removeAssignment, useDashboardAssignments,
@@ -47,7 +47,7 @@ interface AssignPopoverProps {
 }
 
 function AssignPopover({ card, anchorRef, onClose, onSaved }: AssignPopoverProps) {
-  const tid   = MOCK_TENANT.tenant_id
+  const tid   = getActiveTenantId()
   const user  = getActiveUser()
   const existing = getAssignment(tid, card.id)
 
@@ -390,7 +390,7 @@ interface ReportCardProps {
 function ReportCard({ def, canManage, tick, onAssign, children, focused = false }: ReportCardProps) {
   const [hovered, setHovered] = useState(false)
   const pinBtnRef = useRef<HTMLButtonElement>(null)
-  const tid = MOCK_TENANT.tenant_id
+  const tid = getActiveTenantId()
 
   void tick  // triggers re-render on store change
   const assignment = getAssignment(tid, def.id)
@@ -448,7 +448,7 @@ function ReportCard({ def, canManage, tick, onAssign, children, focused = false 
 
 // ── Batch matrix modal ────────────────────────────────────────────────────────
 function BatchMatrixModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const tid  = MOCK_TENANT.tenant_id
+  const tid  = getActiveTenantId()
   const user = getActiveUser()
 
   // Build initial state from store
@@ -624,7 +624,7 @@ export default function ReportsPage() {
     Promise.all([
       listDashboardProjects(),
       fetchAssignedProjects({
-        tenantId: MOCK_TENANT.tenant_id,
+        tenantId: getActiveTenantId(),
         profileId: activeUser.user_id,
         permissions: activeUser.permissions,
       }),
@@ -688,7 +688,7 @@ function ReportsPageInner({ projError }: { projError: string | null }) {
 
   function handleBatchSaved() {
     setTick(t => t + 1)
-    const all = getAllAssignments(MOCK_TENANT.tenant_id)
+    const all = getAllAssignments(getActiveTenantId())
     const total = all.reduce((s, a) => s + a.targets.length, 0)
     toast(`Atribuições salvas. ${total} vínculo${total !== 1 ? 's' : ''} ativo${total !== 1 ? 's' : ''}.`)
   }

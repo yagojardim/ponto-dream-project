@@ -15,11 +15,10 @@ import {
   type WorkItem, type FilterState, type RagStatus,
 } from '../components/ds/DashboardKit'
 import {
-  MOCK_TENANT, MOCK_USERS,
+  MOCK_USERS,
   DASHBOARD_CATALOG, roleChoiceLabel,
   type MockUser, type UserScope, type DashboardType,
 } from '../data/session'
-// MOCK_TENANT used in ProductOwnerPanel for client feed scoping
 import {
   useLiveDashboard, liveItems, liveCurrentSprintName, liveAggregates, liveProjects,
   getBlockedItems, getSprintItems, getReadyItems,
@@ -517,7 +516,7 @@ function AdminPanel({ onNav, onInvite }: { onNav: (v: string, targetId?: string)
   return (
     <>
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="admin" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="admin" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -532,7 +531,7 @@ function AdminPanel({ onNav, onInvite }: { onNav: (v: string, targetId?: string)
           <AdminAuditCard />
         </ColSpan>
 
-        <CompositionGrid dashId="admin" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="admin" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -598,7 +597,7 @@ function PmoCards({ agg, rags, onNav, openChart }: {
       miniViz: committedSeries.length ? <MiniPlannedDone committed={committedSeries} completed={completedSeries} /> : undefined, onClick: () => openChart('criados') },
   ]
 
-  return <UnifiedMural dashId="pmo" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+  return <UnifiedMural dashId="pmo" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 }
 
 function PmoPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
@@ -649,9 +648,9 @@ function PmoPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
 
 
         <ColSpan>
-          <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
+          <ClientFeedCard tenantId={getActiveTenantId()} />
         </ColSpan>
-        <CompositionGrid dashId="pmo" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="pmo" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -696,7 +695,7 @@ function ProjectManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
       {chartModal}
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="project-manager" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="project-manager" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -739,9 +738,9 @@ function ProjectManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
         </ColSpan>
 
         <ColSpan>
-          <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
+          <ClientFeedCard tenantId={getActiveTenantId()} />
         </ColSpan>
-        <CompositionGrid dashId="project-manager" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="project-manager" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -781,7 +780,7 @@ function ProductManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
   return (
     <>
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="product-manager" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="product-manager" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -832,7 +831,7 @@ function ProductManagerPanel({ onNav }: { onNav: (v: string, targetId?: string) 
             </div>
           </SCard>
         </ColSpan>
-        <CompositionGrid dashId="product-manager" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="product-manager" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1100,7 +1099,7 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
       {chartModal}
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="product-owner" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="product-owner" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -1116,7 +1115,7 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
             onViewAll={() => onNav('list')} maxItems={3}
             emptyMsg="Nenhum item ready. Refine o backlog." />
 
-          <ClientFeedCard poId="u_po" tenantId={MOCK_TENANT.tenant_id} />
+          <ClientFeedCard poId="u_po" tenantId={getActiveTenantId()} />
 
           <SCard title="Time Atuando no Projeto">
             {team.length === 0 ? (
@@ -1138,7 +1137,7 @@ function ProductOwnerPanel({ onNav }: { onNav: (v: string, targetId?: string) =>
             )}
           </SCard>
         </div>
-        <CompositionGrid dashId="product-owner" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="product-owner" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1184,7 +1183,7 @@ function ScrumMasterPanel({ onNav }: { onNav: (v: string, targetId?: string) => 
     <>
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="scrum-master" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="scrum-master" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -1238,9 +1237,9 @@ function ScrumMasterPanel({ onNav }: { onNav: (v: string, targetId?: string) => 
         </ColSpan>
 
         <ColSpan>
-          <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
+          <ClientFeedCard tenantId={getActiveTenantId()} />
         </ColSpan>
-        <CompositionGrid dashId="scrum-master" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="scrum-master" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1275,7 +1274,7 @@ function TechLeadPanel({ onNav }: { onNav: (v: string, targetId?: string) => voi
       {tlChartModal}
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="tech-lead" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="tech-lead" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -1287,9 +1286,9 @@ function TechLeadPanel({ onNav }: { onNav: (v: string, targetId?: string) => voi
 
 
         <ColSpan>
-          <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
+          <ClientFeedCard tenantId={getActiveTenantId()} />
         </ColSpan>
-        <CompositionGrid dashId="tech-lead" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="tech-lead" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1337,7 +1336,7 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="dev" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="dev" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
 
@@ -1354,8 +1353,8 @@ function DevPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) 
         </SCard>
       </Grid>
 
-      <ClientFeedCard tenantId={MOCK_TENANT.tenant_id} />
-      <CompositionGrid dashId="dev" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+      <ClientFeedCard tenantId={getActiveTenantId()} />
+      <CompositionGrid dashId="dev" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
     </div>
   )
 }
@@ -1391,7 +1390,7 @@ function UxPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
     <>
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="ux" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="ux" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -1428,7 +1427,7 @@ function UxPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
             }
           </SCard>
         </div>
-        <CompositionGrid dashId="ux" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="ux" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -1462,7 +1461,7 @@ function QaPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
       {qaChartModal}
       {drawerItem && <WorkItemDetailDrawer item={drawerItem} onClose={closeDrawer} onNav={onNav} />}
       <ProjFilterRow selected={selProj} onChange={setSelProj} />
-      <UnifiedMural dashId="qa" tenantId={MOCK_TENANT.tenant_id} nativeCards={nativeCards} onNav={onNav} />
+      <UnifiedMural dashId="qa" tenantId={getActiveTenantId()} nativeCards={nativeCards} onNav={onNav} />
 
       <div style={{ marginTop: 4 }}>
         <FilterBar filters={filters} onChange={setFilters} projects={PROJECTS()} squads={SQUADS()} sprints={SPRINTS()} />
@@ -1507,7 +1506,7 @@ function QaPanel({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
             ))}
           </SCard>
         </div>
-        <CompositionGrid dashId="qa" tenantId={MOCK_TENANT.tenant_id} selProj={selProj} sprintFilter={filters.sprint} />
+        <CompositionGrid dashId="qa" tenantId={getActiveTenantId()} selProj={selProj} sprintFilter={filters.sprint} />
       </Grid>
     </>
   )
@@ -2206,7 +2205,7 @@ function DashboardHomeScoped(props: Props) {
 
 
 function DashboardHomeInner({ onNav, onInvite }: Props) {
-  const { activeUser: user } = useSession()
+  const { activeUser: user, tenantName } = useSession()
   const [scope, setScope]           = useState<UserScope | null>(null)
   const [activeDashId, setActiveDash] = useState<DashboardType | null>(null)
   const [rev, setRev]               = useState(0)
@@ -2246,7 +2245,7 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
               fontSize: 10, fontWeight: 700, color: T.accent, background: `${T.accent}18`,
               border: `1px solid ${T.accent}33`, borderRadius: 4, padding: '2px 7px',
               textTransform: 'uppercase', letterSpacing: '0.06em',
-            }}>{MOCK_TENANT.name}</span>
+            }}>{tenantName}</span>
             <span style={{ color: T.border2, fontSize: 14 }}>/</span>
             <h1 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: T.text1 }}>
               {activeDef.label}
