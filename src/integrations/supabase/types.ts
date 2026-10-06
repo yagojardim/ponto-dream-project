@@ -780,6 +780,7 @@ export type Database = {
           created_by: string | null
           email: string
           id: string
+          last_access_at: string | null
           metadata: Json
           name: string
           password_must_change: boolean
@@ -800,6 +801,7 @@ export type Database = {
           created_by?: string | null
           email: string
           id?: string
+          last_access_at?: string | null
           metadata?: Json
           name: string
           password_must_change?: boolean
@@ -820,6 +822,7 @@ export type Database = {
           created_by?: string | null
           email?: string
           id?: string
+          last_access_at?: string | null
           metadata?: Json
           name?: string
           password_must_change?: boolean
@@ -1161,6 +1164,59 @@ export type Database = {
           },
         ]
       }
+      email_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          from_email: string | null
+          id: string
+          message_id: string | null
+          occurred_at: string | null
+          payload: Json
+          provider: string
+          subject: string | null
+          template_key: string | null
+          tenant_id: string | null
+          to_email: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          from_email?: string | null
+          id?: string
+          message_id?: string | null
+          occurred_at?: string | null
+          payload?: Json
+          provider?: string
+          subject?: string | null
+          template_key?: string | null
+          tenant_id?: string | null
+          to_email?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          from_email?: string | null
+          id?: string
+          message_id?: string | null
+          occurred_at?: string | null
+          payload?: Json
+          provider?: string
+          subject?: string | null
+          template_key?: string | null
+          tenant_id?: string | null
+          to_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       epics: {
         Row: {
           archived_at: string | null
@@ -1303,6 +1359,7 @@ export type Database = {
       feedback: {
         Row: {
           author_name: string | null
+          correlation_id: string | null
           created_at: string
           id: string
           message: string
@@ -1317,6 +1374,7 @@ export type Database = {
         }
         Insert: {
           author_name?: string | null
+          correlation_id?: string | null
           created_at?: string
           id?: string
           message: string
@@ -1331,6 +1389,7 @@ export type Database = {
         }
         Update: {
           author_name?: string | null
+          correlation_id?: string | null
           created_at?: string
           id?: string
           message?: string
@@ -1504,6 +1563,435 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_action_items: {
+        Row: {
+          assignee: string | null
+          created_at: string
+          due: string | null
+          id: string
+          linked_issue_id: string | null
+          meeting_id: string
+          tenant_id: string
+          text: string
+        }
+        Insert: {
+          assignee?: string | null
+          created_at?: string
+          due?: string | null
+          id?: string
+          linked_issue_id?: string | null
+          meeting_id: string
+          tenant_id?: string
+          text: string
+        }
+        Update: {
+          assignee?: string | null
+          created_at?: string
+          due?: string | null
+          id?: string
+          linked_issue_id?: string | null
+          meeting_id?: string
+          tenant_id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_action_items_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_hour_purchases: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          method: string
+          minutes: number
+          purchased_by: string | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          method: string
+          minutes: number
+          purchased_by?: string | null
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          method?: string
+          minutes?: number
+          purchased_by?: string | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_hour_purchases_purchased_by_fkey"
+            columns: ["purchased_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_hour_purchases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_hour_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          granted_minutes: number | null
+          id: string
+          justification: string
+          minutes: number
+          reason: string | null
+          requester_id: string
+          status: string
+          tenant_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          granted_minutes?: number | null
+          id?: string
+          justification: string
+          minutes: number
+          reason?: string | null
+          requester_id: string
+          status?: string
+          tenant_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          granted_minutes?: number | null
+          id?: string
+          justification?: string
+          minutes?: number
+          reason?: string | null
+          requester_id?: string
+          status?: string
+          tenant_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_hour_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_hour_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_hour_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          meeting_id: string
+          tenant_id: string
+          time_anchor: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          meeting_id: string
+          tenant_id: string
+          time_anchor?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          meeting_id?: string
+          tenant_id?: string
+          time_anchor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_notes_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          read: boolean
+          recipient_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          kind: string
+          read?: boolean
+          recipient_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          read?: boolean
+          recipient_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_notifications_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_quotas: {
+        Row: {
+          id: string
+          period_end: string | null
+          period_start: string | null
+          profile_id: string
+          quota_minutes: number
+          role_context: string | null
+          tenant_id: string
+          updated_at: string
+          used_minutes: number
+        }
+        Insert: {
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          profile_id: string
+          quota_minutes?: number
+          role_context?: string | null
+          tenant_id: string
+          updated_at?: string
+          used_minutes?: number
+        }
+        Update: {
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          profile_id?: string
+          quota_minutes?: number
+          role_context?: string | null
+          tenant_id?: string
+          updated_at?: string
+          used_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_quotas_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_quotas_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_shares: {
+        Row: {
+          created_at: string
+          id: string
+          meeting_id: string
+          shared_by_id: string | null
+          shared_with_id: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meeting_id: string
+          shared_by_id?: string | null
+          shared_with_id: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meeting_id?: string
+          shared_by_id?: string | null
+          shared_with_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_shares_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_shares_shared_by_id_fkey"
+            columns: ["shared_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_shares_shared_with_id_fkey"
+            columns: ["shared_with_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_shares_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          archived_at: string | null
+          audio_url: string | null
+          created_at: string
+          duration_min: number | null
+          id: string
+          meeting_date: string | null
+          owner_id: string
+          project_id: string | null
+          source: string
+          status: string
+          summary: Json | null
+          tenant_id: string
+          title: string
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          audio_url?: string | null
+          created_at?: string
+          duration_min?: number | null
+          id?: string
+          meeting_date?: string | null
+          owner_id: string
+          project_id?: string | null
+          source?: string
+          status?: string
+          summary?: Json | null
+          tenant_id?: string
+          title: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          audio_url?: string | null
+          created_at?: string
+          duration_min?: number | null
+          id?: string
+          meeting_date?: string | null
+          owner_id?: string
+          project_id?: string | null
+          source?: string
+          status?: string
+          summary?: Json | null
+          tenant_id?: string
+          title?: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -2247,6 +2735,7 @@ export type Database = {
       projects: {
         Row: {
           archived_at: string | null
+          client_dashboard_layout: Json | null
           client_name: string | null
           created_at: string
           created_by: string | null
@@ -2267,6 +2756,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          client_dashboard_layout?: Json | null
           client_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -2287,6 +2777,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          client_dashboard_layout?: Json | null
           client_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -2843,6 +3334,57 @@ export type Database = {
           },
         ]
       }
+      support_logs: {
+        Row: {
+          area: string | null
+          context: Json
+          correlation_id: string | null
+          created_at: string
+          id: string
+          level: string
+          message: string
+          profile_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          area?: string | null
+          context?: Json
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          message: string
+          profile_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          area?: string | null
+          context?: Json
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          profile_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_bug_environments: {
         Row: {
           created_at: string
@@ -2863,6 +3405,44 @@ export type Database = {
           tenant_id?: string
         }
         Relationships: []
+      }
+      tenant_meeting_pool: {
+        Row: {
+          contracted_minutes: number
+          extra_minutes: number
+          period_end: string | null
+          period_start: string | null
+          renova_at: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          contracted_minutes?: number
+          extra_minutes?: number
+          period_end?: string | null
+          period_start?: string | null
+          renova_at?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          contracted_minutes?: number
+          extra_minutes?: number
+          period_end?: string | null
+          period_start?: string | null
+          renova_at?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_meeting_pool_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_modules: {
         Row: {
@@ -3294,6 +3874,36 @@ export type Database = {
             referencedColumns: ["tenant_id", "id"]
           },
         ]
+      }
+      usage_events: {
+        Row: {
+          event_type: string
+          feature_key: string
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          event_type: string
+          feature_key: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          event_type?: string
+          feature_key?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_dashboards: {
         Row: {
