@@ -773,6 +773,7 @@ export type Database = {
       client_portal_users: {
         Row: {
           archived_at: string | null
+          auth_user_id: string | null
           can_approve: boolean
           can_comment: boolean
           can_preview: boolean
@@ -794,6 +795,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          auth_user_id?: string | null
           can_approve?: boolean
           can_comment?: boolean
           can_preview?: boolean
@@ -815,6 +817,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          auth_user_id?: string | null
           can_approve?: boolean
           can_comment?: boolean
           can_preview?: boolean
