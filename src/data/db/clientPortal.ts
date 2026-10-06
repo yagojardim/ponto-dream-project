@@ -12,7 +12,6 @@ import { safeCall, logger } from '../../utils/logger'
 import { writeAudit as writeMilestone } from '@/data/db/audit'
 import { getActiveTenantId } from '@/data/session'
 import { listModules } from '@/data/db/modules'
-import { generateTempPassword } from '@/data/security'
 
 export { DEFAULT_TENANT_ID }
 
@@ -408,7 +407,6 @@ export interface CreatePortalUserInput {
   canApprove: boolean
   canPreview: boolean
   canComment?: boolean
-  tempPassword?: string
   actorName?: string
 }
 
@@ -427,7 +425,7 @@ async function createClientPortalUsers__raw(
     can_comment: input.canComment ?? true,
     password_must_change: true,
     status: 'invited',
-    metadata: input.tempPassword ? { temp_password_hint: 'sent-by-email' } : {},
+    metadata: {},
   }))
   if (rows.length === 0) return []
   const { data, error } = await tbl('client_portal_users').insert(rows).select('*')
@@ -532,7 +530,7 @@ export const getClientPermissions = (email: string, projectId?: string): Promise
 export const setPortalPasswordChanged = (userId: string): Promise<void> =>
   safeCall('clientPortal.setPortalPasswordChanged', () => setPortalPasswordChanged__raw(userId), undefined, { userId })
 
-// ─── Pré-login do Portal do Cliente (Edge Function, sem sessão) ───────────────
+// ─── Login do Portal do Cliente (Supabase Auth + Edge Function) ───────────────
 export interface PortalLoginUser {
   id: string
   name: string
@@ -552,12 +550,14 @@ export interface PortalLoginResult {
   error?: string
 }
 
-/** Valida o acesso do cliente via Edge Function (service_role no servidor). */
-export function portalLogin(email: string): Promise<PortalLoginResult> {
+/**
+ * Resolve os acessos de portal da sessão atual do Supabase Auth. A senha já foi
+ * validada pelo Auth (signInWithPassword); a Edge Function identifica o cliente
+ * pelo JWT (service_role no servidor) e devolve só o mínimo.
+ */
+export function portalLogin(): Promise<PortalLoginResult> {
   return safeCall<PortalLoginResult>('clientPortal.portalLogin', async () => {
-    const { data, error } = await supabase.functions.invoke('client-portal-login', {
-      body: { email: (email ?? '').trim().toLowerCase() },
-    })
+    const { data, error } = await supabase.functions.invoke('client-portal-login', { body: {} })
     if (error) {
       logger.error('clientPortal.portalLogin', error)
       return { ok: false, error: 'unavailable' }
@@ -568,6 +568,40 @@ export function portalLogin(email: string): Promise<PortalLoginResult> {
   }, { ok: false, error: 'unavailable' })
 }
 
+
+export interface PortalInviteResult {
+  ok: boolean
+  /** Link para o cliente definir a própria senha (repassado pelo gestor). */
+  link?: string
+  /** true quando o cliente já tinha usuário no Auth (link de redefinição). */
+  existing?: boolean
+  error?: string
+}
+
+/**
+ * Gera o link de convite/redefinição de senha do cliente (Edge Function, só
+ * equipe autenticada do tenant). Não envia e-mail: devolve o link.
+ */
+export function portalInvite(email: string): Promise<PortalInviteResult> {
+  return safeCall<PortalInviteResult>('clientPortal.portalInvite', async () => {
+    const { data, error } = await supabase.functions.invoke('portal-invite', {
+      body: { email: (email ?? '').trim().toLowerCase() },
+    })
+    // Erros HTTP (403/404/409) vêm em error.context; o corpo traz o código estável.
+    if (error) {
+      let code = 'unavailable'
+      try {
+        const body = await (error as { context?: Response }).context?.json()
+        if (body && typeof body.error === 'string') code = body.error
+      } catch { /* corpo ilegível */ }
+      logger.error('clientPortal.portalInvite', error)
+      return { ok: false, error: code }
+    }
+    const res = data as PortalInviteResult | null
+    if (!res?.ok || !res.link) return { ok: false, error: res?.error ?? 'unavailable' }
+    return res
+  }, { ok: false, error: 'unavailable' })
+}
 
 // ─── Responsáveis por mensagens do cliente (por projeto) ─────────────────────
 export interface ResponsibleCandidate {
@@ -1468,24 +1502,23 @@ export const updatePortalUser = (
   safeCall('clientPortal.updatePortalUser', () => updatePortalUser__raw(userId, input, actorName), false, { userId })
 
 /**
- * Gera uma nova senha temporária e marca password_must_change=true. Não há
- * envio de e-mail real ainda (mesmo estágio do restante do produto — ver
- * ClientAccessPage/InviteMemberModal: senha é exibida na tela para o gestor
- * copiar e repassar). Retorna a senha gerada para exibição única na UI.
+ * Gera o link para o cliente redefinir a própria senha (Supabase Auth). Não há
+ * envio de e-mail real ainda: o link é exibido na tela para o gestor copiar e
+ * repassar. Retorna o link para exibição única na UI.
  */
 async function resetPortalUserPassword__raw(userId: string, actorName?: string): Promise<string | null> {
   const tid = getActiveTenantId()
-  const tempPassword = generateTempPassword()
   const { data, error } = await tbl('client_portal_users')
-    .update({ password_must_change: true })
-    .eq('tenant_id', tid).eq('id', userId).is('archived_at', null)
-    .select('id, email, project_id').maybeSingle()
+    .select('id, email, project_id')
+    .eq('tenant_id', tid).eq('id', userId).is('archived_at', null).maybeSingle()
   if (error) throw tenantError('client_portal_users', error.message)
   if (!data) return null
   const row = data as { id: string; email: string; project_id: string }
+  const invite = await portalInvite(row.email)
+  if (!invite.ok || !invite.link) return null
   await writeAudit('client_portal_user', row.id, 'portal.password_reset', actorName ?? 'Sistema',
     null, { email: row.email, project_id: row.project_id })
-  return tempPassword
+  return invite.link
 }
 
 export const resetPortalUserPassword = (userId: string, actorName?: string): Promise<string | null> =>

@@ -15,3 +15,11 @@ verify_jwt = false
 # meeting-summarize é chamada pelo front AUTENTICADO (módulo mod_meeting_intel): deriva tenant do JWT.
 [functions.meeting-summarize]
 verify_jwt = true
+
+# portal-invite: chamada pelo front AUTENTICADO (equipe); gera link p/ o cliente definir a senha.
+[functions.portal-invite]
+verify_jwt = true
+
+# client-portal-login: recebe o JWT do cliente já autenticado (signInWithPassword) e devolve os acessos de portal.
+[functions.client-portal-login]
+verify_jwt = true

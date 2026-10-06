@@ -1,6 +1,14 @@
-// Pré-login do Portal do Cliente: valida o acesso lendo client_portal_users
-// server-side (service_role) e devolve APENAS o mínimo para iniciar a sessão.
-// Nunca expõe linhas de outros tenants/clientes nem credenciais.
+// Login do Portal do Cliente (pós-autenticação): a senha é validada pelo próprio
+// Supabase Auth no front (signInWithPassword). Esta função recebe o JWT dessa
+// sessão, descobre QUAIS acessos de portal pertencem àquele usuário e devolve
+// APENAS o mínimo para montar a sessão do portal.
+//
+// Segurança:
+//  - identidade vem do JWT (nunca do corpo da requisição);
+//  - o vínculo por e-mail só vale com e-mail CONFIRMADO no Auth (quem se cadastra
+//    com o e-mail de um cliente sem confirmar não herda o acesso dele);
+//  - staff (tem profile) não entra no portal por aqui;
+//  - nunca expõe linhas de outros tenants/clientes nem credenciais.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 
@@ -26,6 +34,11 @@ function json(body: unknown, status = 200): Response {
   })
 }
 
+/** Escapa curingas do LIKE (% _ \) — '_' é comum em e-mail e casaria outro cliente. */
+function likeEscape(v: string): string {
+  return v.replace(/[\\%_]/g, '\\$&')
+}
+
 interface PortalRow {
   id: string
   tenant_id: string
@@ -36,10 +49,11 @@ interface PortalRow {
   can_approve: boolean
   can_preview: boolean
   can_comment: boolean
-  password_must_change: boolean
   status: string
-  archived_at: string | null
+  auth_user_id: string | null
 }
+
+const COLUMNS = 'id, tenant_id, project_id, name, email, portal_role, can_approve, can_preview, can_comment, status, auth_user_id'
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -48,37 +62,55 @@ Deno.serve(async (req: Request) => {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   if (rateLimited(ip)) return json({ ok: false, error: 'rate_limited' }, 429)
 
-  let email = ''
   try {
-    const body = await req.json()
-    email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
-  } catch {
-    return json({ ok: false, error: 'invalid_body' }, 400)
-  }
-  if (!email || email.length > 320 || !email.includes('@')) {
-    return json({ ok: false, error: 'invalid_credentials' }, 400)
-  }
+    const url = Deno.env.get('SUPABASE_URL')!
+    const caller = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
+      auth: { persistSession: false },
+    })
+    const { data: { user } } = await caller.auth.getUser()
+    if (!user) return json({ ok: false, error: 'invalid_credentials' }, 401)
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      { auth: { persistSession: false } },
-    )
+    const email = (user.email ?? '').trim().toLowerCase()
+    if (!email || !user.email_confirmed_at) return json({ ok: false, error: 'invalid_credentials' }, 403)
 
-    const { data, error } = await supabase
-      .from('client_portal_users')
-      .select('id, tenant_id, project_id, name, email, portal_role, can_approve, can_preview, can_comment, password_must_change, status, archived_at')
-      .ilike('email', email)
-      .is('archived_at', null)
+    const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
+      auth: { persistSession: false },
+    })
 
-    if (error) throw error
-    const rows = (data ?? []) as PortalRow[]
-    if (rows.length === 0) return json({ ok: false, error: 'invalid_credentials' }, 401)
+    // Staff não usa o portal do cliente.
+    const { data: staff, error: staffErr } = await admin
+      .from('profiles').select('id').eq('auth_user_id', user.id).limit(1)
+    if (staffErr) throw staffErr
+    if (staff?.length) return json({ ok: false, error: 'not_portal_user' }, 403)
 
-    // Todas as linhas pertencem ao mesmo e-mail; consolidamos no tenant da primeira.
+    const { data: linked, error: linkedErr } = await admin
+      .from('client_portal_users').select(COLUMNS)
+      .eq('auth_user_id', user.id).is('archived_at', null)
+    if (linkedErr) throw linkedErr
+
+    const { data: unlinked, error: unlinkedErr } = await admin
+      .from('client_portal_users').select(COLUMNS)
+      .is('auth_user_id', null).ilike('email', likeEscape(email)).is('archived_at', null)
+    if (unlinkedErr) throw unlinkedErr
+
+    const rows = [...(linked ?? []), ...(unlinked ?? [])] as PortalRow[]
+    if (rows.length === 0) return json({ ok: false, error: 'not_portal_user' }, 403)
+
+    // Todas as linhas pertencem ao mesmo usuário; consolidamos no tenant da primeira.
     const tenantId = rows[0].tenant_id
     const scoped = rows.filter(r => r.tenant_id === tenantId)
+
+    // 1º login real: grava o vínculo. A senha foi definida pelo próprio cliente
+    // (link de convite), então a troca obrigatória não se aplica.
+    const toLink = scoped.filter(r => r.auth_user_id === null).map(r => r.id)
+    if (toLink.length) {
+      const { error: linkErr } = await admin
+        .from('client_portal_users')
+        .update({ auth_user_id: user.id, password_must_change: false, status: 'active' })
+        .in('id', toLink)
+      if (linkErr) throw linkErr
+    }
 
     return json({
       ok: true,
@@ -88,7 +120,7 @@ Deno.serve(async (req: Request) => {
         email: scoped[0].email,
         tenantId,
         permission: scoped.some(r => r.portal_role === 'portal-admin') ? 'admin' : 'viewer',
-        mustChangePassword: scoped.some(r => r.password_must_change),
+        mustChangePassword: false,
         canApprove: scoped.some(r => r.can_approve),
         canPreview: scoped.some(r => r.can_preview),
         canComment: scoped.some(r => r.can_comment),
