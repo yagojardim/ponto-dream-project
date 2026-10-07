@@ -320,7 +320,7 @@ export function AdminUsersCard({ onNav, onInvite, actorName, canManage = true }:
             </div>
           )}
       <CardStickyFooter>
-        <button onClick={() => onInvite ? onInvite() : onNav('config')} style={{ width: '100%', fontSize: 11, color: T.accent, background: `${T.accent}12`, border: `1px solid ${T.accent}33`, borderRadius: 6, padding: '6px', cursor: 'pointer' }}>
+        <button onClick={() => onInvite ? onInvite() : onNav('team')} style={{ width: '100%', fontSize: 11, color: T.accent, background: `${T.accent}12`, border: `1px solid ${T.accent}33`, borderRadius: 6, padding: '6px', cursor: 'pointer' }}>
           + Convidar usuário
         </button>
       </CardStickyFooter>

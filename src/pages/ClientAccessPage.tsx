@@ -6,6 +6,7 @@ import { copyToClipboard } from '../utils/copyToClipboard'
 import {
   createClientPortalUsers,
   portalInvite,
+  portalInviteErrorMessage,
   listProjectResponsibleCandidates,
   setProjectResponsibles,
   type ResponsibleCandidate,
@@ -45,7 +46,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
   const [done, setDone] = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState('')
   const [inviteLink, setInviteLink] = useState('')
-  const [inviteFailed, setInviteFailed] = useState(false)
+  const [inviteFailed, setInviteFailed] = useState('')
   const [copied, setCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [copyErr, setCopyErr] = useState('')
@@ -139,7 +140,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
       // desfaz o acesso: o gestor pode gerar um novo link em Gestão do Dash View.
       const invite = await portalInvite(clientEmail.trim())
       setInviteLink(invite.ok && invite.link ? invite.link : '')
-      setInviteFailed(!invite.ok)
+      setInviteFailed(invite.ok ? '' : portalInviteErrorMessage(invite.error))
 
       setDone(true)
     } catch (err) {
@@ -163,7 +164,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
     setDone(false)
     setGeneratedUrl('')
     setInviteLink('')
-    setInviteFailed(false)
+    setInviteFailed('')
     setCopied(false)
     setLinkCopied(false)
     setCopyErr('')
@@ -312,7 +313,7 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
             {/* Notice box */}
             <div style={{ background: T.warnDim, border: `1px solid ${T.warn}`, borderRadius: 10, padding: 16, marginBottom: 28, textAlign: 'left', fontSize: 13, color: T.text2, lineHeight: 1.6 }}>
               {inviteFailed
-                ? <>⚠️ <strong style={{ color: T.warn }}>Acesso criado, mas o link de senha não pôde ser gerado agora.</strong> Em Gestão do Dash View, abra o usuário <strong style={{ color: T.text1 }}>{clientEmail}</strong> e use “Gerar novo link”.</>
+                ? <>⚠️ <strong style={{ color: T.warn }}>Acesso criado, mas o link de senha não pôde ser gerado.</strong> {inviteFailed} Depois, em Gestão do Dash View, abra o usuário <strong style={{ color: T.text1 }}>{clientEmail}</strong> e use “Gerar novo link”.</>
                 : <>📨 <strong style={{ color: T.warn }}>Envio por e-mail ainda não está ativo.</strong> Repasse ao cliente <strong style={{ color: T.text1 }}>{clientEmail}</strong> o link acima; depois ele acessa o portal pela URL do portal com e-mail e a senha que definiu.</>}
             </div>
 
@@ -626,27 +627,31 @@ export default function ClientAccessPage({ onBack, initialProjectIds }: Props) {
                   </button>
                 </div>
 
-                {/* Toggle: Preview */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+                {/* Toggle: Preview — bloqueado até a funcionalidade ficar pronta */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, opacity: 0.55 }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text1, marginBottom: 2 }}>Permitir ver preview</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text1, marginBottom: 2 }}>
+                      Permitir ver preview
+                      <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: T.text3, background: T.bgSurface, border: `1px solid ${T.border2}`, borderRadius: 10, padding: '1px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Em breve</span>
+                    </div>
                     <div style={{ fontSize: 11, color: T.text3, lineHeight: 1.5 }}>
                       O cliente poderá visualizar pré-visualizações das entregas antes da validação final.
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setClientCanPreview(v => !v)}
+                    disabled
+                    aria-disabled="true"
                     style={{
                       width: 44, height: 24, borderRadius: 12, border: 'none',
-                      background: clientCanPreview ? T.success : T.border2,
-                      cursor: 'pointer', position: 'relative', flexShrink: 0,
+                      background: T.border2,
+                      cursor: 'not-allowed', position: 'relative', flexShrink: 0,
                       transition: 'background 0.2s',
                     }}
                     aria-label="Alternar permissão de preview"
                   >
                     <span style={{
-                      position: 'absolute', top: 3, left: clientCanPreview ? 23 : 3,
+                      position: 'absolute', top: 3, left: 3,
                       width: 18, height: 18, borderRadius: '50%', background: '#fff',
                       transition: 'left 0.2s', display: 'block',
                     }} />
