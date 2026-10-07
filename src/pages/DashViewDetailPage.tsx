@@ -89,16 +89,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function Switch({ on, onToggle, label, desc }: { on: boolean; onToggle: () => void; label: string; desc?: string }) {
+function Switch({ on, onToggle, label, desc, comingSoon = false }: { on: boolean; onToggle: () => void; label: string; desc?: string; comingSoon?: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, opacity: comingSoon ? 0.55 : 1 }}>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.text1, marginBottom: desc ? 2 : 0 }}>{label}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.text1, marginBottom: desc ? 2 : 0 }}>
+          {label}
+          {comingSoon && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: T.text3, background: T.bgSurface2, border: `1px solid ${T.border2}`, borderRadius: 10, padding: '1px 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Em breve</span>}
+        </div>
         {desc && <div style={{ fontSize: 11, color: T.text3, lineHeight: 1.5 }}>{desc}</div>}
       </div>
-      <button type="button" onClick={onToggle} style={{
+      <button type="button" onClick={onToggle} disabled={comingSoon} aria-disabled={comingSoon} style={{
         width: 40, height: 22, borderRadius: 12, border: 'none',
-        background: on ? T.success : T.border2, cursor: 'pointer', position: 'relative', flexShrink: 0,
+        background: on ? T.success : T.border2, cursor: comingSoon ? 'not-allowed' : 'pointer', position: 'relative', flexShrink: 0,
         transition: 'background 0.2s',
       }}>
         <span style={{
@@ -168,10 +171,10 @@ function EditUserModal({ user, actorName, onClose, onSaved }: {
 
   async function resetPassword() {
     setResetting(true); setError('')
-    const link = await resetPortalUserPassword(user.id, actorName)
+    const res = await resetPortalUserPassword(user.id, actorName)
     setResetting(false)
-    if (link) setResetPwd(link)
-    else setError('Não foi possível gerar o link agora.')
+    if (res.ok) setResetPwd(res.link)
+    else setError(res.message)
   }
 
   return (
@@ -191,7 +194,7 @@ function EditUserModal({ user, actorName, onClose, onSaved }: {
             </select>
           </Field>
           <Switch on={canApprove} onToggle={() => setCanApprove(v => !v)} label="Aprovar entregas" />
-          <Switch on={canPreview} onToggle={() => setCanPreview(v => !v)} label="Ver prévias" />
+          <Switch on={canPreview} onToggle={() => setCanPreview(v => !v)} label="Ver prévias" comingSoon />
           <Switch on={canComment} onToggle={() => setCanComment(v => !v)} label="Comentar" />
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 0 4px', borderTop: `1px solid ${T.border}`, marginTop: 4 }}>

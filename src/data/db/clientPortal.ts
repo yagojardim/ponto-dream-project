@@ -603,6 +603,27 @@ export function portalInvite(email: string): Promise<PortalInviteResult> {
   }, { ok: false, error: 'unavailable' })
 }
 
+/** Mensagem em PT-BR para cada código de erro estável do portal-invite. */
+export function portalInviteErrorMessage(code: string | undefined): string {
+  switch (code) {
+    case 'forbidden':
+      return 'Seu usuário não tem permissão para gerar links de acesso do portal.'
+    case 'email_belongs_to_staff':
+      return 'Este e-mail pertence a um membro da equipe. Use outro e-mail para o cliente.'
+    case 'not_found':
+      return 'Acesso do cliente não encontrado neste workspace.'
+    case 'sign_in_required':
+      return 'Sua sessão expirou. Entre novamente e tente de novo.'
+    case 'invalid_email':
+      return 'O e-mail deste acesso é inválido.'
+    case 'link_failed':
+    case 'server_error':
+      return 'O serviço não conseguiu gerar o link agora. Tente novamente em instantes.'
+    default:
+      return 'Não foi possível falar com o serviço de convites. Verifique se a função portal-invite está publicada e tente novamente.'
+  }
+}
+
 // ─── Responsáveis por mensagens do cliente (por projeto) ─────────────────────
 export interface ResponsibleCandidate {
   id: string
@@ -1506,23 +1527,32 @@ export const updatePortalUser = (
  * envio de e-mail real ainda: o link é exibido na tela para o gestor copiar e
  * repassar. Retorna o link para exibição única na UI.
  */
-async function resetPortalUserPassword__raw(userId: string, actorName?: string): Promise<string | null> {
+export type ResetPortalPasswordResult =
+  | { ok: true; link: string }
+  | { ok: false; message: string }
+
+async function resetPortalUserPassword__raw(userId: string, actorName?: string): Promise<ResetPortalPasswordResult> {
   const tid = getActiveTenantId()
   const { data, error } = await tbl('client_portal_users')
     .select('id, email, project_id')
     .eq('tenant_id', tid).eq('id', userId).is('archived_at', null).maybeSingle()
   if (error) throw tenantError('client_portal_users', error.message)
-  if (!data) return null
+  if (!data) return { ok: false, message: portalInviteErrorMessage('not_found') }
   const row = data as { id: string; email: string; project_id: string }
   const invite = await portalInvite(row.email)
-  if (!invite.ok || !invite.link) return null
+  if (!invite.ok || !invite.link) return { ok: false, message: portalInviteErrorMessage(invite.error) }
   await writeAudit('client_portal_user', row.id, 'portal.password_reset', actorName ?? 'Sistema',
     null, { email: row.email, project_id: row.project_id })
-  return invite.link
+  return { ok: true, link: invite.link }
 }
 
-export const resetPortalUserPassword = (userId: string, actorName?: string): Promise<string | null> =>
-  safeCall('clientPortal.resetPortalUserPassword', () => resetPortalUserPassword__raw(userId, actorName), null, { userId })
+export const resetPortalUserPassword = (userId: string, actorName?: string): Promise<ResetPortalPasswordResult> =>
+  safeCall<ResetPortalPasswordResult>(
+    'clientPortal.resetPortalUserPassword',
+    () => resetPortalUserPassword__raw(userId, actorName),
+    { ok: false, message: portalInviteErrorMessage(undefined) },
+    { userId },
+  )
 
 // ─── Fatia 6d — Edição livre do Dash View (board de widgets por dash) ─────────
 // Catálogo FECHADO: só os cards client-safe que o ClientPortalPage já renderiza
