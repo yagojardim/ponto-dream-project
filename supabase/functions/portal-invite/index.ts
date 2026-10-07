@@ -64,18 +64,47 @@ Deno.serve(async (req: Request) => {
       auth: { persistSession: false },
     })
 
-    // 1) Chamador = staff ativo com permissão de portal.
-    const { data: me, error: meErr } = await admin
-      .from('profiles')
-      .select('id, tenant_id, status, primary_role, tenant_owner')
-      .eq('auth_user_id', user.id)
-      .limit(1)
-    if (meErr) throw meErr
-    const profile = me?.[0]
-    if (!profile || (profile.status && profile.status !== 'active')) {
+    // 1) Chamador = staff ativo com permissão de portal. Mesma resolução do app:
+    //    vínculo por auth_user_id; senão, pelo e-mail CONFIRMADO do usuário.
+    const PROFILE_COLS = 'id, tenant_id, status, primary_role, tenant_owner'
+    const { data: byAuth, error: byAuthErr } = await admin
+      .from('profiles').select(PROFILE_COLS).eq('auth_user_id', user.id).limit(1)
+    if (byAuthErr) throw byAuthErr
+    let profile = byAuth?.[0]
+    if (!profile && user.email && user.email_confirmed_at) {
+      const { data: byMail, error: byMailErr } = await admin
+        .from('profiles').select(PROFILE_COLS)
+        .ilike('email', likeEscape(user.email.trim().toLowerCase())).limit(1)
+      if (byMailErr) throw byMailErr
+      profile = byMail?.[0]
+    }
+    if (!profile) {
+      console.error('portal-invite denied: no_profile')
       return json({ ok: false, error: 'forbidden' }, 403)
     }
-    if (!profile.tenant_owner && !ALLOWED_ROLES.has(normRole(profile.primary_role))) {
+    if (profile.status && profile.status !== 'active') {
+      console.error('portal-invite denied: profile_not_active')
+      return json({ ok: false, error: 'forbidden' }, 403)
+    }
+
+    // Papéis: principal + secundários (user_roles → roles), como no app.
+    const roleNames = new Set<string>([normRole(profile.primary_role)])
+    const { data: urs, error: ursErr } = await admin
+      .from('user_roles').select('role_id')
+      .eq('profile_id', profile.id).eq('tenant_id', profile.tenant_id)
+    if (ursErr) throw ursErr
+    const roleIds = (urs ?? []).map((r: { role_id: string | null }) => r.role_id).filter(Boolean)
+    if (roleIds.length) {
+      const { data: roles, error: rolesErr } = await admin
+        .from('roles').select('key, label').in('id', roleIds)
+      if (rolesErr) throw rolesErr
+      for (const r of roles ?? []) {
+        roleNames.add(normRole(r.key)); roleNames.add(normRole(r.label))
+      }
+    }
+    const allowed = profile.tenant_owner || [...roleNames].some(r => ALLOWED_ROLES.has(r))
+    if (!allowed) {
+      console.error('portal-invite denied: role_not_allowed')
       return json({ ok: false, error: 'forbidden' }, 403)
     }
 
