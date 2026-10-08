@@ -3,6 +3,7 @@ import { WorkItemDetail } from '../components/WorkItemDetail'
 import { T } from '../components/ds/tokens'
 import {
   listEpics, createEpicIssue, linkItemToEpic, createEpic, createFeature, nextEpicKey, epicColor as epicColorOf,
+  setEpicClientVisible,
   type EpicsData, type EpicItemRow, type EpicRow,
 } from '../data/db/epics'
 import { listProjects, projectUsesFeatures } from '../data/db/projects'
@@ -10,6 +11,7 @@ import { DB_STATUS_CFG } from '../data/db/timeline'
 import { getActiveUser } from '../data/session'
 import { can, derivePermissions } from '../data/permissions'
 import { normalizeRole } from '../data/db/authProfile'
+import { isClientPortalModuleEnabled } from '../data/db/clientPortal'
 
 const STATUSES = ['backlog', 'todo', 'in_progress', 'in_review', 'done'] as const
 
@@ -261,8 +263,9 @@ const labelStyle: React.CSSProperties = { fontSize: 11, color: T.text3, display:
 
 // ─── "New epic" modal ─────────────────────────────────────────────────────────
 function NewEpicModal({
-  projects, profiles, busy, error, suggestedKey, onKeyRefresh, onClose, onCreate,
+  projects, profiles, busy, error, suggestedKey, portalEnabled, onKeyRefresh, onClose, onCreate,
 }: {
+  portalEnabled: boolean
   projects: EpicsData['projects']
   profiles: EpicsData['profiles']
   busy: boolean
@@ -273,8 +276,10 @@ function NewEpicModal({
   onCreate: (input: {
     projectId: string; name: string; key?: string
     description?: string | null; quarter?: string | null; ownerId?: string | null
+    clientVisible?: boolean
   }) => void
 }) {
+  const [clientVisible, setClientVisible] = useState(false)
   const [name, setName] = useState('')
   const [key, setKey] = useState('')
   const [projectId, setProjectId] = useState(projects.length === 1 ? projects[0].id : '')
@@ -346,6 +351,28 @@ function NewEpicModal({
           />
         </div>
 
+        {portalEnabled && (
+          <label style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer',
+            background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 8, padding: '10px 12px',
+          }}>
+            <input
+              type="checkbox" checked={clientVisible}
+              onChange={e => setClientVisible(e.target.checked)}
+              style={{ marginTop: 2 }}
+            />
+            <span>
+              <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: T.text1 }}>
+                Visível ao cliente (Dash View)
+              </span>
+              <span style={{ display: 'block', fontSize: 11, color: T.text3, lineHeight: 1.5, marginTop: 2 }}>
+                O nome do épico e o andamento das entregas liberadas aparecem no Roadmap do portal do cliente.
+                Você pode mudar isso depois, no card do épico.
+              </span>
+            </span>
+          </label>
+        )}
+
         {error && <div style={{ fontSize: 12, color: T.crit }}>{error}</div>}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
@@ -360,6 +387,7 @@ function NewEpicModal({
               description: description.trim() || null,
               quarter: quarter.trim() || null,
               ownerId: ownerId || null,
+              clientVisible: portalEnabled && clientVisible,
             })}
             style={{
               fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none',
@@ -401,6 +429,26 @@ export default function EpicsPage() {
   const activeUser = getActiveUser()
   const canCreateFeature = can(activeUser?.permissions ?? [], 'create:feature')
   const canCreateEpic = can(activeUser?.permissions ?? [], 'create:epic')
+
+  // A chave "visível ao cliente" só existe para quem tem o módulo Dash View ativo.
+  const [portalEnabled, setPortalEnabled] = useState(false)
+  useEffect(() => {
+    let alive = true
+    void isClientPortalModuleEnabled().then(v => { if (alive) setPortalEnabled(v) })
+    return () => { alive = false }
+  }, [])
+
+  async function toggleClientVisible(epic: EpicRow) {
+    const next = !epic.client_visible
+    // otimista; volta ao valor anterior se o banco recusar
+    setData(d => d && ({ ...d, epics: d.epics.map(e => e.id === epic.id ? { ...e, client_visible: next } : e) }))
+    try {
+      await setEpicClientVisible(epic.id, next, activeUser?.name)
+    } catch (err) {
+      setData(d => d && ({ ...d, epics: d.epics.map(e => e.id === epic.id ? { ...e, client_visible: !next } : e) }))
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
 
   useEffect(() => {
     let alive = true
@@ -475,6 +523,7 @@ export default function EpicsPage() {
   async function handleCreateEpic(input: {
     projectId: string; name: string; key?: string
     description?: string | null; quarter?: string | null; ownerId?: string | null
+    clientVisible?: boolean
   }) {
     setBusy(true); setNewEpicError(null)
     try {
@@ -721,8 +770,25 @@ export default function EpicsPage() {
                                   borderRadius: 20, padding: '2px 10px', border: `1px solid ${T.border}`,
                                 }}>{epic.quarter}</span>
                               )}
+                              {portalEnabled && (
+                                <button
+                                  type="button"
+                                  disabled={!canCreateEpic}
+                                  onClick={() => void toggleClientVisible(epic)}
+                                  title={epic.client_visible
+                                    ? 'Este épico aparece no Roadmap do portal do cliente. Clique para ocultar.'
+                                    : 'Este épico NÃO aparece no portal do cliente. Clique para mostrar.'}
+                                  style={{
+                                    marginLeft: 'auto', fontSize: 11, fontWeight: 600, borderRadius: 20,
+                                    padding: '2px 10px', cursor: canCreateEpic ? 'pointer' : 'default',
+                                    color: epic.client_visible ? T.success : T.text3,
+                                    background: epic.client_visible ? T.successDim : T.neutralDim,
+                                    border: `1px solid ${epic.client_visible ? T.success + '55' : T.border}`,
+                                  }}
+                                >{epic.client_visible ? '👁 Visível ao cliente' : '🚫 Oculto do cliente'}</button>
+                              )}
                               {owner && (
-                                <div style={{ marginLeft: 'auto' }}>
+                                <div style={{ marginLeft: portalEnabled ? 0 : 'auto' }}>
                                   <Avatar initials={owner.avatar_initials ?? owner.name.slice(0, 2).toUpperCase()} color={owner.avatar_color} size={28} />
                                 </div>
                               )}
@@ -915,6 +981,7 @@ export default function EpicsPage() {
         busy={busy}
         error={newEpicError}
         suggestedKey={suggestedKey}
+        portalEnabled={portalEnabled}
         onKeyRefresh={id => { void refreshSuggestedKey(id) }}
         onClose={() => { setNewEpicOpen(false); setNewEpicProjectId('') }}
         onCreate={input => { void handleCreateEpic(input) }}
