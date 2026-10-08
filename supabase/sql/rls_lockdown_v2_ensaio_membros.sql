@@ -1,9 +1,11 @@
 -- ============================================================================
 -- ENSAIO (parte dos MEMBROS) — cobre as regras de membro comum e a capacidade do
 -- portal, que o 1º ensaio pulou por não haver membro comum vinculado.
--- Cole assim, numa única query do SQL Editor:
---   1) o conteúdo INTEIRO de rls_lockdown_v2.sql
---   2) logo abaixo, este arquivo
+--
+-- ORDEM OBRIGATÓRIA, numa única query do SQL Editor:
+--   1) PRIMEIRO o conteúdo INTEIRO de rls_lockdown_v2.sql
+--   2) DEPOIS, logo abaixo, este arquivo
+-- (se os testes vierem antes, o lockdown não é aplicado antes de testar)
 -- Termina SEMPRE com o erro proposital "ENSAIO CONCLUÍDO" (desfaz tudo; nada é
 -- aplicado). Não use begin/commit/rollback.
 -- ============================================================================
@@ -25,13 +27,19 @@ begin
 end $$;
 
 -- ─── 3. Membro comum: audit_logs só de tipos não sensíveis; avisa outro usuário ─
--- Se não houver membro comum já vinculado, vincula um perfil comum a um usuário
--- FICTÍCIO apenas dentro desta transação (nada fica gravado).
+-- profiles.auth_user_id tem FK para auth.users: não dá para usar um UUID inventado.
+-- O ensaio usa um usuário REAL do Auth que ainda não está ligado a nenhum perfil e
+-- liga/desliga os perfis de teste um de cada vez (tudo desfeito no final).
 do $$
 declare
-  v_uid uuid; v_tid uuid; v_me uuid; v_other uuid; v_origem text;
+  v_free uuid; v_uid uuid; v_tid uuid; v_me uuid; v_other uuid; v_origem text; v_ligou boolean := false;
   v_bad bigint; v_vis text; v_ins text; v_read bigint; v_upd int; v_prof bigint;
 begin
+  select u.id into v_free
+    from auth.users u
+   where not exists (select 1 from public.profiles p where p.auth_user_id = u.id)
+   order by u.created_at limit 1;
+
   select p.auth_user_id, p.tenant_id, p.id into v_uid, v_tid, v_me
     from public.profiles p
    where p.auth_user_id is not null and p.archived_at is null
@@ -51,9 +59,14 @@ begin
       perform pg_temp.rec(300, 'membro comum: achar um perfil comum', 'existir', 'nenhum perfil comum no banco', false);
       return;
     end if;
-    v_uid := '00000000-0000-0000-0000-0000000000bb';
+    if v_free is null then
+      perform pg_temp.rec(300, 'membro comum: achar um usuário livre no Auth', 'existir', 'nenhum usuário do Auth sem perfil', false);
+      return;
+    end if;
+    v_uid := v_free;
     update public.profiles set auth_user_id = v_uid where id = v_me;
-    v_origem := 'perfil comum ligado a usuário fictício (só no ensaio)';
+    v_ligou := true;
+    v_origem := 'perfil comum ligado a um usuário livre do Auth (só no ensaio)';
   end if;
   perform pg_temp.rec(300, 'membro comum: perfil usado no teste', 'existir', v_origem, true);
 
@@ -78,6 +91,10 @@ begin
   get diagnostics v_upd = row_count;
   reset role;
 
+  if v_ligou then
+    update public.profiles set auth_user_id = null where id = v_me;
+  end if;
+
   perform pg_temp.rec(301, 'membro: lê perfis do próprio tenant', 'mais de 0', v_prof::text, v_prof > 0);
   perform pg_temp.rec(302, 'membro: lê audit_logs de tipo sensível', '0', v_bad::text, v_bad = 0);
   perform pg_temp.rec(303, 'membro: tipos de audit_logs que enxerga', 'só work_item/storage', v_vis,
@@ -90,8 +107,13 @@ end $$;
 -- ─── 3b. Capacidade do portal: PO gerencia os acessos; Dev não ───────────────
 do $$
 declare
-  v_po uuid; v_dev uuid; v_tid uuid; v_n_po int; v_n_dev int;
+  v_free uuid; v_po uuid; v_dev uuid; v_tid uuid; v_n_po int; v_n_dev int;
 begin
+  select u.id into v_free
+    from auth.users u
+   where not exists (select 1 from public.profiles p where p.auth_user_id = u.id)
+   order by u.created_at limit 1;
+
   select p.id, p.tenant_id into v_po, v_tid
     from public.profiles p
    where p.archived_at is null
@@ -107,20 +129,28 @@ begin
     perform pg_temp.rec(310, 'portal: achar um PO e um Dev no mesmo tenant', 'existir', 'não achou — teste pulado', true);
     return;
   end if;
+  if v_free is null then
+    perform pg_temp.rec(310, 'portal: achar um usuário livre no Auth', 'existir', 'nenhum usuário do Auth sem perfil', false);
+    return;
+  end if;
 
-  update public.profiles set auth_user_id = '00000000-0000-0000-0000-0000000000c1' where id = v_po;
-  perform pg_temp.sim('00000000-0000-0000-0000-0000000000c1');
+  -- PO: liga ao usuário livre, testa, desliga
+  update public.profiles set auth_user_id = v_free where id = v_po;
+  perform pg_temp.sim(v_free);
   set local role authenticated;
   update public.client_portal_users set name = name where tenant_id = v_tid;
   get diagnostics v_n_po = row_count;
   reset role;
+  update public.profiles set auth_user_id = null where id = v_po;
 
-  update public.profiles set auth_user_id = '00000000-0000-0000-0000-0000000000c2' where id = v_dev;
-  perform pg_temp.sim('00000000-0000-0000-0000-0000000000c2');
+  -- Dev: liga ao MESMO usuário livre, testa, desliga
+  update public.profiles set auth_user_id = v_free where id = v_dev;
+  perform pg_temp.sim(v_free);
   set local role authenticated;
   update public.client_portal_users set name = name where tenant_id = v_tid;
   get diagnostics v_n_dev = row_count;
   reset role;
+  update public.profiles set auth_user_id = null where id = v_dev;
 
   perform pg_temp.rec(311, 'portal: PO altera acessos do portal', 'mais de 0 linhas', v_n_po::text, v_n_po > 0);
   perform pg_temp.rec(312, 'portal: Dev altera acessos do portal', '0 linhas', v_n_dev::text, v_n_dev = 0);
