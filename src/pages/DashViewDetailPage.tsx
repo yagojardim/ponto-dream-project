@@ -147,6 +147,95 @@ function InviteLinkReveal({ link }: { link: string }) {
   )
 }
 
+/** Endereço público do Portal do Cliente (igual para todos os clientes; não é secreto). */
+function portalUrl(): string {
+  return `${window.location.origin}/portal`
+}
+
+function firstName(full: string): string {
+  return (full || '').trim().split(/\s+/)[0] || 'tudo bem'
+}
+
+// ─── Modal: reenviar acesso (novo link de senha + mensagem pronta) ──────────
+function ResendAccessModal({ user, projectName, actorName, onClose }: {
+  user: ClientPortalUserRow; projectName: string; actorName: string; onClose: () => void
+}) {
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  async function generate() {
+    setBusy(true); setError('')
+    const res = await resetPortalUserPassword(user.id, actorName)
+    setBusy(false)
+    if (!res.ok) { setError(res.message); return }
+    setMessage(
+      `Olá, ${firstName(user.name)}! Seu acesso ao Dash View do projeto "${projectName}" está liberado.\n\n` +
+      `1) Defina sua senha neste link (pessoal e expira em pouco tempo):\n${res.link}\n\n` +
+      `2) Depois, entre no portal com o e-mail ${user.email} e a senha que você definiu:\n${portalUrl()}`,
+    )
+  }
+
+  async function copy() {
+    if (!message) return
+    const ok = await copyToClipboard(message)
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000) }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1200, background: 'rgba(9,9,11,0.80)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: T.bgSurface, border: `1px solid ${T.border}`, borderRadius: 14, boxShadow: T.shadowModal, width: 520, maxWidth: '94vw', maxHeight: '90vh', overflow: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '15px 18px', borderBottom: `1px solid ${T.border}` }}>
+          <h3 style={{ margin: 0, fontSize: 14.5, color: T.text1 }}>Reenviar acesso</h3>
+          <span onClick={onClose} style={{ marginLeft: 'auto', cursor: 'pointer', color: T.text3, fontSize: 18, lineHeight: 1 }}>✕</span>
+        </div>
+        <div style={{ padding: 18 }}>
+          <div style={{ fontSize: 12.5, color: T.text2, lineHeight: 1.6, marginBottom: 14 }}>
+            Gera um <strong style={{ color: T.text1 }}>novo link para {user.name} definir a senha</strong> e monta a mensagem com o endereço do portal, pronta para você copiar e enviar.
+            O link anterior deixa de funcionar.
+          </div>
+          {!message && (
+            <button onClick={() => void generate()} disabled={busy} style={{
+              background: T.accent, border: 'none', color: '#fff', borderRadius: 8, padding: '9px 16px',
+              fontSize: 13, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1,
+            }}>
+              {busy ? 'Gerando…' : 'Gerar link e mensagem'}
+            </button>
+          )}
+          {message && (
+            <>
+              <textarea readOnly value={message} onFocus={e => e.currentTarget.select()} style={{
+                width: '100%', boxSizing: 'border-box', minHeight: 190, resize: 'vertical', padding: 12,
+                background: T.bgPage, border: `1px solid ${T.border}`, borderRadius: 10, color: T.text1,
+                fontSize: 12, lineHeight: 1.55, fontFamily: 'inherit',
+              }} />
+              <div style={{ fontSize: 10.5, color: T.text3, marginTop: 8, lineHeight: 1.5 }}>
+                Exibido uma única vez. Se perder, é só gerar outro.
+              </div>
+            </>
+          )}
+          {error && <div style={{ marginTop: 12, fontSize: 12, color: T.crit }}>{error}</div>}
+        </div>
+        <div style={{ display: 'flex', gap: 9, justifyContent: 'flex-end', padding: '14px 18px', borderTop: `1px solid ${T.border}` }}>
+          <button onClick={onClose} style={{ background: 'transparent', border: `1px solid ${T.border2}`, color: T.text2, borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>
+            Fechar
+          </button>
+          {message && (
+            <button onClick={() => void copy()} style={{
+              background: copied ? T.successDim : T.accent, border: copied ? `1px solid ${T.success}` : 'none',
+              color: copied ? T.success : '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer',
+            }}>
+              {copied ? '✓ Copiado!' : '📋 Copiar mensagem'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Modal: editar usuário ─────────────────────────────────────────────────
 function EditUserModal({ user, actorName, onClose, onSaved }: {
   user: ClientPortalUserRow; actorName?: string; onClose: () => void; onSaved: () => void
@@ -236,6 +325,12 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
   const [busyId, setBusyId] = useState<string | null>(null)
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null)
   const [editingUser, setEditingUser] = useState<ClientPortalUserRow | null>(null)
+  const [resendingUser, setResendingUser] = useState<ClientPortalUserRow | null>(null)
+
+  async function copyPortalLink() {
+    const ok = await copyToClipboard(portalUrl())
+    setToast(ok ? 'Link do portal copiado.' : 'Não foi possível copiar. Use: ' + portalUrl())
+  }
 
   useEffect(() => {
     let alive = true
@@ -307,8 +402,15 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
                 {detail.createdAt && <> · criado em {fmtDate(detail.createdAt)}</>}
               </p>
             </div>
-            {onNav && (
-              <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={() => void copyPortalLink()}
+                title="Endereço de login do portal do cliente (igual para todos os clientes)"
+                style={{
+                  fontSize: 12.5, padding: '7px 13px', borderRadius: 9, border: `1px solid ${T.border2}`,
+                  background: T.bgSurface2, color: T.text1, cursor: 'pointer',
+                }}>🔗 Copiar link do portal</button>
+              {onNav && (<>
                 <button
                   onClick={() => onNav('dashview-editor', projectId)}
                   style={{
@@ -324,8 +426,8 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
                     background: T.bgSurface2, color: users.length === 0 ? T.text3 : T.text1,
                     cursor: users.length === 0 ? 'not-allowed' : 'pointer', opacity: users.length === 0 ? 0.6 : 1,
                   }}>👁 Visualizar DashView</button>
-              </div>
-            )}
+              </>)}
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 20 }}>
@@ -385,6 +487,9 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
                         ) : (
                           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                             <ActionBtn label="Editar" color={T.accent} onClick={() => setEditingUser(u)} />
+                            {u.status !== 'blocked' && (
+                              <ActionBtn label="Reenviar acesso" color={T.accent} onClick={() => setResendingUser(u)} />
+                            )}
                             <ActionBtn
                               label={u.status === 'blocked' ? 'Reativar' : 'Bloquear'}
                               color={u.status === 'blocked' ? T.success : T.warn}
@@ -414,6 +519,15 @@ export default function DashViewDetailPage({ projectId, onBack, onNav }: Props) 
           background: T.bgSurface, border: `1px solid ${T.border}`, color: T.text1,
           padding: '10px 16px', borderRadius: 12, boxShadow: T.shadowModal, fontSize: 13,
         }}>{toast}</div>
+      )}
+
+      {resendingUser && detail && (
+        <ResendAccessModal
+          user={resendingUser}
+          projectName={detail.projectName}
+          actorName={activeUser.name}
+          onClose={() => setResendingUser(null)}
+        />
       )}
 
       {editingUser && (
