@@ -78,6 +78,30 @@ async function resolveRoles(
   return ordered
 }
 
+type LinkResult = 'linked' | 'none' | 'unavailable'
+
+/**
+ * 1º login de um profile ainda sem vínculo com o Auth: o BANCO vincula pelo e-mail
+ * CONFIRMADO do usuário (função link_my_profile). Com o RLS ligado o navegador não
+ * consegue ler o profile antes de estar vinculado, por isso isso não pode ser feito
+ * no cliente. 'unavailable' = SQL de preparação ainda não aplicado (cai no legado).
+ */
+async function linkMyProfile(): Promise<LinkResult> {
+  try {
+    const client = supabase as unknown as {
+      rpc: (n: string) => Promise<{ data: unknown; error: { message: string } | null }>
+    }
+    const { data, error } = await client.rpc('link_my_profile')
+    if (error) {
+      return /could not find the function|schema cache/i.test(error.message) ? 'unavailable' : 'none'
+    }
+    return data ? 'linked' : 'none'
+  } catch (err) {
+    logger.error('authProfile.linkMyProfile', err)
+    return 'none'
+  }
+}
+
 /** Carrega o profile ligado à sessão do Supabase Auth e monta o usuário ativo. */
 export function loadProfileByAuthUserId(authUserId: string, email: string): Promise<MockUser | null> {
   return safeCall<MockUser | null>('authProfile.load', async () => {
@@ -87,8 +111,20 @@ export function loadProfileByAuthUserId(authUserId: string, email: string): Prom
       .eq('auth_user_id', authUserId).limit(1)
     row = (byAuth.data ?? [])[0] ?? null
 
-    // Fallback por e-mail (profiles ainda não vinculados) — vincula na primeira entrada.
-    if (!row && email) {
+    // Profile ainda sem vínculo: o banco vincula pelo e-mail confirmado e relemos.
+    let linkResult: LinkResult = 'none'
+    if (!row) {
+      linkResult = await linkMyProfile()
+      if (linkResult === 'linked') {
+        const again = await tbl('profiles')
+          .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, can_handle_client_messages, password_must_change, metadata')
+          .eq('auth_user_id', authUserId).limit(1)
+        row = (again.data ?? [])[0] ?? null
+      }
+    }
+
+    // Legado (só se link_my_profile não existe ainda): e-mail + vínculo pelo navegador.
+    if (!row && email && linkResult === 'unavailable') {
       const byEmail = await tbl('profiles')
         .select('id, tenant_id, name, email, status, primary_role, tenant_owner, can_create_projects, can_handle_client_messages, password_must_change, metadata')
         .ilike('email', email).limit(1)
