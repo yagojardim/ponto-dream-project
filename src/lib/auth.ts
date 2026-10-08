@@ -6,10 +6,14 @@ import { logger } from '../utils/logger'
 import { clearRememberMe } from './authStorage'
 
 
-// Inspection Mode (temporário, será removido na virada de produção):
-// habilitado por padrão; desligue com VITE_INSPECTION_MODE=false.
-export const INSPECTION_MODE_ENABLED =
-  String(import.meta.env.VITE_INSPECTION_MODE ?? 'true').toLowerCase() !== 'false'
+// Inspection Mode: seletor de personas SEM login (usa a chave anônima do Supabase).
+// Só existe em DESENVOLVIMENTO (npm run dev / preview do editor): em build de produção
+// fica DESLIGADO, porque o banco passa a bloquear acesso anônimo (RLS). Para forçar em
+// qualquer build: VITE_INSPECTION_MODE=true|false.
+const INSPECTION_FLAG = String(import.meta.env.VITE_INSPECTION_MODE ?? '').trim().toLowerCase()
+export const INSPECTION_MODE_ENABLED = INSPECTION_FLAG
+  ? INSPECTION_FLAG !== 'false'
+  : import.meta.env.DEV === true
 
 export interface AuthUser {
   id: string

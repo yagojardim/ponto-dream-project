@@ -164,7 +164,11 @@ async function create__raw(input: {
   entityType?: string | null
   entityId?: string | null
 }): Promise<string | null> {
-  const { data, error } = await tbl('notifications').insert({
+  // O id é gerado aqui e o insert NÃO pede retorno: com o RLS, quem cria a
+  // notificação para OUTRO usuário não pode lê-la depois (só o dono lê).
+  const id = crypto.randomUUID()
+  const { error } = await tbl('notifications').insert({
+    id,
     tenant_id: getActiveTenantId(),
     user_id: input.profileId,
     type: input.type ?? 'info',
@@ -172,10 +176,10 @@ async function create__raw(input: {
     body: input.body ?? null,
     entity_type: input.entityType ?? null,
     entity_id: input.entityId ?? null,
-  }).select('id').single()
+  })
   if (error) throw notifError('notifications', error.message)
-  await writeAudit(data.id, 'notification.create', { title: input.title })
-  return data.id as string
+  await writeAudit(id, 'notification.create', { title: input.title })
+  return id
 }
 
 export function create(input: Parameters<typeof create__raw>[0]): Promise<string | null> {
