@@ -40,6 +40,37 @@ function tbl(name: PortalTable): any {
   return (supabase as unknown as { from: (t: string) => any }).from(name)
 }
 
+/**
+ * Sessão REAL de cliente do portal? O `portal-invite` marca o usuário no Auth com
+ * app_metadata.portal = true (campo só gravável no servidor). Cliente logado lê e
+ * grava SOMENTE pelas funções `portal_*` do banco (identidade = auth.uid()); a
+ * equipe (preview/gestão) e o modo Inspection seguem pelas tabelas, como antes.
+ * É só a escolha do caminho: quem protege os dados é o banco.
+ */
+async function isPortalClientSession(): Promise<boolean> {
+  try {
+    const { data } = await supabase.auth.getSession()
+    return data.session?.user?.app_metadata?.portal === true
+  } catch {
+    return false
+  }
+}
+
+type RpcResult = { data: unknown; error: { message: string } | null }
+
+/** Chama uma função segura `portal_*` (SQL: supabase/sql/client_portal_fatia2.sql). */
+async function portalRpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
+  const client = supabase as unknown as { rpc: (n: string, a?: Record<string, unknown>) => Promise<RpcResult> }
+  const { data, error } = await client.rpc(fn, args)
+  if (error) {
+    if (/could not find the function|schema cache/i.test(error.message)) {
+      throw new Error(`A função "${fn}" não existe no Supabase. Rode supabase/sql/client_portal_fatia2.sql.`)
+    }
+    throw new Error(error.message)
+  }
+  return data as T
+}
+
 // ─── Row types ────────────────────────────────────────────────────────────────
 export type PortalRole = 'viewer' | 'portal-admin'
 export type SignalType = 'comment' | 'approval'
@@ -170,7 +201,46 @@ async function listPortalProjects__raw(): Promise<PortalProject[]> {
  * Only items explicitly shared (shared_project_items) or with client visibility
  * are returned — raw internal work items, PRs and infra never leave the tenant.
  */
+interface RpcPortalScope {
+  project: PortalProject | null
+  sprints: PortalSprint[]
+  deliveries: { id: string; title: string; status: string | null; due_date: string | null; completed_at: string | null }[]
+  roadmap: PortalRoadmapItem[]
+}
+
+/** Épicos do projeto com a chave client_visible (cai para sem a coluna se o SQL novo não foi aplicado). */
+async function fetchEpicsForPortal(tid: string, projectId: string):
+  Promise<{ rows: { id: string; name: string; quarter: string | null; color: string | null; client_visible?: boolean }[]; hasFlag: boolean }> {
+  const run = async (cols: string) => (await supabase.from('epics').select(cols)
+    .eq('tenant_id', tid).eq('project_id', projectId).is('archived_at', null).order('key')) as unknown as {
+      data: { id: string; name: string; quarter: string | null; color: string | null; client_visible?: boolean }[] | null
+      error: { message: string } | null
+    }
+  const withFlag = await run('id, name, quarter, color, client_visible')
+  if (!withFlag.error) return { rows: withFlag.data ?? [], hasFlag: true }
+  if (/client_visible/i.test(withFlag.error.message)) {
+    const legacy = await run('id, name, quarter, color')
+    if (legacy.error) throw tenantError('epics', legacy.error.message)
+    return { rows: legacy.data ?? [], hasFlag: false }
+  }
+  throw tenantError('epics', withFlag.error.message)
+}
+
 async function getClientPortal__raw(projectId: string): Promise<ClientPortalScope> {
+  if (await isPortalClientSession()) {
+    const sc = await portalRpc<RpcPortalScope | null>('portal_project_scope', { p_project_id: projectId })
+    if (!sc) return { project: null, sprints: [], deliveries: [], roadmap: [] }
+    return {
+      project: sc.project,
+      sprints: (sc.sprints ?? []).slice().sort(sortSprintsByStartDate),
+      deliveries: (sc.deliveries ?? []).map(d => ({
+        id: d.id, title: d.title, status: clientStatus(d.status),
+        due_date: d.due_date, completed_at: d.completed_at,
+      })),
+      roadmap: sc.roadmap ?? [],
+    }
+  }
+
   const tid = portalTenantId()
   const [projectRes, sprintsRes, sharedRes, epicsRes, itemsRes] = await Promise.all([
     supabase.from('projects').select('id, name, status, period_start, period_end')
@@ -180,8 +250,7 @@ async function getClientPortal__raw(projectId: string): Promise<ClientPortalScop
       .order('start_date', { ascending: true, nullsFirst: false }),
     tbl('shared_project_items').select('id, shared_entity_type, shared_entity_id, visibility')
       .eq('tenant_id', tid).eq('project_id', projectId).is('archived_at', null),
-    supabase.from('epics').select('id, name, quarter, color')
-      .eq('tenant_id', tid).eq('project_id', projectId).is('archived_at', null).order('key'),
+    fetchEpicsForPortal(tid, projectId),
     supabase.from('work_items')
       .select('id, title, status, due_date, completed_at, visibility, epic_id')
       .eq('tenant_id', tid).eq('project_id', projectId).is('archived_at', null),
@@ -190,7 +259,6 @@ async function getClientPortal__raw(projectId: string): Promise<ClientPortalScop
   if (projectRes.error) throw tenantError('projects', projectRes.error.message)
   if (sprintsRes.error) throw tenantError('sprints', sprintsRes.error.message)
   if (sharedRes.error) throw tenantError('shared_project_items', sharedRes.error.message)
-  if (epicsRes.error) throw tenantError('epics', epicsRes.error.message)
   if (itemsRes.error) throw tenantError('work_items', itemsRes.error.message)
 
   const shared = (sharedRes.data ?? []) as SharedProjectItemRow[]
@@ -209,8 +277,12 @@ async function getClientPortal__raw(projectId: string): Promise<ClientPortalScop
   )
 
 
-  const roadmap: PortalRoadmapItem[] = (epicsRes.data ?? []).map(e => {
-    const epicItems = items.filter(i => i.epic_id === e.id)
+  // Roadmap = só épicos marcados "visível ao cliente"; contagens só de itens liberados
+  // (mesma regra do servidor). Sem a coluna (SQL novo pendente) mantém o comportamento antigo.
+  const roadmapEpics = epicsRes.hasFlag ? epicsRes.rows.filter(e => e.client_visible === true) : epicsRes.rows
+  const roadmapItems = epicsRes.hasFlag ? clientVisible : items
+  const roadmap: PortalRoadmapItem[] = roadmapEpics.map(e => {
+    const epicItems = roadmapItems.filter(i => i.epic_id === e.id)
     return {
       id: e.id, name: e.name, quarter: e.quarter, color: e.color,
       total: epicItems.length,
@@ -287,6 +359,21 @@ export interface AddCommentInput {
 
 async function addClientComment__raw(input: AddCommentInput): Promise<ClientSignalRow> {
   const isMgmt = input.source === 'management'
+  if (!isMgmt && await isPortalClientSession()) {
+    // Autor e título do item são resolvidos no servidor (não vêm do navegador).
+    const mentions = [...new Set((input.mentions ?? []).filter(Boolean))]
+    const res = await portalRpc<{ id: string }>('portal_add_message', {
+      p_project_id: input.projectId, p_body: input.body,
+      p_item_id: input.itemId ?? null, p_mentions: mentions,
+    })
+    return {
+      id: res.id, tenant_id: '', project_id: input.projectId, type: 'comment',
+      item_id: input.itemId ?? null, item_title: input.itemTitle ?? null,
+      author: input.author, responsible_po: null, body: input.body, po_reply: null,
+      read_by_po: false, reply_read_by_client: true,
+      metadata: { source: 'client', mentions }, created_at: new Date().toISOString(),
+    }
+  }
   const { data, error } = await tbl('client_signals').insert({
     tenant_id: portalTenantId(),
     project_id: input.projectId,
@@ -321,6 +408,18 @@ export interface AddApprovalInput {
 
 /** Records a formal approval (client_approvals) plus its signal (type=approval). */
 async function addClientApproval__raw(input: AddApprovalInput): Promise<ClientSignalRow> {
+  if (await isPortalClientSession()) {
+    if (!input.workItemId) throw new Error('Aprovação sem entrega associada.')
+    const res = await portalRpc<{ id: string }>('portal_approve', {
+      p_project_id: input.projectId, p_work_item_id: input.workItemId,
+    })
+    return {
+      id: res.id, tenant_id: '', project_id: input.projectId, type: 'approval',
+      item_id: input.workItemId, item_title: input.itemTitle, author: input.author,
+      responsible_po: null, body: null, po_reply: null, read_by_po: false,
+      reply_read_by_client: true, metadata: { source: 'client' }, created_at: new Date().toISOString(),
+    }
+  }
   if (input.workItemId) {
     const { data: appr, error: apprErr } = await tbl('client_approvals').insert({
       tenant_id: portalTenantId(),
@@ -370,6 +469,9 @@ async function addPoReply__raw(signalId: string, reply: string, poName: string):
 }
 
 async function markSignalReadByPo__raw(signalId: string): Promise<void> {
+  // Cliente do portal NUNCA altera o "lido pela gestão" (a tela do portal chamava isto
+  // ao abrir a thread e zerava o não-lido do PO sem o PO ter visto).
+  if (await isPortalClientSession()) return
   await tbl('client_signals').update({ read_by_po: true })
     .eq('tenant_id', portalTenantId()).eq('id', signalId)
 }
@@ -380,6 +482,10 @@ async function markProjectReadByPo__raw(projectId: string): Promise<void> {
 }
 
 async function markReplyReadByClient__raw(signalId: string): Promise<void> {
+  if (await isPortalClientSession()) {
+    await portalRpc<void>('portal_mark_replies_read', { p_signal_id: signalId })
+    return
+  }
   await tbl('client_signals').update({ reply_read_by_client: true })
     .eq('tenant_id', portalTenantId()).eq('id', signalId)
 }
@@ -471,6 +577,10 @@ async function getClientPermissions__raw(
 }
 
 async function setPortalPasswordChanged__raw(userId: string): Promise<void> {
+  if (await isPortalClientSession()) {
+    await portalRpc<void>('portal_password_changed')
+    return
+  }
   await tbl('client_portal_users').update({ password_must_change: false, status: 'active' })
     .eq('tenant_id', portalTenantId()).eq('id', userId)
 }
@@ -728,6 +838,10 @@ export const listProjectResponsibleCandidates = (projectId: string): Promise<Res
 
 /** Responsáveis atribuídos ao projeto (para autocomplete de @menção). */
 async function listProjectResponsibleProfiles__raw(projectId: string): Promise<MentionProfile[]> {
+  if (await isPortalClientSession()) {
+    const rows = await portalRpc<{ id: string; name: string }[] | null>('portal_responsibles', { p_project_id: projectId })
+    return (rows ?? []).map(r => ({ id: r.id, name: r.name }))
+  }
   const ids = await listProjectResponsibles__raw(projectId)
   if (!ids.length) return []
   const { data, error } = await tbl('profiles')
@@ -901,6 +1015,10 @@ function toChatMessage(r: ClientSignalRow): ClientChatMessage {
 }
 
 async function listProjectChat__raw(projectId: string): Promise<ClientChatMessage[]> {
+  if (await isPortalClientSession()) {
+    const rows = await portalRpc<ClientSignalRow[] | null>('portal_chat', { p_project_id: projectId })
+    return (rows ?? []).map(toChatMessage)
+  }
   const rows = await listClientSignals__raw(projectId)
   return rows.map(toChatMessage)
 }
@@ -933,6 +1051,10 @@ async function listProjectThreads__raw(projectId: string): Promise<ProjectThread
 }
 
 async function listThreadMessages__raw(projectId: string, itemId: string): Promise<ClientChatMessage[]> {
+  if (await isPortalClientSession()) {
+    const rows = await portalRpc<ClientSignalRow[] | null>('portal_chat', { p_project_id: projectId, p_item_id: itemId })
+    return (rows ?? []).map(toChatMessage)
+  }
   const { data, error } = await tbl('client_signals').select('*')
     .eq('tenant_id', portalTenantId()).eq('project_id', projectId).eq('item_id', itemId)
     .is('archived_at', null).order('created_at', { ascending: true })
@@ -1036,6 +1158,9 @@ function toContext(rows: ClientPortalUserRow[]): ClientPortalContext | null {
 async function getClientPortalContext__raw(
   ident?: { id?: string | null; email?: string | null } | null,
 ): Promise<ClientPortalContext | null> {
+  if (await isPortalClientSession()) {
+    return portalRpc<ClientPortalContext | null>('portal_context')
+  }
   const base = () => tbl('client_portal_users').select('*')
     .eq('tenant_id', portalTenantId()).is('archived_at', null)
 
@@ -1077,6 +1202,9 @@ async function listClientUnreadReplies__raw(
   ctx: ClientPortalContext | null,
 ): Promise<ClientReplyNotice[]> {
   if (!ctx || ctx.projectIds.length === 0) return []
+  if (await isPortalClientSession()) {
+    return (await portalRpc<ClientReplyNotice[] | null>('portal_unread_replies')) ?? []
+  }
   const { data, error } = await tbl('client_signals').select('*')
     .eq('tenant_id', portalTenantId())
     .in('project_id', ctx.projectIds)
@@ -1103,6 +1231,9 @@ async function listClientUnreadReplies__raw(
 
 async function countClientUnreadReplies__raw(ctx: ClientPortalContext | null): Promise<number> {
   if (!ctx || ctx.projectIds.length === 0) return 0
+  if (await isPortalClientSession()) {
+    return (await portalRpc<number | null>('portal_unread_count')) ?? 0
+  }
   const { count, error } = await tbl('client_signals').select('id', { count: 'exact', head: true })
     .eq('tenant_id', portalTenantId())
     .in('project_id', ctx.projectIds)
@@ -1115,6 +1246,10 @@ async function countClientUnreadReplies__raw(ctx: ClientPortalContext | null): P
 
 async function markClientRepliesRead__raw(ctx: ClientPortalContext | null): Promise<void> {
   if (!ctx || ctx.projectIds.length === 0) return
+  if (await isPortalClientSession()) {
+    await portalRpc<void>('portal_mark_replies_read', { p_signal_id: null })
+    return
+  }
   await tbl('client_signals').update({ reply_read_by_client: true })
     .eq('tenant_id', portalTenantId())
     .in('project_id', ctx.projectIds)
@@ -1197,7 +1332,7 @@ async function getPortalScope__raw(projectIds: string[]): Promise<PortalScope> {
         id: r.id,
         date: r.quarter ?? fmtMonthYear(sc.project.period_end),
         title: r.name,
-        desc: `${name} · ${r.done}/${r.total} entregas concluídas`,
+        desc: r.total > 0 ? `${name} · ${r.done}/${r.total} entregas concluídas` : `${name} · sem entregas liberadas ainda`,
         status: r.total > 0 && r.done === r.total ? 'done' : 'upcoming',
       })
     }
@@ -1392,6 +1527,10 @@ export const fetchDashViewOverview = (): Promise<DashViewOverview> =>
 /** Grava o acesso real do cliente (nunca chamar em preview da gestão). */
 async function touchPortalAccess__raw(userIds: string[]): Promise<void> {
   if (userIds.length === 0) return
+  if (await isPortalClientSession()) {
+    await portalRpc<void>('portal_touch_access')
+    return
+  }
   const { error } = await tbl('client_portal_users')
     .update({ last_access_at: new Date().toISOString() })
     .in('id', userIds)
@@ -1574,6 +1713,10 @@ export const DASH_WIDGET_CATALOG: DashWidgetCatalogEntry[] = [
 export interface DashLayoutItem { i: string; x: number; y: number; w: number; h: number }
 
 async function fetchDashLayout__raw(projectId: string): Promise<DashLayoutItem[] | null> {
+  if (await isPortalClientSession()) {
+    const raw = await portalRpc<DashLayoutItem[] | null>('portal_dash_layout', { p_project_id: projectId })
+    return Array.isArray(raw) ? raw : null
+  }
   const tid = getActiveTenantId()
   const { data, error } = await supabase.from('projects')
     .select('client_dashboard_layout')

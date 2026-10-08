@@ -12,7 +12,10 @@ type Tables = Database['public']['Tables']
 export type EpicRow = Pick<
   Tables['epics']['Row'],
   'id' | 'project_id' | 'key' | 'name' | 'description' | 'color' | 'quarter' | 'owner_id'
->
+> & {
+  /** Chave "visível ao cliente" (Roadmap do Portal). Ausente até o SQL da fatia 2 ser aplicado. */
+  client_visible?: boolean
+}
 export type EpicFeatureRow = Pick<Tables['features']['Row'], 'id' | 'epic_id' | 'name' | 'description'>
 export type EpicItemRow = Pick<
   Tables['work_items']['Row'],
@@ -37,24 +40,37 @@ function missingTableMessage(table: string, message: string): string {
   return message
 }
 
+const EPIC_COLS = 'id, project_id, key, name, description, color, quarter, owner_id'
+
+type EpicFetch = { data: EpicRow[] | null; error: { message: string } | null }
+
+/**
+ * Épicos do tenant, já com `client_visible`. Se a coluna ainda não existe (SQL
+ * da fatia 2 pendente), refaz a busca sem ela — a tela de Épicos nunca quebra.
+ */
+async function fetchEpicRows(tid: string, scoped: string[] | null): Promise<EpicFetch> {
+  const run = async (cols: string): Promise<EpicFetch> => {
+    let q = supabase.from('epics').select(cols).eq('tenant_id', tid).is('archived_at', null)
+    if (scoped) q = q.in('project_id', scoped)
+    return (await q.order('key')) as unknown as EpicFetch
+  }
+  const withFlag = await run(`${EPIC_COLS}, client_visible`)
+  if (withFlag.error && /client_visible/i.test(withFlag.error.message)) return run(EPIC_COLS)
+  return withFlag
+}
+
 /** Lists every epic of the tenant (optionally scoped to a set of projects). */
 export async function listEpics(projectIds?: string[]): Promise<EpicsData> {
   const tid = getActiveTenantId()
   const scoped = projectIds && projectIds.length > 0 ? projectIds : null
 
-  let epicsQ = supabase.from('epics')
-    .select('id, project_id, key, name, description, color, quarter, owner_id')
-    .eq('tenant_id', tid).is('archived_at', null)
   let itemsQ = supabase.from('work_items')
     .select('id, key, title, type, status, priority, epic_id, feature_id, project_id, assignee_id, story_points, is_blocked')
     .eq('tenant_id', tid).is('archived_at', null)
-  if (scoped) {
-    epicsQ = epicsQ.in('project_id', scoped)
-    itemsQ = itemsQ.in('project_id', scoped)
-  }
+  if (scoped) itemsQ = itemsQ.in('project_id', scoped)
 
   const [epics, features, items, profiles, projects] = await Promise.all([
-    epicsQ.order('key'),
+    fetchEpicRows(tid, scoped),
     supabase.from('features').select('id, epic_id, name, description').eq('tenant_id', tid).is('archived_at', null),
     itemsQ.order('key'),
     supabase.from('profiles').select('id, name, avatar_initials, avatar_color, primary_role').eq('tenant_id', tid).is('archived_at', null),
@@ -168,6 +184,8 @@ export interface CreateEpicInput {
   quarter?: string | null
   ownerId?: string | null
   color?: string | null
+  /** Visível ao cliente (Roadmap do Portal). Só envia a coluna quando true. */
+  clientVisible?: boolean
   actorName?: string
 }
 
@@ -188,7 +206,7 @@ export async function createEpic(input: CreateEpicInput): Promise<EpicRow> {
   try {
     const key = input.key?.trim() || (await nextEpicKey(input.projectId))
 
-    const { data, error } = await supabase.from('epics').insert({
+    const base = {
       tenant_id: getActiveTenantId(),
       project_id: input.projectId,
       key,
@@ -197,7 +215,12 @@ export async function createEpic(input: CreateEpicInput): Promise<EpicRow> {
       quarter: input.quarter ?? null,
       owner_id: input.ownerId ?? null,
       color: input.color ?? null,
-    }).select('id, project_id, key, name, description, color, quarter, owner_id').single()
+    }
+    // client_visible ainda não está nos tipos gerados (coluna nova): só vai no
+    // insert quando true, assim criar épico continua funcionando sem o SQL novo.
+    const payload = (input.clientVisible ? { ...base, client_visible: true } : base) as typeof base
+
+    const { data, error } = await supabase.from('epics').insert(payload).select(EPIC_COLS).single()
 
     if (error || !data) {
       throw new Error(missingTableMessage('epics', error?.message ?? 'Falha ao criar o épico.'))
@@ -205,12 +228,28 @@ export async function createEpic(input: CreateEpicInput): Promise<EpicRow> {
 
     await writeAudit('epic', data.id, 'epic.created', input.actorName ?? 'Sistema', null, {
       key: data.key, name: data.name, project_id: data.project_id,
+      client_visible: !!input.clientVisible,
     })
 
-    return data as EpicRow
+    return { ...(data as EpicRow), client_visible: !!input.clientVisible }
   } catch (err) {
     throw new Error(`Não foi possível criar o épico: ${err instanceof Error ? err.message : String(err)}`)
   }
+}
+
+/** Liga/desliga a visibilidade do épico no Roadmap do Portal do Cliente. */
+export async function setEpicClientVisible(epicId: string, visible: boolean, actorName = 'Sistema'): Promise<void> {
+  const { error } = await supabase.from('epics')
+    .update({ client_visible: visible } as unknown as Tables['epics']['Update'])
+    .eq('id', epicId).eq('tenant_id', getActiveTenantId())
+  if (error) {
+    const hint = /client_visible/i.test(error.message)
+      ? ' Aplique o SQL supabase/sql/client_portal_fatia2.sql no Supabase.'
+      : ''
+    throw new Error(`Não foi possível alterar a visibilidade do épico: ${error.message}.${hint}`)
+  }
+  await writeAudit('epic', epicId, 'epic.client_visibility_changed', actorName,
+    { client_visible: !visible }, { client_visible: visible })
 }
 
 /** Creates a feature (row in `features`) under an epic. */
