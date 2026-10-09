@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { resolveSessionProfileId } from '@/utils/profile-id'
 import { Avatar } from './ds/Avatar'
 import { T } from './ds/tokens'
 import { MOCK_USERS } from '../data/session'
@@ -131,7 +132,7 @@ export function Header({ currentView, onViewChange, onCreateIssue, onOpenClientM
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const pid = await notificationsApi.resolveProfileId(activeUser.name)
+      const pid = await resolveSessionProfileId(activeUser, notificationsApi.resolveProfileId)
       if (cancelled || !pid) { setProfileId(null); setRows([]); return }
       setProfileId(pid)
       await notificationsApi.mirrorClientSignals(pid)

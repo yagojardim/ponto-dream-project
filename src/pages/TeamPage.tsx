@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { T } from '../components/ds/tokens'
 import {
   MOCK_USERS, getActiveTenantId, DASHBOARD_CATALOG, buildPersona,
@@ -10,7 +10,10 @@ import {
   capabilityVisibility,
 } from '../data/permissions'
 import { getTenantOwnerEmails, getMembers, setMemberStatus, type MemberRow } from '../data/db/members'
-import { setMemberHomeRoles, ROLE_BY_DASHBOARD } from '../data/db/invite'
+import {
+  fetchInviteOptions, fetchMemberDirectory, updateMemberProfile, ROLE_BY_DASHBOARD,
+  type InviteOptions, type MemberLinks,
+} from '../data/db/invite'
 import { normalizeRole } from '../data/db/authProfile'
 import {
   fetchProfileReportsAccess, saveProfileReportsAccess, roleSupportsReportsAccess,
@@ -36,9 +39,6 @@ const _AUDIT: AuditEntry[] = []
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ALL_MODULES = ['board','reports','portfolio','roadmap','config','team','modules','audit','releases','analytics','integrations','deployments']
-
-const SQUADS = ['squad_platform','squad_growth','squad_design','squad_ops']
 const SQUAD_LABELS: Record<string,string> = {
   squad_platform:'Platform', squad_growth:'Growth', squad_design:'Design', squad_ops:'Ops', '*':'— todos —',
 }
@@ -191,7 +191,7 @@ function TabBar({ active, onChange, pendingCount }: { active:Tab; onChange:(t:Ta
 // ─── Edit draft type ─────────────────────────────────────────────────────────
 
 interface EditDraft {
-  role: RoleContext; squad: string; status: 'active'|'inactive'|'blocked'
+  role: RoleContext; squadIds: string[]; status: 'active'|'inactive'|'blocked'
   modules: string[]; dashboards: DashboardType[]; defaultDash: DashboardType|null; optIns: Capability[]
   reportsAccess: boolean
 }
@@ -199,13 +199,17 @@ interface EditDraft {
 // ─── Edit User Modal ──────────────────────────────────────────────────────────
 
 function EditUserModal({
-  user, activeUserName, onClose, onSave, isOwner = false,
+  user, activeUserName, onClose, onSave, isOwner = false, options, links,
 }: {
   user:           UserWithStatus
   activeUserName: string
   onClose:        ()=>void
   onSave:         (patch: EditDraft)=>void
   isOwner?:       boolean
+  /** Projetos/squads/módulos reais do tenant. */
+  options:        InviteOptions
+  /** Squads e módulos já gravados do membro (undefined = ainda carregando). */
+  links?:         MemberLinks
 }) {
   void activeUserName
   const [step, setStep] = useState<'basics'|'permissions'|'dashboards'>('basics')
@@ -219,14 +223,21 @@ function EditUserModal({
 
   const [draft, setDraft] = useState<EditDraft>({
     role:        user.role_context,
-    squad:       user.squad_id,
+    squadIds:    links?.squadIds ?? [],
     status:      userStatus(user),
-    modules:     [...user.modules_enabled],
+    modules:     links?.modules ?? [],
     dashboards:  [...currentDashIds],
     defaultDash: currentDefault,
     optIns:      existingOptIns,
     reportsAccess: false,
   })
+
+  const linksApplied = useRef(!!links)
+  useEffect(() => {
+    if (!links || linksApplied.current) return
+    linksApplied.current = true
+    setDraft(d => ({ ...d, squadIds: links.squadIds, modules: links.modules }))
+  }, [links])
 
   // Carrega o flag atual de acesso a Relatórios (profiles.reports_access).
   useEffect(() => {
@@ -242,6 +253,10 @@ function EditUserModal({
   // When role changes, reset opt-ins to empty and suggest dashboards reset
   function changeRole(r: RoleContext) {
     patch({ role:r, optIns:[], reportsAccess: roleSupportsReportsAccess(r) ? draft.reportsAccess : false })
+  }
+
+  function toggleSquad(id: string) {
+    patch({ squadIds: draft.squadIds.includes(id) ? draft.squadIds.filter(x=>x!==id) : [...draft.squadIds, id] })
   }
 
   function toggleModule(m: string) {
@@ -313,12 +328,26 @@ function EditUserModal({
                 {isAdmin && <p style={{ fontSize:11, color:T.text3, marginTop:6 }}>{isOwner ? 'Admin Master do tenant — não pode ser removido/rebaixado.' : 'O papel Admin não pode ser alterado.'}</p>}
               </Field>
 
-              <Field label="Squad">
-                <select value={draft.squad} onChange={e=>patch({squad:e.target.value})}
-                  style={{ ...inputStyle(), fontFamily:'inherit' }}>
-                  {isAdmin && <option value="*">— todos —</option>}
-                  {SQUADS.map(s=><option key={s} value={s}>{SQUAD_LABELS[s]}</option>)}
-                </select>
+              <Field label="Squads">
+                {isAdmin ? (
+                  <p style={{ fontSize:11, color:T.text3, margin:0 }}>Admin Master enxerga todos os squads.</p>
+                ) : options.squads.length === 0 ? (
+                  <p style={{ fontSize:11, color:T.text3, margin:0 }}>Nenhum squad cadastrado ainda. Quando existirem, você poderá vincular este membro aqui.</p>
+                ) : (
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                    {options.squads.map(sq=>{
+                      const on = draft.squadIds.includes(sq.id)
+                      return (
+                        <button key={sq.id} onClick={()=>toggleSquad(sq.id)}
+                          style={{
+                            padding:'4px 12px', borderRadius:20, fontSize:12,
+                            background:on?T.accentDim:'transparent', color:on?T.accent:T.text2,
+                            border:`1px solid ${on?T.accentBorder:T.border}`, cursor:'pointer',
+                          }}>{sq.name}</button>
+                      )
+                    })}
+                  </div>
+                )}
               </Field>
 
               <Field label="Status do usuário">
@@ -337,18 +366,22 @@ function EditUserModal({
               </Field>
 
               <Field label="Módulos habilitados">
-                <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                  {ALL_MODULES.map(m=>(
-                    <button key={m} onClick={()=>toggleModule(m)}
-                      style={{
-                        padding:'4px 10px', borderRadius:5, fontSize:11,
-                        background:draft.modules.includes(m)?T.accentDim:'transparent',
-                        color:draft.modules.includes(m)?T.accent:T.text3,
-                        border:`1px solid ${draft.modules.includes(m)?T.accentBorder:T.border}`,
-                        cursor:'pointer',
-                      }}>{m}</button>
-                  ))}
-                </div>
+                {options.modules.length === 0 ? (
+                  <p style={{ fontSize:11, color:T.text3, margin:0 }}>Nenhum módulo habilitado no tenant.</p>
+                ) : (
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                    {options.modules.map(m=>(
+                      <button key={m.key} onClick={()=>toggleModule(m.key)}
+                        style={{
+                          padding:'4px 10px', borderRadius:5, fontSize:11,
+                          background:draft.modules.includes(m.key)?T.accentDim:'transparent',
+                          color:draft.modules.includes(m.key)?T.accent:T.text3,
+                          border:`1px solid ${draft.modules.includes(m.key)?T.accentBorder:T.border}`,
+                          cursor:'pointer',
+                        }}>{m.name}</button>
+                    ))}
+                  </div>
+                )}
               </Field>
 
               <Field label="Acesso a Relatórios e Insights">
@@ -484,9 +517,13 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
   const [profileIds, setProfileIds] = useState<Record<string,string>>({})
   const [resetLink, setResetLink] = useState<{ name:string; url:string }|null>(null)
   const [generating, setGenerating] = useState<string|null>(null)
+  const [inviteOpts, setInviteOpts] = useState<InviteOptions>({ projects: [], squads: [], modules: [] })
+  const [directory, setDirectory] = useState<Record<string, MemberLinks>|undefined>(undefined)
 
   useEffect(()=>{
     let alive = true
+    void fetchInviteOptions().then(o=>{ if (alive) setInviteOpts(o) })
+    void fetchMemberDirectory().then(d=>{ if (alive) setDirectory(d) })
     getTenantOwnerEmails().then(set=>{ if (alive) setOwnerEmails(set) })
     getMembers().then(rows=>{
       if (!alive) return
@@ -556,7 +593,11 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
     const who = activeUser.name
     const changes: [string,string,string][] = []
     if (draft.role !== target.role_context) changes.push(['Papel', ROLE_LABELS[target.role_context], ROLE_LABELS[draft.role]])
-    if (draft.squad !== target.squad_id) changes.push(['Squad', SQUAD_LABELS[target.squad_id]??target.squad_id, SQUAD_LABELS[draft.squad]??draft.squad])
+    const squadName = (id: string) => inviteOpts.squads.find(x=>x.id===id)?.name ?? id
+    const beforeSquads = directory?.[userId]?.squadIds
+    if (beforeSquads && (beforeSquads.length !== draft.squadIds.length || beforeSquads.some(id=>!draft.squadIds.includes(id)))) {
+      changes.push(['Squads', beforeSquads.map(squadName).join(', ') || '—', draft.squadIds.map(squadName).join(', ') || '—'])
+    }
     if (draft.status !== userStatus(target)) changes.push(['Status', STATUS_LABEL[userStatus(target)], STATUS_LABEL[draft.status]])
 
     changes.forEach(([field,from,to])=>{
@@ -575,8 +616,7 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
     const mu = MOCK_USERS.find(u=>u.user_id===userId)
     if (mu) {
       mu.role_context = draft.role
-      mu.squad_id = draft.squad
-      mu.modules_enabled = draft.modules
+      mu.squad_id = draft.squadIds[0] ?? '*'
       mu.permissions = newPerms
       mu.assigned_dashboards = newDashes
       ;(mu as UserWithStatus).status = draft.status
@@ -588,8 +628,23 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
     ].filter((r, i, arr) => arr.indexOf(r) === i)
     if (mu) mu.available_roles = homeRoles
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(userId)) { // só perfis reais do banco (não personas mock)
-      void setMemberHomeRoles(userId, draft.role, homeRoles).then(ok => {
-        if (!ok) showToast('Não foi possível salvar os papéis no banco. Tente novamente.')
+      const protectedRole = userId==='u_admin' || isTenantOwner(target)
+      const linksLoaded = !!directory?.[userId]
+      void updateMemberProfile(userId, draft.role, {
+        editRole: !protectedRole,
+        homeRoles,
+        dashboards: draft.dashboards,
+        defaultDashboard: draft.defaultDash,
+        squadIds: linksLoaded && !protectedRole ? draft.squadIds : undefined,
+        modules: linksLoaded ? draft.modules : undefined,
+        canCreateProjects: capabilityVisibility(draft.role, 'project:create') === 'on' || draft.optIns.includes('project:create' as Capability),
+        canHandleClientMessages: capabilityVisibility(draft.role, 'access:client-messages') === 'on' || draft.optIns.includes('access:client-messages' as Capability),
+      }).then(ok => {
+        if (!ok) { showToast('Não foi possível salvar todas as alterações no banco. Tente novamente.'); return }
+        setDirectory(prev => prev ? { ...prev, [userId]: {
+          squadIds: protectedRole ? (prev[userId]?.squadIds ?? []) : draft.squadIds,
+          modules: draft.modules,
+        } } : prev)
       })
     }
 
@@ -606,8 +661,8 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
     }
 
     setUsers(prev=>prev.map(u=>u.user_id===userId?{
-      ...u, role_context:draft.role, squad_id:draft.squad,
-      modules_enabled:draft.modules, permissions:newPerms,
+      ...u, role_context:draft.role, squad_id:draft.squadIds[0] ?? '*',
+      permissions:newPerms,
       assigned_dashboards:newDashes, status:draft.status,
     }:u))
 
@@ -700,7 +755,7 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
                     <div style={{ fontSize:10, color:T.text3, marginTop:2 }}>Tier {ROLE_TIER[u.role_context]}</div>
                   </td>
                   <td style={{ padding:'12px 16px' }}>
-                    <span style={{ fontSize:12, color:T.text2 }}>{SQUAD_LABELS[u.squad_id]??u.squad_id}</span>
+                    <span style={{ fontSize:12, color:T.text2 }}>{isAdmin ? '— todos —' : ((directory?.[u.user_id]?.squadIds ?? []).map(id=>inviteOpts.squads.find(x=>x.id===id)?.name ?? '').filter(Boolean).join(', ') || '—')}</span>
                   </td>
                   <td style={{ padding:'12px 16px' }}>
                     <div className="flex items-center gap-2">
@@ -710,10 +765,17 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
                   </td>
                   <td style={{ padding:'12px 16px' }}>
                     <div className="flex flex-wrap gap-1" style={{ maxWidth:200 }}>
-                      {u.modules_enabled.slice(0,4).map(m=>(
-                        <span key={m} style={{ fontSize:10, color:T.text3, background:`${T.text3}12`, border:`1px solid ${T.border}`, borderRadius:4, padding:'1px 6px' }}>{m}</span>
-                      ))}
-                      {u.modules_enabled.length>4&&<span style={{ fontSize:10, color:T.text3 }}>+{u.modules_enabled.length-4}</span>}
+                      {(() => {
+                        const keys = isAdmin ? inviteOpts.modules.map(m=>m.key) : (directory?.[u.user_id]?.modules ?? [])
+                        const names = keys.map(k=>inviteOpts.modules.find(m=>m.key===k)?.name).filter((n): n is string => !!n)
+                        if (names.length === 0) return <span style={{ fontSize:11, color:T.text3 }}>—</span>
+                        return (<>
+                          {names.slice(0,4).map(n=>(
+                            <span key={n} style={{ fontSize:10, color:T.text3, background:`${T.text3}12`, border:`1px solid ${T.border}`, borderRadius:4, padding:'1px 6px' }}>{n}</span>
+                          ))}
+                          {names.length>4&&<span style={{ fontSize:10, color:T.text3 }}>+{names.length-4}</span>}
+                        </>)
+                      })()}
                     </div>
                   </td>
                   <td data-tour="team-actions" style={{ padding:'12px 16px' }}>
@@ -790,6 +852,8 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
           onClose={()=>setEditingUser(null)}
           onSave={draft=>handleSave(editingUser.user_id, draft)}
           isOwner={isTenantOwner(editingUser)}
+          options={inviteOpts}
+          links={directory?.[editingUser.user_id]}
         />
       )}
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { resolveSessionProfileId } from '@/utils/profile-id'
 import { T } from '../components/ds/tokens'
 import { useSession } from '../data/SessionContext'
 import { can } from '../data/permissions'
@@ -131,7 +132,7 @@ const inputSt: React.CSSProperties = { padding: '6px 10px', borderRadius: 7, bac
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function HoursApprovalPage() {
   const { activeUser } = useSession()
-  const { permissions, name: userName } = activeUser
+  const { permissions, name: userName, user_id: userId } = activeUser
   const allowed = can(permissions, 'approve:hours')
 
   const [profileId, setProfileId] = useState<string | null>(null)
@@ -165,7 +166,7 @@ export default function HoursApprovalPage() {
     let alive = true
     void (async () => {
       setLoading(true)
-      const [pid, allSquads] = await Promise.all([resolveProfileIdByName(userName), listSquads()])
+      const [pid, allSquads] = await Promise.all([resolveSessionProfileId({ user_id: userId, name: userName }, resolveProfileIdByName), listSquads()])
       if (!alive) return
       setSquads(allSquads)
       setProfileId(pid)
@@ -182,7 +183,7 @@ export default function HoursApprovalPage() {
       await loadQueue(pid)
     })()
     return () => { alive = false }
-  }, [allowed, userName, loadQueue])
+  }, [allowed, userName, userId, loadQueue])
 
   if (!allowed) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: T.text3, fontSize: 14 }}>Sem permissão para aprovar horas.</div>

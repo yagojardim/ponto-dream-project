@@ -3,6 +3,7 @@ import { supabase } from '../../integrations/supabase/client'
 import type { Database } from '../../integrations/supabase/types'
 import { DEFAULT_TENANT_ID } from './timeline'
 import { getActiveTenantId } from '@/data/session'
+import { isProfileUuid } from '@/utils/profile-id'
 
 export { DEFAULT_TENANT_ID }
 
@@ -62,8 +63,8 @@ const PRIORITY_WEIGHT: Record<string, number> = {
 }
 
 /** Work items assigned to a user, ordered by required action then deadline. */
-export async function listMyQueue(userName: string): Promise<QueueData> {
-  const profileId = await resolveProfileIdByName(userName)
+export async function listMyQueue(userName: string, userId?: string): Promise<QueueData> {
+  const profileId = isProfileUuid(userId) ? userId : await resolveProfileIdByName(userName)
   if (!profileId) return { profileId: null, items: [] }
 
   const [items, projects, epics, sprints] = await Promise.all([
