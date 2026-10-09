@@ -2279,6 +2279,7 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
         userId={user.user_id}
         userName={user.name}
         role={activeDashId}
+        lift={scope.permissions?.includes('*') ?? false}
         onNav={(v, targetId) => onNav?.(v, targetId)}
       />
     </div>
