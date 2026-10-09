@@ -85,7 +85,7 @@ export function checkMemberIdentity(name: string, email: string): Promise<Identi
 export const ROLE_BY_DASHBOARD: Record<string, RoleContext> = Object.entries(DEFAULT_DASHBOARD_BY_ROLE)
   .reduce((acc, [role, dash]) => { acc[dash] = role as RoleContext; return acc }, {} as Record<string, RoleContext>)
 
-const ROLE_KEYS: Record<RoleContext, string> = {
+export const ROLE_KEYS: Record<RoleContext, string> = {
   Admin: 'admin', PMO: 'pmo', ProjectManager: 'project_manager',
   ProductManager: 'product_manager', ProductOwner: 'product_owner',
   ScrumMaster: 'scrum_master', TechLead: 'tech_lead', Dev: 'dev',
@@ -292,6 +292,7 @@ export async function assignOperationalRole(profileId: string, role: RoleContext
  */
 export async function setMemberHomeRoles(
   profileId: string, primary: RoleContext, roles: RoleContext[],
+  extraMeta: Record<string, unknown> = {},
 ): Promise<boolean> {
   return safeCall<boolean>('invite.setMemberHomeRoles', async () => {
     const tenantId = getActiveTenantId()
@@ -303,7 +304,7 @@ export async function setMemberHomeRoles(
     if (profErr) throw profErr
     const meta = (prof?.metadata ?? {}) as Record<string, unknown>
     const { error: upErr } = await tbl('profiles')
-      .update({ metadata: { ...meta, home_roles: wanted } })
+      .update({ metadata: { ...meta, ...extraMeta, home_roles: wanted } })
       .eq('id', profileId).eq('tenant_id', tenantId)
     if (upErr) throw upErr
 
@@ -333,6 +334,89 @@ export async function setMemberHomeRoles(
     if (toRemove.length) {
       const { error } = await tbl('user_roles').delete().in('id', toRemove)
       if (error) throw error
+    }
+    return true
+  }, false)
+}
+
+// ─── Vínculos reais do membro (squads/módulos) ──────────────────────────────
+export interface MemberLinks { squadIds: string[]; modules: string[] }
+
+/** Squads (squad_members) e módulos (metadata.modules_enabled) de cada profile do tenant. */
+export function fetchMemberDirectory(): Promise<Record<string, MemberLinks>> {
+  return safeCall<Record<string, MemberLinks>>('invite.fetchMemberDirectory', async () => {
+    const tenantId = getActiveTenantId()
+    const [sm, prof] = await Promise.all([
+      tbl('squad_members').select('profile_id, squad_id').eq('tenant_id', tenantId),
+      tbl('profiles').select('id, metadata').eq('tenant_id', tenantId).is('archived_at', null),
+    ])
+    const out: Record<string, MemberLinks> = {}
+    for (const p of (prof.data ?? []) as any[]) {
+      const mods = (p.metadata as any)?.modules_enabled
+      out[p.id] = { squadIds: [], modules: Array.isArray(mods) ? mods.filter((m: unknown) => typeof m === 'string') : [] }
+    }
+    for (const r of (sm.data ?? []) as any[]) {
+      if (out[r.profile_id]) out[r.profile_id].squadIds.push(r.squad_id)
+    }
+    return out
+  }, {})
+}
+
+export interface UpdateMemberInput {
+  /** false para Admin Master/Admin: o papel principal e as flags não são tocados. */
+  editRole: boolean
+  homeRoles: RoleContext[]
+  dashboards: string[]
+  defaultDashboard: string | null
+  /** undefined = não mexer (vínculos ainda não carregados). */
+  squadIds?: string[]
+  modules?: string[]
+  canCreateProjects: boolean
+  canHandleClientMessages: boolean
+}
+
+/** Grava no banco o que a edição de membro altera (papéis, squads, módulos, flags). */
+export function updateMemberProfile(
+  profileId: string, primary: RoleContext, input: UpdateMemberInput,
+): Promise<boolean> {
+  return safeCall<boolean>('invite.updateMemberProfile', async () => {
+    const tenantId = getActiveTenantId()
+
+    if (input.editRole) {
+      const { error } = await tbl('profiles').update({
+        primary_role: ROLE_KEYS[primary],
+        can_create_projects: input.canCreateProjects,
+        can_handle_client_messages: input.canHandleClientMessages,
+      }).eq('id', profileId).eq('tenant_id', tenantId)
+      if (error) throw error
+    }
+
+    const extraMeta: Record<string, unknown> = {
+      dashboards: input.dashboards,
+      default_dashboard: input.defaultDashboard,
+    }
+    if (input.modules) extraMeta.modules_enabled = input.modules
+    const rolesOk = await setMemberHomeRoles(profileId, primary, input.homeRoles, extraMeta)
+    if (!rolesOk) throw new Error('papéis não gravados')
+
+    if (input.squadIds) {
+      const { data: cur } = await tbl('squad_members').select('squad_id')
+        .eq('tenant_id', tenantId).eq('profile_id', profileId)
+      const have = new Set(((cur ?? []) as any[]).map(r => r.squad_id))
+      const want = new Set(input.squadIds)
+      const toAdd = [...want].filter(id => !have.has(id))
+      const toRemove = [...have].filter(id => !want.has(id))
+      if (toAdd.length) {
+        const { error } = await tbl('squad_members').insert(
+          toAdd.map(squad_id => ({ tenant_id: tenantId, squad_id, profile_id: profileId })),
+        )
+        if (error) throw error
+      }
+      if (toRemove.length) {
+        const { error } = await tbl('squad_members').delete()
+          .eq('tenant_id', tenantId).eq('profile_id', profileId).in('squad_id', toRemove)
+        if (error) throw error
+      }
     }
     return true
   }, false)

@@ -427,10 +427,10 @@ export default function MyTasksPage({ onNav }: { onNav?: (view: string, targetId
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
-    try { setQueue((await listMyQueue(user.name)).items) }
+    try { setQueue((await listMyQueue(user.name, user.user_id)).items) }
     catch (err) { setError(err instanceof Error ? err.message : String(err)) }
     finally { setLoading(false) }
-  }, [user.name])
+  }, [user.name, user.user_id])
 
   useEffect(() => { void load() }, [load])
 

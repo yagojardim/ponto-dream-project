@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { resolveSessionProfileId } from '@/utils/profile-id'
 import { T } from '../components/ds/tokens'
 import { useSession } from '../data/SessionContext'
 import { can } from '../data/permissions'
@@ -169,7 +170,7 @@ function EditModal({ state, onSave, onCancel }: { state: EditState; onSave: (s: 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function TimesheetPage() {
   const { activeUser } = useSession()
-  const { permissions, name: userName } = activeUser
+  const { permissions, name: userName, user_id: userId } = activeUser
   const allowed = can(permissions, 'log:hours')
 
   const [profileId, setProfileId] = useState<string | null>(null)
@@ -213,7 +214,7 @@ export default function TimesheetPage() {
     let alive = true
     void (async () => {
       setLoading(true)
-      const [pid, appr] = await Promise.all([resolveProfileIdByName(userName), listApprovers()])
+      const [pid, appr] = await Promise.all([resolveSessionProfileId({ user_id: userId, name: userName }, resolveProfileIdByName), listApprovers()])
       if (!alive) return
       setApprovers(appr)
       setProfileId(pid)
@@ -227,7 +228,7 @@ export default function TimesheetPage() {
       await load(pid)
     })()
     return () => { alive = false }
-  }, [allowed, userName, load])
+  }, [allowed, userName, userId, load])
 
   if (!allowed) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: T.text3, fontSize: 14 }}>Sem permissão para lançar horas.</div>
