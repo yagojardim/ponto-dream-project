@@ -2243,9 +2243,11 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
         <style>{`
           .altech-home-glow {
             background-image:
-              radial-gradient(940px 460px at 92% 0%, rgba(59, 130, 246, 0.27), transparent 66%),
-              radial-gradient(520px 280px at 100% 0%, rgba(91, 147, 240, 0.16), transparent 72%);
+              radial-gradient(940px 460px at 92% 70px, rgba(59, 130, 246, 0.27), transparent 66%),
+              radial-gradient(520px 280px at 100% 70px, rgba(91, 147, 240, 0.16), transparent 72%),
+              radial-gradient(680px 360px at 16% 100%, rgba(99, 102, 241, 0.18), transparent 66%);
             background-repeat: no-repeat;
+            background-attachment: fixed;
           }
           :root[data-theme='light'] .altech-home-glow { background-image: none; }
         `}</style>
