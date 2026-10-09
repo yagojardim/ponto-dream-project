@@ -19,7 +19,7 @@
   /* ── Text ─────────────────────────────────────────────────── */
   --text-primary:  #F1F1F5;
   --text-secondary:#9898AD;
-  --text-muted:    #5C5C7A;
+  --text-muted:    #8585A1;
 
   /* ── Accent / Primary — Altech Blue ──────────────────────── */
   --primary:       #3B82F6;
@@ -100,7 +100,7 @@
 
   --text-primary:  #16161D;
   --text-secondary:#55556B;
-  --text-muted:    #7A7A93;
+  --text-muted:    #6B6B84;
 
   --shadow-1: 0 1px 2px rgba(16,16,29,0.06), 0 1px 3px rgba(16,16,29,0.08);
   --shadow-2: 0 4px 16px rgba(16,16,29,0.10);
@@ -120,7 +120,7 @@
   --border-default:  #D2D2DE;
   --text-primary:    #16161D;
   --text-secondary:  #55556B;
-  --text-muted:      #7A7A93;
+  --text-muted:      #6B6B84;
   --primary:         #3B82F6;
   --primary-hover:   #2563EB;
   --primary-active:  #1D4ED8;
@@ -153,7 +153,7 @@
   --border-default:  #2f3547;
   --text-primary:    #e7eaf2;
   --text-secondary:  #a2a8ba;
-  --text-muted:      #6a7390;
+  --text-muted:      #8590AC;
   --primary:         #7d92ff;
   --primary-hover:   #6a7eec;
   --primary-active:  #5a6eda;
@@ -186,7 +186,7 @@
   --border-default:#1e2d42;
   --text-primary:  #e7eaf2;
   --text-secondary:#a2a8ba;
-  --text-muted:    #466080;
+  --text-muted:    #6E8DB0;
 }
 
 /* ═══ Responsive grid utility ════════════════════════════════════ */
@@ -220,6 +220,21 @@ html, body, #root {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+
+/* Foco do teclado: vence o `outline: none` inline espalhado pelos componentes.
+   Campos de texto usam anel em box-shadow para não mudar o desenho dos inputs. */
+:where(button, a, select, summary, [role='button'], [role='tab'], [role='menuitem'], [tabindex]):focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+:where(input, textarea):focus-visible {
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+/* Feedback imediato ao pressionar (sutil; desligue com data-no-press). */
+:where(button, [role='button']):not(:disabled, [aria-disabled='true'], [data-no-press]):active {
+  transform: scale(0.98);
 }
 
 /* ═══ Animations ═════════════════════════════════════════════════ */
@@ -259,3 +274,19 @@ html, body, #root {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .toast-in { animation: toastIn 0.22s ease-out forwards; }
+
+/* ═══ Reduzir movimento ══════════════════════════════════════════
+   Respeita a preferência do sistema: sem animação decorativa nem transições.
+   O spinner continua girando (devagar) porque sinaliza carregamento. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .spin {
+    animation-duration: 1.6s !important;
+    animation-iteration-count: infinite !important;
+  }
+}

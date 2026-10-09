@@ -31,7 +31,10 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
       style={{ background: 'var(--bg-overlay, rgba(8,10,14,0.72))', backdropFilter: 'blur(4px)' }}
       onClick={e => { if (e.target === e.currentTarget && closeOnBackdrop) onClose() }}
     >

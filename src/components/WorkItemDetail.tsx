@@ -1217,10 +1217,16 @@ export function WorkItemDetail({ data: dataProp, itemId: itemIdProp, onUpdate, o
 
 
       {mode === 'drawer' && (
-        <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:300 }} />
+        <div className="fade-in" onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:300 }} />
       )}
 
-      <div style={panelStyle}>
+      <div
+        style={panelStyle}
+        className={mode === 'drawer' ? 'slide-right' : undefined}
+        role={mode === 'drawer' ? 'dialog' : undefined}
+        aria-modal={mode === 'drawer' ? true : undefined}
+        aria-label={mode === 'drawer' ? 'Detalhe do item' : undefined}
+      >
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div style={{ flexShrink:0, borderBottom:`1px solid ${T.border}` }}>
           {/* Breadcrumb */}
