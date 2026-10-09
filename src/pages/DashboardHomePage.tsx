@@ -2234,9 +2234,22 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
     label: DASHBOARD_CATALOG[d.dashboard_id as DashboardType]?.label ?? d.dashboard_id,
   }))
   const navigate = (view: string) => onNav?.(view)
+  // Início do Admin Master: brilho azul suave no canto superior direito (mesma identidade do modal).
+  const isMaster = scope.permissions?.includes('*') ?? false
 
   return (
-    <div style={{ padding: 24, minHeight: '100%', background: T.bgPage }}>
+    <div className={isMaster ? 'altech-home-glow' : undefined} style={{ padding: 24, minHeight: '100%', backgroundColor: T.bgPage }}>
+      {isMaster && (
+        <style>{`
+          .altech-home-glow {
+            background-image:
+              radial-gradient(940px 460px at 92% 0%, rgba(59, 130, 246, 0.27), transparent 66%),
+              radial-gradient(520px 280px at 100% 0%, rgba(91, 147, 240, 0.16), transparent 72%);
+            background-repeat: no-repeat;
+          }
+          :root[data-theme='light'] .altech-home-glow { background-image: none; }
+        `}</style>
+      )}
       {/* ── Header ─────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8, flexWrap: 'wrap' }}>
         <div>
