@@ -283,3 +283,57 @@ export async function assignOperationalRole(profileId: string, role: RoleContext
     return true
   }, false)
 }
+
+/**
+ * Persiste os papéis de Início (seletor "Papel:") de um membro já cadastrado.
+ * `roles` = papel principal + secundários desejados. Grava em
+ * `profiles.metadata.home_roles` e sincroniza os secundários em `user_roles`
+ * (o principal não é tocado). Idempotente.
+ */
+export async function setMemberHomeRoles(
+  profileId: string, primary: RoleContext, roles: RoleContext[],
+): Promise<boolean> {
+  return safeCall<boolean>('invite.setMemberHomeRoles', async () => {
+    const tenantId = getActiveTenantId()
+    const wanted = [...new Set([primary, ...roles])]
+    const extras = wanted.filter(r => r !== primary)
+
+    const { data: prof, error: profErr } = await tbl('profiles')
+      .select('metadata').eq('id', profileId).eq('tenant_id', tenantId).maybeSingle()
+    if (profErr) throw profErr
+    const meta = (prof?.metadata ?? {}) as Record<string, unknown>
+    const { error: upErr } = await tbl('profiles')
+      .update({ metadata: { ...meta, home_roles: wanted } })
+      .eq('id', profileId).eq('tenant_id', tenantId)
+    if (upErr) throw upErr
+
+    // user_roles: adiciona os secundários que faltam e remove os que saíram.
+    const { data: roleRows } = await tbl('roles').select('id, key, label')
+    const byKey = new Map<string, string>()
+    for (const r of (roleRows ?? []) as any[]) {
+      byKey.set(normKey(r.key), r.id)
+      byKey.set(normKey(r.label), r.id)
+    }
+    const wantedIds = new Set(
+      extras.map(r => byKey.get(ROLE_KEYS[r])).filter((id): id is string => !!id),
+    )
+    const { data: existing } = await tbl('user_roles')
+      .select('id, role_id, is_primary').eq('tenant_id', tenantId).eq('profile_id', profileId)
+    const have = new Set(((existing ?? []) as any[]).map(r => r.role_id))
+
+    const toAdd = [...wantedIds].filter(id => !have.has(id))
+    if (toAdd.length) {
+      const { error } = await tbl('user_roles').insert(
+        toAdd.map(role_id => ({ tenant_id: tenantId, profile_id: profileId, role_id, is_primary: false })),
+      )
+      if (error) throw error
+    }
+    const toRemove = ((existing ?? []) as any[])
+      .filter(r => !r.is_primary && !wantedIds.has(r.role_id)).map(r => r.id)
+    if (toRemove.length) {
+      const { error } = await tbl('user_roles').delete().in('id', toRemove)
+      if (error) throw error
+    }
+    return true
+  }, false)
+}

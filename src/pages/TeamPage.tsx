@@ -10,6 +10,7 @@ import {
   capabilityVisibility,
 } from '../data/permissions'
 import { getTenantOwnerEmails, getMembers, setMemberStatus, type MemberRow } from '../data/db/members'
+import { setMemberHomeRoles, ROLE_BY_DASHBOARD } from '../data/db/invite'
 import { normalizeRole } from '../data/db/authProfile'
 import {
   fetchProfileReportsAccess, saveProfileReportsAccess, roleSupportsReportsAccess,
@@ -580,6 +581,18 @@ function MembersTab({ onInvite, canManage }: { onInvite:()=>void; canManage:bool
       mu.assigned_dashboards = newDashes
       ;(mu as UserWithStatus).status = draft.status
     }
+    // Papéis de Início (seletor "Papel:"): papel principal + os das telas marcadas.
+    const homeRoles = [
+      draft.role,
+      ...draft.dashboards.map(d => ROLE_BY_DASHBOARD[d]).filter((r): r is RoleContext => !!r),
+    ].filter((r, i, arr) => arr.indexOf(r) === i)
+    if (mu) mu.available_roles = homeRoles
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(userId)) { // só perfis reais do banco (não personas mock)
+      void setMemberHomeRoles(userId, draft.role, homeRoles).then(ok => {
+        if (!ok) showToast('Não foi possível salvar os papéis no banco. Tente novamente.')
+      })
+    }
+
     // Persiste a mudança de status em profiles.status (fonte única).
     if (draft.status !== userStatus(target)) {
       void setMemberStatus(userId, draft.status, activeUser.name).then(ok => {
