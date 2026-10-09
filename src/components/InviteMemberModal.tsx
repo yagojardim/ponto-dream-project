@@ -185,7 +185,7 @@ export default function InviteMemberModal({ onClose, onSuccess }: Props) {
       case 1: return role !== null
       case 2: return defaultDash !== null
       case 3: return true
-      case 4: return projects.length > 0
+      case 4: return true // vínculos são opcionais: podem ser atribuídos depois
       case 5: return true
       default: return true
     }
@@ -486,7 +486,7 @@ export default function InviteMemberModal({ onClose, onSuccess }: Props) {
           {step === 3 && role && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ fontSize: 12, color: T.text2 }}>
-                Opt-ins começam desligados (menor privilégio). Capacidades travadas em ✅ são concedidas automaticamente pelo papel.
+                Capacidades opcionais começam desligadas (menor privilégio). As travadas em ✅ são concedidas automaticamente pelo papel.
               </div>
 
               {roleSupportsReportsAccess(role) && (
@@ -555,11 +555,6 @@ export default function InviteMemberModal({ onClose, onSuccess }: Props) {
                             Papel garante ✅
                           </span>
                         )}
-                        {!isLocked && (
-                          <span style={{ fontSize: 9, color: T.warn, background: `${T.warn}18`, border: `1px solid ${T.warn}33`, borderRadius: 4, padding: '1px 5px' }}>
-                            Opt-in
-                          </span>
-                        )}
                       </div>
                       <div style={{ fontSize: 11, color: T.text3, marginTop: 3 }}>{desc}</div>
                     </div>
@@ -624,6 +619,9 @@ export default function InviteMemberModal({ onClose, onSuccess }: Props) {
           {/* ── Step 4: Vínculos ─────────────────────────────────── */}
           {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ fontSize: 11, color: T.text3 }}>
+                Opcional — você pode concluir o convite sem vínculos e atribuí-los depois.
+              </div>
               <div>
                 <SLabel>Projetos</SLabel>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>

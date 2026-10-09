@@ -86,7 +86,7 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
         await updateBoard(board.id, { filter: boardFilter }, actorName)
       }
     },
-    'Board atualizado', false,
+    'Board atualizado', true,
   )
   const finalize = () => run(() => finalizeBoard(board, actorName), 'Board finalizado', true)
   const archive = () => run(() => archiveBoard(board, actorName), 'Board arquivado', true)
@@ -221,7 +221,15 @@ export function BoardSettingsModal({ board, actorName, onClose, onDone }: Props)
             />
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={onClose}
+              disabled={busy}
+              className="px-3.5 py-2 rounded-lg text-xs font-medium"
+              style={{ color: '#8a9ab8', border: '1px solid #2f3547', background: '#141926', opacity: busy ? 0.5 : 1 }}
+            >
+              Cancelar
+            </button>
             <button
               onClick={() => { void save() }}
               disabled={busy}
