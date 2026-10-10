@@ -42,6 +42,8 @@ interface Props {
   userId: string
   userName: string
   role: string
+  /** Cartões sobem em relevo ao passar o mouse (hoje só no Início do Admin Master). */
+  lift?: boolean
   onNav: (view: string, targetId?: string) => void
 }
 
@@ -114,7 +116,7 @@ function loadStored(userId: string, role: string): StoredState | null {
   }
 }
 
-export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
+export function HomeWidgetGrid({ userId, userName, role, lift = false, onNav }: Props) {
   const [state, setState] = useState<StoredState>(() => loadStored(userId, role) ?? buildDefault(role))
   const [addOpen, setAddOpen] = useState(false)
   const [selProj, setSelProj] = useProjSel()
@@ -237,8 +239,9 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
     openBoard,
     openDetail,
     openKpiDetail,
+    role,
     interactive: !editing,
-  }), [onNav, userName, scope, openBoard, openDetail, openKpiDetail, editing])
+  }), [onNav, userName, scope, openBoard, openDetail, openKpiDetail, role, editing])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     // Fora do modo edição o grid não é interativo (isDraggable/isResizable = editing):
@@ -286,7 +289,7 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
   const layouts: Layouts = { lg: state.layout, md: state.layout, sm: state.layout, xs: state.layout }
 
   return (
-    <div className={`altech-home-panel${editing ? ' is-editing' : ''}`} style={{ width: '100%', overflowX: 'hidden' }}>
+    <div className={`altech-home-panel${editing ? ' is-editing' : ''}${lift ? ' is-lift' : ''}`} style={{ width: '100%', overflowX: 'hidden' }}>
       <style>{`
         .altech-home-grid .react-grid-placeholder { background: ${T.accentDim}; border: 1px dashed ${T.accentBorder}; border-radius: 12px; opacity: 1; }
         .altech-home-grid .react-grid-item > .react-resizable-handle::after { border-color: ${T.text3}; }
@@ -308,6 +311,30 @@ export function HomeWidgetGrid({ userId, userName, role, onNav }: Props) {
         .altech-widget-body-fit .altech-chart-fill > svg,
         .altech-widget-body-fit .altech-chart-fill > div > svg { height: 100%; width: 100%; flex: 1 1 auto; min-height: 0; }
         .altech-widget-kpi > * { height: 100%; }
+        /* Relevo ao passar o mouse (Admin Master): o conteúdo do card sobe e ganha sombra.
+           O item do grid já usa transform inline para se posicionar, então o efeito vai no conteúdo
+           interno e o recorte do item é liberado. Fora do modo de edição, para não competir com o
+           arrastar. Respeita "reduzir movimento". */
+        .altech-home-panel.is-lift:not(.is-editing) .altech-widget-card { overflow: visible !important; }
+        .altech-home-panel.is-lift:not(.is-editing) .altech-widget-card > :not(.altech-widget-tools):not(.react-resizable-handle) {
+          border-radius: 12px;
+          transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+        }
+        .altech-home-panel.is-lift:not(.is-editing) .altech-widget-card:hover > :not(.altech-widget-tools):not(.react-resizable-handle) {
+          transform: translateY(-3px);
+          box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+        .altech-home-panel.is-lift:not(.is-editing) .altech-widget-card:hover > .altech-widget-tools {
+          transform: translateY(-3px);
+        }
+        .altech-home-panel.is-lift:not(.is-editing) .altech-widget-card:active > :not(.altech-widget-tools):not(.react-resizable-handle) {
+          transform: translateY(-1px) scale(0.992);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .altech-home-panel.is-lift .altech-widget-card > * { transition: none; }
+          .altech-home-panel.is-lift:not(.is-editing) .altech-widget-card:hover > *,
+          .altech-home-panel.is-lift:not(.is-editing) .altech-widget-card:active > * { transform: none; }
+        }
         /* Controles de edição: barra flutuante só no hover, sem chrome permanente. */
         .altech-widget-tools { opacity: 0; transition: opacity 0.12s; }
         .altech-widget-card:hover .altech-widget-tools { opacity: 1; }

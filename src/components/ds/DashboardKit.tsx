@@ -326,10 +326,12 @@ export function MiniSparkline({ data, color }: {
 }
 
 // ─── KpiCard — clicking navigates to filtered list ────────────────────────────
-export function KpiCard({ value, label, sub, miniViz, disclaimer, color, alert, onClick, help, helpTitle }: {
+export function KpiCard({ value, label, sub, miniViz, disclaimer, color, alert, onClick, help, helpTitle, trend }: {
   value: string; label: string; sub?: string; miniViz?: ReactNode; disclaimer?: string
   color?: string; alert?: boolean; onClick?: () => void
   help?: string; helpTitle?: string
+  /** Variação em relação ao período anterior — só quando há histórico real. */
+  trend?: { text: string; color: string; title?: string }
 }) {
   const [hovered, setHovered] = useState(false)
   const clickable  = !!onClick
@@ -362,6 +364,7 @@ export function KpiCard({ value, label, sub, miniViz, disclaimer, color, alert, 
         }}>{label}</span>
         {help && <span onClick={e => e.stopPropagation()}><HelpHint text={help} title={helpTitle} label={`Ajuda sobre ${label}`} /></span>}
         <span style={{ flex: 1 }} />
+        {trend && <span title={trend.title} style={{ fontSize: 11, fontWeight: 700, color: trend.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{trend.text}</span>}
         {alert
           ? <span style={{ width: 7, height: 7, borderRadius: '50%', background: T.crit, flexShrink: 0 }} />
           : (clickable && <span style={{ fontSize: 12, color: T.accent, opacity: hovered ? 1 : 0, transition: 'opacity 0.15s' }}>↗</span>)}

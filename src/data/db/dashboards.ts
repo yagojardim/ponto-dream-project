@@ -679,6 +679,52 @@ export async function fetchAdminInicioData(): Promise<AdminInicioData> {
   return { projects: proj, boards: brd, signupsWeekly }
 }
 
+// ─── Admin Master · modal "Tenant" (listas reais por situação) ───────────────
+
+export type ProjectSituation = 'Ativo' | 'Finalizado' | 'Arquivado' | 'Outro'
+
+export interface AdminTenantLists {
+  projects: { id: string; name: string; situation: ProjectSituation }[]
+  boards: { id: string; name: string; projectId: string | null; archived: boolean }[]
+  users: { id: string; name: string; role: string | null; status: string | null }[]
+}
+
+/**
+ * Listas por tenant para as abas do modal "Tenant". Usa a MESMA classificação de
+ * fetchAdminInicioData (ativos / finalizados / arquivados), para os números do
+ * modal baterem com os cards. Sempre por tenant, nunca cross-tenant.
+ */
+export async function fetchAdminTenantLists(): Promise<AdminTenantLists> {
+  const tid = getActiveTenantId()
+  const [projects, boards, profiles] = await Promise.all([
+    supabase.from('projects').select('id, name, status, archived_at').eq('tenant_id', tid),
+    supabase.from('boards').select('id, name, project_id, status, archived_at').eq('tenant_id', tid),
+    supabase.from('profiles').select('id, name, primary_role, status').eq('tenant_id', tid).is('archived_at', null),
+  ])
+  const failed = [
+    ['projects', projects.error], ['boards', boards.error], ['profiles', profiles.error],
+  ].find(([, e]) => e) as [string, { message: string }] | undefined
+  if (failed) throw new Error(missingTableMessage(failed[0], failed[1].message))
+
+  const st = (s: string | null) => (s ?? '').toLowerCase()
+  const pr = (projects.data ?? []) as { id: string; name: string; status: string | null; archived_at: string | null }[]
+  const br = (boards.data ?? []) as { id: string; name: string; project_id: string | null; status: string | null; archived_at: string | null }[]
+  const us = (profiles.data ?? []) as { id: string; name: string | null; primary_role: string | null; status: string | null }[]
+
+  const situation = (p: { status: string | null; archived_at: string | null }): ProjectSituation => {
+    if (p.archived_at) return 'Arquivado'
+    if (['active', 'in_progress', 'em_andamento', 'planned'].includes(st(p.status))) return 'Ativo'
+    if (['completed', 'done', 'finished'].includes(st(p.status))) return 'Finalizado'
+    return 'Outro'
+  }
+
+  return {
+    projects: pr.map(p => ({ id: p.id, name: p.name, situation: situation(p) })),
+    boards: br.map(b => ({ id: b.id, name: b.name, projectId: b.project_id, archived: !!b.archived_at || st(b.status) === 'archived' })),
+    users: us.map(u => ({ id: u.id, name: u.name ?? '—', role: u.primary_role, status: u.status })),
+  }
+}
+
 // ─── MAU / atividade de usuários (Product Manager) ───────────────────────────
 export interface MauMetrics {
   /** Usuários únicos com login nos últimos 30 dias. */

@@ -73,6 +73,41 @@ export async function fetchRejections(projectIds?: string[]): Promise<QaItemRow[
   }, [])
 }
 
+export interface RejectionRate { rejected: number; tested: number; pct: number | null }
+
+/**
+ * Taxa de rejeição real: itens devolvidos do QA para o dev ÷ itens que passaram
+ * pelo QA, ambos do histórico de status. Sem histórico → pct null (sem inventar).
+ */
+export async function fetchRejectionRate(projectIds?: string[]): Promise<RejectionRate> {
+  return safeCall('inicio.rejection-rate', async () => {
+    const { data, error } = await (supabase.from('item_status_history') as any)
+      .select('work_item_id, from_value, to_value, field, work_items(project_id)')
+      .eq('tenant_id', getActiveTenantId())
+      .eq('field', 'status')
+    if (error) throw error
+    const tested = new Set<string>()
+    const rejected = new Set<string>()
+    ;(data ?? []).forEach((h: any) => {
+      const wi = Array.isArray(h.work_items) ? h.work_items[0] : h.work_items
+      if (!wi) return
+      if (projectIds && projectIds.length && !projectIds.includes(wi.project_id)) return
+      const from = (h.from_value ?? '').toLowerCase()
+      const to = (h.to_value ?? '').toLowerCase()
+      if (QA_STATES.includes(to)) tested.add(h.work_item_id)
+      if (QA_STATES.includes(from) && DEV_STATES.includes(to)) {
+        rejected.add(h.work_item_id)
+        tested.add(h.work_item_id)
+      }
+    })
+    return {
+      rejected: rejected.size,
+      tested: tested.size,
+      pct: tested.size > 0 ? Math.round((rejected.size / tested.size) * 100) : null,
+    }
+  }, { rejected: 0, tested: 0, pct: null })
+}
+
 /** Bugs abertos sem nenhuma evidência (anexo) vinculada. */
 export async function fetchEvidencePending(projectIds?: string[]): Promise<QaItemRow[]> {
   return safeCall('inicio.evidence', async () => {

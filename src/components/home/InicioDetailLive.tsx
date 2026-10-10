@@ -13,10 +13,10 @@ function projName(id: string | null): string {
   if (!id) return '—'
   return liveProjects().find(p => p.id === id)?.name ?? '—'
 }
-function Msg({ text }: { text: string }) {
+export function Msg({ text }: { text: string }) {
   return <div style={{ padding: '16px 4px', fontSize: 12.5, color: T.text3 }}>{text}</div>
 }
-function Table({ head, children }: { head: string[]; children: ReactNode }) {
+export function Table({ head, children }: { head: string[]; children: ReactNode }) {
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
@@ -28,11 +28,11 @@ function Table({ head, children }: { head: string[]; children: ReactNode }) {
     </div>
   )
 }
-const td: React.CSSProperties = { padding: 10, borderBottom: `1px solid ${T.border}`, color: T.text1, verticalAlign: 'middle' }
-const tdMuted: React.CSSProperties = { ...td, color: T.text2 }
-const tdMono: React.CSSProperties = { ...td, fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11, color: T.text3 }
+export const td: React.CSSProperties = { padding: 10, borderBottom: `1px solid ${T.border}`, color: T.text1, verticalAlign: 'middle' }
+export const tdMuted: React.CSSProperties = { ...td, color: T.text2 }
+export const tdMono: React.CSSProperties = { ...td, fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11, color: T.text3 }
 
-function useAsync<T2>(fn: () => Promise<T2>, deps: unknown[]): { data: T2 | null; loading: boolean } {
+export function useAsync<T2>(fn: () => Promise<T2>, deps: unknown[]): { data: T2 | null; loading: boolean } {
   const [data, setData] = useState<T2 | null>(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
@@ -136,7 +136,7 @@ export function ReleasesTabLive({ projectIds }: { projectIds: string[] }) {
   )
 }
 
-function Metric({ v, k, c }: { v: string; k: string; c?: string }) {
+export function Metric({ v, k, c }: { v: string; k: string; c?: string }) {
   return (
     <div style={{ background: T.bgSurface2, border: `1px solid ${T.border}`, borderRadius: 10, padding: '10px 14px', minWidth: 120 }}>
       <div style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: c ?? T.text1 }}>{v}</div>

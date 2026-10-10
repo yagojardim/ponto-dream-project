@@ -2234,9 +2234,25 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
     label: DASHBOARD_CATALOG[d.dashboard_id as DashboardType]?.label ?? d.dashboard_id,
   }))
   const navigate = (view: string) => onNav?.(view)
+  // Brilho azul suave no canto superior direito e índigo no inferior esquerdo (mesma identidade do modal).
+  // Relevo nos cards, degradê de fundo e modal premium valem para as dez personas.
+  const withGlow = true
 
   return (
-    <div style={{ padding: 24, minHeight: '100%', background: T.bgPage }}>
+    <div className={withGlow ? 'altech-home-glow' : undefined} style={{ padding: 24, minHeight: '100%', backgroundColor: T.bgPage }}>
+      {withGlow && (
+        <style>{`
+          .altech-home-glow {
+            background-image:
+              radial-gradient(940px 460px at 92% 70px, rgba(59, 130, 246, 0.27), transparent 66%),
+              radial-gradient(520px 280px at 100% 70px, rgba(91, 147, 240, 0.16), transparent 72%),
+              radial-gradient(680px 360px at 16% 100%, rgba(99, 102, 241, 0.18), transparent 66%);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+          }
+          :root[data-theme='light'] .altech-home-glow { background-image: none; }
+        `}</style>
+      )}
       {/* ── Header ─────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8, flexWrap: 'wrap' }}>
         <div>
@@ -2279,6 +2295,7 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
         userId={user.user_id}
         userName={user.name}
         role={activeDashId}
+        lift
         onNav={(v, targetId) => onNav?.(v, targetId)}
       />
     </div>
