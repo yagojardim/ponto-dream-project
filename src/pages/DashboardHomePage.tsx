@@ -2234,12 +2234,13 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
     label: DASHBOARD_CATALOG[d.dashboard_id as DashboardType]?.label ?? d.dashboard_id,
   }))
   const navigate = (view: string) => onNav?.(view)
-  // Início do Admin Master: brilho azul suave no canto superior direito (mesma identidade do modal).
-  const isMaster = scope.permissions?.includes('*') ?? false
+  // Brilho azul suave no canto superior direito e índigo no inferior esquerdo (mesma identidade do modal).
+  // Relevo nos cards, degradê de fundo e modal premium valem para as dez personas.
+  const withGlow = true
 
   return (
-    <div className={isMaster ? 'altech-home-glow' : undefined} style={{ padding: 24, minHeight: '100%', backgroundColor: T.bgPage }}>
-      {isMaster && (
+    <div className={withGlow ? 'altech-home-glow' : undefined} style={{ padding: 24, minHeight: '100%', backgroundColor: T.bgPage }}>
+      {withGlow && (
         <style>{`
           .altech-home-glow {
             background-image:
@@ -2294,7 +2295,7 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
         userId={user.user_id}
         userName={user.name}
         role={activeDashId}
-        lift={scope.permissions?.includes('*') ?? false}
+        lift
         onNav={(v, targetId) => onNav?.(v, targetId)}
       />
     </div>
