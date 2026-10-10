@@ -39,6 +39,8 @@ export interface KpiDetailTab {
   live?: ReactNode
   /** Sugestão (💡) ou insight (📈), sempre em tom não-impositivo. */
   note?: { text: string; insight?: boolean }
+  /** Ação de rodapé desta aba (sobrepõe a do config): mantém o destino que o card original tinha. */
+  footerAction?: { label: string; onClick: () => void }
 }
 export interface KpiDetailConfig {
   title: string
@@ -142,6 +144,7 @@ export function KpiDetailModal({ config, projects, onOpenItem, onClose }: KpiDet
   }, [config, onClose])
 
   if (!config || !t) return null
+  const footer = t.footerAction ?? config.footerAction
 
   const filterRows = (rows: KpiDetailRow[]) =>
     sel.size === 0 ? rows : rows.filter(r => !r.project || sel.has(r.project.id))
@@ -295,12 +298,12 @@ export function KpiDetailModal({ config, projects, onOpenItem, onClose }: KpiDet
         </div>
 
         {/* Rodapé */}
-        {config.footerAction && (
+        {footer && (
           <div style={{ position: 'relative', display: 'flex', justifyContent: 'flex-end', padding: '14px 24px 18px', background: 'linear-gradient(180deg, transparent, rgba(10,11,16,.6) 40%)', flexShrink: 0 }}>
-            <button className="kpd-press" onClick={() => { onClose(); config.footerAction?.onClick() }} style={{
+            <button className="kpd-press" onClick={() => { onClose(); footer.onClick() }} style={{
               fontSize: 12, fontWeight: 600, color: '#fff', background: T.accent, border: 'none', borderRadius: 7,
               padding: '8px 15px', cursor: 'pointer', transition: 'transform .12s',
-            }}>{config.footerAction.label}</button>
+            }}>{footer.label}</button>
           </div>
         )}
       </div>

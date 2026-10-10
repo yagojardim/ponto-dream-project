@@ -239,8 +239,9 @@ export function HomeWidgetGrid({ userId, userName, role, lift = false, onNav }: 
     openBoard,
     openDetail,
     openKpiDetail,
+    role,
     interactive: !editing,
-  }), [onNav, userName, scope, openBoard, openDetail, openKpiDetail, editing])
+  }), [onNav, userName, scope, openBoard, openDetail, openKpiDetail, role, editing])
 
   const handleLayoutChange = useCallback((layout: Layout[]) => {
     // Fora do modo edição o grid não é interativo (isDraggable/isResizable = editing):
