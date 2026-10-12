@@ -2241,17 +2241,29 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
   return (
     <div className={withGlow ? 'altech-home-glow' : undefined} style={{ padding: 24, minHeight: '100%', backgroundColor: T.bgPage }}>
       {withGlow && (
-        <style>{`
-          .altech-home-glow {
-            background-image:
-              radial-gradient(940px 460px at 92% 70px, rgba(59, 130, 246, 0.27), transparent 66%),
-              radial-gradient(520px 280px at 100% 70px, rgba(91, 147, 240, 0.16), transparent 72%),
-              radial-gradient(680px 360px at 16% 100%, rgba(99, 102, 241, 0.18), transparent 66%);
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-          }
-          :root[data-theme='light'] .altech-home-glow { background-image: none; }
-        `}</style>
+        <>
+          <style>{`
+            /* Luz fixa no topo: camada presa (sticky) ao topo da área que rola, atrás do conteúdo.
+               background-attachment: fixed não funciona dentro de uma área com rolagem própria,
+               por isso a luz é uma camada separada. Altura 0 + margens negativas: não ocupa espaço. */
+            .altech-home-glow-light {
+              position: sticky; top: 0; height: 0; margin: -24px -24px 24px;
+              pointer-events: none;
+            }
+            .altech-home-glow-light > div {
+              position: absolute; left: 0; right: 0; top: 0; height: 100vh;
+              background-image:
+                radial-gradient(940px 460px at 92% 0, rgba(59, 130, 246, 0.27), transparent 66%),
+                radial-gradient(520px 280px at 100% 0, rgba(91, 147, 240, 0.16), transparent 72%),
+                radial-gradient(680px 360px at 16% 100%, rgba(99, 102, 241, 0.18), transparent 66%);
+              background-repeat: no-repeat;
+            }
+            /* O conteúdo vem depois na ordem de pintura, então passa por cima da luz (sem z-index). */
+            .altech-home-glow > :not(.altech-home-glow-light) { position: relative; }
+            :root[data-theme='light'] .altech-home-glow-light { display: none; }
+          `}</style>
+          <div className="altech-home-glow-light" aria-hidden><div /></div>
+        </>
       )}
       {/* ── Header ─────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8, flexWrap: 'wrap' }}>
