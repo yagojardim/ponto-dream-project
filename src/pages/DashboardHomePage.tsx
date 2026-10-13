@@ -58,7 +58,6 @@ import { HomeWidgetGrid } from '@/components/home/HomeWidgetGrid'
 import { AppearancePanel, type AppearanceScope } from '@/components/home/AppearancePanel'
 import { accessFor, effectiveAppearance, appearanceVars, accentChanges, type Appearance } from '@/data/appearance'
 import { fetchAppearance, savePersonalAppearance, saveCompanyAppearance, type AppearanceState } from '@/data/db/appearance'
-import { getTheme } from '@/lib/appPrefs'
 
 // ─── Shared hook: drawer + nav + filter state ─────────────────────────────────
 function useDrawer() {
@@ -2376,7 +2375,6 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
           current={apSaved}
           canChooseScope={apAccess.canChooseScope}
           initialScope={apState.company?.mode === 'company' ? 'all' : 'me'}
-          theme={getTheme()}
           onPreview={onApPreview}
           onApply={applyAppearance}
           onClose={onApClose}

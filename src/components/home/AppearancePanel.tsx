@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, 
 import { T } from '@/components/ds/tokens'
 import {
   PALETTES, INTENSITY_MIN, INTENSITY_MAX, DEFAULT_APPEARANCE,
-  appearanceVars, paletteOf, worstContrast,
+  appearanceVars, paletteOf,
   type Appearance, type PaletteId,
 } from '@/data/appearance'
 
@@ -17,7 +17,6 @@ export interface AppearancePanelProps {
   canChooseScope: boolean
   /** Escopo inicial: "Toda a empresa" quando a empresa já travou a paleta. */
   initialScope: AppearanceScope
-  theme: 'dark' | 'light'
   /** Rascunho para a prévia ao vivo na tela (null = voltar ao que está salvo). */
   onPreview: (draft: Appearance | null) => void
   onApply: (draft: Appearance, scope: AppearanceScope) => Promise<void>
@@ -48,7 +47,7 @@ const PANEL_CSS = `
 const GLASS = { background: 'rgba(255,255,255,.05)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.08)', borderRadius: 8 } as const
 const LABEL = { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12, fontWeight: 600, color: '#a3aac0', margin: '0 0 9px' } as const
 
-export function AppearancePanel({ current, canChooseScope, initialScope, theme, onPreview, onApply, onClose }: AppearancePanelProps) {
+export function AppearancePanel({ current, canChooseScope, initialScope, onPreview, onApply, onClose }: AppearancePanelProps) {
   const [draft, setDraft] = useState<Appearance>(current)
   const [scope, setScope] = useState<AppearanceScope>(initialScope)
   const [saving, setSaving] = useState(false)
@@ -76,8 +75,6 @@ export function AppearancePanel({ current, canChooseScope, initialScope, theme, 
 
   const pal = paletteOf(draft.preset)
   const vars = appearanceVars(draft)
-  const contrast = worstContrast(draft, theme)
-  const contrastOk = contrast >= 4.5
   const pct = ((draft.intensity - INTENSITY_MIN) / (INTENSITY_MAX - INTENSITY_MIN)) * 100
 
   function pick(id: PaletteId) { setDraft(d => ({ ...d, preset: id })) }
@@ -255,16 +252,6 @@ export function AppearancePanel({ current, canChooseScope, initialScope, theme, 
               <p style={{ color: '#9aa1b6', fontSize: 12.5, margin: '10px 2px 0', lineHeight: 1.45 }}>{scopeText}</p>
             </div>
           )}
-
-          {/* Contraste */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: '#aab1c6', lineHeight: 1.4, padding: '10px 12px', borderRadius: 8, flexShrink: 0,
-            background: contrastOk ? 'rgba(52,199,123,.1)' : 'rgba(245,165,36,.12)',
-            boxShadow: `inset 0 0 0 1px ${contrastOk ? 'rgba(52,199,123,.22)' : 'rgba(245,165,36,.3)'}`,
-          }}>
-            <span aria-hidden style={{ color: contrastOk ? '#34c77b' : '#f5a524', fontSize: 15 }}>{contrastOk ? '✓' : '!'}</span>
-            <span>Contraste do texto sobre o ponto mais claro: <b style={{ color: '#fff' }}>{contrast.toFixed(1).replace('.', ',')}:1</b> {contrastOk ? '(nível AA)' : '(abaixo de 4,5:1: reduza a intensidade)'}</span>
-          </div>
 
           {error && <div role="alert" style={{ fontSize: 12.5, color: '#fca5a5', background: 'rgba(239,68,68,.12)', borderRadius: 8, padding: '10px 12px' }}>{error}</div>}
         </div>
