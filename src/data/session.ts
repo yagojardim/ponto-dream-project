@@ -140,6 +140,18 @@ export const ROLE_LABEL: Record<RoleContext, string> = {
   UX: 'UX / UI', QA: 'QA',
 }
 
+const ROLE_DISPLAY: Record<string, string> = {
+  adminmaster: 'Admin Master', admin: 'Admin', administrador: 'Admin', pmo: 'PMO',
+  projectmanager: 'Project Manager', productmanager: 'Product Manager', productowner: 'Product Owner',
+  scrummaster: 'Scrum Master', techlead: 'Tech Lead', dev: 'Dev', ux: 'UX / UI', uxui: 'UX / UI', qa: 'QA',
+}
+
+/** Nome legível de um papel guardado no banco (ex.: "ADMIN_MASTER" → "Admin Master"). */
+export function roleDisplayName(raw: string | null | undefined): string {
+  if (!raw) return '—'
+  return ROLE_DISPLAY[raw.toLowerCase().replace(/[^a-z]/g, '')] ?? raw
+}
+
 export function roleChoiceLabel(choice: RoleChoice): string {
   return choice === ADMIN_MASTER_ROLE ? 'Admin Master' : ROLE_LABEL[choice]
 }

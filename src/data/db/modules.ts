@@ -80,6 +80,8 @@ export interface ModuleView {
   requested_at: string | null
   cta: ModuleCta
   contract_status: ContractStatus
+  /** O tenant contratou/ativou este módulo (há ativação em tenant_modules com situação ativa). */
+  contracted?: boolean
   technical_health: TechnicalHealth
   trial_duration_days: number
 }
@@ -200,6 +202,16 @@ async function writeAudit(
   }
 }
 
+/** Situações de tenant_modules que contam como módulo contratado e ativo. */
+export const CONTRACTED_TENANT_STATUSES = [
+  'operational', 'implemented', 'contracted', 'deploying', 'preview', 'trial', 'active',
+  'operacional', 'implementado', 'contratado',
+]
+
+export function isContractedStatus(raw: string | null | undefined): boolean {
+  return CONTRACTED_TENANT_STATUSES.includes((raw ?? '').trim().toLowerCase())
+}
+
 // ─── Reads ────────────────────────────────────────────────────────────────────
 async function listModules__raw(): Promise<ModuleView[]> {
   const { data: cat, error: catErr } = await tbl('modules').select('*')
@@ -237,6 +249,7 @@ async function listModules__raw(): Promise<ModuleView[]> {
       contract_status: normalizeContract((state as any)?.contract_status, status),
       technical_health: normalizeHealth((state as any)?.technical_health),
       trial_duration_days: Number((m as any).trial_duration_days ?? 30) || 30,
+      contracted: !!state && isContractedStatus(state.status),
     }
   })
 }
@@ -260,8 +273,7 @@ export function listActivationRequests(): Promise<ActivationRequestRow[]> {
 /** Active/operational modules for this tenant — used by the Home KPI. */
 export async function countActiveModules(): Promise<{ active: number; total: number }> {
   const mods = await listModules()
-  const active = mods.filter(m =>
-    m.status === 'operational' || m.status === 'implemented' || m.status === 'preview').length
+  const active = mods.filter(m => m.contracted).length
   return { active, total: mods.length }
 }
 

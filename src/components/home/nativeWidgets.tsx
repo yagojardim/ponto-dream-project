@@ -536,7 +536,6 @@ function useAdminInicio(): AdminInicioData | null {
   return data
 }
 
-const ACTIVE_MODULE_STATUSES = ['operational', 'implemented', 'preview', 'trial', 'active']
 
 /** Carrossel dos módulos ativos do tenant: alterna o nome a cada 3s, com rodapé
  *  que leva à Central de Módulos. Usado no card "Módulos ativos" do Admin. */
@@ -546,7 +545,7 @@ function ModuleCarousel({ onOpen }: { onOpen: () => void }) {
   useEffect(() => {
     let alive = true
     listModules()
-      .then(mods => { if (alive) setNames(mods.filter(m => ACTIVE_MODULE_STATUSES.includes((m.status ?? '').toLowerCase())).map(m => m.name)) })
+      .then(mods => { if (alive) setNames(mods.filter(m => m.contracted).map(m => m.name)) })
       .catch(err => { logger.error('home.admin-modules', err) })
     return () => { alive = false }
   }, [])

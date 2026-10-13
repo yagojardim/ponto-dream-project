@@ -6,6 +6,7 @@ import type { Database } from '../../integrations/supabase/types'
 import { T } from '../../components/ds/tokens'
 import { DEFAULT_TENANT_ID } from './timeline'
 import { getActiveTenantId } from '@/data/session'
+import { isContractedStatus } from '@/data/db/modules'
 import { PRIORITY_FROM_DB } from './board'
 import type { WorkItem, WorkStatus, RagStatus } from '../../components/ds/DashboardKit'
 
@@ -574,12 +575,13 @@ export async function fetchAdminKpis(projectIds?: string[]): Promise<AdminKpis> 
   let boardsQ = supabase.from('boards').select('id, status').eq('tenant_id', tid).is('archived_at', null)
   if (ids) boardsQ = boardsQ.in('project_id', ids)
 
-  const [projects, boards, modules, profiles, invites] = await Promise.all([
+  const [projects, boards, modules, profiles, invites, catalog] = await Promise.all([
     projectsQ,
     boardsQ,
     supabase.from('tenant_modules').select('id, status').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('profiles').select('id, status').eq('tenant_id', tid).is('archived_at', null),
     supabase.from('invitations').select('id, status, expires_at').eq('tenant_id', tid),
+    (supabase as unknown as { from: (t: string) => any }).from('modules').select('id').is('archived_at', null),
   ])
 
 
@@ -610,8 +612,9 @@ export async function fetchAdminKpis(projectIds?: string[]): Promise<AdminKpis> 
       active: boardRows.filter(b => (b.status ?? '').toLowerCase() === 'active').length,
     },
     modules: {
-      total: moduleRows.length,
-      active: moduleRows.filter(m => ACTIVE_MODULE_STATUSES.includes((m.status ?? '').toLowerCase())).length,
+      // Total = módulos do catálogo; ativos = só os que o tenant contratou.
+      total: catalog.error ? moduleRows.length : (catalog.data ?? []).length,
+      active: moduleRows.filter(m => isContractedStatus(m.status)).length,
     },
     users: {
       total: profileRows.length,
