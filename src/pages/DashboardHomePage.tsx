@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, createContext, useContext, type ReactNode, type ReactElement } from 'react'
 import { useSession } from '../data/SessionContext'
+import { roleDisplayName } from '@/data/session'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import { fetchTenantStorage, usagePct, bytesToHuman, type TenantStorage } from '@/data/db/storage'
 import { getActiveTenantId } from '@/data/session'
@@ -304,7 +305,7 @@ export function AdminUsersCard({ onNav, onInvite, actorName, canManage = true }:
                     <Av initials={initialsOf(u.name || u.email)} color={colorOf(u.id)} size={28} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, color: T.text1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || u.email}</div>
-                      <div style={{ fontSize: 10, color: T.text3 }}>{u.primary_role ?? '—'}</div>
+                      <div style={{ fontSize: 10, color: T.text3 }}>{roleDisplayName(u.primary_role)}</div>
                     </div>
                     <span style={{ fontSize: 10, color: c, background: `${c}18`, border: `1px solid ${c}33`, borderRadius: 4, padding: '2px 7px' }}>
                       {STATUS_LABEL[u.status] ?? u.status}
@@ -331,8 +332,6 @@ export function AdminUsersCard({ onNav, onInvite, actorName, canManage = true }:
   )
 }
 
-const ACTIVE_MODULE_STATUS = new Set<string>(['operational', 'implemented', 'contracted', 'deploying', 'preview'])
-
 export function AdminModulesCard({ onNav }: { onNav: (v: string, targetId?: string) => void }) {
   const [mods, setMods] = useState<ModuleView[] | null>(null)
   useEffect(() => {
@@ -348,7 +347,7 @@ export function AdminModulesCard({ onNav }: { onNav: (v: string, targetId?: stri
         : mods.length === 0
           ? <EmptyState message="Nenhum módulo disponível." />
           : mods.map(m => {
-            const active = ACTIVE_MODULE_STATUS.has(m.status)
+            const active = !!m.contracted
             return (
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>

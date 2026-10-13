@@ -9,6 +9,7 @@ import {
 } from '@/data/db/dashboards'
 import { listModules, type ModuleView } from '@/data/db/modules'
 import { useProductMetrics } from '@/data/db/engagement'
+import { roleDisplayName } from '@/data/session'
 
 function Metrics({ children }: { children: React.ReactNode }) {
   return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, margin: '0 0 14px' }}>{children}</div>
@@ -77,25 +78,24 @@ export function AdminBoardsTabLive() {
   )
 }
 
-const MODULE_LABEL: Record<string, string> = {
-  operational: 'Ativo', implemented: 'Ativo', preview: 'Ativo', contracted: 'Contratado',
-  deploying: 'Em implantação', pending: 'Pendente', 'not-contracted': 'Não contratado',
-  planned: 'Planejado', 'coming-soon': 'Em breve', suspended: 'Suspenso', unavailable: 'Indisponível',
+/** Situação no catálogo de um módulo que o tenant NÃO contratou. */
+const NOT_CONTRACTED_LABEL: Record<string, string> = {
+  pending: 'Pendente', planned: 'Planejado', 'coming-soon': 'Em breve',
+  suspended: 'Suspenso', unavailable: 'Indisponível',
 }
 
 export function AdminModulesTabLive() {
   const mods = useAsync<ModuleView[]>(() => listModules(), [])
-  const kpis = useAsync<AdminKpis>(() => fetchAdminKpis(), [])
-  if (mods.loading || kpis.loading) return <Msg text="Carregando módulos…" />
-  if (!mods.data && !kpis.data) return <Msg text="Não foi possível carregar os módulos agora." />
+  if (mods.loading) return <Msg text="Carregando módulos…" />
   const rows = mods.data ?? []
-  const label = (s: string) => MODULE_LABEL[s] ?? s
-  const color = (s: string) => (label(s) === 'Ativo' ? T.success : s === 'pending' ? T.warn : s === 'suspended' ? T.crit : T.text2)
+  // "Ativo" = contratado pelo tenant. Os demais mostram a situação no catálogo.
+  const label = (m: ModuleView) => (m.contracted ? 'Ativo' : (NOT_CONTRACTED_LABEL[m.status] ?? 'Não contratado'))
+  const color = (m: ModuleView) => (m.contracted ? T.success : m.status === 'pending' ? T.warn : m.status === 'suspended' ? T.crit : T.text2)
   return (
     <>
       <Metrics>
-        <Metric v={kpis.data ? String(kpis.data.modules.active) : '—'} k="Ativos" c={T.success} />
-        <Metric v={kpis.data ? String(kpis.data.modules.total) : '—'} k="No catálogo" />
+        <Metric v={String(rows.filter(m => m.contracted).length)} k="Ativos (contratados)" c={T.success} />
+        <Metric v={String(rows.length)} k="No catálogo" />
       </Metrics>
       {rows.length === 0
         ? <Msg text="Nenhum módulo no catálogo deste tenant." />
@@ -104,7 +104,7 @@ export function AdminModulesTabLive() {
             {rows.map(m => (
               <tr key={m.id}>
                 <td style={td}>{m.name}</td>
-                <td style={{ ...td, color: color(m.status) }}>{label(m.status)}</td>
+                <td style={{ ...td, color: color(m) }}>{label(m)}</td>
               </tr>
             ))}
           </Table>
@@ -145,7 +145,7 @@ export function AdminUsersTabLive() {
               return (
                 <tr key={u.id}>
                   <td style={td}>{u.name}</td>
-                  <td style={tdMuted}>{u.role ?? '—'}</td>
+                  <td style={tdMuted}>{roleDisplayName(u.role)}</td>
                   <td style={{ ...td, color: s.color }}>{s.text}</td>
                 </tr>
               )
