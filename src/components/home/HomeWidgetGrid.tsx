@@ -44,6 +44,8 @@ interface Props {
   role: string
   /** Cartões sobem em relevo ao passar o mouse (hoje só no Início do Admin Master). */
   lift?: boolean
+  /** Ações extras na barra do painel (ex.: botão Aparência). */
+  extraActions?: React.ReactNode
   onNav: (view: string, targetId?: string) => void
 }
 
@@ -116,7 +118,7 @@ function loadStored(userId: string, role: string): StoredState | null {
   }
 }
 
-export function HomeWidgetGrid({ userId, userName, role, lift = false, onNav }: Props) {
+export function HomeWidgetGrid({ userId, userName, role, lift = false, extraActions, onNav }: Props) {
   const [state, setState] = useState<StoredState>(() => loadStored(userId, role) ?? buildDefault(role))
   const [addOpen, setAddOpen] = useState(false)
   const [selProj, setSelProj] = useProjSel()
@@ -369,6 +371,7 @@ export function HomeWidgetGrid({ userId, userName, role, lift = false, onNav }: 
           </>
         ) : (
           <>
+            {extraActions}
             <button
               data-tour="home-edit"
               onClick={startEditing}
