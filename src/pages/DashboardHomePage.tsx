@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, createContext, useContext, type ReactNode, type ReactElement } from 'react'
+import { useState, useEffect, useMemo, useCallback, createContext, useContext, type ReactNode, type ReactElement } from 'react'
 import { useSession } from '../data/SessionContext'
 import { INSPECTION_MODE_ENABLED } from '../lib/auth'
 import { fetchTenantStorage, usagePct, bytesToHuman, type TenantStorage } from '@/data/db/storage'
@@ -55,6 +55,10 @@ import { fetchRecentAdminActivity, relativeTime, type AdminActivityRow } from '@
 import { fetchMilestones, type MilestoneRow, type MilestoneMeta } from '@/data/db/audit'
 import { countPendingInvites, nearestExpiry } from '../data/invites'
 import { HomeWidgetGrid } from '@/components/home/HomeWidgetGrid'
+import { AppearancePanel, type AppearanceScope } from '@/components/home/AppearancePanel'
+import { accessFor, effectiveAppearance, appearanceVars, accentChanges, type Appearance } from '@/data/appearance'
+import { fetchAppearance, savePersonalAppearance, saveCompanyAppearance, type AppearanceState } from '@/data/db/appearance'
+import { getTheme } from '@/lib/appPrefs'
 
 // ─── Shared hook: drawer + nav + filter state ─────────────────────────────────
 function useDrawer() {
@@ -2221,6 +2225,33 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
 
   const activeDef = activeDashId ? DASHBOARD_CATALOG[activeDashId] : null
 
+  // ── Aparência do Início (paleta, intensidade, destaque e quem vê) ──
+  const isAppearanceAdmin = canManageUsers(user)
+  const [apState, setApState] = useState<AppearanceState>({ personal: null, company: null })
+  const [apPreview, setApPreview] = useState<Appearance | null>(null)
+  const [apOpen, setApOpen] = useState(false)
+  useEffect(() => {
+    let alive = true
+    fetchAppearance(user.user_id).then(s => { if (alive) setApState(s) })
+    return () => { alive = false }
+  }, [user.user_id])
+  const onApPreview = useCallback((d: Appearance | null) => setApPreview(d), [])
+  const onApClose = useCallback(() => setApOpen(false), [])
+  const apAccess = accessFor(isAppearanceAdmin, apState.company)
+  const apSaved = effectiveAppearance(isAppearanceAdmin, apState.personal, apState.company)
+  const apShown = apPreview ?? apSaved
+  const applyAppearance = useCallback(async (d: Appearance, apScope: AppearanceScope) => {
+    if (apScope === 'all' && isAppearanceAdmin) {
+      await saveCompanyAppearance({ mode: 'company', ...d })
+      setApState(s => ({ ...s, company: { mode: 'company', ...d } }))
+      return
+    }
+    await savePersonalAppearance(user.user_id, d)
+    // Admin escolhendo "Só para mim" libera o painel para os outros usuários.
+    if (isAppearanceAdmin) await saveCompanyAppearance({ mode: 'users-own' })
+    setApState(s => ({ personal: d, company: isAppearanceAdmin ? { mode: 'users-own' } : s.company }))
+  }, [isAppearanceAdmin, user.user_id])
+
   if (!scope || !activeDashId || !activeDef) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 16 }}>
@@ -2239,7 +2270,8 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
   const withGlow = true
 
   return (
-    <div className={withGlow ? 'altech-home-glow' : undefined} style={{ padding: 24, minHeight: '100%', backgroundColor: T.bgPage }}>
+    <div className={withGlow ? `altech-home-glow${accentChanges(apShown) ? ' ap-accent' : ''}` : undefined}
+      style={{ ...appearanceVars(apShown), padding: 24, minHeight: '100%', backgroundColor: T.bgPage }}>
       {withGlow && (
         <>
           <style>{`
@@ -2253,14 +2285,33 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
             .altech-home-glow-light > div {
               position: absolute; left: 0; right: 0; top: 0; height: 100vh;
               background-image:
-                radial-gradient(940px 460px at 92% 0, rgba(59, 130, 246, 0.27), transparent 66%),
-                radial-gradient(520px 280px at 100% 0, rgba(91, 147, 240, 0.16), transparent 72%),
-                radial-gradient(680px 360px at 16% 100%, rgba(99, 102, 241, 0.18), transparent 66%);
+                radial-gradient(940px 460px at 92% 0, var(--ap-g1), transparent 66%),
+                radial-gradient(520px 280px at 100% 0, var(--ap-g1b), transparent 72%),
+                radial-gradient(680px 360px at 16% 100%, var(--ap-g2), transparent 66%);
               background-repeat: no-repeat;
             }
+            /* Tema claro: a mesma paleta, mais suave (mockup aprovado do tema claro). "Liso" = sem luz. */
+            :root[data-theme='light'] .altech-home-glow-light > div {
+              background-image:
+                radial-gradient(940px 460px at 92% 0, var(--ap-g1-light), transparent 66%),
+                radial-gradient(520px 280px at 100% 0, var(--ap-g1b-light), transparent 72%),
+                radial-gradient(680px 360px at 16% 100%, var(--ap-g2-light), transparent 66%);
+            }
+            /* "Itens em azul seguem a paleta" — só dentro do Início. Troca o azul padrão (#3B82F6)
+               dos estilos do Início pela cor da paleta, sem mexer no resto do app. */
+            .altech-home-glow.ap-accent [style^="color: rgb(59, 130, 246)"],
+            .altech-home-glow.ap-accent [style*="; color: rgb(59, 130, 246)"] { color: var(--ap-acc) !important; }
+            .altech-home-glow.ap-accent [style*="background: rgb(59, 130, 246)"],
+            .altech-home-glow.ap-accent [style*="background-color: rgb(59, 130, 246)"] { background: var(--ap-acc) !important; }
+            .altech-home-glow.ap-accent [style*="background: rgba(59, 130, 246"],
+            .altech-home-glow.ap-accent [style*="background-color: rgba(59, 130, 246"] { background: var(--ap-acc-soft) !important; }
+            .altech-home-glow.ap-accent [style*="border"][style*="rgba(59, 130, 246"] { border-color: var(--ap-acc-line) !important; }
+            .altech-home-glow.ap-accent [style*="border"][style*="rgb(59, 130, 246)"] { border-color: var(--ap-acc) !important; }
+            .altech-home-glow.ap-accent [fill="#3B82F6"], .altech-home-glow.ap-accent [fill="#3b82f6"] { fill: var(--ap-acc); }
+            .altech-home-glow.ap-accent [stroke="#3B82F6"], .altech-home-glow.ap-accent [stroke="#3b82f6"] { stroke: var(--ap-acc); }
+            .altech-home-glow.ap-accent :focus-visible { outline-color: var(--ap-acc) !important; }
             /* O conteúdo vem depois na ordem de pintura, então passa por cima da luz (sem z-index). */
             .altech-home-glow > :not(.altech-home-glow-light) { position: relative; }
-            :root[data-theme='light'] .altech-home-glow-light { display: none; }
           `}</style>
           <div className="altech-home-glow-light" aria-hidden><div /></div>
         </>
@@ -2294,7 +2345,7 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
 
       {/* ── Scope debug pills ───────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 20 }}>
-        {[`Papel: ${scope.role_context}`, `Usuário: ${user.name}`, `Módulos: ${(scope.modules_allowed ?? []).join(' · ')}`].map(t => (
+        {[`Papel: ${scope.role_context}`, `Usuário: ${user.name}`, `Módulos: ${(scope.modules_allowed ?? []).join(' · ')}`, ...(apAccess.lockedByCompany ? ['Aparência definida pela empresa'] : [])].map(t => (
           <span key={t} style={{ fontSize: 9, color: T.text3, background: `${T.text3}0A`, border: `1px solid ${T.border}`, borderRadius: 4, padding: '1px 7px' }}>{t}</span>
         ))}
       </div>
@@ -2308,8 +2359,29 @@ function DashboardHomeInner({ onNav, onInvite }: Props) {
         userName={user.name}
         role={activeDashId}
         lift
+        extraActions={apAccess.canUse ? (
+          <button
+            data-tour="home-appearance"
+            onClick={() => setApOpen(true)}
+            style={{
+              fontSize: 11, fontWeight: 600, color: T.accent, background: T.accentDim,
+              border: `1px solid ${T.accentBorder}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer',
+            }}
+          >Aparência</button>
+        ) : undefined}
         onNav={(v, targetId) => onNav?.(v, targetId)}
       />
+      {apOpen && apAccess.canUse && (
+        <AppearancePanel
+          current={apSaved}
+          canChooseScope={apAccess.canChooseScope}
+          initialScope={apState.company?.mode === 'company' ? 'all' : 'me'}
+          theme={getTheme()}
+          onPreview={onApPreview}
+          onApply={applyAppearance}
+          onClose={onApClose}
+        />
+      )}
     </div>
   )
 }
